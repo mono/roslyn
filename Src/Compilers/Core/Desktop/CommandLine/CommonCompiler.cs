@@ -496,7 +496,8 @@ namespace Microsoft.CodeAnalysis
                     if (sqm != null)
                     {
                         sqm.BeginSession(this.GetSqmAppID(), false, out sqmSession);
-                        sqm.SetGlobalSessionGuid(Arguments.SqmSessionGuid);
+                        var sessionGuid = Arguments.SqmSessionGuid;
+                        sqm.SetGlobalSessionGuid(ref sessionGuid);
 
                         // Build Version
                         Assembly thisAssembly = typeof(CommonCompiler).Assembly;
