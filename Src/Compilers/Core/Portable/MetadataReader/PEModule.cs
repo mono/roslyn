@@ -96,13 +96,10 @@ namespace Microsoft.CodeAnalysis
 
             internal override ImmutableArray<byte> ComputeHash(HashAlgorithm algorithm)
             {
-                IntPtr pointer;
-                int size;
-
-                peReader.GetEntireImage(out pointer, out size);
+                PEMemoryBlock block = peReader.GetEntireImage();
                 byte[] hash;
 
-                using (var stream = new ReadOnlyUnmanagedMemoryStream(peReader, pointer, size))
+                using (var stream = new ReadOnlyUnmanagedMemoryStream(peReader, block.Pointer, block.Length))
                 {
                     hash = algorithm.ComputeHash(stream);
                 }
@@ -2861,7 +2858,7 @@ namespace Microsoft.CodeAnalysis
         }
 
         /// <summary>
-        /// Returns true if method IL can be retrieved from the the module.
+        /// Returns true if method IL can be retrieved from the module.
         /// </summary>
         internal bool HasIL
         {

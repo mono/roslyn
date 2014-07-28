@@ -583,7 +583,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Return SpecializedCollections.EmptyEnumerable(Of ITypeSymbol)()
                 End If
 
-                ' If we're in a a lambda, then use the return tpe of the lambda to figure out what to
+                ' If we're in a lambda, then use the return tpe of the lambda to figure out what to
                 ' infer.  i.e.   Func<int,string> f = i => { return Foo(); }
                 Dim lambda = returnStatement.GetAncestorsOrThis(Of ExpressionSyntax)().FirstOrDefault(
                     Function(e) TypeOf e Is MultiLineLambdaExpressionSyntax OrElse
@@ -746,18 +746,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Public Function InferTypeInCaseStatement(caseStatement As CaseStatementSyntax) As IEnumerable(Of ITypeSymbol)
                 Dim selectBlock = caseStatement.GetAncestor(Of SelectBlockSyntax)()
                 If selectBlock IsNot Nothing Then
-                    If selectBlock.SelectStatement.Expression IsNot Nothing Then
-                        ' As the user adds case statements, the type/converted type of the select statement can change.
-                        ' The type could be either Int32 or the enum type, so we must look at both and take the enum type.
-                        Dim info = _semanticModel.GetTypeInfo(selectBlock.SelectStatement.Expression)
-                        If info.Type IsNot Nothing AndAlso info.Type.TypeKind <> TypeKind.Error AndAlso info.Type.TypeKind = TypeKind.Enum Then
-                            Return SpecializedCollections.SingletonEnumerable(info.Type)
-                        End If
-
-                        If info.ConvertedType IsNot Nothing AndAlso info.ConvertedType.TypeKind <> TypeKind.Error AndAlso info.ConvertedType.TypeKind = TypeKind.Enum Then
-                            Return SpecializedCollections.SingletonEnumerable(info.ConvertedType)
-                        End If
-                    End If
+                    Return GetTypes(selectBlock.SelectStatement.Expression)
                 End If
 
                 Return SpecializedCollections.EmptyEnumerable(Of ITypeSymbol)()

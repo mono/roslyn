@@ -13,7 +13,7 @@ namespace Microsoft.CodeAnalysis.CSharp
     /// with surrogate replacements that keep actual handler code in regular code blocks.
     /// That allows these constructs to be further lowered at the async lowering pass.
     /// </summary>
-    internal sealed class AsyncHandlerRewriter : BoundTreeRewriter
+    internal sealed class AsyncExceptionHandlerRewriter : BoundTreeRewriter
     {
         private readonly bool generateDebugInfo;
         private readonly CSharpCompilation compilation;
@@ -24,7 +24,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         AwaitCatchFrame currentAwaitCatchFrame = null;
         AwaitFinallyFrame currentAwaitFinallyFrame = new AwaitFinallyFrame(null, null);
 
-        private AsyncHandlerRewriter(
+        private AsyncExceptionHandlerRewriter(
             bool generateDebugInfo,
             MethodSymbol containingMethod,
             NamedTypeSymbol containingType,
@@ -129,7 +129,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             var compilation = containingType.DeclaringCompilation;
             var factory = new SyntheticBoundNodeFactory(containingSymbol, statement.Syntax, compilationState, diagnostics);
-            var rewriter = new AsyncHandlerRewriter(generateDebugInfo, containingSymbol, containingType, factory, compilation, diagnostics, analysis);
+            var rewriter = new AsyncExceptionHandlerRewriter(generateDebugInfo, containingSymbol, containingType, factory, compilation, diagnostics, analysis);
             var loweredStatement = (BoundStatement)rewriter.Visit(statement);
 
             return loweredStatement;
@@ -172,9 +172,9 @@ namespace Microsoft.CodeAnalysis.CSharp
             PopFrame();
 
             var exceptionType = F.SpecialType(SpecialType.System_Object);
-            var pendingExceptionLocal = F.SynthesizedLocal(exceptionType);
+            var pendingExceptionLocal = F.SynthesizedLocal(exceptionType, kind: SynthesizedLocalKind.TryAwaitPendingException);
             var finallyLabel = F.GenerateLabel("finallyLabel");
-            var pendingBranchVar = F.SynthesizedLocal(F.SpecialType(SpecialType.System_Int32));
+            var pendingBranchVar = F.SynthesizedLocal(F.SpecialType(SpecialType.System_Int32), kind: SynthesizedLocalKind.TryAwaitPendingBranch);
 
             var catchAll = F.Catch(F.Local(pendingExceptionLocal), F.Block());
 
@@ -901,7 +901,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     returnValue = this.returnValue;
                     if (returnValue == null)
                     {
-                        this.returnValue = returnValue = new SynthesizedLocal(containingMethod, valueOpt.Type);
+                        this.returnValue = returnValue = new SynthesizedLocal(containingMethod, valueOpt.Type, SynthesizedLocalKind.LoweringTemp);
                     }
                 }
 
@@ -924,7 +924,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             // they will become switch sections when pending exception is dispatched.
             public readonly List<BoundBlock> handlers;
 
-            // when catch local local must be used from a filter
+            // when catch local must be used from a filter
             // we need to "hoist" it up to ensure that both the filter 
             // and the catch access the same variable.
             // NOTE: it must be the same variable, not just same value. 
@@ -934,8 +934,8 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             public AwaitCatchFrame(SyntheticBoundNodeFactory F)
             {
-                this.pendingCaughtException = F.SynthesizedLocal(F.SpecialType(SpecialType.System_Object));
-                this.pendingCatch = F.SynthesizedLocal(F.SpecialType(SpecialType.System_Int32));
+                this.pendingCaughtException = F.SynthesizedLocal(F.SpecialType(SpecialType.System_Object), kind: SynthesizedLocalKind.TryAwaitPendingCaughtException);
+                this.pendingCatch = F.SynthesizedLocal(F.SpecialType(SpecialType.System_Int32), kind: SynthesizedLocalKind.TryAwaitPendingCatch);
                 this.handlers = new List<BoundBlock>();
                 this.hoistedLocals = new Dictionary<LocalSymbol, LocalSymbol>();
             }
@@ -953,8 +953,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 // and become fields with identical signatures.
                 // To avoid such problems we will mangle the name of the second local.
                 // This will only affect debugging of this extremely rare case.
-                var newName = GeneratedNames.MakeIteratorLocalName(local.Name, hoistedLocals.Count);
-                var newLocal = F.SynthesizedLocal(local.Type, newName);
+                var newLocal = F.SynthesizedLocal(local.Type, kind: SynthesizedLocalKind.ExceptionFilterAwaitHoistedExceptionLocal);
                 hoistedLocals.Add(local, newLocal);
             }
         }

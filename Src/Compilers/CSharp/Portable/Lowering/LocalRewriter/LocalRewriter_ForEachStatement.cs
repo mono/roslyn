@@ -86,7 +86,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             TypeSymbol elementType = enumeratorInfo.ElementType;
 
             // E e
-            LocalSymbol enumeratorVar = factory.SynthesizedLocal(enumeratorType, syntax: forEachSyntax, tempKind: TempKind.ForEachEnumerator);
+            LocalSymbol enumeratorVar = factory.SynthesizedLocal(enumeratorType, syntax: forEachSyntax, kind: SynthesizedLocalKind.ForEachEnumerator);
 
             // Reference to e.
             BoundLocal boundEnumeratorVar = MakeBoundLocal(forEachSyntax, enumeratorVar, enumeratorType);
@@ -396,9 +396,9 @@ namespace Microsoft.CodeAnalysis.CSharp
             BoundStatement rewrittenBody = (BoundStatement)Visit(node.Body);
 
             // string s;
-            LocalSymbol stringVar = factory.SynthesizedLocal(stringType, syntax: forEachSyntax, tempKind: TempKind.ForEachArray);
+            LocalSymbol stringVar = factory.SynthesizedLocal(stringType, syntax: forEachSyntax, kind: SynthesizedLocalKind.ForEachArray);
             // int p;
-            LocalSymbol positionVar = factory.SynthesizedLocal(intType, syntax: forEachSyntax, tempKind: TempKind.ForEachArrayIndex0);
+            LocalSymbol positionVar = factory.SynthesizedLocal(intType, syntax: forEachSyntax, kind: SynthesizedLocalKind.ForEachArrayIndex0);
 
             // Reference to s.
             BoundLocal boundStringVar = MakeBoundLocal(forEachSyntax, stringVar, stringType);
@@ -473,11 +473,12 @@ namespace Microsoft.CodeAnalysis.CSharp
             // }
             BoundStatement result = RewriteForStatement(
                 syntax: forEachSyntax,
-                outerLocals: node.OuterLocals.AddRange(ImmutableArray.Create<LocalSymbol>(stringVar, positionVar)),
+                outerLocals: node.OuterLocals.AddRange(ImmutableArray.Create(stringVar, positionVar)),
                 rewrittenInitializer: initializer,
                 innerLocals: ImmutableArray<LocalSymbol>.Empty,
                 rewrittenCondition: exitCondition,
-                conditionSyntax: forEachSyntax.InKeyword,
+                conditionSyntaxOpt: null,
+                conditionSpanOpt: forEachSyntax.InKeyword.Span,
                 rewrittenIncrement: positionIncrement,
                 rewrittenBody: loopBody,
                 breakLabel: node.BreakLabel,
@@ -523,7 +524,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             BoundStatement rewrittenBody = (BoundStatement)Visit(node.Body);
 
             // A[] a
-            LocalSymbol arrayVar = factory.SynthesizedLocal(arrayType, syntax: forEachSyntax, tempKind: TempKind.ForEachArray);
+            LocalSymbol arrayVar = factory.SynthesizedLocal(arrayType, syntax: forEachSyntax, kind: SynthesizedLocalKind.ForEachArray);
 
             // A[] a = /*node.Expression*/;
             BoundStatement arrayVarDecl = MakeLocalDeclaration(forEachSyntax, arrayVar, rewrittenExpression);
@@ -534,7 +535,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             BoundLocal boundArrayVar = MakeBoundLocal(forEachSyntax, arrayVar, arrayType);
 
             // int p
-            LocalSymbol positionVar = factory.SynthesizedLocal(intType, syntax: forEachSyntax, tempKind: TempKind.ForEachArrayIndex0);
+            LocalSymbol positionVar = factory.SynthesizedLocal(intType, syntax: forEachSyntax, kind: SynthesizedLocalKind.ForEachArrayIndex0);
 
             // Reference to p.
             BoundLocal boundPositionVar = MakeBoundLocal(forEachSyntax, positionVar, intType);
@@ -602,7 +603,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                 rewrittenInitializer: initializer,
                 innerLocals: ImmutableArray<LocalSymbol>.Empty,
                 rewrittenCondition: exitCondition,
-                conditionSyntax: forEachSyntax.InKeyword,
+                conditionSyntaxOpt: null,
+                conditionSpanOpt: forEachSyntax.InKeyword.Span,
                 rewrittenIncrement: positionIncrement,
                 rewrittenBody: loopBody,
                 breakLabel: node.BreakLabel,
@@ -654,7 +656,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             BoundStatement rewrittenBody = (BoundStatement)Visit(node.Body);
 
             // A[...] a
-            LocalSymbol arrayVar = factory.SynthesizedLocal(arrayType, syntax: forEachSyntax, tempKind: TempKind.ForEachArray);
+            LocalSymbol arrayVar = factory.SynthesizedLocal(arrayType, syntax: forEachSyntax, kind: SynthesizedLocalKind.ForEachArray);
             BoundLocal boundArrayVar = MakeBoundLocal(forEachSyntax, arrayVar, arrayType);
 
             // A[...] a = /*node.Expression*/;
@@ -677,7 +679,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 upperVar[dimension] = factory.SynthesizedLocal(
                     intType,
                     syntax: forEachSyntax,
-                    tempKind: (TempKind)((int)TempKind.ForEachArrayLimit0 + dimension));
+                    kind: (SynthesizedLocalKind)((int)SynthesizedLocalKind.ForEachArrayLimit0 + dimension));
                 boundUpperVar[dimension] = MakeBoundLocal(forEachSyntax, upperVar[dimension], intType);
 
                 ImmutableArray<BoundExpression> dimensionArgument = ImmutableArray.Create<BoundExpression>(
@@ -700,7 +702,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 positionVar[dimension] = factory.SynthesizedLocal(
                     intType,
                     syntax: forEachSyntax,
-                    tempKind: (TempKind)((int)TempKind.ForEachArrayIndex0 + dimension));
+                    kind: (SynthesizedLocalKind)((int)SynthesizedLocalKind.ForEachArrayIndex0 + dimension));
                 boundPositionVar[dimension] = MakeBoundLocal(forEachSyntax, positionVar[dimension], intType);
             }
 
@@ -787,7 +789,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     rewrittenInitializer: positionVarDecl,
                     innerLocals: ImmutableArray<LocalSymbol>.Empty,
                     rewrittenCondition: exitCondition,
-                    conditionSyntax: forEachSyntax.InKeyword,
+                    conditionSyntaxOpt: null,
+                    conditionSpanOpt: forEachSyntax.InKeyword.Span,
                     rewrittenIncrement: positionIncrement,
                     rewrittenBody: body,
                     breakLabel: breakLabel,

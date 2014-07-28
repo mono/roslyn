@@ -28,9 +28,9 @@ namespace Microsoft.CodeAnalysis.MSBuild
         // used to protect access to mutable state
         private readonly NonReentrantLock dataGuard = new NonReentrantLock();
 
-        private readonly Dictionary<string, string> extensionToLanguageMap = new Dictionary<string, string>();
-        private readonly Dictionary<string, ProjectId> projectPathToProjectIdMap = new Dictionary<string, ProjectId>();
-        private readonly Dictionary<string, IProjectFileLoader> projectPathToLoaderMap = new Dictionary<string, IProjectFileLoader>();
+        private readonly Dictionary<string, string> extensionToLanguageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, ProjectId> projectPathToProjectIdMap = new Dictionary<string, ProjectId>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, IProjectFileLoader> projectPathToLoaderMap = new Dictionary<string, IProjectFileLoader>(StringComparer.OrdinalIgnoreCase);
 
         private string solutionFilePath;
         private ImmutableDictionary<string, string> properties;
@@ -420,6 +420,8 @@ namespace Microsoft.CodeAnalysis.MSBuild
             // construct workspace from loaded project infos
             this.OnSolutionAdded(SolutionInfo.Create(SolutionId.CreateNewId(debugName: absoluteSolutionPath), version, absoluteSolutionPath, loadedProjects));
 
+            this.UpdateReferencesAfterAdd();
+
             return this.CurrentSolution;
         }
 
@@ -448,12 +450,79 @@ namespace Microsoft.CodeAnalysis.MSBuild
                         this.OnProjectAdded(project);
                     }
 
+                    this.UpdateReferencesAfterAdd();
+
                     return this.CurrentSolution.GetProject(projectId);
                 }
             }
 
             // unreachable
             return null;
+        }
+
+        private void UpdateReferencesAfterAdd()
+        {
+            using (this.serializationLock.DisposableWait())
+            {
+                var oldSolution = this.CurrentSolution;
+                var newSolution = this.UpdateReferencesAfterAdd(oldSolution);
+
+                if (newSolution != oldSolution)
+                {
+                    newSolution = this.SetCurrentSolution(newSolution);
+                    var ignore = this.RaiseWorkspaceChangedEventAsync(WorkspaceChangeKind.SolutionChanged, oldSolution, newSolution);
+                }
+            }
+        }
+
+        // Updates all projects to properly reference other existing projects via project references instead of using references to built metadata.
+        private Solution UpdateReferencesAfterAdd(Solution solution)
+        {
+            // Build map from output assembly path to ProjectId
+            // Use explicit loop instead of ToDictionary so we don't throw if multiple projects have same output assembly path.
+            var outputAssemblyToProjectIdMap = new Dictionary<string, ProjectId>();
+            foreach (var p in solution.Projects)
+            {
+                if (!string.IsNullOrEmpty(p.OutputFilePath))
+                {
+                    outputAssemblyToProjectIdMap[p.OutputFilePath] = p.Id;
+                }
+            }
+
+            // now fix each project if necessary
+            foreach (var pid in solution.ProjectIds)
+            {
+                var project = solution.GetProject(pid);
+
+                // convert metadata references to project references if the metadata reference matches some project's output assembly.
+                foreach (var meta in project.MetadataReferences)
+                {
+                    var pemeta = meta as PortableExecutableReference;
+                    if (pemeta != null)
+                    {
+                        ProjectId matchingProjectId;
+
+                        // check both Display and FilePath. FilePath points to the actually bits, but Display should match output path if 
+                        // the metadata reference is shadow copied.
+                        if ((!string.IsNullOrEmpty(pemeta.Display) && outputAssemblyToProjectIdMap.TryGetValue(pemeta.Display, out matchingProjectId)) ||
+                            (!string.IsNullOrEmpty(pemeta.FilePath) && outputAssemblyToProjectIdMap.TryGetValue(pemeta.FilePath, out matchingProjectId)))
+                        {
+                            var newProjRef = new ProjectReference(matchingProjectId, pemeta.Properties.Aliases, pemeta.Properties.EmbedInteropTypes);
+
+                            if (!project.ProjectReferences.Contains(newProjRef))
+                            {
+                                project = project.WithProjectReferences(project.ProjectReferences.Concat(newProjRef));
+                            }
+
+                            project = project.WithMetadataReferences(project.MetadataReferences.Where(mr => mr != meta));
+                        }
+                    }
+                }
+
+                solution = project.Solution;
+            }
+
+            return solution;
         }
 
         private async Task<ProjectId> GetOrLoadProjectAsync(string projectFilePath, IProjectFileLoader loader, bool preferMetadata, List<ProjectInfo> loadedProjects, CancellationToken cancellationToken)
@@ -764,7 +833,17 @@ namespace Microsoft.CodeAnalysis.MSBuild
             }
         }
 
-        protected override void AddDocument(DocumentId documentId, IEnumerable<string> folders, string name, SourceText text = null, SourceCodeKind sourceCodeKind = SourceCodeKind.Regular)
+        protected override void ChangedAdditionalDocumentText(DocumentId documentId, SourceText text)
+        {
+            var document = this.CurrentSolution.GetAdditionalDocument(documentId);
+            if (document != null)
+            {
+                this.SaveDocumentText(documentId, document.FilePath, text);
+                this.OnAdditionalDocumentTextChanged(documentId, text, PreservationMode.PreserveValue);
+            }
+        }
+
+        private void AddDocumentCore(DocumentId documentId, IEnumerable<string> folders, string name, SourceText text = null, SourceCodeKind sourceCodeKind = SourceCodeKind.Regular, bool isAdditionalDocument = false)
         {
             System.Diagnostics.Debug.Assert(this.applyChangesProjectFile != null);
 
@@ -773,7 +852,7 @@ namespace Microsoft.CodeAnalysis.MSBuild
             IProjectFileLoader loader;
             if (this.TryGetLoaderFromProjectPath(project.FilePath, ReportMode.Ignore, out loader))
             {
-                var extension = this.applyChangesProjectFile.GetDocumentExtension(sourceCodeKind);
+                var extension = isAdditionalDocument ? Path.GetExtension(name) : this.applyChangesProjectFile.GetDocumentExtension(sourceCodeKind);
                 var fileName = Path.ChangeExtension(name, extension);
 
                 var relativePath = folders != null ? Path.Combine(Path.Combine(folders.ToArray()), fileName) : fileName;
@@ -787,7 +866,14 @@ namespace Microsoft.CodeAnalysis.MSBuild
                 this.applyChangesProjectFile.AddDocument(relativePath);
 
                 // add to solution
-                this.OnDocumentAdded(documentInfo);
+                if (isAdditionalDocument)
+                {
+                    this.OnAdditionalDocumentAdded(documentInfo);
+                }
+                else
+                {
+                    this.OnDocumentAdded(documentInfo);
+                }
 
                 // save text to disk
                 if (text != null)
@@ -795,6 +881,16 @@ namespace Microsoft.CodeAnalysis.MSBuild
                     this.SaveDocumentText(documentId, fullPath, text);
                 }
             }
+        }
+
+        protected override void AddDocument(DocumentId documentId, IEnumerable<string> folders, string name, SourceText text = null, SourceCodeKind sourceCodeKind = SourceCodeKind.Regular)
+        {
+            AddDocumentCore(documentId, folders, name, text, sourceCodeKind, isAdditionalDocument: false);
+        }
+
+        protected override void AddAdditionalDocument(DocumentId documentId, IEnumerable<string> folders, string name, SourceText text = null)
+        {
+            AddDocumentCore(documentId, folders, name, text, SourceCodeKind.Regular, isAdditionalDocument: true);
         }
 
         private void SaveDocumentText(DocumentId id, string fullPath, SourceText newText)
@@ -828,6 +924,19 @@ namespace Microsoft.CodeAnalysis.MSBuild
                 this.applyChangesProjectFile.RemoveDocument(document.FilePath);
                 this.DeleteDocumentFile(document.Id, document.FilePath);
                 this.OnDocumentRemoved(documentId);
+            }
+        }
+
+        protected override void RemoveAdditionalDocument(DocumentId documentId)
+        {
+            System.Diagnostics.Debug.Assert(this.applyChangesProjectFile != null);
+
+            var document = this.CurrentSolution.GetAdditionalDocument(documentId);
+            if (document != null)
+            {
+                this.applyChangesProjectFile.RemoveDocument(document.FilePath);
+                this.DeleteDocumentFile(document.Id, document.FilePath);
+                this.OnAdditionalDocumentRemoved(documentId);
             }
         }
 

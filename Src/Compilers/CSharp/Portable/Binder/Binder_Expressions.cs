@@ -275,7 +275,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             // Always generate the conversion, even if the expression is not convertible to the given type.
             // We want the erroneous conversion in the tree.
             return GenerateConversionForAssignment(parameterType, valueBeforeConversion, diagnostics, isDefaultParameter: true);
-        }
+            }
 
         internal BoundExpression BindEnumConstantInitializer(
             SourceEnumConstantSymbol symbol,
@@ -457,6 +457,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.SizeOfExpression:
                     return BindSizeOf((SizeOfExpressionSyntax)node, diagnostics);
 
+                case SyntaxKind.NameOfExpression:
+                    return BindNameOf((NameOfExpressionSyntax)node, diagnostics);
+
                 case SyntaxKind.AddAssignmentExpression:
                 case SyntaxKind.AndAssignmentExpression:
                 case SyntaxKind.DivideAssignmentExpression:
@@ -537,7 +540,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             bool isConst = false;
             bool isVar;
             AliasSymbol alias;
-            TypeSymbol declType = BindVariableType(node, diagnostics, typeSyntax, ref isConst, /*isFixed*/ false, out isVar, out alias);
+            TypeSymbol declType = BindVariableType(node, diagnostics, typeSyntax, ref isConst, out isVar, out alias);
 
             SourceLocalSymbol localSymbol = this.LookupLocal(node.Variable.Identifier);
 
@@ -552,10 +555,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                 if (children.IsDefault)
                 {
                     children = ImmutableArray<BoundExpression>.Empty;
-                }
+            }
 
                 if (isVar)
-                {
+            {
                     initializer = BindInferredVariableInitializer(diagnostics, node.Variable.Initializer, node.Variable);
 
                     if (initializer != null && (object)initializer.Type != null && initializer.Type.SpecialType != SpecialType.System_Void)
@@ -596,7 +599,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                                                                  hasErrors: this.ValidateDeclarationNameConflictsInScope(localSymbol, diagnostics));
             }
 
-            BoundLocalDeclaration localDeclaration = BindVariableDeclaration(localSymbol, LocalDeclarationKind.Variable, isVar, node.Variable, typeSyntax, declType, alias, diagnostics, node);
+            BoundLocalDeclaration localDeclaration = BindVariableDeclaration(localSymbol, LocalDeclarationKind.RegularVariable, isVar, node.Variable, typeSyntax, declType, alias, diagnostics, node);
 
             return new BoundDeclarationExpression(node, 
                                                   localDeclaration.LocalSymbol, 
@@ -804,6 +807,219 @@ namespace Microsoft.CodeAnalysis.CSharp
                 this.GetSpecialType(SpecialType.System_Int32, diagnostics, node), hasErrors);
         }
 
+        private BoundExpression BindNameOf(NameOfExpressionSyntax node, DiagnosticBag diagnostics)
+        {
+            var argument = node.Argument;
+            if (InvocableNameofInScope())
+            {
+                // If there is an invocable nameof symbol, bind the NameOfExpressionSyntax as a regular method invocation.
+                return BindNameOfAsInvocation(node, diagnostics, argument);
+            }
+            // We now bind it as a built-in nameof operator.
+
+            CheckFeatureAvailability(node.GetLocation(), MessageID.IDS_FeatureNameof, diagnostics);
+
+            // We divide the argument (TypeSyntax) into two pieces: left and right.
+            // It makes easier (i) to filter out invalid nameof arguments (see CheckSyntaxErrorsForNameOf) and (ii) to lookup the symbols (see LookupForNameofArgument).
+            ExpressionSyntax left, right;
+            bool isAliasQualified = false;
+
+            switch (argument.Kind)
+            {
+                // nameof(identifier)
+                case SyntaxKind.IdentifierName:
+                    left = null;
+                    right = argument;
+                    break;
+
+                // nameof(unbound-type-name . identifier)
+                case SyntaxKind.QualifiedName:
+                    var qualifiedName = (QualifiedNameSyntax)argument;
+                    left = qualifiedName.Left;
+                    right = qualifiedName.Right;
+                    Debug.Assert(left.Kind == SyntaxKind.IdentifierName || left.Kind == SyntaxKind.QualifiedName || left.Kind == SyntaxKind.AliasQualifiedName || left.Kind == SyntaxKind.GenericName);
+                    break;
+
+                // nameof(identifier :: identifier)
+                case SyntaxKind.AliasQualifiedName:
+                    var aliasQualifiedName = (AliasQualifiedNameSyntax)argument;
+                    left = aliasQualifiedName.Alias;
+                    right = aliasQualifiedName.Name;
+                    isAliasQualified = true;
+                    break;
+
+                default:
+                    left = null;
+                    right = argument;
+                    break;
+            }
+
+            // We are still not sure that it is a valid nameof operator. 
+            // At this point, we only know that (i) nameof has one argument which is a kind of TypeSyntax 
+            // and (ii) there is no invocable nameof symbol.
+            if (CheckSyntaxErrorsForNameOf(left, right, diagnostics))
+            {
+                bool hasErrors;
+                // CheckSyntaxErrorsForNameOf method guarantees that the rightmost part is a IdendifierNameSyntax
+                Debug.Assert(right is IdentifierNameSyntax);
+                string rightmostIdentifier = ((IdentifierNameSyntax)right).Identifier.ValueText;
+
+                // We use TypeofBinder in order to resolve unbound generic names without any error.
+                TypeofBinder typeofBinder = new TypeofBinder(argument, this);
+                var symbols = LookupForNameofArgument(left, (IdentifierNameSyntax)right, rightmostIdentifier, diagnostics, typeofBinder, isAliasQualified, out hasErrors);
+                return new BoundNameOfOperator(node, symbols.ToImmutableAndFree(), ConstantValue.Create(rightmostIdentifier), this.GetSpecialType(SpecialType.System_String, diagnostics, node), hasErrors: hasErrors);
+            }
+            else
+            {
+                return BadExpression(node);
+            }
+        }
+
+        private BoundExpression BindNameOfAsInvocation(NameOfExpressionSyntax node, DiagnosticBag diagnostics, TypeSyntax argument)
+        {
+            var nameOfIdentifier = node.NameOfIdentifier;
+            string nameofString = nameOfIdentifier.Identifier.ValueText;
+            AnalyzedArguments analyzedArguments = AnalyzedArguments.GetInstance();
+            var boundArgument = this.BindValue(argument, diagnostics, BindValueKind.RValue);
+            analyzedArguments.Arguments.Add(boundArgument);
+            BoundExpression boundExpression = BindMethodGroup(nameOfIdentifier, invoked: true, indexed: false, diagnostics: diagnostics);
+            boundExpression = CheckValue(boundExpression, BindValueKind.RValueOrMethodGroup, diagnostics);
+            var result = BindInvocationExpression(node, nameOfIdentifier, nameofString, boundExpression, analyzedArguments, diagnostics);
+            analyzedArguments.Free();
+            return result;
+        }
+
+        /// <summary>
+        /// Returns the list of the symbols which represent the argument of the nameof operator. Ambiguities are not an error for the nameof.
+        /// </summary>
+        private ArrayBuilder<Symbol> LookupForNameofArgument(ExpressionSyntax left, IdentifierNameSyntax right, string name, DiagnosticBag diagnostics,  TypeofBinder binder, bool isAliasQualified, out bool hasErrors)
+        {
+            ArrayBuilder<Symbol> symbols = new ArrayBuilder<Symbol>();
+            Symbol container = null;
+            hasErrors = false;
+
+            // We treat the AliasQualified syntax different than the rest. We bind the whole part for the alias.
+            if (isAliasQualified)
+            {
+                container = binder.BindNamespaceAliasSymbol((IdentifierNameSyntax)left, diagnostics);
+                var aliasSymbol = container as AliasSymbol;
+                container = aliasSymbol != null ? aliasSymbol.Target : container;
+                if (container.Kind == SymbolKind.NamedType)
+                {
+                    diagnostics.Add(ErrorCode.ERR_ColColWithTypeAlias, left.Location, left);
+                    hasErrors = true;
+                    return symbols;
+                }
+            }
+            // If it isn't AliasQualified, we first bind the left part, and then bind the right part as a simple name.
+            else if (left != null)
+            {
+                // We use OriginalDefinition because of the unbound generic names such as List<>, Dictionary<,>.
+                container = binder.BindNamespaceOrTypeOrAliasSymbol(left, diagnostics, null, false).OriginalDefinition;
+            }
+
+            this.BindNonGenericSimpleName(right, diagnostics, null, false, (NamespaceOrTypeSymbol)container, isNameofArgument: true, symbols: symbols);
+            if (CheckUsedBeforeDeclarationIfLocal(symbols, right))
+            {
+                Error(diagnostics, ErrorCode.ERR_VariableUsedBeforeDeclaration, right, right);
+                hasErrors = true;
+            }
+            else if (symbols.Count == 0)
+            {
+                hasErrors = true;
+            }
+            return symbols;
+        }
+
+        private bool CheckUsedBeforeDeclarationIfLocal(ArrayBuilder<Symbol> symbols, ExpressionSyntax node)
+        {
+            if (symbols.Count > 0)
+            {
+                var localSymbol = symbols.First() as LocalSymbol;
+                if (localSymbol != null)
+                {
+                    Location localSymbolLocation = localSymbol.Locations[0];
+                    return node.SyntaxTree == localSymbolLocation.SourceTree &&
+                           node.SpanStart < localSymbolLocation.SourceSpan.Start;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Helper method that checks whether there is an invocable 'nameof' in scope.
+        /// </summary>
+        private bool InvocableNameofInScope()
+        {
+            var lookupResult = LookupResult.GetInstance();
+            const LookupOptions options = LookupOptions.AllMethodsOnArityZero | LookupOptions.MustBeInvocableIfMember;
+            HashSet<DiagnosticInfo> useSiteDiagnostics = null;
+            this.LookupSymbolsWithFallback(lookupResult, SyntaxFacts.GetText(SyntaxKind.NameOfKeyword), useSiteDiagnostics: ref useSiteDiagnostics, arity: 0, options: options);
+
+            var result = lookupResult.IsMultiViable;
+            lookupResult.Free();
+            return result;
+        }
+
+        private bool CheckSyntaxErrorsForNameOf(ExpressionSyntax left, ExpressionSyntax right, DiagnosticBag diagnostics)
+        {
+            // Filter out the TypeSyntax nodes whose rightmost part is not an identifier such as nameof(int), nameof(Collections.List<>).
+            if (right.Kind != SyntaxKind.IdentifierName)
+            {
+                Error(diagnostics, ErrorCode.ERR_IdentifierExpected, right);
+                return false;
+            }
+            // If there is a left part, let's also filter out the cases such as nameof(List<int>.Equals)
+            // Specifying the type parameters is not allowed in the argument of the nameof operator.
+            return left == null || CheckTypeParametersForNameOf((NameSyntax)left, diagnostics);
+        }
+
+        private static bool CheckTypeParametersForNameOf(NameSyntax node, DiagnosticBag diagnostics)
+        {
+            NameSyntax temp;
+            // if we are analyzing nameof(a.b.c.d.e.f.g), this method will get the left part as an argument, which is 'a.b.c.d.e.f'. 
+            // the loop below visits the nodes in the 'a.b.c.d.e.f' in order from rightmost to leftmost. 
+            while (node != null)
+            {
+                switch (node.Kind)
+                {
+                    case SyntaxKind.QualifiedName:
+                        temp = ((QualifiedNameSyntax)node).Right;
+                        node = ((QualifiedNameSyntax)node).Left;
+                        break;
+                    case SyntaxKind.AliasQualifiedName:
+                        temp = ((AliasQualifiedNameSyntax)node).Name;
+                        node = null;
+                        break;
+                    case SyntaxKind.GenericName:
+                        temp = node;
+                        node = null;
+                        break;
+                    default:
+                        return true;
+                }
+                // if the current node is a generic name, let's analyze the type parameters if they are omitted or not.
+                if (temp.Kind == SyntaxKind.GenericName && !AreTypeParametersOmitted(((GenericNameSyntax)temp).TypeArgumentList, diagnostics))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static bool AreTypeParametersOmitted(TypeArgumentListSyntax list, DiagnosticBag diagnostics)
+        {
+            foreach (var arg in list.Arguments)
+            {
+                if (arg.Kind != SyntaxKind.OmittedTypeArgument)
+                {
+                    Error(diagnostics, ErrorCode.ERR_UnexpectedBoundGenericName, arg);
+                    return false;
+                }
+            }
+            return true;
+        }
+
         internal static ConstantValue GetConstantSizeOf(TypeSymbol type)
         {
             return ConstantValue.CreateSizeOf((type.GetEnumUnderlyingType() ?? type).SpecialType);
@@ -874,7 +1090,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             HashSet<DiagnosticInfo> useSiteDiagnostics = null;
             this.LookupSymbolsWithFallback(lookupResult, node.Identifier.ValueText, arity: arity, useSiteDiagnostics: ref useSiteDiagnostics, options: options);
             diagnostics.Add(node, useSiteDiagnostics);
-
+            
             if (lookupResult.Kind != LookupResultKind.Empty)
             {
                 // have we detected an error with the current node?
@@ -1223,25 +1439,25 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                                     // Skip parentheses and checked/unchecked expressions
                                     while (possibleArgument != null)
-                                    {
+                                {
                                         switch (possibleArgument.Kind)
-                                        {
+                            {
                                             case SyntaxKind.ParenthesizedExpression:
                                             case SyntaxKind.CheckedExpression:
                                             case SyntaxKind.UncheckedExpression:
                                                 possibleArgument = possibleArgument.Parent;
                                                 continue;
-                                        }
+                        }
 
                                         break;
-                                    }
+                    }
 
                                     if (possibleArgument != null && possibleArgument.Kind == SyntaxKind.Argument && possibleArgument.Parent != null)
-                                    {
+                    {
                                         bool isInTheSameArgumentList;
 
                                         switch (possibleArgument.Parent.Kind)
-                                        {
+                            {
                                             case SyntaxKind.ArgumentList:
                                                 isInTheSameArgumentList = node.SpanStart < ((ArgumentListSyntax)possibleArgument.Parent).CloseParenToken.SpanStart;
                                                 break;
@@ -1253,10 +1469,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                                             default:
                                                 isInTheSameArgumentList = false;
                                                 break;
-                                        }
+                            }
 
                                         if (isInTheSameArgumentList && sourceLocal.IsVar)
-                                        {
+                            {
                                             Error(diagnostics, ErrorCode.ERR_VariableUsedInTheSameArgumentList, node, node);
 
                                             // Treat this case as variable used before declaration, we might be able to infer type of the variable anyway and SemanticModel 
@@ -1271,10 +1487,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                             {
                                 type = localSymbol.Type;
                             }
-                        }
+                            }
 
                         return new BoundLocal(node, localSymbol, constantValueOpt, type, hasErrors: isError);
-                    }
+                        }
 
                 case SymbolKind.Parameter:
                     {
@@ -1284,9 +1500,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                         {
                             // Captured in a lambda.
                             if (parameter.RefKind != RefKind.None)
-                            {
-                                Error(diagnostics, ErrorCode.ERR_AnonDelegateCantUse, node, parameter.Name);
-                            }
+                        {
+                            Error(diagnostics, ErrorCode.ERR_AnonDelegateCantUse, node, parameter.Name);
+                        }
                         }
 
                         return new BoundParameter(node, parameter, hasErrors: isError);
@@ -1380,17 +1596,19 @@ namespace Microsoft.CodeAnalysis.CSharp
                     Error(diagnostics, ErrorCode.ERR_ObjectRequired, node, member);
                     hasErrors = true;
                 }
-
-                // not an instance member if the container is a type, like when binding default parameter values.
-                var containingMember = ContainingMember();
-                bool locationIsInstanceMember = !containingMember.IsStatic &&
-                    (containingMember.Kind != SymbolKind.NamedType || currentType.IsScriptClass);
-
-                if (!hasErrors && !locationIsInstanceMember)
+                else
                 {
-                    // error CS0120: An object reference is required for the non-static field, method, or property '{0}'
-                    Error(diagnostics, ErrorCode.ERR_ObjectRequired, node, member);
-                    hasErrors = true;
+                    // not an instance member if the container is a type, like when binding default parameter values.
+                    var containingMember = ContainingMember();
+                    bool locationIsInstanceMember = !containingMember.IsStatic &&
+                        (containingMember.Kind != SymbolKind.NamedType || currentType.IsScriptClass);
+
+                    if (!locationIsInstanceMember)
+                    {
+                        // error CS0120: An object reference is required for the non-static field, method, or property '{0}'
+                        Error(diagnostics, ErrorCode.ERR_ObjectRequired, node, member);
+                        hasErrors = true;
+                    }
                 }
 
                 hasErrors = hasErrors || IsRefOrOutThisParameterCaptured(node, diagnostics);
@@ -4079,7 +4297,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 // new C(__arglist()) is legal
                 BindArgumentsAndNames(node.ArgumentList, diagnostics, analyzedArguments, allowArglist: true);
 
-                // No point in performing overload resolution if the type is static.  Just return the a bad expression containing
+                // No point in performing overload resolution if the type is static.  Just return a bad expression containing
                 // the arguments.
                 if (type.IsStatic)
                 {
@@ -7374,14 +7592,14 @@ namespace Microsoft.CodeAnalysis.CSharp
                 return GenerateBadConditionalAccessNodeError(node, receiver, access, diagnostics);
             }
 
-            // access cannot be void
-            if (accessType.SpecialType == SpecialType.System_Void)
+            // access cannot be a pointer
+            if (accessType.IsPointerType())
             {
                 return GenerateBadConditionalAccessNodeError(node, receiver, access, diagnostics);
             }
 
             // if access has value type, the type of the conditional access is nullable of that
-            if (accessType.IsValueType && !accessType.IsNullableType())
+            if (accessType.IsValueType && !accessType.IsNullableType() && accessType.SpecialType != SpecialType.System_Void)
             {
                 accessType = GetSpecialType(SpecialType.System_Nullable_T, diagnostics, node).Construct(accessType);
             }
@@ -7486,30 +7704,28 @@ namespace Microsoft.CodeAnalysis.CSharp
             // Can't dot into the null literal or anything that has no type
             if (receiverType == null)
             {
-                Error(diagnostics, ErrorCode.ERR_BadUnaryOp, node, operatorToken.Text, receiver.Display);
-                return BadExpression(node, receiver);
-            }
-
-            // receiver cannot be "base"
-            if (receiverType == null)
-            {
-                Error(diagnostics, ErrorCode.ERR_BadUnaryOp, node, operatorToken.Text, receiver.Display);
-                return BadExpression(node, receiver);
-            }
-
-            // No member accesses on void
-            if (receiverType != null && receiverType.SpecialType == SpecialType.System_Void)
-            {
-                DiagnosticInfo diagnosticInfo = new CSDiagnosticInfo(ErrorCode.ERR_BadUnaryOp, SyntaxFacts.GetText(operatorToken.CSharpKind()), receiverType);
-                diagnostics.Add(new CSDiagnostic(diagnosticInfo, operatorToken.GetLocation()));
+                Error(diagnostics, ErrorCode.ERR_BadUnaryOp, operatorToken.GetLocation(), operatorToken.Text, receiver.Display);
                 return BadExpression(receiverSyntax, receiver);
             }
 
-            if (receiverType != null && receiverType.IsValueType && !receiverType.IsNullableType())
+            // receiver cannot have unconstrained generic type
+            if (!receiverType.IsReferenceType && !receiverType.IsValueType)
+            {
+                Error(diagnostics, ErrorCode.ERR_BadUnaryOp, operatorToken.GetLocation(), operatorToken.Text, receiverType);
+                return BadExpression(receiverSyntax, receiver);
+            }
+
+            // No member accesses on void
+            if (receiverType.SpecialType == SpecialType.System_Void)
+            {
+                Error(diagnostics, ErrorCode.ERR_BadUnaryOp, operatorToken.GetLocation(), operatorToken.Text, receiverType);
+                return BadExpression(receiverSyntax, receiver);
+            }
+
+            if (receiverType.IsValueType && !receiverType.IsNullableType())
             {
                 // must be nullable or reference type
-                DiagnosticInfo diagnosticInfo = new CSDiagnosticInfo(ErrorCode.ERR_BadUnaryOp, SyntaxFacts.GetText(operatorToken.CSharpKind()), receiverType);
-                diagnostics.Add(new CSDiagnostic(diagnosticInfo, operatorToken.GetLocation()));
+                Error(diagnostics, ErrorCode.ERR_BadUnaryOp, operatorToken.GetLocation(), operatorToken.Text, receiverType);
                 return BadExpression(receiverSyntax, receiver);
             }
 

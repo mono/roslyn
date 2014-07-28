@@ -3,10 +3,11 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="Settings">
     <Import Project="..\..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Settings.targets" />
-    <Import Project="..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
+    <Import Project="..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
   </ImportGroup>
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <OutDir>..\..\..\..\Binaries\$(Configuration)\</OutDir>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <ProjectGuid>{1EE8CAD3-55F9-4D91-96B2-084641DA9A6C}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -19,11 +20,10 @@
     <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
     <TargetFrameworkIdentifier>.NETPortable</TargetFrameworkIdentifier>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <OutDir>..\..\..\..\Binaries\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemGroup Label="File References">
     <Reference Include="System.Reflection.Metadata">
-      <HintPath>..\..\..\packages\Microsoft.Bcl.Metadata.1.0.11-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
+      <HintPath>..\..\..\packages\Microsoft.Bcl.Metadata.1.0.12-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
     </Reference>
     <Reference Include="System.Collections.Immutable">
       <HintPath>..\..\..\packages\Microsoft.Bcl.Immutable.1.1.20-beta\lib\portable-net45+win8\System.Collections.Immutable.dll</HintPath>
@@ -66,6 +66,7 @@
     <Compile Include="CodeGen\LabelInfo.cs" />
     <Compile Include="CodeGen\LocalConstantDefinition.cs" />
     <Compile Include="CodeGen\LocalDefinition.cs" />
+    <Compile Include="CodeGen\LocalOrParameter.cs" />
     <Compile Include="CodeGen\LocalScopeManager.cs" />
     <Compile Include="CodeGen\LocalSlotManager.cs" />
     <Compile Include="CodeGen\MetadataConstant.cs" />
@@ -110,7 +111,6 @@
     <Compile Include="Collections\SmallConcurrentSetOfInts.cs" />
     <Compile Include="Collections\SmallDictionary.cs" />
     <Compile Include="Collections\UnionCollection.cs" />
-    <Compile Include="CommonLock.cs" />
     <Compile Include="Compilation\CandidateReason.cs" />
     <Compile Include="Compilation\CommonMemberResolutionKind.cs" />
     <Compile Include="Compilation\CommonMemberResolutionResult.cs" />
@@ -174,10 +174,10 @@
     <Compile Include="DiagnosticAnalyzer\CompilationEvent.cs" />
     <Compile Include="DiagnosticAnalyzer\AsyncQueue.cs" />
     <Compile Include="DiagnosticAnalyzer\DiagnosticAnalyzerAttribute.cs" />
-    <Compile Include="DiagnosticAnalyzer\ICodeBlockEndedAnalyzer.cs" />
-    <Compile Include="DiagnosticAnalyzer\ICodeBlockStartedAnalyzer.cs" />
-    <Compile Include="DiagnosticAnalyzer\ICompilationEndedAnalyzer.cs" />
-    <Compile Include="DiagnosticAnalyzer\ICompilationStartedAnalyzer.cs" />
+    <Compile Include="DiagnosticAnalyzer\ICodeBlockAnalyzer.cs" />
+    <Compile Include="DiagnosticAnalyzer\ICodeBlockNestedAnalyzerFactory.cs" />
+    <Compile Include="DiagnosticAnalyzer\ICompilationAnalyzer.cs" />
+    <Compile Include="DiagnosticAnalyzer\ICompilationNestedAnalyzerFactory.cs" />
     <Compile Include="DiagnosticAnalyzer\ISemanticModelAnalyzer.cs" />
     <Compile Include="DiagnosticAnalyzer\IDiagnosticAnalyzer.cs" />
     <Compile Include="DiagnosticAnalyzer\ISymbolAnalyzer.cs" />

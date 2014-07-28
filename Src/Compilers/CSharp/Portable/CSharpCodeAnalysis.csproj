@@ -3,10 +3,11 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="Settings">
     <Import Project="..\..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Settings.targets" />
-    <Import Project="..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
+    <Import Project="..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
   </ImportGroup>
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <OutDir>..\..\..\..\Binaries\$(Configuration)\</OutDir>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <ProjectGuid>{B501A547-C911-4A05-AC6E-274A50DFF30E}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -22,11 +23,10 @@
     <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
     <TargetFrameworkIdentifier>.NETPortable</TargetFrameworkIdentifier>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <OutDir>..\..\..\..\Binaries\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemGroup Label="File References">
     <Reference Include="System.Reflection.Metadata">
-      <HintPath>..\..\..\packages\Microsoft.Bcl.Metadata.1.0.11-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
+      <HintPath>..\..\..\packages\Microsoft.Bcl.Metadata.1.0.12-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
     </Reference>
     <Reference Include="System.Collections.Immutable">
       <HintPath>..\..\..\packages\Microsoft.Bcl.Immutable.1.1.20-beta\lib\portable-net45+win8\System.Collections.Immutable.dll</HintPath>
@@ -70,6 +70,9 @@
     <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\Core\Desktop\FailFast.cs">
+      <Link>Utilities\FailFast.cs</Link>
+    </Compile>
     <Compile Include="Binder\AliasAndExternAliasDirective.cs" />
     <Compile Include="Binder\AliasAndUsingDirective.cs" />
     <Compile Include="Binder\Binder.cs" />
@@ -364,7 +367,7 @@
     <Compile Include="FlowAnalysis\VariablesDeclaredWalker.cs" />
     <Compile Include="LanguageVersion.cs" />
     <Compile Include="Lowering\AsyncRewriter\AsyncConstructor.cs" />
-    <Compile Include="Lowering\AsyncRewriter\AsyncHandlerRewriter.cs" />
+    <Compile Include="Lowering\AsyncRewriter\AsyncExceptionHandlerRewriter.cs" />
     <Compile Include="Lowering\AsyncRewriter\AsyncMethodBuilderMemberCollection.cs" />
     <Compile Include="Lowering\AsyncRewriter\AsyncMethodToStateMachineRewriter.cs" />
     <Compile Include="Lowering\AsyncRewriter\AsyncRewriter.cs" />
@@ -384,7 +387,6 @@
     <Compile Include="Lowering\LambdaRewriter\ExpressionLambdaRewriter.cs" />
     <Compile Include="Lowering\LambdaRewriter\LambdaCapturedVariable.cs" />
     <Compile Include="Lowering\LambdaRewriter\LambdaFrameConstructor.cs" />
-    <Compile Include="Lowering\LambdaRewriter\LambdaFrameLocalSymbol.cs" />
     <Compile Include="Lowering\LambdaRewriter\LambdaRewriter.Analysis.cs" />
     <Compile Include="Lowering\LambdaRewriter\LambdaRewriter.cs" />
     <Compile Include="Lowering\LambdaRewriter\LambdaFrame.cs" />
@@ -675,7 +677,6 @@
     <Compile Include="Symbols\Synthesized\GeneratedNames.cs" />
     <Compile Include="Symbols\Synthesized\SynthesizedAccessorValueParameterSymbol.cs" />
     <Compile Include="Symbols\Synthesized\SynthesizedBackingFieldSymbol.cs" />
-    <Compile Include="Symbols\Synthesized\SynthesizedCapturedVariable.cs" />
     <Compile Include="Symbols\Synthesized\SynthesizedContainer.cs" />
     <Compile Include="Symbols\Synthesized\SynthesizedDelegateSymbol.cs" />
     <Compile Include="Symbols\Synthesized\SynthesizedEntryPointSymbol.cs" />
@@ -696,7 +697,8 @@
     <Compile Include="Symbols\Synthesized\SynthesizedStringHashFunctionSymbol.cs" />
     <Compile Include="Symbols\Synthesized\SynthesizedSubmissionConstructor.cs" />
     <Compile Include="Symbols\Synthesized\SynthesizedTypeParameterSymbol.cs" />
-    <Compile Include="Symbols\TempKind.cs" />
+    <Compile Include="Symbols\SynthesizedLocalKind.cs" />
+    <Compile Include="Symbols\Synthesized\TypeSubstitutedLocalSymbol.cs" />
     <Compile Include="Symbols\TypedConstantExtensions.cs" />
     <Compile Include="Symbols\TypeMap.cs" />
     <Compile Include="Symbols\TypeParameterBounds.cs" />

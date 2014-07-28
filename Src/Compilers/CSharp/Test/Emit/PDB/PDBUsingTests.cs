@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
 using Microsoft.CodeAnalysis.Test.Utilities;
@@ -1557,33 +1558,33 @@ public class Test : IDisposable
     public void Dispose() { }
 }
 ";
-            var expectedXml = @"
-<symbols>
-  <entryPoint declaringType=""Test"" methodName=""Main"" parameterNames="""" />
-  <methods>
-    <method containingType=""Test"" name=""Main"" parameterNames="""">
-      <customDebugInfo version=""4"" count=""1"">
-        <using version=""4"" kind=""UsingInfo"" size=""12"" namespaceCount=""1"">
-          <namespace usingCount=""1"" />
-        </using>
-      </customDebugInfo>
-      <sequencepoints total=""6"">
-        <entry il_offset=""0x0"" start_row=""7"" start_column=""5"" end_row=""7"" end_column=""6"" file_ref=""0"" />
-        <entry il_offset=""0x1"" start_row=""8"" start_column=""9"" end_row=""8"" end_column=""27"" file_ref=""0"" />
-        <entry il_offset=""0x7"" start_row=""9"" start_column=""9"" end_row=""9"" end_column=""10"" file_ref=""0"" />
-        <entry il_offset=""0x8"" start_row=""10"" start_column=""9"" end_row=""10"" end_column=""10"" file_ref=""0"" />
-        <entry il_offset=""0xb"" hidden=""true"" start_row=""16707566"" start_column=""0"" end_row=""16707566"" end_column=""0"" file_ref=""0"" />
-        <entry il_offset=""0x1b"" start_row=""11"" start_column=""5"" end_row=""11"" end_column=""6"" file_ref=""0"" />
-      </sequencepoints>
-      <locals />
-      <scope startOffset=""0x0"" endOffset=""0x1c"">
-        <namespace name=""System"" />
-      </scope>
-    </method>
-  </methods>
-</symbols>";
-            
-            AssertXmlEqual(expectedXml, GetPdbXml(source, TestOptions.Exe, "Test.Main"));
+            var v = CompileAndVerify(source, options: TestOptions.DebugDll, emitPdb: true);
+
+            v.VerifyIL("Test.Main", @"
+{
+  // Code size       23 (0x17)
+  .maxstack  1
+  .locals init (Test V_0) //CS$3$0000
+ -IL_0000:  nop       
+ -IL_0001:  newobj     ""Test..ctor()""
+  IL_0006:  stloc.0   
+  .try
+  {
+   -IL_0007:  nop       
+   -IL_0008:  nop       
+    IL_0009:  leave.s    IL_0016
+  }
+  finally
+  {
+   ~IL_000b:  ldloc.0   
+    IL_000c:  brfalse.s  IL_0015
+    IL_000e:  ldloc.0   
+    IL_000f:  callvirt   ""void System.IDisposable.Dispose()""
+    IL_0014:  nop       
+    IL_0015:  endfinally
+  }
+ -IL_0016:  ret       
+}", sequencePoints: "Test.Main");
         }
 
         [Fact]
@@ -1817,6 +1818,102 @@ public class Test : IDisposable
     public void Dispose() { }
 
 }", TestOptions.Exe, methodName: "Test.Main");
+        }
+
+        [WorkItem(546754, "DevDiv")]
+        [Fact]
+        public void ArrayType()
+        {
+            var source1 = @"
+using System;
+
+public class W {}
+
+public class Y<T>
+{
+  public class F {}
+  public class Z<U> {}
+}
+";
+            string compName = GetUniqueName();
+            var comp = CreateCompilationWithMscorlib(source1, assemblyName: compName, compOptions: TestOptions.Dll.WithDebugInformationKind(DebugInformationKind.Full));
+
+            var source2 = @"
+using t1 = Y<W[]>;
+using t2 = Y<W[,]>;
+using t3 = Y<W[,][]>;
+using t4 = Y<Y<W>[][,]>;
+using t5 = Y<W[,][]>.Z<W[][,,]>;
+using t6 = Y<Y<Y<int[]>.F[,][]>.Z<Y<W[,][]>.F[]>[][]>;
+
+public class C1
+{
+    public static void Main()
+    {
+    }
+}
+";
+            string actual = GetPdbXml(source2, TestOptions.Exe.WithDebugInformationKind(DebugInformationKind.Full), references: new[] { comp.ToMetadataReference() });
+            string expected = string.Format(@"
+<symbols>
+  <entryPoint declaringType=""C1"" methodName=""Main"" parameterNames="""" />
+  <methods>
+    <method containingType=""C1"" name=""Main"" parameterNames="""">
+      <customDebugInfo version=""4"" count=""1"">
+        <using version=""4"" kind=""UsingInfo"" size=""12"" namespaceCount=""1"">
+          <namespace usingCount=""6"" />
+        </using>
+      </customDebugInfo>
+      <sequencepoints total=""2"">
+        <entry il_offset=""0x0"" start_row=""12"" start_column=""5"" end_row=""12"" end_column=""6"" file_ref=""0"" />
+        <entry il_offset=""0x1"" start_row=""13"" start_column=""5"" end_row=""13"" end_column=""6"" file_ref=""0"" />
+      </sequencepoints>
+      <locals />
+      <scope startOffset=""0x0"" endOffset=""0x2"">
+        <alias name=""t1"" target=""Y`1[[W[], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"" kind=""type"" />
+        <alias name=""t2"" target=""Y`1[[W[,], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"" kind=""type"" />
+        <alias name=""t3"" target=""Y`1[[W[][,], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"" kind=""type"" />
+        <alias name=""t4"" target=""Y`1[[Y`1[[W, {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]][,][], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"" kind=""type"" />
+        <alias name=""t5"" target=""Y`1+Z`1[[W[][,], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[W[,,][], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"" kind=""type"" />
+        <alias name=""t6"" target=""Y`1[[Y`1+Z`1[[Y`1+F[[System.Int32[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]][][,], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[Y`1+F[[W[][,], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]][], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]][][], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], {0}, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"" kind=""type"" />
+      </scope>
+    </method>
+  </methods>
+</symbols>", compName);
+
+            AssertXmlEqual(expected, actual);
+        }
+
+        [Fact, WorkItem(543615, "DevDiv")]
+        public void WRN_DebugFullNameTooLong()
+        {
+            var text = @"
+using System;
+
+using DICT1 = System.Collections.Generic.Dictionary<int, int>;
+
+namespace foo
+{
+    using ACT = System.Action<DICT1, DICT1, DICT1, DICT1, DICT1, DICT1, DICT1>;
+    
+    class C
+    {
+        static void Main()
+        {
+            ACT ac = null;
+            Console.Write(ac);
+        }
+    }
+}";
+
+            var compilation = CreateCompilationWithMscorlib(text, compOptions: TestOptions.Exe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(false));
+
+            var exebits = new MemoryStream();
+            var pdbbits = new MemoryStream();
+            var result = compilation.Emit(exebits, null, "DontCare", pdbbits, null);
+
+            result.Diagnostics.Verify(
+                Diagnostic(ErrorCode.WRN_DebugFullNameTooLong, "Main").WithArguments("AACT TSystem.Action`7[[System.Collections.Generic.Dictionary`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Collections.Generic.Dictionary`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Collections.Generic.Dictionary`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Collections.Generic.Dictionary`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Collections.Generic.Dictionary`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Collections.Generic.Dictionary`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Collections.Generic.Dictionary`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"));
         }
     }
 }

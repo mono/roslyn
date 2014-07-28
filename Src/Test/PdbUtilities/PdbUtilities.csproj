@@ -3,11 +3,12 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="Settings">
     <Import Project="..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Settings.targets" />
-    <Import Project="..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
+    <Import Project="..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
   </ImportGroup>
   <PropertyGroup>
     <Nonshipping>true</Nonshipping>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <OutDir>..\..\..\Binaries\$(Configuration)\</OutDir>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <ProjectGuid>{AFDE6BEA-5038-4A4A-A88E-DBD2E4088EED}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -16,7 +17,6 @@
     <StyleCopEnabled>false</StyleCopEnabled>
     <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
-    <OutDir>..\..\..\Binaries\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemGroup Label="Linked Files">
     <Compile Include="..\..\Compilers\Core\Portable\Collections\ArrayBuilder.cs">
@@ -40,7 +40,7 @@
   </ItemGroup>
   <ItemGroup Label="File References">
     <Reference Include="System.Reflection.Metadata">
-      <HintPath>..\..\packages\Microsoft.Bcl.Metadata.1.0.11-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Bcl.Metadata.1.0.12-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
     </Reference>
     <Reference Include="CorApi">
       <HintPath>..\..\packages\MDbg.0.1.0\lib\net40\CorApi.dll</HintPath>

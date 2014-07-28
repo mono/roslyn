@@ -20,7 +20,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Usage
     /// dispose operations occur on every path through the dispose method. Flow analysis
     /// is not yet implemented.
     /// </summary>
-    public abstract class CA2213DiagnosticAnalyzer : ICompilationStartedAnalyzer
+    public abstract class CA2213DiagnosticAnalyzer : ICompilationNestedAnalyzerFactory
     {
         internal const string RuleId = "CA2213";
         internal const string Dispose = "Dispose";
@@ -29,7 +29,8 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Usage
                                                                          FxCopRulesResources.DisposableFieldsShouldBeDisposed,
                                                                          FxCopDiagnosticCategory.Usage,
                                                                          DiagnosticSeverity.Warning,
-                                                                         isEnabledByDefault: true);
+                                                                         isEnabledByDefault: true,
+                                                                         customTags: DiagnosticCustomTags.Microsoft);
 
         public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
         {
@@ -41,13 +42,13 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Usage
         
         protected abstract AbstractAnalyzer GetAnalyzer(INamedTypeSymbol disposableType);
 
-        public ICompilationEndedAnalyzer OnCompilationStarted(Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
+        public IDiagnosticAnalyzer CreateAnalyzerWithinCompilation(Compilation compilation, AnalyzerOptions options, CancellationToken cancellationToken)
         {
             var disposableType = compilation.GetSpecialType(SpecialType.System_IDisposable);
             return disposableType != null ? GetAnalyzer(disposableType) : null;
         }
 
-        protected abstract class AbstractAnalyzer : ICompilationEndedAnalyzer, ISymbolAnalyzer
+        protected abstract class AbstractAnalyzer : ICompilationAnalyzer, ISymbolAnalyzer
         {
             private INamedTypeSymbol disposableType;
             private ConcurrentDictionary<IFieldSymbol, bool> fieldDisposedMap = new ConcurrentDictionary<IFieldSymbol, bool>();
@@ -65,7 +66,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Usage
                 }
             }
 
-            public void OnCompilationEnded(Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
+            public void AnalyzeCompilation(Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
             {
                 foreach (var item in this.fieldDisposedMap)
                 {

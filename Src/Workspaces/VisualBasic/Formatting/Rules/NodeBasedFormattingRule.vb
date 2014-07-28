@@ -140,8 +140,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Formatting
             End If
 
             Dim Item1PreviousToken = pair.Item1.GetPreviousToken()
-            If (Item1PreviousToken.VisualBasicKind = SyntaxKind.GreaterThanToken AndAlso
-                Item1PreviousToken.IsParentKind(SyntaxKind.XmlElementEndTag)) Then
+            If (Item1PreviousToken.IsKind(SyntaxKind.GreaterThanToken) AndAlso
+                Item1PreviousToken.Parent.IsKind(SyntaxKind.XmlElementEndTag)) Then
 
                 Dim outerBlockWithBaseToken = GetOuterBlockWithDifferentStartTokenUsingXmlElement(pair.Item1)
                 If outerBlockWithBaseToken IsNot Nothing Then
@@ -150,6 +150,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Formatting
                 End If
             End If
 
+            Dim caseBlock = TryCast(node, CaseBlockSyntax)
+            If caseBlock IsNot Nothing AndAlso pair.Item2.GetNextToken().IsKind(SyntaxKind.CaseKeyword) Then
+                AddIndentBlockOperation(operations, pair.Item1, pair.Item2, dontIncludeNextTokenTrailingTrivia:=True)
+                Return
+            End If
 
             AddIndentBlockOperation(operations, pair.Item1, pair.Item2)
         End Sub

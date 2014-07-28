@@ -836,7 +836,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         }
                     }
 
-                    body = MethodCompiler.BindMethodBody(methodSymbol, initializationScopeLocals, compilationState, diagsForCurrentMethod, this.generateDebugInfo, out debugImports);
+                    body = BindMethodBody(methodSymbol, initializationScopeLocals, compilationState, diagsForCurrentMethod, this.generateDebugInfo, out debugImports);
 
                     // lower initializers just once. the lowered tree will be reused when emitting all constructors 
                     // with field initializers. Once lowered, these initializers will be stashed in processedInitializers.LoweredInitializers
@@ -917,7 +917,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 {
                     if ((methodSymbol.MethodKind == MethodKind.Constructor || methodSymbol.MethodKind == MethodKind.StaticConstructor) && methodSymbol.IsImplicitlyDeclared)
                     {
-                        // There was no body to bind, so we didn't get anything from Compiler.BindMethodBody.
+                        // There was no body to bind, so we didn't get anything from BindMethodBody.
                         Debug.Assert(debugImports == null);
                         // Either there were no field initializers or we grabbed debug imports from the first one.
                         Debug.Assert(processedInitializers.BoundInitializers.IsDefaultOrEmpty || processedInitializers.FirstDebugImports != null);
@@ -1103,11 +1103,12 @@ namespace Microsoft.CodeAnalysis.CSharp
                 method.ContainingType,
                 body,
                 compilationState,
-                diagnostics,
-                previousSubmissionFields,
-                out sawLambdas,
-                out sawDynamicOperations,
-                out sawAwaitInExceptionHandler);
+                previousSubmissionFields: previousSubmissionFields,
+                includeConditionalCalls: false,
+                diagnostics: diagnostics,
+                sawLambdas: out sawLambdas,
+                sawDynamicOperations: out sawDynamicOperations,
+                sawAwaitInExceptionHandler: out sawAwaitInExceptionHandler);
 
             if (sawDynamicOperations && compilationState.ModuleBuilderOpt.IsEncDelta)
             {
@@ -1130,7 +1131,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 // is that we may need access to exception locals and it would be fairly hard to do
                 // if these locals are captured into closures (possibly nested ones).
                 Debug.Assert(method.IteratorElementType == null);
-                loweredBody = AsyncHandlerRewriter.Rewrite(
+                loweredBody = AsyncExceptionHandlerRewriter.Rewrite(
                     generateDebugInfo,
                     method,
                     method.ContainingType,
@@ -1459,7 +1460,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <param name="compilation">Used to retrieve binder.</param>
         /// <param name="localsDeclaredInInitializer">Locals declared in the initializer are returned through this parameter.</param>
         /// <returns>A bound expression for the constructor initializer call.</returns>
-        private static BoundExpression BindConstructorInitializer(MethodSymbol constructor, ImmutableArray<LocalSymbol> initializationScopeLocals, DiagnosticBag diagnostics, CSharpCompilation compilation, out ImmutableArray<LocalSymbol> localsDeclaredInInitializer)
+        internal static BoundExpression BindConstructorInitializer(MethodSymbol constructor, ImmutableArray<LocalSymbol> initializationScopeLocals, DiagnosticBag diagnostics, CSharpCompilation compilation, out ImmutableArray<LocalSymbol> localsDeclaredInInitializer)
         {
             localsDeclaredInInitializer = ImmutableArray<LocalSymbol>.Empty;
 

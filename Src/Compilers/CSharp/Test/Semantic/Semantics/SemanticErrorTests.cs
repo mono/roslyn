@@ -19888,7 +19888,7 @@ public class MyClass
             CreateCompilationWithMscorlibAndDocumentationComments(text).VerifyDiagnostics(
                 // (2,20): warning CS1580: Invalid type for parameter 'i' in XML comment cref attribute: 'Test(i)'
                 // /// <seealso cref="Test(i)"/>   // CS1580
-                Diagnostic(ErrorCode.WRN_BadXMLRefParamType, "Test(i)").WithArguments("i", "Test(i)"),
+                Diagnostic(ErrorCode.WRN_BadXMLRefParamType, "i").WithArguments("i", "Test(i)"),
                 // (2,20): warning CS1574: XML comment has cref attribute 'Test(i)' that could not be resolved
                 // /// <seealso cref="Test(i)"/>   // CS1580
                 Diagnostic(ErrorCode.WRN_BadXMLRef, "Test(i)").WithArguments("Test(i)"));
@@ -19919,10 +19919,10 @@ public class MyClass2
             CreateCompilationWithMscorlibAndDocumentationComments(text).VerifyDiagnostics(
                 // (15,20): warning CS1581: Invalid return type in XML comment cref attribute
                 // /// <seealso cref="MyClass.explicit operator intt(MyClass)"/>   // CS1581
-                Diagnostic(ErrorCode.WRN_BadXMLRefReturnType, "MyClass.explicit operator intt(MyClass)").WithArguments("intt", "MyClass.explicit operator intt(MyClass)"),
+                Diagnostic(ErrorCode.WRN_BadXMLRefReturnType, "intt").WithArguments("intt", "MyClass.explicit operator intt(MyClass)"),
                 // (15,20): warning CS1574: XML comment has cref attribute 'MyClass.explicit operator intt(MyClass)' that could not be resolved
                 // /// <seealso cref="MyClass.explicit operator intt(MyClass)"/>   // CS1581
-                Diagnostic(ErrorCode.WRN_BadXMLRef, "MyClass.explicit operator intt(MyClass)").WithArguments("MyClass.explicit operator intt(MyClass)"));
+                Diagnostic(ErrorCode.WRN_BadXMLRef, "MyClass.explicit operator intt(MyClass)").WithArguments("explicit operator intt(MyClass)"));
         }
 
         [Fact]
@@ -21944,7 +21944,10 @@ class Program
         set { }
     }
 
-    public void V() { }
+    public void V() 
+    { 
+        var x6 = base?.ToString();
+    }
 
     static void Main(string[] args)
     {
@@ -21957,35 +21960,111 @@ class Program
         var x4 = ()=> { return 1; } ?[1,2];
 
         var x5 = null?.ToString();
-        var x6 = base?.ToString();
     }
 }
 ";
             CreateExperimentalCompilationWithMscorlib45(text).VerifyDiagnostics(
-    // (13,21): error CS0023: Operator '?' cannot be applied to operand of type 'int'
-    //         var x = 123 ?[1,2];
-    Diagnostic(ErrorCode.ERR_BadUnaryOp, "?").WithArguments("?", "int").WithLocation(13, 21),
-    // (16,18): error CS0154: The property or indexer 'Program.P1' cannot be used in this context because it lacks the get accessor
-    //         var x1 = p.P1 ?[1,2];
-    Diagnostic(ErrorCode.ERR_PropertyLacksGet, "p.P1").WithArguments("Program.P1").WithLocation(16, 18),
-    // (17,24): error CS0023: Operator '?' cannot be applied to operand of type 'void'
-    //         var x2 = p.V() ?[1,2];
-    Diagnostic(ErrorCode.ERR_BadUnaryOp, "?").WithArguments("?", "void").WithLocation(17, 24),
-    // (18,20): error CS0119: 'Program.V()' is a method, which is not valid in the given context
-    //         var x3 = p.V ?[1,2];
-    Diagnostic(ErrorCode.ERR_BadSKunknown, "V").WithArguments("Program.V()", "method").WithLocation(18, 20),
-    // (19,18): error CS0023: Operator '?' cannot be applied to operand of type 'lambda expression'
-    //         var x4 = ()=> { return 1; } ?[1,2];
-    Diagnostic(ErrorCode.ERR_BadUnaryOp, "()=> { return 1; } ?[1,2]").WithArguments("?", "lambda expression").WithLocation(19, 18),
-    // (21,18): error CS0023: Operator '?' cannot be applied to operand of type '<null>'
-    //         var x5 = null?.ToString();
-    Diagnostic(ErrorCode.ERR_BadUnaryOp, "null?.ToString()").WithArguments("?", "<null>").WithLocation(21, 18),
-    // (21,18): error CS0023: Operator '?' cannot be applied to operand of type '<null>'
-    //         var x5 = null?.ToString();
-    Diagnostic(ErrorCode.ERR_BadUnaryOp, "null?.ToString()").WithArguments("?", "<null>").WithLocation(21, 18),
-    // (22,18): error CS1511: Keyword 'base' is not available in a static method
+    // (11,18): error CS0175: Use of keyword 'base' is not valid in this context
     //         var x6 = base?.ToString();
-    Diagnostic(ErrorCode.ERR_BaseInStaticMeth, "base").WithLocation(22, 18));
+    Diagnostic(ErrorCode.ERR_BaseIllegal, "base").WithLocation(11, 18),
+    // (16,21): error CS0023: Operator '?' cannot be applied to operand of type 'int'
+    //         var x = 123 ?[1,2];
+    Diagnostic(ErrorCode.ERR_BadUnaryOp, "?").WithArguments("?", "int").WithLocation(16, 21),
+    // (19,18): error CS0154: The property or indexer 'Program.P1' cannot be used in this context because it lacks the get accessor
+    //         var x1 = p.P1 ?[1,2];
+    Diagnostic(ErrorCode.ERR_PropertyLacksGet, "p.P1").WithArguments("Program.P1").WithLocation(19, 18),
+    // (20,24): error CS0023: Operator '?' cannot be applied to operand of type 'void'
+    //         var x2 = p.V() ?[1,2];
+    Diagnostic(ErrorCode.ERR_BadUnaryOp, "?").WithArguments("?", "void").WithLocation(20, 24),
+    // (21,20): error CS0119: 'Program.V()' is a method, which is not valid in the given context
+    //         var x3 = p.V ?[1,2];
+    Diagnostic(ErrorCode.ERR_BadSKunknown, "V").WithArguments("Program.V()", "method").WithLocation(21, 20),
+    // (22,18): error CS0023: Operator '?' cannot be applied to operand of type 'lambda expression'
+    //         var x4 = ()=> { return 1; } ?[1,2];
+    Diagnostic(ErrorCode.ERR_BadUnaryOp, "()=> { return 1; } ?[1,2]").WithArguments("?", "lambda expression").WithLocation(22, 18),
+    // (24,22): error CS0023: Operator '?' cannot be applied to operand of type '<null>'
+    //         var x5 = null?.ToString();
+    Diagnostic(ErrorCode.ERR_BadUnaryOp, "?").WithArguments("?", "<null>").WithLocation(24, 22)
+    );
+        }
+
+
+        [Fact]
+        [WorkItem(976765, "DevDiv")]
+        public void ConditionalMemberAccessPtr()
+        {
+            var text = @"
+using System;
+ 
+class Program
+{
+    unsafe static void Main()
+    {
+        IntPtr? intPtr = null;
+        var p = intPtr?.ToPointer();
+    }
+}
+
+";
+            CreateExperimentalCompilationWithMscorlib45(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+    // (9,23): error CS0023: Operator '?' cannot be applied to operand of type 'void*'
+    //         var p = intPtr?.ToPointer();
+    Diagnostic(ErrorCode.ERR_BadUnaryOp, "?").WithArguments("?", "void*").WithLocation(9, 23)
+               );
+        }
+
+        [Fact]
+        [WorkItem(976765, "DevDiv")]
+        public void ConditionalMemberAccessUnconstrained()
+        {
+            var text = @"
+class Program
+{
+    static void M<T>(T x)
+    {
+        var s = x?.ToString();
+    }
+ 
+    static void Main()
+    {
+        M("""");
+    }
+}
+";
+            CreateExperimentalCompilationWithMscorlib45(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+    // (6,18): error CS0023: Operator '?' cannot be applied to operand of type 'T'
+    //         var s = x?.ToString();
+    Diagnostic(ErrorCode.ERR_BadUnaryOp, "?").WithArguments("?", "T").WithLocation(6, 18)
+               );
+        }
+
+        [Fact]
+        public void ConditionalMemberAccessNotStatement()
+        {
+            var text = @"
+class Program
+{
+    static void Main()
+    {
+        var x = new int[10];
+
+        x?.Length;
+        x?[1];
+        x?.ToString()[1];
+    }
+}
+";
+            CreateExperimentalCompilationWithMscorlib45(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+    // (8,9): error CS0201: Only assignment, call, increment, decrement, and new object expressions can be used as a statement
+    //         x?.Length;
+    Diagnostic(ErrorCode.ERR_IllegalStatement, "x?.Length").WithLocation(8, 9),
+    // (9,9): error CS0201: Only assignment, call, increment, decrement, and new object expressions can be used as a statement
+    //         x?[1];
+    Diagnostic(ErrorCode.ERR_IllegalStatement, "x?[1]").WithLocation(9, 9),
+    // (10,9): error CS0201: Only assignment, call, increment, decrement, and new object expressions can be used as a statement
+    //         x?.ToString()[1];
+    Diagnostic(ErrorCode.ERR_IllegalStatement, "x?.ToString()[1]").WithLocation(10, 9)
+               );
         }
 
     }

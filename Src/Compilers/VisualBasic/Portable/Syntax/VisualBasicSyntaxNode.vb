@@ -275,7 +275,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' associated with this node. If this is a non-terminal, returns the preceding trivia of the first token
         ''' of this node. 
         ''' </summary>
-        ''' <returns>A list of a the preceding trivia.</returns>
+        ''' <returns>A list of the preceding trivia.</returns>
         ''' <remarks>If this node is a non-terminal, the parents of the trivia will be the first token of this 
         ''' non-terminal; NOT this node.</remarks>
         Public Shadows Function GetLeadingTrivia() As SyntaxTriviaList
@@ -287,7 +287,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' associated with this node. If this is a non-terminal, returns the following trivia of the last token
         ''' of this node. 
         ''' </summary>
-        ''' <returns>A list of a the following trivia.</returns>
+        ''' <returns>A list of the following trivia.</returns>
         ''' <remarks>If this node is a non-terminal, the parents of the trivia will be the first token of this 
         ''' non-terminal; NOT this node.</remarks>
         Public Shadows Function GetTrailingTrivia() As SyntaxTriviaList
@@ -574,30 +574,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' </summary>
         Public Overrides Function ChildThatContainsPosition(position As Integer) As SyntaxNodeOrToken
             'PERF: it is very important to keep this method fast.
-            '      if there are ways to make it faster through some use of green nodes and such - 
-            '      it would be a welcome change.
-            Dim l As Integer = 0
-            Dim r As Integer = ChildSyntaxList.CountNodes(Me.Green) - 1
 
-            Do While (l <= r)
-                Dim m As Integer = (l + ((r - l) \ 2))
-                Dim node As SyntaxNodeOrToken = ChildSyntaxList.ItemInternal(Me, m)
+            If Not FullSpan.Contains(position) Then
+                Throw New ArgumentOutOfRangeException("position")
+            End If
 
-                If position < node.Position Then
-                    r = (m - 1)
-                    Continue Do
-                End If
-                If position >= node.EndPosition Then
-                    l = (m + 1)
-                    Continue Do
-                End If
-                Return node
-            Loop
-
-            ' we could check up front that index is within FullSpan,
-            ' but we wan to optimize for the common case where position is valid.
-            Debug.Assert(Not FullSpan.Contains(position), "Position is valid. How could we not find a child?")
-            Throw New ArgumentOutOfRangeException("position")
+            Dim childNodeOrToken = ChildSyntaxList.ChildThatContainsPosition(Me, position)
+            Debug.Assert(childNodeOrToken.FullSpan.Contains(position), "ChildThatContainsPosition's return value does not contain the requested position.")
+            Return childNodeOrToken
         End Function
 #End Region
 

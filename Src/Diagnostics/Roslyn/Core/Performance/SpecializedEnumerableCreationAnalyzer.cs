@@ -12,7 +12,7 @@ namespace Roslyn.Diagnostics.Analyzers
     // TODO: This should be updated to follow the flow of array creation expressions
     // that are eventually converted to and leave a given method as IEnumerable<T> once we have
     // the ability to do more thorough data-flow analysis in diagnostic analyzers.
-    public abstract class SpecializedEnumerableCreationAnalyzer : IDiagnosticAnalyzer, ICompilationStartedAnalyzer
+    public abstract class SpecializedEnumerableCreationAnalyzer : IDiagnosticAnalyzer, ICompilationNestedAnalyzerFactory
     {
         internal const string SpecializedCollectionsMetadataName = "Roslyn.Utilities.SpecializedCollections";
         internal const string IEnumerableMetadataName = "System.Collections.Generic.IEnumerable`1";
@@ -27,7 +27,8 @@ namespace Roslyn.Diagnostics.Analyzers
             RoslynDiagnosticsResources.UseEmptyEnumerableMessage,
             "Performance",
             DiagnosticSeverity.Warning,
-            isEnabledByDefault: true);
+            isEnabledByDefault: true,
+            customTags: WellKnownDiagnosticTags.Telemetry);
 
         internal static readonly DiagnosticDescriptor UseSingletonEnumerableRule = new DiagnosticDescriptor(
             "RS0002",
@@ -35,14 +36,15 @@ namespace Roslyn.Diagnostics.Analyzers
             RoslynDiagnosticsResources.UseSingletonEnumerableMessage,
             "Performance",
             DiagnosticSeverity.Warning,
-            isEnabledByDefault: true);
+            isEnabledByDefault: true,
+            customTags: WellKnownDiagnosticTags.Telemetry);
 
         public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
         {
             get { return ImmutableArray.Create(UseEmptyEnumerableRule, UseSingletonEnumerableRule); }
         }
 
-        public ICompilationEndedAnalyzer OnCompilationStarted(Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
+        public IDiagnosticAnalyzer CreateAnalyzerWithinCompilation(Compilation compilation, AnalyzerOptions options, CancellationToken cancellationToken)
         {
             var specializedCollectionsSymbol = compilation.GetTypeByMetadataName(SpecializedCollectionsMetadataName);
             if (specializedCollectionsSymbol == null)
@@ -79,7 +81,7 @@ namespace Roslyn.Diagnostics.Analyzers
 
         protected abstract AbstractCodeBlockStartedAnalyzer GetCodeBlockStartedAnalyzer(INamedTypeSymbol genericEnumerableSymbol, IMethodSymbol genericEmptyEnumerableSymbol);
 
-        protected abstract class AbstractCodeBlockStartedAnalyzer : ICodeBlockStartedAnalyzer, ICompilationEndedAnalyzer
+        protected abstract class AbstractCodeBlockStartedAnalyzer : ICodeBlockNestedAnalyzerFactory
         {
             private INamedTypeSymbol genericEnumerableSymbol;
             private IMethodSymbol genericEmptyEnumerableSymbol;
@@ -97,7 +99,7 @@ namespace Roslyn.Diagnostics.Analyzers
 
             protected abstract AbstractSyntaxAnalyzer GetSyntaxAnalyzer(INamedTypeSymbol genericEnumerableSymbol, IMethodSymbol genericEmptyEnumerableSymbol);
 
-            public ICodeBlockEndedAnalyzer OnCodeBlockStarted(SyntaxNode codeBlock, ISymbol ownerSymbol, SemanticModel semanticModel, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
+            public IDiagnosticAnalyzer CreateAnalyzerWithinCodeBlock(SyntaxNode codeBlock, ISymbol ownerSymbol, SemanticModel semanticModel, AnalyzerOptions options, CancellationToken cancellationToken)
             {
                 var methodSymbol = ownerSymbol as IMethodSymbol;
                 if (methodSymbol != null &&
@@ -108,13 +110,9 @@ namespace Roslyn.Diagnostics.Analyzers
 
                 return null;
             }
-
-            public void OnCompilationEnded(Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
-            {
-            }
         }
 
-        protected abstract class AbstractSyntaxAnalyzer : ICodeBlockEndedAnalyzer
+        protected abstract class AbstractSyntaxAnalyzer : IDiagnosticAnalyzer
         {
             private INamedTypeSymbol genericEnumerableSymbol;
             private IMethodSymbol genericEmptyEnumerableSymbol;
@@ -128,10 +126,6 @@ namespace Roslyn.Diagnostics.Analyzers
             public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
             {
                 get { return ImmutableArray.Create(UseEmptyEnumerableRule, UseSingletonEnumerableRule); }
-            }
-
-            public void OnCodeBlockEnded(SyntaxNode codeBlock, ISymbol ownerSymbol, SemanticModel semanticModel, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
-            {
             }
 
             protected bool ShouldAnalyzeArrayCreationExpression(SyntaxNode expression, SemanticModel semanticModel)

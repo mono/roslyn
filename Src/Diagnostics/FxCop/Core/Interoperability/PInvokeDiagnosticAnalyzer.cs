@@ -12,7 +12,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Interoperability
 {
     [DiagnosticAnalyzer]
     [ExportDiagnosticAnalyzer(PInvokeInteroperabilityRuleName, LanguageNames.CSharp, LanguageNames.VisualBasic)]
-    public sealed class PInvokeDiagnosticAnalyzer : ICompilationStartedAnalyzer
+    public sealed class PInvokeDiagnosticAnalyzer : ICompilationNestedAnalyzerFactory
     {
         public const string PInvokeInteroperabilityRuleName = "PInvokeInteroperability";
         public const string CA1401 = "CA1401";
@@ -22,13 +22,17 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Interoperability
                                                                          FxCopRulesResources.PInvokeMethodShouldNotBeVisible,
                                                                          FxCopDiagnosticCategory.Interoperability,
                                                                          DiagnosticSeverity.Warning,
-                                                                         isEnabledByDefault: true);
+                                                                         isEnabledByDefault: true,
+                                                                         customTags: DiagnosticCustomTags.Microsoft);
+
         internal static DiagnosticDescriptor RuleCA2101 = new DiagnosticDescriptor(CA2101,
                                                                          FxCopRulesResources.SpecifyMarshalingForPInvokeStringArguments,
                                                                          FxCopRulesResources.SpecifyMarshalingForPInvokeStringArguments,
                                                                          FxCopDiagnosticCategory.Globalization,
                                                                          DiagnosticSeverity.Warning,
-                                                                         isEnabledByDefault: true);
+                                                                         isEnabledByDefault: true,
+                                                                         customTags: DiagnosticCustomTags.Microsoft);
+
         private static readonly ImmutableArray<DiagnosticDescriptor> supportedDiagnostics = ImmutableArray.Create(RuleCA1401, RuleCA2101);
 
         public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
@@ -39,7 +43,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Interoperability
             }
         }
 
-        public ICompilationEndedAnalyzer OnCompilationStarted(Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
+        public IDiagnosticAnalyzer CreateAnalyzerWithinCompilation(Compilation compilation, AnalyzerOptions options, CancellationToken cancellationToken)
         {
             var dllImportType = compilation.GetTypeByMetadataName("System.Runtime.InteropServices.DllImportAttribute");
             if (dllImportType == null)
@@ -68,7 +72,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Interoperability
             return new Analyzer(dllImportType, marshalAsType, stringBuilderType, unmanagedType);
         }
 
-        private sealed class Analyzer : ISymbolAnalyzer, ICompilationEndedAnalyzer
+        private sealed class Analyzer : ISymbolAnalyzer
         {
             private INamedTypeSymbol dllImportType;
             private INamedTypeSymbol marshalAsType;
@@ -165,10 +169,6 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Interoperability
                         addDiagnostic(defaultLocation.CreateDiagnostic(RuleCA2101));
                     }
                 }
-            }
-
-            public void OnCompilationEnded(Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
-            {
             }
 
             private UnmanagedType? GetParameterMarshaling(AttributeData attributeData)

@@ -5039,7 +5039,7 @@ BC30333: Value of type 'Integer()' cannot be converted to 'Object()' because 'In
         <Fact()>
         Public Sub BC30311ERR_WithArray_ParseAndDeclarationErrors()
             'This test is because previously in native command line compiler we would produce errors for both parsing and binding errors,  now 
-            ' we wont produce the binding if parsing was not successful from the command line.  However, the diagnostics will display both messages and 
+            ' we won't produce the binding if parsing was not successful from the command line.  However, the diagnostics will display both messages and 
             ' hence the need for two tests to verify this behaviour.
 
             Dim source =
@@ -7345,7 +7345,7 @@ BC30500: Constant 'f1' cannot depend on its own value.
         <Fact()>
         Public Sub BC30500ERR_CircularEvaluation1_02()
             Dim source =
-<compilation name="FieldsConst">
+<compilation>
     <file name="a.vb">
 Option Strict On
 Option Infer On
@@ -7387,8 +7387,40 @@ BC30500: Constant 'f1' cannot depend on its own value.
         End Module
     </file>
     </compilation>)
+            compilation.AssertTheseDiagnostics(
+<expected>
+BC30500: Constant 'Val' cannot depend on its own value.
+                Const Val As Integer = Val
+                      ~~~
+</expected>)
+        End Sub
 
-            compilation.VerifyDiagnostics(Diagnostic(ERRID.ERR_CircularEvaluation1, "Val").WithArguments("Val"))
+        <Fact()>
+        Public Sub BC30500ERR_CircularEvaluation1_04()
+            Dim compilation = CompilationUtils.CreateCompilationWithMscorlib(
+<compilation>
+    <file name="a.vb">
+Class C
+    Const c0, c1 = c2 + 1
+    Const c2, c3 = c0 + 1
+End Class
+    </file>
+</compilation>)
+            compilation.AssertTheseDiagnostics(
+<expected>
+BC30500: Constant 'c0' cannot depend on its own value.
+    Const c0, c1 = c2 + 1
+          ~~
+BC30671: Explicit initialization is not permitted with multiple variables declared with a single type specifier.
+    Const c0, c1 = c2 + 1
+          ~~~~~~~~~~~~~~~
+BC30671: Explicit initialization is not permitted with multiple variables declared with a single type specifier.
+    Const c2, c3 = c0 + 1
+          ~~~~~~~~~~~~~~~
+BC30060: Conversion from 'Integer' to 'Object' cannot occur in a constant expression.
+    Const c2, c3 = c0 + 1
+                        ~
+</expected>)
         End Sub
 
         <Fact()>
@@ -10535,7 +10567,7 @@ BC30742: Value '-68888' cannot be converted to 'Char'.
         <Fact()>
         Public Sub BC30742ERR_CannotConvertValue2_2()
             Dim source =
-<compilation name="FieldsConst">
+<compilation>
     <file name="a.vb">
 Option strict on
 imports system
@@ -18883,6 +18915,24 @@ End Class
             Diagnostic(ERRID.WRN_SharedMemberThroughInstance, "1"))
         End Sub
 
+        <Fact()>
+        Public Sub BC42025WRN_SharedMemberThroughInstance_4()
+            Dim comp = CompilationUtils.CreateCompilationWithMscorlib(
+<compilation>
+    <file name="a.vb">
+Enum E
+    A
+    B = B.A + 1
+End Enum
+        </file>
+</compilation>)
+            comp.AssertTheseDiagnostics(<errors>
+BC42025: Access of shared member, constant member, enum member or nested type through an instance; qualifying expression will not be evaluated.
+    B = B.A + 1
+        ~~~
+</errors>)
+        End Sub
+
         <Fact(), WorkItem(528734, "DevDiv")>
         Public Sub BC42026WRN_RecursivePropertyCall()
             Dim compilation1 = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(
@@ -21176,7 +21226,7 @@ BC42355: Property 'P' doesn't return a value on all code paths. Are you missing 
         End Sub
 
         <Fact()>
-        Public Sub BC42356WRN_UnreachableCode_LamdaBody()
+        Public Sub BC42356WRN_UnreachableCode_LambdaBody()
             Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(
     <compilation>
         <file name="a.vb">

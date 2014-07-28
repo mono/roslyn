@@ -454,9 +454,9 @@ class C
             var comp = CreateCompilationWithMscorlib(source);
             comp.VerifyDiagnostics();
             comp.VerifyEmitDiagnostics(
-                // (13,16): error CS7013: Name '<longName + 1>b__5' exceeds the maximum length allowed in metadata.
+                // (13,16): error CS7013: Name '<longName + 1>b__3' exceeds the maximum length allowed in metadata.
                 //         return () => p + 1;
-                Diagnostic(ErrorCode.ERR_MetadataNameTooLong, "() => p + 1").WithArguments("<" + longName + 1 + ">b__5").WithLocation(13, 16));
+                Diagnostic(ErrorCode.ERR_MetadataNameTooLong, "() => p + 1").WithArguments("<" + longName + 1 + ">b__3").WithLocation(13, 16));
         }
 
         [Fact]
@@ -519,7 +519,7 @@ class Async
     }}
 }}
 ";
-            int padding = GeneratedNames.MakeIteratorOrAsyncDisplayClassName("A", 1).Length - 1;
+            int padding = GeneratedNames.MakeStateMachineTypeName("A", 1).Length - 1;
             string longName = LongSymbolName.Substring(padding);
             var source = string.Format(sourceTemplate, longName);
             var comp = CreateCompilationWithMscorlib45(source);

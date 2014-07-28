@@ -10,7 +10,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
 {
     [DiagnosticAnalyzer]
     [ExportDiagnosticAnalyzer(RuleNameForExportAttribute, LanguageNames.CSharp, LanguageNames.VisualBasic)]
-    public sealed class AssemblyAttributesDiagnosticAnalyzer : ICompilationStartedAnalyzer
+    public sealed class AssemblyAttributesDiagnosticAnalyzer : ICompilationAnalyzer
     {
         internal const string RuleNameForExportAttribute = "AssemblyAttributeRules";
         internal const string CA1016RuleName = "CA1016";
@@ -21,14 +21,16 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
                                                                          FxCopRulesResources.AssembliesShouldBeMarkedWithAssemblyVersionAttribute,
                                                                          FxCopDiagnosticCategory.Design,
                                                                          DiagnosticSeverity.Warning,
-                                                                         isEnabledByDefault: true);
+                                                                         isEnabledByDefault: true,
+                                                                         customTags: DiagnosticCustomTags.Microsoft);
 
         internal static DiagnosticDescriptor CA1014Rule = new DiagnosticDescriptor(CA1014RuleName,
                                                                          FxCopRulesResources.MarkAssembliesWithCLSCompliantAttribute,
                                                                          FxCopRulesResources.MarkAssembliesWithCLSCompliantAttribute,
                                                                          FxCopDiagnosticCategory.Design,
                                                                          DiagnosticSeverity.Warning,
-                                                                         isEnabledByDefault: true);
+                                                                         isEnabledByDefault: true,
+                                                                         customTags: DiagnosticCustomTags.Microsoft);
 
         private static readonly ImmutableArray<DiagnosticDescriptor> supportedDiagnostics = ImmutableArray.Create(CA1016Rule, CA1014Rule);
 
@@ -40,14 +42,14 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
             }
         }
 
-        public ICompilationEndedAnalyzer OnCompilationStarted(Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
+        public void AnalyzeCompilation(Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
         {
             var assemblyVersionAttributeSymbol = WellKnownTypes.AssemblyVersionAttribute(compilation);
             var assemblyComplianceAttributeSymbol = WellKnownTypes.CLSCompliantAttribute(compilation);
 
             if (assemblyVersionAttributeSymbol == null && assemblyComplianceAttributeSymbol == null)
             {
-                return null;
+                return;
             }
 
             bool assemblyVersionAttributeFound = false;
@@ -92,8 +94,6 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
                     addDiagnostic(Diagnostic.Create(CA1014Rule, Location.None));
                 }
             }
-
-            return null;
         }
     }
 }

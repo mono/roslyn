@@ -661,7 +661,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                 return false;
             }
 
-            if (optionSet.GetOption(SimplificationOptions.QualifyMemberAccessWithThisOrMe, semanticModel.Language) && 
+            if (optionSet.GetOption(SimplificationOptions.QualifyMemberAccessWithThisOrMe, semanticModel.Language) &&
                 memberAccess.Expression.CSharpKind() == SyntaxKind.ThisExpression)
             {
                 return false;
@@ -1283,11 +1283,15 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                         }
                     }
 
-                    if (!name.IsVar && symbol.Kind == SymbolKind.NamedType)
+                    // nullable rewrite: Nullable<int> -> int?
+                    // Don't rewrite in the case where Nullable<int> is part of some qualified name like Nullable<int>.Something
+                    if (!name.IsVar && (symbol.Kind == SymbolKind.NamedType) && !name.IsLeftSideOfQualifiedName())
                     {
-                        // nullable rewrite: Nullable<int> -> int?
-                        var original = ((INamedTypeSymbol)symbol).OriginalDefinition;
-                        if (original != null && original.SpecialType == SpecialType.System_Nullable_T && aliasInfo == null)
+                        var type = (INamedTypeSymbol)symbol;
+                        if ((!type.IsUnboundGenericType) && // Don't rewrite unbound generic type "Nullable<>"
+                            (type.OriginalDefinition != null) &&
+                            (type.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T) &&
+                            (aliasInfo == null))
                         {
                             GenericNameSyntax genericName;
                             if (name.CSharpKind() == SyntaxKind.QualifiedName)
@@ -1831,7 +1835,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                 var symbol = semanticModel.GetSymbolInfo(memberAccess.Name).Symbol;
 
                 if (previousToken.CSharpKind() == SyntaxKind.OpenParenToken &&
-                    previousToken.IsParentKind(SyntaxKind.ParenthesizedExpression) &&
+                    previousToken.Parent.IsKind(SyntaxKind.ParenthesizedExpression) &&
                     !previousToken.Parent.IsParentKind(SyntaxKind.ParenthesizedExpression) &&
                     ((ParenthesizedExpressionSyntax)previousToken.Parent).Expression.CSharpKind() == SyntaxKind.SimpleMemberAccessExpression &&
                     symbol != null && symbol.Kind == SymbolKind.Method)
@@ -1896,7 +1900,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
             // If the simpleName is the type of the Variable Declaration Syntax belonging to LocalDeclaration, For Statement or Using statement
             if (simpleName.IsParentKind(SyntaxKind.VariableDeclaration) &&
                 ((VariableDeclarationSyntax)simpleName.Parent).Type == simpleName &&
-                simpleName.Parent.Parent.MatchesKind(SyntaxKind.LocalDeclarationStatement, SyntaxKind.ForStatement, SyntaxKind.UsingStatement))
+                simpleName.Parent.Parent.IsKind(SyntaxKind.LocalDeclarationStatement, SyntaxKind.ForStatement, SyntaxKind.UsingStatement))
             {
                 if (simpleName.Parent.IsParentKind(SyntaxKind.LocalDeclarationStatement) &&
                     ((LocalDeclarationStatementSyntax)simpleName.Parent.Parent).Modifiers.Any(n => n.CSharpKind() == SyntaxKind.ConstKeyword))

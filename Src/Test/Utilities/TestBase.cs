@@ -2,23 +2,24 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Xml.Linq;
-using Microsoft.CodeAnalysis;
-using ProprietaryTestResources = Microsoft.CodeAnalysis.Test.Resources.Proprietary;
-using Microsoft.CodeAnalysis.Test.Utilities;
-using Roslyn.Test.PdbUtilities;
-using Xunit;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using Microsoft.Win32;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Xml;
+using System.Xml.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Test.Utilities;
+using Roslyn.Test.PdbUtilities;
+using Roslyn.Utilities;
+using Xunit;
+using ProprietaryTestResources = Microsoft.CodeAnalysis.Test.Resources.Proprietary;
 
 namespace Roslyn.Test.Utilities
 {
@@ -666,7 +667,7 @@ namespace Roslyn.Test.Utilities
 
         #region PDB Validation
 
-        public static string GetPdbXml(Compilation compilation, string methodName = "")
+        public static string GetPdbXml(Compilation compilation, string qualifiedMethodName = "")
         {
             string actual = null;
             using (var exebits = new MemoryStream())
@@ -677,11 +678,33 @@ namespace Roslyn.Test.Utilities
 
                     pdbbits.Position = 0;
                     exebits.Position = 0;
-                    actual = PdbToXmlConverter.ToXml(pdbbits, exebits, PdbToXmlOptions.ResolveTokens | PdbToXmlOptions.ThrowOnError, methodName: methodName);
+
+                    actual = PdbToXmlConverter.ToXml(pdbbits, exebits, PdbToXmlOptions.ResolveTokens | PdbToXmlOptions.ThrowOnError, methodName: qualifiedMethodName);
                 }
             }
 
             return actual;
+        }
+
+        public static Dictionary<int, string> GetSequencePointMarkers(string pdbXml)
+        {
+            return EnumerateSequencepointMarkers(pdbXml).ToDictionary(pair => pair.Key, pair => pair.Value);
+        }
+
+        public static IEnumerable<KeyValuePair<int, string>> EnumerateSequencepointMarkers(string pdbXml)
+        {
+            var doc = new XmlDocument();
+            doc.LoadXml(pdbXml);
+
+            foreach (XmlNode entry in doc.GetElementsByTagName("sequencepoints"))
+            {
+                foreach (XmlElement item in entry.ChildNodes)
+                {
+                    yield return KeyValuePair.Create(
+                        Convert.ToInt32(item.GetAttribute("il_offset"), 16),
+                        (item.GetAttribute("hidden") == "true") ? "~" : "-");
+                }
+            }
         }
 
         public static string GetTokenToLocationMap(Compilation compilation, bool maskToken = false)

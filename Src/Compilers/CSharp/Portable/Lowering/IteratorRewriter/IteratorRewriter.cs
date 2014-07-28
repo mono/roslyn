@@ -81,7 +81,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             this.isEnumerable = isEnumerable;
         }
 
-        protected override bool PreserveInitialLocals
+        protected override bool PreserveInitialParameterValues
         {
             get { return isEnumerable; }
         }
@@ -220,7 +220,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                             method.IsStatic || method.ThisParameter.Type.IsReferenceType ?   // if this is a reference type, no need to copy it since it is not assignable
                                 F.Goto(thisInitialized) :                          // goto thisInitialized
                                 (BoundStatement)F.Block()),
-                    elseClause:
+                    elseClauseOpt:
                         makeIterator // else result = new IteratorClass(0)
                         );
             }

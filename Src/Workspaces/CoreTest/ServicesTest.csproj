@@ -3,7 +3,7 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="Settings">
     <Import Project="..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Settings.targets" />
-    <Import Project="..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
+    <Import Project="..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
   </ImportGroup>
   <PropertyGroup>
     <Nonshipping>true</Nonshipping>
@@ -87,6 +87,9 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' "></PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyAttributes.cs" />
+    <Compile Include="LinkedFileDiffMerging\LinkedFileDiffMergingTests.TextMerging.cs" />
+    <Compile Include="LinkedFileDiffMerging\LinkedFileDiffMergingTests.Features.cs" />
+    <Compile Include="LinkedFileDiffMerging\LinkedFileDiffMergingTests.cs" />
     <Compile Include="UtilityTest\AsyncLazyTests.cs" />
     <Compile Include="UtilityTest\AsyncLazyTests.StopTheThreadPoolContext.cs" />
     <Compile Include="CodeCleanup\AddMissingTokensTests.cs" />

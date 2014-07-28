@@ -1221,15 +1221,15 @@ d.cs
 
             parsedArgs = CSharpCommandLineParser.Default.Parse(new[] { "/debug:pdbonly", "a.cs" }, baseDirectory);
             parsedArgs.Errors.Verify();
-            Assert.Equal(DebugInformationKind.PDBOnly, parsedArgs.CompilationOptions.DebugInformationKind);
+            Assert.Equal(DebugInformationKind.PdbOnly, parsedArgs.CompilationOptions.DebugInformationKind);
 
             parsedArgs = CSharpCommandLineParser.Default.Parse(new[] { "/debug:PDBONLY", "a.cs" }, baseDirectory);
             parsedArgs.Errors.Verify();
-            Assert.Equal(DebugInformationKind.PDBOnly, parsedArgs.CompilationOptions.DebugInformationKind);
+            Assert.Equal(DebugInformationKind.PdbOnly, parsedArgs.CompilationOptions.DebugInformationKind);
 
             parsedArgs = CSharpCommandLineParser.Default.Parse(new[] { "/debug:full", "/debug:pdbonly", "a.cs" }, baseDirectory);
             parsedArgs.Errors.Verify();
-            Assert.Equal(DebugInformationKind.PDBOnly, parsedArgs.CompilationOptions.DebugInformationKind);
+            Assert.Equal(DebugInformationKind.PdbOnly, parsedArgs.CompilationOptions.DebugInformationKind);
 
             parsedArgs = CSharpCommandLineParser.Default.Parse(new[] { "/debug:pdbonly", "/debug:full", "a.cs" }, baseDirectory);
             parsedArgs.Errors.Verify();
@@ -1241,11 +1241,11 @@ d.cs
 
             parsedArgs = CSharpCommandLineParser.Default.Parse(new[] { "/debug:pdbonly", "/debug-", "/debug", "a.cs" }, baseDirectory);
             parsedArgs.Errors.Verify();
-            Assert.Equal(DebugInformationKind.PDBOnly, parsedArgs.CompilationOptions.DebugInformationKind);
+            Assert.Equal(DebugInformationKind.PdbOnly, parsedArgs.CompilationOptions.DebugInformationKind);
 
             parsedArgs = CSharpCommandLineParser.Default.Parse(new[] { "/debug:pdbonly", "/debug-", "/debug+", "a.cs" }, baseDirectory);
             parsedArgs.Errors.Verify();
-            Assert.Equal(DebugInformationKind.PDBOnly, parsedArgs.CompilationOptions.DebugInformationKind);
+            Assert.Equal(DebugInformationKind.PdbOnly, parsedArgs.CompilationOptions.DebugInformationKind);
 
             parsedArgs = CSharpCommandLineParser.Default.Parse(new[] { "/debug:", "a.cs" }, baseDirectory);
             parsedArgs.Errors.Verify(Diagnostic(ErrorCode.ERR_SwitchNeedsString).WithArguments("<text>", "debug"));
@@ -6315,10 +6315,10 @@ using System.Diagnostics; // Unused.
     }
 
     [DiagnosticAnalyzer]
-    abstract class CompilationStartedAnalyzer : ICompilationStartedAnalyzer
+    abstract class CompilationStartedAnalyzer : ICompilationNestedAnalyzerFactory
     {
         public abstract ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; }
-        public abstract ICompilationEndedAnalyzer OnCompilationStarted(Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken);
+        public abstract IDiagnosticAnalyzer CreateAnalyzerWithinCompilation(Compilation compilation, AnalyzerOptions options, CancellationToken cancellationToken);
     }
 
     [DiagnosticAnalyzer]
@@ -6342,7 +6342,7 @@ using System.Diagnostics; // Unused.
             }
         }
 
-        public override ICompilationEndedAnalyzer OnCompilationStarted(Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
+        public override IDiagnosticAnalyzer CreateAnalyzerWithinCompilation(Compilation compilation, AnalyzerOptions options, CancellationToken cancellationToken)
         {
             return null;
         }

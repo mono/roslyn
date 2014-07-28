@@ -22,6 +22,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             protected abstract void VisitForEachStatementDeclarations(ForEachStatementSyntax node);
             protected abstract void VisitLockStatementDeclarations(LockStatementSyntax node);
             protected abstract void VisitUsingStatementDeclarations(UsingStatementSyntax node);
+            protected abstract void VisitSwitchStatementDeclarations(SwitchStatementSyntax node);
+            protected abstract void VisitIfStatementDeclarations(IfStatementSyntax node);
+            protected abstract void VisitWhileStatementDeclarations(WhileStatementSyntax node);
+            protected abstract void VisitDoStatementDeclarations(DoStatementSyntax node);
+            protected abstract void VisitForStatementDeclarations(ForStatementSyntax node);
 
             public sealed override void VisitFixedStatement(FixedStatementSyntax node)
             {
@@ -47,6 +52,36 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
                 base.VisitUsingStatement(node);
             }
 
+            public override void VisitSwitchStatement(SwitchStatementSyntax node)
+            {
+                this.VisitSwitchStatementDeclarations(node);
+                base.VisitSwitchStatement(node);
+            }
+
+            public override void VisitIfStatement(IfStatementSyntax node)
+            {
+                this.VisitIfStatementDeclarations(node);
+                base.VisitIfStatement(node);
+            }
+
+            public override void VisitWhileStatement(WhileStatementSyntax node)
+            {
+                this.VisitWhileStatementDeclarations(node);
+                base.VisitWhileStatement(node);
+            }
+
+            public override void VisitDoStatement(DoStatementSyntax node)
+            {
+                this.VisitDoStatementDeclarations(node);
+                base.VisitDoStatement(node);
+            }
+
+            public override void VisitForStatement(ForStatementSyntax node)
+            {
+                this.VisitForStatementDeclarations(node);
+                base.VisitForStatement(node);
+            }
+
             public abstract override void VisitVariableDeclarator(VariableDeclaratorSyntax node);
         }
 
@@ -55,27 +90,39 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             [DebuggerDisplay("{GetDebuggerDisplay(), nq}")]
             private struct LocalName
             {
-                public readonly string Name;
-                public readonly TempKind Kind;
+                public readonly string UserDefinedName;
+                public readonly SynthesizedLocalKind Kind;
                 public readonly int UniqueId;
 
-                public LocalName(string name, TempKind kind, int uniqueId)
+                public LocalName(string name)
                 {
-                    this.Name = name;
+                    this.UserDefinedName = name;
+                    this.Kind = SynthesizedLocalKind.None;
+                    this.UniqueId = 0;
+                }
+
+                public LocalName(SynthesizedLocalKind kind, int uniqueId)
+                {
+                    this.UserDefinedName = null;
                     this.Kind = kind;
                     this.UniqueId = uniqueId;
                 }
 
                 private string GetDebuggerDisplay()
                 {
-                    return string.Format("[{0}, {1}, {2}]", this.Kind, this.UniqueId, this.Name);
+                    return UserDefinedName ?? string.Format("[{0}: {1}]", this.Kind, this.UniqueId);
                 }
             }
+
+            // We assume that user-defined locals are assigned slots in the order their declarations appear in source code 
+            // during lowering. We also assume that synthesized variables are assigned slots in the order the syntax that produce them 
+            // appear in source. To relax constraints on lowering we treat user-defined and synthesized orderings as independent.
 
             private readonly ImmutableArray<LocalName> localNames;
             private readonly ImmutableArray<MetadataDecoder.LocalInfo> localInfo;
             private readonly Dictionary<EncLocalInfo, int> locals;
-            private int slotIndex;
+            private int userDefinedSlotIndex;
+            private int synthesizedSlotIndex;
             private int offset;
 
             private LocalSlotMapBuilder(
@@ -86,7 +133,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
                 this.localNames = localNames.SelectAsArray(ParseName);
                 this.localInfo = localInfo;
                 this.locals = locals;
-                this.slotIndex = 0;
             }
 
             public static Dictionary<EncLocalInfo, int> CreateMap(
@@ -118,11 +164,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
                 for (int i = 0; i < n; i++)
                 {
                     var declarator = declarators[i];
-                    if (!IsSlotIndex(TempKind.FixedString))
+                    if (!IsSlotIndex(SynthesizedLocalKind.FixedString))
                     {
                         break;
                     }
-                    AddLocal(TempKind.FixedString);
+
+                    AddSynthesizedLocal(SynthesizedLocalKind.FixedString);
                     this.offset++;
                 }
 
@@ -135,34 +182,34 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
                 // Expecting two or more locals: one for the enumerator,
                 // for arrays one local for each upper bound and one for
                 // each index, and finally one local for the loop variable.
-                var kindOpt = TryGetSlotIndex(TempKind.ForEachEnumerator, TempKind.ForEachArray);
+                var kindOpt = TryGetSlotIndex(SynthesizedLocalKind.ForEachEnumerator, SynthesizedLocalKind.ForEachArray);
                 if (kindOpt != null)
                 {
                     // Enumerator.
-                    if (kindOpt.Value == TempKind.ForEachArray)
+                    if (kindOpt.Value == SynthesizedLocalKind.ForEachArray)
                     {
                         // Upper bounds.
-                        var kind = TempKind.ForEachArrayLimit0;
+                        var kind = SynthesizedLocalKind.ForEachArrayLimit0;
                         while (IsSlotIndex(kind))
                         {
-                            AddLocal(kind);
-                            kind = (TempKind)((int)kind + 1);
+                            AddSynthesizedLocal(kind);
+                            kind = (SynthesizedLocalKind)((int)kind + 1);
                         }
 
                         // Indices.
-                        kind = TempKind.ForEachArrayIndex0;
+                        kind = SynthesizedLocalKind.ForEachArrayIndex0;
                         while (IsSlotIndex(kind))
                         {
-                            AddLocal(kind);
-                            kind = (TempKind)((int)kind + 1);
+                            AddSynthesizedLocal(kind);
+                            kind = (SynthesizedLocalKind)((int)kind + 1);
                         }
                     }
 
                     // Loop variable.
-                    string name = ((ForEachStatementSyntax)node).Identifier.ValueText;
+                    string name = node.Identifier.ValueText;
                     if (IsSlotIndex(name))
                     {
-                        AddLocal(TempKind.None);
+                        AddUserDefinedLocal();
                     }
                     else
                     {
@@ -175,16 +222,16 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
 
             protected override void VisitLockStatementDeclarations(LockStatementSyntax node)
             {
-                // Expecting one or two locals depending on which overload of Monitor.Enter is used.
-                var expr = node.Expression;
-                Debug.Assert(expr != null);
-                if (TryGetSlotIndex(TempKind.Lock) != null)
+                Debug.Assert(node.Expression != null);
+               
+                 // Expecting one or two locals depending on which overload of Monitor.Enter is used.
+                if (TryGetSlotIndex(SynthesizedLocalKind.Lock) != null)
                 {
                     // If the next local is LockTaken, then the lock was emitted with the two argument
                     // overload for Monitor.Enter(). Otherwise, the single argument overload was used.
-                    if (IsSlotIndex(TempKind.LockTaken))
+                    if (IsSlotIndex(SynthesizedLocalKind.LockTaken))
                     {
-                        AddLocal(TempKind.LockTaken);
+                        AddSynthesizedLocal(SynthesizedLocalKind.LockTaken);
                     }
                 }
 
@@ -193,13 +240,50 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
 
             protected override void VisitUsingStatementDeclarations(UsingStatementSyntax node)
             {
-                // Expecting one temporary for using statement with no explicit declaration.
+                // Expecting one synthesized local for using statement with no explicit declaration.
                 if (node.Declaration == null)
                 {
-                    var expr = node.Expression;
-                    Debug.Assert(expr != null);
-                    TryGetSlotIndex(TempKind.Using);
+                    Debug.Assert(node.Expression != null);
 
+                    TryGetSlotIndex(SynthesizedLocalKind.Using);
+                    this.offset++;
+                }
+            }
+
+            protected override void VisitSwitchStatementDeclarations(SwitchStatementSyntax node)
+            {
+                // Expecting one synthesized local for conditional branch 
+                TryGetSlotIndex(SynthesizedLocalKind.ConditionalBranchDiscriminator);
+                this.offset++;
+            }
+
+            protected override void VisitIfStatementDeclarations(IfStatementSyntax node)
+            {
+                // Expecting one synthesized local for conditional branch 
+                TryGetSlotIndex(SynthesizedLocalKind.ConditionalBranchDiscriminator);
+                this.offset++;
+            }
+
+            protected override void VisitWhileStatementDeclarations(WhileStatementSyntax node)
+            {
+                // Expecting one synthesized local for conditional branch 
+                TryGetSlotIndex(SynthesizedLocalKind.ConditionalBranchDiscriminator);
+                this.offset++;
+            }
+
+            protected override void VisitDoStatementDeclarations(DoStatementSyntax node)
+            {
+                // Expecting one synthesized local for conditional branch 
+                TryGetSlotIndex(SynthesizedLocalKind.ConditionalBranchDiscriminator);
+                this.offset++;
+            }
+
+            protected override void VisitForStatementDeclarations(ForStatementSyntax node)
+            {
+                if (node.Condition != null)
+                {
+                    // Expecting one synthesized local for conditional branch 
+                    TryGetSlotIndex(SynthesizedLocalKind.ConditionalBranchDiscriminator);
                     this.offset++;
                 }
             }
@@ -214,76 +298,93 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             {
                 if (name == null)
                 {
-                    return new LocalName(name, TempKind.None, 0);
+                    return new LocalName(name);
                 }
 
-                TempKind kind;
+                SynthesizedLocalKind kind;
                 int uniqueId;
-                GeneratedNames.TryParseTemporaryName(name, out kind, out uniqueId);
-                return new LocalName(name, kind, uniqueId);
+                if (GeneratedNames.TryParseLocalName(name, out kind, out uniqueId))
+                {
+                    return new LocalName(kind, uniqueId);
+                }
+                else
+                {
+                    return new LocalName(name);
+                }
             }
 
             private bool IsSlotIndex(string name)
             {
-                return (this.slotIndex < this.localNames.Length) &&
-                    (this.localNames[this.slotIndex].Kind == TempKind.None) &&
-                    (name == this.localNames[this.slotIndex].Name);
+                return this.userDefinedSlotIndex < this.localNames.Length && 
+                       name == this.localNames[this.userDefinedSlotIndex].UserDefinedName;
             }
 
-            private bool IsSlotIndex(params TempKind[] kinds)
+            private bool IsSlotIndex(params SynthesizedLocalKind[] kinds)
             {
-                Debug.Assert(Array.IndexOf(kinds, TempKind.None) < 0);
+                Debug.Assert(Array.IndexOf(kinds, SynthesizedLocalKind.None) < 0);
 
-                return (this.slotIndex < this.localNames.Length) &&
-                    (Array.IndexOf(kinds, this.localNames[this.slotIndex].Kind) >= 0);
+                return this.synthesizedSlotIndex < this.localNames.Length && 
+                       Array.IndexOf(kinds, this.localNames[this.synthesizedSlotIndex].Kind) >= 0;
             }
 
             private bool TryGetSlotIndex(string name)
             {
-                while (this.slotIndex < this.localNames.Length)
+                while (this.userDefinedSlotIndex < this.localNames.Length)
                 {
                     if (IsSlotIndex(name))
                     {
-                        AddLocal(TempKind.None);
+                        AddUserDefinedLocal();
                         return true;
                     }
-                    this.slotIndex++;
+
+                    this.userDefinedSlotIndex++;
                 }
 
                 return false;
             }
 
-            private TempKind? TryGetSlotIndex(params TempKind[] kinds)
+            private SynthesizedLocalKind? TryGetSlotIndex(params SynthesizedLocalKind[] kinds)
             {
-                while (this.slotIndex < this.localNames.Length)
+                while (this.synthesizedSlotIndex < this.localNames.Length)
                 {
                     if (IsSlotIndex(kinds))
                     {
-                        var localName = this.localNames[this.slotIndex];
+                        var localName = this.localNames[this.synthesizedSlotIndex];
                         var kind = localName.Kind;
-                        AddLocal(kind);
+                        AddSynthesizedLocal(kind);
                         return kind;
                     }
-                    this.slotIndex++;
+
+                    this.synthesizedSlotIndex++;
                 }
 
                 return null;
             }
 
-            private void AddLocal(TempKind tempKind)
+            private void AddSynthesizedLocal(SynthesizedLocalKind synthesizedKind)
             {
-                var info = this.localInfo[this.slotIndex];
+                AddLocalImpl(ref synthesizedSlotIndex, synthesizedKind);
+            }
+
+            private void AddUserDefinedLocal()
+            {
+                AddLocalImpl(ref userDefinedSlotIndex, SynthesizedLocalKind.None);
+            }
+
+            private void AddLocalImpl(ref int slotIndex, SynthesizedLocalKind synthesizedKind)
+            {
+                var info = this.localInfo[slotIndex];
 
                 // We do not emit custom modifiers on locals so ignore the
                 // previous version of the local if it had custom modifiers.
                 if (info.CustomModifiers.IsDefaultOrEmpty)
                 {
                     var constraints = GetConstraints(info);
-                    var local = new EncLocalInfo(this.offset, (Cci.ITypeReference)info.Type, constraints, (int)tempKind, info.Signature);
-                    this.locals.Add(local, this.slotIndex);
+                    var local = new EncLocalInfo(this.offset, (Cci.ITypeReference)info.Type, constraints, (int)synthesizedKind, info.Signature);
+                    this.locals.Add(local, slotIndex);
                 }
 
-                this.slotIndex++;
+                slotIndex++;
             }
         }
 
@@ -346,6 +447,34 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             public override void VisitVariableDeclarator(VariableDeclaratorSyntax node)
             {
                 this.builder.Add(node);
+            }
+
+            protected override void VisitSwitchStatementDeclarations(SwitchStatementSyntax node)
+            {
+                this.builder.Add(node);
+            }
+
+            protected override void VisitIfStatementDeclarations(IfStatementSyntax node)
+            {
+                this.builder.Add(node);
+            }
+
+            protected override void VisitWhileStatementDeclarations(WhileStatementSyntax node)
+            {
+                this.builder.Add(node);
+            }
+
+            protected override void VisitDoStatementDeclarations(DoStatementSyntax node)
+            {
+                this.builder.Add(node);
+            }
+
+            protected override void VisitForStatementDeclarations(ForStatementSyntax node)
+            {
+                if (node.Condition != null)
+                {
+                    this.builder.Add(node);
+                }
             }
         }
     }

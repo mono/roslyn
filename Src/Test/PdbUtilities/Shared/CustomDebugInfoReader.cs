@@ -66,7 +66,7 @@ namespace Roslyn.Utilities.Pdb
         }
 
         /// <summary>
-        /// After the global header (see <see cref="ReadGlobalHeader"/> comes  list of custom debug info record.
+        /// After the global header (see <see cref="ReadGlobalHeader"/> comes list of custom debug info record.
         /// Each record begins with a standard header.
         /// </summary>
         public static void ReadRecordHeader(byte[] bytes, ref int offset, out byte version, out CustomDebugInfoKind kind, out int size)
@@ -331,7 +331,10 @@ namespace Roslyn.Utilities.Pdb
                     }
 
                     ReadForwardRecord(bytes, ref offset, size, out methodToken);
-                    if (!seenForward) // Follow at most one forward link.
+
+                    // Follow at most one forward link (as in FUNCBRECEE::ensureNamespaces).
+                    // NOTE: Dev11 may produce chains of forward links (e.g. for System.Collections.Immutable).
+                    if (!seenForward) 
                     {
                         seenForward = true;
                         goto RETRY;
@@ -346,7 +349,7 @@ namespace Roslyn.Utilities.Pdb
 
                     int moduleInfoMethodToken;
                     ReadForwardToModuleRecord(bytes, ref offset, size, out moduleInfoMethodToken);
-                    ImmutableArray<string> allModuleInfoImportStrings = GetImportStrings(reader.GetBaselineMethod(moduleInfoMethodToken));
+                    ImmutableArray<string> allModuleInfoImportStrings = reader.GetBaselineMethod(moduleInfoMethodToken).GetImportStrings();
                     ArrayBuilder<string> externAliasBuilder = ArrayBuilder<string>.GetInstance();
                     foreach(string importString in allModuleInfoImportStrings)
                     {
@@ -365,10 +368,11 @@ namespace Roslyn.Utilities.Pdb
 
             if (groupSizes.IsDefault)
             {
-                throw new InvalidOperationException(string.Format("Didn't find usings info for method {0}", FormatMethodToken(methodToken)));
+                // This can happen in malformed PDBs (e.g. chains of forwards).
+                return default(ImmutableArray<ImmutableArray<string>>);
             }
 
-            ImmutableArray<string> importStrings = GetImportStrings(reader.GetBaselineMethod(methodToken));
+            ImmutableArray<string> importStrings = reader.GetBaselineMethod(methodToken).GetImportStrings();
             int numImportStrings = importStrings.Length;
 
             ArrayBuilder<ImmutableArray<string>> resultBuilder = ArrayBuilder<ImmutableArray<string>>.GetInstance(groupSizes.Length);
@@ -438,11 +442,13 @@ namespace Roslyn.Utilities.Pdb
         /// </returns>
         public static ImmutableArray<string> GetVisualBasicImportStrings(this ISymUnmanagedReader reader, int methodToken)
         {
-            ImmutableArray<string> importStrings = GetImportStrings(reader.GetBaselineMethod(methodToken));
+            ImmutableArray<string> importStrings = reader.GetBaselineMethod(methodToken).GetImportStrings();
 
             // Follow at most one forward link.
-            if (importStrings.Length == 1)
+            if (importStrings.Length > 0)
             {
+                // As in PdbUtil::GetRawNamespaceListCore, we consider only the first string when
+                // checking for forwarding.
                 string importString = importStrings[0];
                 if (importString.Length >= 2 && importString[0] == '@')
                 {
@@ -452,7 +458,7 @@ namespace Roslyn.Utilities.Pdb
                         int tempMethodToken;
                         if (int.TryParse(importString.Substring(1), NumberStyles.None, CultureInfo.InvariantCulture, out tempMethodToken))
                         {
-                            return GetImportStrings(reader.GetBaselineMethod(tempMethodToken));
+                            return reader.GetBaselineMethod(tempMethodToken).GetImportStrings();
                         }
                     }
                 }
@@ -474,6 +480,10 @@ namespace Roslyn.Utilities.Pdb
         /// </summary>
         /// <remarks>
         /// Doesn't consider forwarding.
+        /// TODO (acasey): VB doesn't just check the root scope - it digs around to find the best
+        /// match based on the IL offset and then walks up to the root scope (see PdbUtil::GetScopeFromOffset).
+        /// However, it's not clear that this matters, since imports can't be scoped in VB.  This is probably
+        /// just based on the way they were extracting locals and constants based on a specific scope.
         /// </remarks>
         private static ImmutableArray<string> GetImportStrings(this ISymUnmanagedMethod method)
         {

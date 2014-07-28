@@ -766,7 +766,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Extensions
             ' Failfast Conditions
             If Not optionSet.GetOption(SimplificationOptions.PreferImplicitTypeInLocalDeclaration) OrElse
                 variableDeclarator.AsClause Is Nothing OrElse
-                Not variableDeclarator.Parent.MatchesKind(
+                Not variableDeclarator.Parent.IsKind(
                     SyntaxKind.LocalDeclarationStatement,
                     SyntaxKind.UsingStatement,
                     SyntaxKind.ForStatement,
@@ -787,7 +787,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Extensions
                 Return False
             End If
 
-            If (parent.MatchesKind(SyntaxKind.LocalDeclarationStatement, SyntaxKind.UsingStatement, SyntaxKind.FieldDeclaration) AndAlso
+            If (parent.IsKind(SyntaxKind.LocalDeclarationStatement, SyntaxKind.UsingStatement, SyntaxKind.FieldDeclaration) AndAlso
                 variableDeclarator.Initializer IsNot Nothing) Then
 
                 ' Type Check
@@ -819,9 +819,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Extensions
                 Return True
             End If
 
-            If (parent.MatchesKind(SyntaxKind.ForEachStatement, SyntaxKind.ForStatement)) Then
+            If (parent.IsKind(SyntaxKind.ForEachStatement, SyntaxKind.ForStatement)) Then
                 ' Type Check for ForStatement
-                If parent.MatchesKind(SyntaxKind.ForStatement) Then
+                If parent.IsKind(SyntaxKind.ForStatement) Then
                     Dim declaredSymbolType As ITypeSymbol = Nothing
                     If Not HasValidDeclaredTypeSymbol(modifiedIdentifier, semanticModel, declaredSymbolType) Then
                         Return False
@@ -834,7 +834,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Extensions
                     End If
                 End If
 
-                If parent.MatchesKind(SyntaxKind.ForEachStatement) Then
+                If parent.IsKind(SyntaxKind.ForEachStatement) Then
                     Dim forEachStatementInfo = semanticModel.GetForEachStatementInfo(DirectCast(parent, ForEachStatementSyntax))
                     If Not forEachStatementInfo.ElementConversion.IsIdentity Then
                         Return False
@@ -1277,9 +1277,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Extensions
                         End If
                     End If
 
-                    If symbol.Kind = SymbolKind.NamedType Then
-                        Dim original = DirectCast(symbol, INamedTypeSymbol).OriginalDefinition
-                        If original IsNot Nothing AndAlso original.SpecialType = SpecialType.System_Nullable_T AndAlso aliasInfo Is Nothing Then
+                    ' Nullable rewrite: Nullable(Of Integer) -> Integer?
+                    ' Don't rewrite in the case where Nullable(Of Integer) is part of some qualified name like Nullable(Of Integer).Something
+                    If (symbol.Kind = SymbolKind.NamedType) AndAlso (Not name.IsLeftSideOfQualifiedName) Then
+                        Dim type = DirectCast(symbol, INamedTypeSymbol)
+                        If (Not type.IsUnboundGenericType) AndAlso 'Don't rewrite unbound generic type "Nullable(Of )"
+                           (type.OriginalDefinition IsNot Nothing) AndAlso
+                           (type.OriginalDefinition.SpecialType = SpecialType.System_Nullable_T) AndAlso
+                           (aliasInfo Is Nothing) Then
                             Dim genericName As GenericNameSyntax
                             If name.VisualBasicKind = SyntaxKind.QualifiedName Then
                                 genericName = DirectCast(DirectCast(name, QualifiedNameSyntax).Right, GenericNameSyntax)
@@ -1357,7 +1362,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Extensions
         ) As Boolean
             If SyntaxFacts.IsAttributeName(name) AndAlso Not isIdentifierNameFromAlias Then
 
-                ' When the replacement is an Alias we dont want the "Attribute" Suffix to be removed because this will result in symbol change
+                ' When the replacement is an Alias we don't want the "Attribute" Suffix to be removed because this will result in symbol change
                 Dim aliasSymbol = semanticModel.GetAliasInfo(name, cancellationToken)
                 If (aliasSymbol IsNot Nothing AndAlso preferAliasToQualification AndAlso
                     String.Compare(aliasSymbol.Name, identifierToken.ValueText, StringComparison.OrdinalIgnoreCase) = 0) Then

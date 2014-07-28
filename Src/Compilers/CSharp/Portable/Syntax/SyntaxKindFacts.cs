@@ -1046,6 +1046,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.ParamKeyword:
                 case SyntaxKind.PropertyKeyword:
                 case SyntaxKind.TypeVarKeyword:
+                case SyntaxKind.NameOfKeyword:
                 case SyntaxKind.AsyncKeyword:
                 case SyntaxKind.AwaitKeyword:
                     return true;
@@ -1143,6 +1144,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return SyntaxKind.AsyncKeyword;
                 case "await":
                     return SyntaxKind.AwaitKeyword;
+                case "nameof":
+                    return SyntaxKind.NameOfKeyword;
                 default:
                     return SyntaxKind.None;
             }
@@ -1534,6 +1537,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return "async";
                 case SyntaxKind.AwaitKeyword:
                     return "await";
+                case SyntaxKind.NameOfKeyword:
+                    return "nameof";
                 default:
                     return string.Empty;
             }
@@ -1542,61 +1547,6 @@ namespace Microsoft.CodeAnalysis.CSharp
         public static bool IsTypeParameterVarianceKeyword(SyntaxKind kind)
         {
             return kind == SyntaxKind.OutKeyword || kind == SyntaxKind.InKeyword;
-        }
-
-        internal static bool IsStatementExpression(SyntaxKind kind, bool isMissing)
-        {
-            // The grammar gives:
-            //
-            // expression-statement:
-            //     statement-expression ;
-            //
-            // statement-expression:
-            //     invocation-expression
-            //     object-creation-expression
-            //     assignment
-            //     post-increment-expression
-            //     post-decrement-expression
-            //     pre-increment-expression
-            //     pre-decrement-expression
-            //     await-expression
-
-            switch (kind)
-            {
-                case SyntaxKind.InvocationExpression:
-                case SyntaxKind.ObjectCreationExpression:
-                case SyntaxKind.SimpleAssignmentExpression:
-                case SyntaxKind.AddAssignmentExpression:
-                case SyntaxKind.SubtractAssignmentExpression:
-                case SyntaxKind.MultiplyAssignmentExpression:
-                case SyntaxKind.DivideAssignmentExpression:
-                case SyntaxKind.ModuloAssignmentExpression:
-                case SyntaxKind.AndAssignmentExpression:
-                case SyntaxKind.OrAssignmentExpression:
-                case SyntaxKind.ExclusiveOrAssignmentExpression:
-                case SyntaxKind.LeftShiftAssignmentExpression:
-                case SyntaxKind.RightShiftAssignmentExpression:
-                case SyntaxKind.PostIncrementExpression:
-                case SyntaxKind.PostDecrementExpression:
-                case SyntaxKind.PreIncrementExpression:
-                case SyntaxKind.PreDecrementExpression:
-                case SyntaxKind.AwaitExpression:
-                    return true;
-
-                // Allow missing IdentifierNames; they will show up in error cases
-                // where there is no statement whatsoever.
-
-                case SyntaxKind.IdentifierName:
-                    return isMissing;
-
-                // TODO: The native implementation also disallows delegate
-                // creation expressions with the ERR_IllegalStatement error, 
-                // so that needs to go into the semantic analysis somewhere
-                // if we intend to carry it forward.
-
-                default:
-                    return false;
-            }
         }
 
         public static bool IsDocumentationCommentTrivia(SyntaxKind kind)

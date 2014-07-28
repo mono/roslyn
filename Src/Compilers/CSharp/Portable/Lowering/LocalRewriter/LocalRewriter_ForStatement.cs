@@ -3,7 +3,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Microsoft.CodeAnalysis.CSharp
@@ -19,15 +18,14 @@ namespace Microsoft.CodeAnalysis.CSharp
             var rewrittenIncrement = (BoundStatement)Visit(node.Increment);
             var rewrittenBody = (BoundStatement)Visit(node.Body);
 
-            SyntaxNodeOrToken conditionSyntax = ((BoundNode)rewrittenCondition ?? node).Syntax;
-
             return RewriteForStatement(
                 node.Syntax,
                 node.OuterLocals,
                 rewrittenInitializer,
                 node.InnerLocals,
-                rewrittenCondition,
-                conditionSyntax,
+                AddConditionSequencePoint(rewrittenCondition, node),
+                node.Condition?.Syntax,
+                default(TextSpan),
                 rewrittenIncrement,
                 rewrittenBody,
                 node.BreakLabel,
@@ -40,7 +38,8 @@ namespace Microsoft.CodeAnalysis.CSharp
             BoundStatement rewrittenInitializer,
             ImmutableArray<LocalSymbol> innerLocals,
             BoundExpression rewrittenCondition,
-            SyntaxNodeOrToken conditionSyntax,
+            CSharpSyntaxNode conditionSyntaxOpt,
+            TextSpan conditionSpanOpt,
             BoundStatement rewrittenIncrement,
             BoundStatement rewrittenBody,
             GeneratedLabelSymbol breakLabel,
@@ -52,16 +51,14 @@ namespace Microsoft.CodeAnalysis.CSharp
             // The sequence point behavior exhibited here is different from that of the native compiler.  In the native
             // compiler, if you have something like 
             //
-            // for(int i = 0, j = 0; ; i++, j++)
-            //     ^--------------^    ^------^   
+            // for([|int i = 0, j = 0|]; ; [|i++, j++|])
             //
             // then all the initializers are treated as a single sequence point, as are
             // all the loop incrementers.
             //
             // We now make each one individually a sequence point:
             //
-            // for(int i = 0, j = 0; ; i++, j++)
-            //     ^-------^  ^---^    ^-^  ^-^
+            // for([|int i = 0|], [|j = 0|]; ; [|i++|], [|j++|])
             //
             // If we decide that we want to preserve the native compiler stepping behavior
             // then we'll need to be a bit fancy here. The initializer and increment statements
@@ -91,8 +88,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     // for (initializer; condition; increment)
                     //   body;
                     //
-                    // becomes the following (with
-                    // block added for locals)
+                    // becomes the following (with block added for locals)
                     //
                     // {
                     //   initializer;
@@ -119,13 +115,14 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                         if (this.generateDebugInfo)
                         {
-                            if (conditionSyntax.IsToken)
+                            if (!conditionSpanOpt.IsEmpty)
                             {
-                                ifNotConditionGotoBreak = new BoundSequencePointWithSpan(syntax, ifNotConditionGotoBreak, conditionSyntax.Span);
+                                ifNotConditionGotoBreak = new BoundSequencePointWithSpan(syntax, ifNotConditionGotoBreak, conditionSpanOpt);
                             }
                             else
                             {
-                                ifNotConditionGotoBreak = new BoundSequencePoint((CSharpSyntaxNode)conditionSyntax.AsNode(), ifNotConditionGotoBreak);
+                                // hidden sequence point if there is no condition
+                                ifNotConditionGotoBreak = new BoundSequencePoint(conditionSyntaxOpt, ifNotConditionGotoBreak);
                             }
                         }
 
@@ -155,13 +152,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                 }
             }
 
-            var endLabel = new GeneratedLabelSymbol("end");
-
             // for (initializer; condition; increment)
             //   body;
             //
-            // becomes the following (with
-            // block added for locals)
+            // becomes the following (with block added for locals)
             //
             // {
             //   initializer;
@@ -175,13 +169,15 @@ namespace Microsoft.CodeAnalysis.CSharp
             // break:
             // }
 
+            var endLabel = new GeneratedLabelSymbol("end");
+
             //  initializer;
             //  goto end;
 
-            //mark the initial jump as hidden.
-            //We do it to tell that this is not a part of previous statement.
-            //This jump may be a target of another jump (for example if loops are nested) and that will make 
-            //impression of the previous statement being re-executed
+            // Mark the initial jump as hidden.
+            // We do it to tell that this is not a part of previous statement.
+            // This jump may be a target of another jump (for example if loops are nested) and that will make 
+            // impression of the previous statement being re-executed
             var gotoEnd = new BoundSequencePoint(null, new BoundGotoStatement(syntax, endLabel));
             statementBuilder.Add(gotoEnd);
 
@@ -222,15 +218,14 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             if (this.generateDebugInfo)
             {
-                if (conditionSyntax.IsToken)
-                {
-                    branchBack = new BoundSequencePointWithSpan(syntax, branchBack, conditionSyntax.Span);
+                if (!conditionSpanOpt.IsEmpty)
+                {   
+                    branchBack = new BoundSequencePointWithSpan(syntax, branchBack, conditionSpanOpt);
                 }
                 else
                 {
-                    //if there is no condition, make this a hidden point so that 
-                    //it does not count as a part of previous statement
-                    branchBack = new BoundSequencePoint((CSharpSyntaxNode)conditionSyntax.AsNode(), branchBack);
+                    // hidden sequence point if there is no condition
+                    branchBack = new BoundSequencePoint(conditionSyntaxOpt, branchBack);
                 }
             }
 

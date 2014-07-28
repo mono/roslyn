@@ -452,7 +452,9 @@ namespace Microsoft.CodeAnalysis.CSharp
             DiagnosticBag diagnostics,
             ConsList<Symbol> basesBeingResolved,
             bool suppressUseSiteDiagnostics,
-            NamespaceOrTypeSymbol qualifierOpt)
+            NamespaceOrTypeSymbol qualifierOpt,
+            bool isNameofArgument = false,
+            ArrayBuilder<Symbol> symbols = null)
         {
             var identifierValueText = node.Identifier.ValueText;
 
@@ -475,7 +477,9 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
 
             var result = LookupResult.GetInstance();
-            LookupOptions options = GetSimpleNameLookupOptions(node, node.Identifier.IsVerbatimIdentifier());
+            // If it is a nameof argument, we do not care the arity for both Methods and NamedTypes.
+            LookupOptions options = isNameofArgument ? LookupOptions.AllMethodsOnArityZero | LookupOptions.AllNamedTypesOnArityZero : GetSimpleNameLookupOptions(node, node.Identifier.IsVerbatimIdentifier());
+
             HashSet<DiagnosticInfo> useSiteDiagnostics = null;
             this.LookupSymbolsSimpleName(result, qualifierOpt, identifierValueText, 0, basesBeingResolved, options, diagnose: true, useSiteDiagnostics: ref useSiteDiagnostics);
             diagnostics.Add(node, useSiteDiagnostics);
@@ -502,14 +506,27 @@ namespace Microsoft.CodeAnalysis.CSharp
             else
             {
                 bool wasError;
-                bindingResult = ResultSymbol(result, identifierValueText, 0, node, diagnostics, suppressUseSiteDiagnostics, out wasError, qualifierOpt, options);
 
-                if (bindingResult.Kind == SymbolKind.Alias)
+                if (isNameofArgument && result.IsMultiViable && result.Symbols.Count > 1)
                 {
-                    var aliasTarget = ((AliasSymbol)bindingResult).GetAliasTarget(basesBeingResolved);
-                    if (aliasTarget.Kind == SymbolKind.NamedType && ((NamedTypeSymbol)aliasTarget).ContainsDynamic())
+                    symbols.AddRange(result.Symbols);
+                    bindingResult = null;
+                }
+                else
+                {
+                    bindingResult = ResultSymbol(result, identifierValueText, 0, node, diagnostics, suppressUseSiteDiagnostics, out wasError, qualifierOpt, options);
+                    if (bindingResult.Kind == SymbolKind.Alias)
                     {
-                        ReportUseSiteDiagnosticForDynamic(diagnostics, node);
+                        var aliasTarget = ((AliasSymbol)bindingResult).GetAliasTarget(basesBeingResolved);
+                        if (aliasTarget.Kind == SymbolKind.NamedType && ((NamedTypeSymbol)aliasTarget).ContainsDynamic())
+                        {
+                            ReportUseSiteDiagnosticForDynamic(diagnostics, node);
+                        }
+                    }
+                    if (isNameofArgument)
+                    {
+                        symbols.Add(bindingResult);
+                        bindingResult = null;
                     }
                 }
             }
@@ -1044,7 +1061,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <summary>
         /// Retrieves a well-known type member and reports diagnostics.
         /// </summary>
-        /// <retruns>Null if the symbol is missing.</retruns>
+        /// <returns>Null if the symbol is missing.</returns>
         internal static Symbol GetWellKnownTypeMember(CSharpCompilation compilation, WellKnownMember member, DiagnosticBag diagnostics, Location location = null, CSharpSyntaxNode syntax = null, bool isOptional = false)
         {
             Debug.Assert((syntax != null) ^ (location != null));
@@ -1717,8 +1734,6 @@ namespace Microsoft.CodeAnalysis.CSharp
             bool encounteredForwardingCycle;
             string fullName;
 
-            string arityString = arity == 0 ? "" : ("`" + arity);
-
             if ((object)qualifierOpt != null)
             {
                 if (qualifierOpt.IsType)
@@ -1737,7 +1752,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                     bool qualifierIsCompilationGlobalNamespace = ReferenceEquals(qualifierOpt, Compilation.GlobalNamespace);
 
-                    fullName = simpleName + arityString;
+                    fullName = MetadataHelpers.ComposeAritySuffixedMetadataName(simpleName, arity);
                     if (!qualifierIsCompilationGlobalNamespace)
                     {
                         fullName = qualifierOpt.ToDisplayString(SymbolDisplayFormat.QualifiedNameOnlyFormat) + "." + fullName;
@@ -1787,7 +1802,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 return diagnostics.Add(code, location);
             }
 
-            fullName = simpleName + arityString;
+            fullName = MetadataHelpers.ComposeAritySuffixedMetadataName(simpleName, arity);
             forwardedToAssembly = GetForwardedToAssembly(fullName, arity, out encounteredForwardingCycle);
 
             if (encounteredForwardingCycle)

@@ -2,19 +2,19 @@
 <!-- Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="Settings">
-    <Import Project="..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
+    <Import Project="..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
     <Import Project="..\..\..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Settings.targets" />
   </ImportGroup>
   <PropertyGroup>
     <Nonshipping>true</Nonshipping>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <OutDir>..\..\..\..\..\Binaries\$(Configuration)\</OutDir>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <ProjectGuid>{7FE6B002-89D8-4298-9B1B-0B5C247DD1FD}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>Roslyn.Compilers.Test.Resources</AssemblyName>
     <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">..\..\..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
-    <OutDir>..\..\..\..\..\Binaries\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemGroup Label="File References">
     <Reference Include="System.Collections.Immutable">
@@ -52,6 +52,14 @@
     <PlatformTarget>ARM</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="AssemblyLoadTests\Alpha.cs" />
+    <Content Include="AssemblyLoadTests\Alpha.dll" />
+    <Content Include="AssemblyLoadTests\Beta.cs" />
+    <Content Include="AssemblyLoadTests\Beta.dll" />
+    <Content Include="AssemblyLoadTests\Delta.cs" />
+    <Content Include="AssemblyLoadTests\Delta.dll" />
+    <Content Include="AssemblyLoadTests\Gamma.cs" />
+    <Content Include="AssemblyLoadTests\Gamma.dll" />
     <Content Include="DiagnosticTests\badresfile.res" />
     <Content Include="DiagnosticTests\ErrTestLib01.cs" />
     <Content Include="DiagnosticTests\ErrTestLib01.dll" />
@@ -390,6 +398,11 @@
     <None Include="SymbolsTests\NoPia\MissingPIAAttributes.dll" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="AssemblyLoadTests\AssemblyLoadTests.resx">
+      <CustomToolNamespace>TestResources.AssemblyLoadTests</CustomToolNamespace>
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>AssemblyLoadTests.Designer.vb</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="DiagnosticTests\DiagnosticTests.resx">
       <CustomToolNamespace>TestResources.DiagnosticTests</CustomToolNamespace>
       <Generator>PublicResXFileCodeGenerator</Generator>
@@ -570,6 +583,11 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyLoadTests\AssemblyLoadTests.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>AssemblyLoadTests.resx</DependentUpon>
+    </Compile>
     <Compile Include="DiagnosticTests\DiagnosticTests.Designer.vb">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

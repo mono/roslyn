@@ -47,7 +47,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend Const ThenByMethod As String = "ThenBy"
         Friend Const UnnamedNamespaceErrName As String = "<Default>"
         Friend Const WhereMethod As String = "Where"
-        Friend Const LiftedMePrefix As String = "$VB$Me"
+        Friend Const LiftedMeName As String = "$VB$Me"
         Friend Const LiftedNonLocalPrefix As String = "$VB$NonLocal_"
         Friend Const LiftedLocalPrefix As String = "$VB$Local_"
         Friend Const ClosureClassPrefix As String = "_Closure$__"
@@ -72,13 +72,17 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend Const ForLoopObject As String = "VB$LoopObject"
         Friend Const ForDirection As String = "VB$LoopDirection"
 
-        Friend Const StateMachineTypeNameMask As String = "VB$StateMachine_{0}_{1}"
+        Friend Const StateMachineTypeNamePrefix As String = "VB$StateMachine_"
+        Friend Const StateMachineTypeNameMask As String = StateMachineTypeNamePrefix & "{0}_{1}"
         Friend Const StateMachineLocalNamePrefix As String = "$VB$ResumableLocal_"
         Friend Const StateMachineLocalNameMask As String = StateMachineLocalNamePrefix & "{1}${0}"
         Friend Const StateMachineExceptionLocalName As String = "$ex"
         Friend Const StateMachineReturnValueLocalName As String = "VB$returnTemp"
+
+        ' Microsoft.VisualStudio.VIL.VisualStudioHost.AsyncReturnStackFrame depends on these names.
         Friend Const StateMachineBuilderFieldName As String = "$Builder"
         Friend Const StateMachineStateFieldName As String = "$State"
+
         Friend Const StateMachineAwaiterFieldName As String = "$awaiter_{0}"
         Friend Const StateMachineStackSpillNameMask As String = "VB$StackSpill_${0}"
         Friend Const StateMachineExpressionCaptureNameMask As String = "VB$ExpressionCapture_${0}"

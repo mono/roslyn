@@ -3,7 +3,7 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="Settings">
     <Import Project="..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Settings.targets" />
-    <Import Project="..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
+    <Import Project="..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
   </ImportGroup>
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
@@ -74,6 +74,7 @@
     <InternalsVisibleToTest Include="Roslyn.Services.Editor.VisualBasic.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Services.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Services.VisualBasic.Perf" />
+    <InternalsVisibleToTest Include="Roslyn.VisualStudio.Services.UnitTests" />
     <InternalsVisibleToTest Include="RoslynConsoleRun" />
   </ItemGroup>
   <ItemGroup>
@@ -204,6 +205,7 @@
     <Compile Include="LanguageServices\VisualBasicSyntaxVersionService.vb" />
     <Compile Include="LanguageServices\VisualBasicTypeInferenceService.TypeInferrer.vb" />
     <Compile Include="LanguageServices\VisualBasicTypeInferenceService.vb" />
+    <Compile Include="LinkedFiles\BasicLinkedFileMergeConflictCommentAdditionService.vb" />
     <Compile Include="MSBuild\VisualBasicProjectFileLoader.vb" />
     <Compile Include="MSBuild\VisualBasicProjectFileLoaderFactory.vb" />
     <Compile Include="Recommendations\VisualBasicRecommendationService.vb" />

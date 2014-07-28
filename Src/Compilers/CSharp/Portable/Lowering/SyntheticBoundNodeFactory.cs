@@ -334,12 +334,12 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         public BoundBlock Block(params BoundStatement[] statements)
         {
-            return Block(ImmutableArray.Create<BoundStatement>(statements));
+            return Block(ImmutableArray.Create(statements));
         }
 
         public BoundBlock Block(ImmutableArray<LocalSymbol> locals, params BoundStatement[] statements)
         {
-            return Block(locals, ImmutableArray.Create<BoundStatement>(statements));
+            return Block(locals, ImmutableArray.Create(statements));
         }
 
         public BoundBlock Block(ImmutableArray<LocalSymbol> locals, ImmutableArray<BoundStatement> statements)
@@ -373,9 +373,9 @@ namespace Microsoft.CodeAnalysis.CSharp
             CurrentMethod = null;
         }
 
-        public LocalSymbol SynthesizedLocal(TypeSymbol type, string name = null, CSharpSyntaxNode syntax = null, bool isPinned = false, RefKind refKind = RefKind.None, TempKind tempKind = TempKind.None)
+        public LocalSymbol SynthesizedLocal(TypeSymbol type, CSharpSyntaxNode syntax = null, bool isPinned = false, RefKind refKind = RefKind.None, SynthesizedLocalKind kind = SynthesizedLocalKind.LoweringTemp)
         {
-            return new SynthesizedLocal(CurrentMethod, type, name, syntax, isPinned: isPinned, refKind: refKind, tempKind: tempKind);
+            return new SynthesizedLocal(CurrentMethod, type, kind, syntax, isPinned, refKind);
         }
 
         public ParameterSymbol SynthesizedParameter(TypeSymbol type, string name, MethodSymbol container = null, int ordinal = 0)
@@ -583,7 +583,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             return new BoundNullCoalescingOperator(Syntax, left, right, Conversion.Identity, left.Type) { WasCompilerGenerated = true };
         }
 
-        public BoundStatement If(BoundExpression condition, BoundStatement thenClause, BoundStatement elseClause)
+        public BoundStatement If(BoundExpression condition, BoundStatement thenClause, BoundStatement elseClauseOpt = null)
         {
             // We translate
             //    if (condition) thenClause else elseClause
@@ -596,17 +596,29 @@ namespace Microsoft.CodeAnalysis.CSharp
             //       elseClause
             //       afterif:
             //    }
-            Debug.Assert(thenClause != null && elseClause != null);
+            Debug.Assert(thenClause != null);
+
+            var statements = ArrayBuilder<BoundStatement>.GetInstance();
             var afterif = new GeneratedLabelSymbol("afterif");
-            var alt = new GeneratedLabelSymbol("alternative");
-            return Block(
-                new BoundConditionalGoto(Syntax, condition, false, alt) { WasCompilerGenerated = true },
-                thenClause,
-                Goto(afterif),
-                Label(alt),
-                elseClause,
-                Label(afterif)
-                );
+
+            if (elseClauseOpt != null)
+            {
+                var alt = new GeneratedLabelSymbol("alternative");
+
+                statements.Add(new BoundConditionalGoto(Syntax, condition, false, alt) { WasCompilerGenerated = true });
+                statements.Add(thenClause);
+                statements.Add(Goto(afterif));
+                statements.Add(Label(alt));
+                statements.Add(elseClauseOpt);
+            }
+            else
+            {
+                statements.Add(new BoundConditionalGoto(Syntax, condition, false, afterif) { WasCompilerGenerated = true });
+                statements.Add(thenClause);
+            }
+
+            statements.Add(Label(afterif));
+            return Block(statements.ToImmutableAndFree());
         }
 
         public BoundStatement For(BoundExpression initialization, BoundExpression termination, BoundExpression increment, BoundStatement body)
@@ -635,11 +647,6 @@ namespace Microsoft.CodeAnalysis.CSharp
                          ExpressionStatement(increment),
                          Label(lLoopCondition),
                          If(termination, Goto(lLoopStart)));
-        }
-
-        public BoundStatement If(BoundExpression condition, BoundStatement thenClause)
-        {
-            return If(condition, thenClause, Block());
         }
 
         public BoundThrowStatement Throw(BoundExpression e = null)
@@ -1021,22 +1028,25 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// Takes an expression and returns the bound local expression "temp" 
         /// and the bound assignment expression "temp = expr".
         /// </summary>
-        public BoundLocal StoreToTemp(BoundExpression argument, out BoundAssignmentOperator store, RefKind refKind = RefKind.None, TempKind tempKind = TempKind.None)
+        public BoundLocal StoreToTemp(BoundExpression argument, out BoundAssignmentOperator store, RefKind refKind = RefKind.None, SynthesizedLocalKind kind = SynthesizedLocalKind.LoweringTemp)
         {
             MethodSymbol containingMethod = this.CurrentMethod;
             var syntax = argument.Syntax;
             var type = argument.Type;
+
             var local = new BoundLocal(
                 syntax,
-                new SynthesizedLocal(containingMethod, type, syntax: (tempKind == TempKind.None) ? null : syntax, refKind: refKind, tempKind: tempKind),
+                new SynthesizedLocal(containingMethod, type, kind, syntax: kind.IsLongLived() ? syntax : null, refKind: refKind),
                 null,
                 type);
+
             store = new BoundAssignmentOperator(
                 syntax,
                 local,
                 argument,
                 refKind,
                 type);
+
             return local;
         }
 

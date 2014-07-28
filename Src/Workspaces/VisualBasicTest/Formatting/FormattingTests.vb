@@ -3874,22 +3874,22 @@ End Class</text>.Value)
         <Fact, Trait(Traits.Feature, Traits.Features.Formatting)>
         Public Sub TestWarningDirectives()
             Dim text = <Code>
-                           #  enable           warning[BC000],123,             "456",_789$'          comment
+                           #  enable           warning[BC000],bc123,             ap456,_789'          comment
 Module Program
         #   disable     warning   'Comment
     Sub Main()
-        #disable       warning          "123",            bc456,789
+        #disable       warning          bc123,            bC456,someId789
     End Sub
 End Module
         #   enable     warning    
 </Code>
 
             Dim expected = <Code>
-#enable warning [BC000], 123, "456", _789$'          comment
+#enable warning [BC000], bc123, ap456, _789'          comment
 Module Program
 #disable warning   'Comment
     Sub Main()
-#disable warning "123", bc456, 789
+#disable warning bc123, bC456, someId789
     End Sub
 End Module
 #enable warning
@@ -3903,15 +3903,77 @@ End Module
             Dim text = <Code>
 #   disable
 Module M1
-        #   enable     warning"123",   ' Comment   
+        #   enable     warning[bc123],   ' Comment   
 End Module
 </Code>
 
             Dim expected = <Code>
 #disable
 Module M1
-#enable warning "123",   ' Comment   
+#enable warning [bc123],   ' Comment   
 End Module
+</Code>
+
+            AssertFormatLf2CrLf(text.Value, expected.Value)
+        End Sub
+
+        <WorkItem(796562)>
+        <Fact, Trait(Traits.Feature, Traits.Features.Formatting)>
+        Public Sub TriviaAtEndOfCaseBelongsToNextCase()
+            Dim text = <Code>
+Class X
+    Function F(x As Integer) As Integer
+        Select Case x
+            Case 1
+                Return 2
+                ' This comment describes case 2.
+            Case 2,
+                Return 3
+        End Select
+
+        Return 5
+    End Function
+End Class
+</Code>
+
+            Dim expected = <Code>
+Class X
+    Function F(x As Integer) As Integer
+        Select Case x
+            Case 1
+                Return 2
+            ' This comment describes case 2.
+            Case 2,
+                Return 3
+        End Select
+
+        Return 5
+    End Function
+End Class
+</Code>
+
+            AssertFormatLf2CrLf(text.Value, expected.Value)
+        End Sub
+
+        <WorkItem(938188)>
+        <Fact, Trait(Traits.Feature, Traits.Features.Formatting)>
+        Public Sub XelementAttributeSpacing()
+            Dim text = <Code>
+Class X
+    Function F(x As Integer) As Integer
+        Dim x As XElement
+        x.@Foo= "Hello"
+    End Function
+End Class
+</Code>
+
+            Dim expected = <Code>
+Class X
+    Function F(x As Integer) As Integer
+        Dim x As XElement
+        x.@Foo = "Hello"
+    End Function
+End Class
 </Code>
 
             AssertFormatLf2CrLf(text.Value, expected.Value)

@@ -111,9 +111,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' lookup options accordingly.
         ''' </summary>
         Friend Overridable Function BinderSpecificLookupOptions(options As LookupOptions) As LookupOptions
-            ' When early binding attributes, extension methods should always be ignored.
-            Return If(IsEarlyAttributeBinder, options Or LookupOptions.IgnoreExtensionMethods, options)
+            Return m_containingBinder.BinderSpecificLookupOptions(options)
         End Function
+
+        Protected ReadOnly Property IgnoresAccessibility As Boolean
+            Get
+                Return (BinderSpecificLookupOptions(Nothing) And LookupOptions.IgnoreAccessibility) =
+                    LookupOptions.IgnoreAccessibility
+            End Get
+        End Property
 
         ''' <summary>
         ''' Lookup the given name in the binder and containing binders.
@@ -275,6 +281,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' access, use the qualifier type "accessThroughType" if not Nothing (if Nothing just check protected
         ''' access with no qualifier).
         ''' </summary>
+        ''' <remarks>
+        ''' Overriding methods should consider <see cref="IgnoresAccessibility"/>.
+        ''' </remarks>
         Public Overridable Function CheckAccessibility(sym As Symbol,
                                                        <[In], Out> ByRef useSiteDiagnostics As HashSet(Of DiagnosticInfo),
                                                        Optional accessThroughType As TypeSymbol = Nothing,

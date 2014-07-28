@@ -169,7 +169,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         internal abstract ImmutableArray<PropertySymbol> GetIndexerGroupWorker(CSharpSyntaxNode node, SymbolInfoOptions options, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// Gets a the constant value for a syntax node. This is overridden by various specializations of SemanticModel.
+        /// Gets the constant value for a syntax node. This is overridden by various specializations of SemanticModel.
         /// It can assume that CheckSyntaxNode and CanGetSemanticInfo have already been called, as well as that named
         /// argument nodes have been handled.
         /// </summary>
@@ -2723,7 +2723,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 Binder enclosingBinder = this.GetEnclosingBinder(GetAdjustedNodePosition(forEachStatement));
                 Binder foreachBinder = enclosingBinder.GetBinder(forEachStatement).WithAdditionalFlags(BinderFlags.SemanticModel);
                 LocalSymbol local = foreachBinder.Locals.FirstOrDefault();
-                return ((object)local != null && local.DeclarationKind == LocalDeclarationKind.ForEach)
+                return ((object)local != null && local.DeclarationKind == LocalDeclarationKind.ForEachIterationVariable)
                     ? local
                     : null;
             }
@@ -2744,7 +2744,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 Binder enclosingBinder = this.GetEnclosingBinder(GetAdjustedNodePosition(catchClause));
                 Binder catchBinder = enclosingBinder.GetBinder(catchClause).WithAdditionalFlags(BinderFlags.SemanticModel);
                 LocalSymbol local = catchBinder.Locals.FirstOrDefault();
-                return ((object)local != null && local.DeclarationKind == LocalDeclarationKind.Catch)
+                return ((object)local != null && local.DeclarationKind == LocalDeclarationKind.CatchVariable)
                     ? local
                     : null;
             }

@@ -3,10 +3,11 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="Settings">
     <Import Project="..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Settings.targets" />
-    <Import Project="..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
+    <Import Project="..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
   </ImportGroup>
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <OutDir>..\..\..\Binaries\$(Configuration)\</OutDir>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <ProjectGuid>{5F8D2414-064A-4B3A-9B42-8E2A04246BE5}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -15,7 +16,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
-    <OutDir>..\..\..\Binaries\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemGroup Label="File References">
     <Reference Include="System.Collections.Immutable">
@@ -853,6 +853,9 @@
     <Compile Include="Workspace\MSBuild\SolutionFile\ProjectBlock.cs" />
     <Compile Include="Workspace\MSBuild\SolutionFile\SectionBlock.cs" />
     <Compile Include="Workspace\MSBuild\SolutionFile\SolutionFile.cs" />
+    <Compile Include="Workspace\Solution\AbstractLinkedFileMergeConflictCommentAdditionService.cs" />
+    <Compile Include="Workspace\Solution\AdditionalDocumentStream.cs" />
+    <Compile Include="Workspace\Solution\TextDocumentState.cs" />
     <Compile Include="Workspace\Solution\BranchId.cs" />
     <Compile Include="Workspace\Solution\Document.cs">
       <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
@@ -863,6 +866,7 @@
     <Compile Include="Workspace\Solution\DocumentState.cs" />
     <Compile Include="Workspace\Solution\DocumentState.EquivalenceResult.cs" />
     <Compile Include="Workspace\Solution\DocumentState_SimpleProperties.cs" />
+    <Compile Include="Workspace\Solution\ILinkedFileMergeConflictCommentAdditionService.cs" />
     <Compile Include="Workspace\Solution\MetadataOnlyImage.cs" />
     <Compile Include="Workspace\Solution\MetadataOnlyReference.cs" />
     <Compile Include="Workspace\Solution\PreservationMode.cs" />
@@ -875,6 +879,7 @@
     <Compile Include="Workspace\Solution\ProjectInfo.cs" />
     <Compile Include="Workspace\Solution\ProjectReference.cs" />
     <Compile Include="Workspace\Solution\ProjectState.cs" />
+    <Compile Include="Workspace\Solution\TextDocument.cs" />
     <Compile Include="Workspace\Solution\RecoverableTextAndVersion.cs" />
     <Compile Include="Workspace\Solution\SemanticDocument.cs" />
     <Compile Include="Workspace\Solution\Solution.CompilationTracker.cs">
@@ -886,6 +891,8 @@
     <Compile Include="Workspace\Solution\Solution.cs">
       <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
     </Compile>
+    <Compile Include="Workspace\Solution\Solution.LinkedFileDiffMergingSession.cs" />
+    <Compile Include="Workspace\Solution\Solution.LinkedFileMergeResult.cs" />
     <Compile Include="Workspace\Solution\SolutionChanges.cs" />
     <Compile Include="Workspace\Solution\SolutionId.cs" />
     <Compile Include="Workspace\Solution\SolutionInfo.cs" />
@@ -894,6 +901,7 @@
     <Compile Include="Workspace\Solution\TextAndVersion.cs" />
     <Compile Include="Workspace\Solution\TextLoader.cs" />
     <Compile Include="Workspace\Solution\TreeAndVersion.cs" />
+    <Compile Include="Workspace\Solution\UnmergedDocumentChanges.cs" />
     <Compile Include="Workspace\Solution\VersionStamp.cs" />
     <Compile Include="Workspace\TextExtensions.cs" />
     <Compile Include="Workspace\Workspace.cs" />

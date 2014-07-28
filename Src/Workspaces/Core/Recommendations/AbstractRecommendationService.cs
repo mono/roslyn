@@ -60,11 +60,15 @@ namespace Microsoft.CodeAnalysis.Recommendations
                 case SymbolKind.Property:
                     isMember = true;
                     break;
+
+                case SymbolKind.TypeParameter:
+                    return ((ITypeParameterSymbol)symbol).TypeParameterKind != TypeParameterKind.Cref;
             }
 
             if (context.IsAttributeNameContext)
             {
-                return symbol.IsOrContainsAccessibleAttribute(context.SemanticModel.Compilation);
+                var enclosingSymbol = context.SemanticModel.GetEnclosingNamedType(context.LeftToken.SpanStart, cancellationToken);
+                return symbol.IsOrContainsAccessibleAttribute(enclosingSymbol, context.SemanticModel.Compilation.Assembly);
             }
 
             if (context.IsEnumTypeMemberAccessContext)

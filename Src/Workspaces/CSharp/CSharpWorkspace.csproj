@@ -3,7 +3,7 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="Settings">
     <Import Project="..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Settings.targets" />
-    <Import Project="..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4032713-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
+    <Import Project="..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
   </ImportGroup>
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
@@ -66,6 +66,7 @@
     <InternalsVisibleToTest Include="Roslyn.Services.Editor.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Services.Editor.UnitTests2" />
     <InternalsVisibleToTest Include="Roslyn.Services.UnitTests" />
+    <InternalsVisibleToTest Include="Roslyn.VisualStudio.CSharp.UnitTests" />
     <InternalsVisibleToTest Include="RoslynConsoleRun" />
   </ItemGroup>
   <ItemGroup>
@@ -117,9 +118,10 @@
     <Compile Include="Extensions\BaseArgumentListSyntaxExtensions.cs" />
     <Compile Include="Extensions\BaseParameterListSyntaxExtensions.cs" />
     <Compile Include="Extensions\BinaryExpressionSyntaxExtensions.cs" />
-    <Compile Include="Extensions\BreakpointSpans.cs" />
+    <Compile Include="Extensions\BreakpointSpans.cs">
+      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
+    </Compile>
     <Compile Include="Extensions\CastExpressionSyntaxExtensions.cs" />
-    <Compile Include="Extensions\CommonSyntaxNodeExtensions.cs" />
     <Compile Include="Extensions\CompilationUnitSyntaxExtensions.cs" />
     <Compile Include="Extensions\ContextQuery\CSharpSyntaxContext.cs" />
     <Compile Include="Extensions\ContextQuery\SyntaxNodeExtensions.cs" />
@@ -148,7 +150,6 @@
     <Compile Include="Extensions\OperatorPrecedence.cs" />
     <Compile Include="Extensions\ParenthesizedExpressionSyntaxExtensions.cs" />
     <Compile Include="Extensions\QueryExpressionSyntaxExtensions.cs" />
-    <Compile Include="Extensions\SemanticEquivalence.cs" />
     <Compile Include="Extensions\SeparatedSyntaxListExtensions.cs" />
     <Compile Include="Extensions\SimpleNameSyntaxExtensions.cs" />
     <Compile Include="Extensions\StatementSyntaxExtensions.cs" />
@@ -207,6 +208,7 @@
     <Compile Include="LanguageServices\CSharpSyntaxVersionService.cs" />
     <Compile Include="LanguageServices\CSharpTypeInferenceService.cs" />
     <Compile Include="LanguageServices\CSharpTypeInferenceService.TypeInferrer.cs" />
+    <Compile Include="LinkedFiles\CSharpLinkedFileMergeConflictCommentAdditionService.cs" />
     <Compile Include="MSBuild\CSharpProjectFileLoader.cs" />
     <Compile Include="MSBuild\CSharpProjectFileLoader.CSharpProjectFile.cs" />
     <Compile Include="MSBuild\CSharpProjectFileLoaderFactory.cs" />

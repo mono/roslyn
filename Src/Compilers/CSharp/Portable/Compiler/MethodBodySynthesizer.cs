@@ -363,7 +363,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             for (int i = 0; i < numTemps; i++)
             {
-                tmps[i] = new SynthesizedLocal(accessor, delegateType);
+                tmps[i] = new SynthesizedLocal(accessor, delegateType, SynthesizedLocalKind.LoweringTemp);
                 boundTmps[i] = new BoundLocal(syntax, tmps[i], null, delegateType);
             }
 
@@ -447,7 +447,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 resultKind: LookupResultKind.Viable,
                 type: boolType)
             { WasCompilerGenerated = true };
-
+            
             // branchfalse (tmp0 == tmp1) LOOP
             BoundStatement loopEnd = new BoundConditionalGoto(syntax,
                 condition: loopExitCondition,

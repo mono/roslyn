@@ -338,7 +338,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SymbolKind.Parameter:
                     // Parameters of a primary constructor are never captured, they are similar to fields.
                     var container = variable.ContainingSymbol as SourceMethodSymbol;
-                    if ((object)container != null && container.IsPrimaryCtor )
+                    if ((object)container != null && container.IsPrimaryCtor)
                     {
                         break;
                     }
@@ -1313,13 +1313,13 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             foreach (LocalSymbol local in localsOpt)
             {
-                if (local.DeclarationKind == LocalDeclarationKind.Variable)
+                if (local.DeclarationKind == LocalDeclarationKind.RegularVariable)
                 {
                     DeclareVariable(local);
                 }
                 else
                 {
-                    Debug.Assert(local.DeclarationKind == LocalDeclarationKind.Using);
+                    Debug.Assert(local.DeclarationKind == LocalDeclarationKind.UsingVariable);
                     int slot = MakeSlot(local);
                     if (slot >= 0)
                     {
@@ -1337,7 +1337,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             foreach (LocalSymbol local in localsOpt)
             {
-                if (local.DeclarationKind == LocalDeclarationKind.Variable)
+                if (local.DeclarationKind == LocalDeclarationKind.RegularVariable)
                 {
                     ReportIfUnused(local, assigned: true);
                 }
@@ -1355,13 +1355,13 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             foreach (LocalSymbol local in node.Locals)
             {
-                if (local.DeclarationKind == LocalDeclarationKind.Variable)
+                if (local.DeclarationKind == LocalDeclarationKind.RegularVariable)
                 {
                     DeclareVariable(local);
                 }
                 else
                 {
-                    Debug.Assert(local.DeclarationKind == LocalDeclarationKind.Fixed);
+                    Debug.Assert(local.DeclarationKind == LocalDeclarationKind.FixedVariable);
                     // TODO: should something be done about this local?
                 }
             }
@@ -1370,7 +1370,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             foreach (LocalSymbol local in node.Locals)
             {
-                if (local.DeclarationKind == LocalDeclarationKind.Variable)
+                if (local.DeclarationKind == LocalDeclarationKind.RegularVariable)
                 {
                     ReportIfUnused(local, assigned: true);
                 }
@@ -1785,7 +1785,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             foreach (var symbol in catchBlock.Locals)
             {
-                ReportIfUnused(symbol, assigned: symbol.DeclarationKind != LocalDeclarationKind.Catch);
+                ReportIfUnused(symbol, assigned: symbol.DeclarationKind != LocalDeclarationKind.CatchVariable);
             }
         }
 
