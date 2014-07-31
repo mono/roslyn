@@ -3,13 +3,14 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.IO;
 
 namespace Roslyn.Utilities
 {
     internal static class PathUtilities
     {
-        private const string DirectorySeparatorStr = "\\";
-        internal const char DirectorySeparatorChar = '\\';
+        private static readonly string DirectorySeparatorStr = Path.DirectorySeparatorChar.ToString ();
+        internal static readonly char DirectorySeparatorChar = Path.DirectorySeparatorChar;
         internal const char AltDirectorySeparatorChar = '/';
         internal const char VolumeSeparatorChar = ':';
 
@@ -144,7 +145,7 @@ namespace Roslyn.Utilities
         /// </summary>
         private static bool IsDriveRootedAbsolutePath(string path)
         {
-            return path.Length >= 3 && path[1] == VolumeSeparatorChar && IsDirectorySeparator(path[2]);
+            return path.Length >= 3 && path[1] == VolumeSeparatorChar && IsDirectorySeparator(path[2]) || (path [0] == '/' && DirectorySeparatorChar == '/');
         }
 
         /// <summary>
