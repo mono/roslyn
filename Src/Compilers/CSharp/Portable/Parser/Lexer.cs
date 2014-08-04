@@ -5,8 +5,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using Microsoft.CodeAnalysis.CSharp.Symbols;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 
@@ -740,9 +738,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                     goto default;
 
-                    // All the 'common' identifier characters are represented directly in
-                    // these switch cases for optimal perf.  Calling IsIdentifierChar() functions is relatively
-                    // expensive.
+                // All the 'common' identifier characters are represented directly in
+                // these switch cases for optimal perf.  Calling IsIdentifierChar() functions is relatively
+                // expensive.
                 case 'a':
                 case 'b':
                 case 'c':
@@ -1347,9 +1345,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     }
                     else if (SyntaxFacts.IsNewLine(ch) ||
                             (ch == SlidingTextWindow.InvalidCharacter && TextWindow.IsReallyAtEnd()))
-                            //String and character literals can contain any Unicode character. They are not limited
-                            //to valid UTF-16 characters. So if we get the SlidingTextWindow's sentinel value,
-                            //double check that it was not real user-code contents. This will be rare.
+                    //String and character literals can contain any Unicode character. They are not limited
+                    //to valid UTF-16 characters. So if we get the SlidingTextWindow's sentinel value,
+                    //double check that it was not real user-code contents. This will be rare.
                     {
                         Debug.Assert(TextWindow.Width > 0);
                         this.AddError(ErrorCode.ERR_NewlineInConst);
@@ -1674,8 +1672,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         currentOffset++;
                         continue;
 
-                        // case '@':  verbatim identifiers are handled in the slow path
-                        // case '\\': unicode escapes are handled in the slow path
+                    // case '@':  verbatim identifiers are handled in the slow path
+                    // case '\\': unicode escapes are handled in the slow path
                     default:
                         // Any other character is something we cannot handle.  i.e.
                         // unicode chars or an escape.  Just break out and move to
@@ -1695,6 +1693,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             {
                 TextWindow.AdvanceChar();
             }
+
+            bool isObjectAddress = false;
 
             while (true)
             {
@@ -1788,6 +1788,25 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         }
 
                     case '0':
+                        {
+                            if (this.identLen == 0)
+                            {
+                                // Debugger syntax allows @0x[hexdigit]+ for object address identifiers.
+                                if (info.IsVerbatim &&
+                                    this.ModeIs(LexerMode.DebuggerSyntax) &&
+                                    (char.ToLower(TextWindow.PeekChar(1)) == 'x'))
+                                {
+                                    isObjectAddress = true;
+                                }
+                                else
+                                {
+                                    goto LoopExit;
+                                }
+                            }
+
+                            // Again, these are the 'common' identifier characters...
+                            break;
+                        }
                     case '1':
                     case '2':
                     case '3':
@@ -1897,15 +1916,39 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     info.StringValue = TextWindow.Intern(this.identBuffer, 0, this.identLen);
                 }
 
+                if (isObjectAddress)
+                {
+                    // @0x[hexdigit]+
+                    const int objectAddressOffset = 2;
+                    Debug.Assert(string.Equals(info.Text.Substring(0, objectAddressOffset + 1), "@0x", StringComparison.OrdinalIgnoreCase));
+                    var valueText = TextWindow.Intern(this.identBuffer, objectAddressOffset, this.identLen - objectAddressOffset);
+                    // Verify valid hex value.
+                    if ((valueText.Length == 0) || !valueText.All(IsValidHexDigit))
+                    {
+                        goto Fail;
+                    }
+                    // Parse hex value to check for overflow.
+                    this.GetValueUInt64(valueText, isHex: true);
+                }
+
                 return true;
             }
-            else
+
+        Fail:
+            info.Text = null;
+            info.StringValue = null;
+            TextWindow.Reset(start);
+            return false;
+        }
+
+        private static bool IsValidHexDigit(char c)
+        {
+            if ((c >= '0') && (c <= '9'))
             {
-                info.Text = null;
-                info.StringValue = null;
-                TextWindow.Reset(start);
-                return false;
+                return true;
             }
+            c = char.ToLower(c);
+            return (c >= 'a') && (c <= 'f');
         }
 
         /// <summary>
@@ -1978,7 +2021,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             (TextWindow.PeekChar() == 'u' || TextWindow.PeekChar() == 'U'))
                         {
                             Debug.Assert(consumedSurrogate == SlidingTextWindow.InvalidCharacter, "Since consumedChar == '\\'");
-                            
+
                             info.HasIdentifierEscapeSequence = true;
 
                             TextWindow.Reset(beforeConsumed);
@@ -2173,7 +2216,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         {
                             // Let the parser decide which instances are actually keywords.
                             info.Kind = SyntaxKind.IdentifierToken;
-                            info.ContextualKind = SyntaxFacts.GetPreprocessorKeywordKind(info.Text);
+                            info.ContextualKind = keywordKind;
                         }
                         else
                         {
@@ -2373,7 +2416,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         private void ScanToEndOfLine()
         {
             char ch;
-            while (!SyntaxFacts.IsNewLine(ch = TextWindow.PeekChar()) && 
+            while (!SyntaxFacts.IsNewLine(ch = TextWindow.PeekChar()) &&
                 (ch != SlidingTextWindow.InvalidCharacter || !TextWindow.IsReallyAtEnd()))
             {
                 TextWindow.AdvanceChar();
@@ -2446,7 +2489,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 case '\r':      // Carriage Return
                 case '\n':      // Line-feed
                     break;
-                
+
                 default:
                     if (ch > 127 && SyntaxFacts.IsWhitespace(ch))
                     {
@@ -3691,7 +3734,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             // This first switch is for special characters.  If we see the corresponding
             // XML entities, we DO NOT want to take these actions.
-            switch(consumedChar)
+            switch (consumedChar)
             {
                 case '"':
                     if (this.ModeIs(LexerMode.XmlCrefDoubleQuote) || this.ModeIs(LexerMode.XmlNameDoubleQuote))
@@ -3978,7 +4021,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                 char nextChar;
                 char nextSurrogate;
-                if (TextWindow.TryScanXmlEntity(out nextChar, out nextSurrogate) 
+                if (TextWindow.TryScanXmlEntity(out nextChar, out nextSurrogate)
                     && nextChar == ch && nextSurrogate == SlidingTextWindow.InvalidCharacter)
                 {
                     return true;

@@ -2195,6 +2195,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;await&apos; cannot be used in an expression containing the type &apos;System.TypedReference&apos;.
+        /// </summary>
+        internal static string ERR_ByRefTypeAndAwait {
+            get {
+                return ResourceManager.GetString("ERR_ByRefTypeAndAwait", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Do not directly call your base class Finalize method. It is called automatically from your destructor..
         /// </summary>
         internal static string ERR_CallingBaseFinalizeDeprecated {
@@ -6326,6 +6335,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to An expression tree lambda may not contain a null propagating operator..
+        /// </summary>
+        internal static string ERR_NullPropagatingOpInExpressionTree {
+            get {
+                return ResourceManager.GetString("ERR_NullPropagatingOpInExpressionTree", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; has no base class and cannot call a base constructor.
         /// </summary>
         internal static string ERR_ObjectCallingBaseConstructor {
@@ -10430,6 +10448,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Expected identifier or numeric literal..
+        /// </summary>
+        internal static string WRN_IdentifierOrNumericLiteralExpected {
+            get {
+                return ResourceManager.GetString("WRN_IdentifierOrNumericLiteralExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid #pragma checksum syntax; should be #pragma checksum &quot;filename&quot; &quot;{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}&quot; &quot;XXXX...&quot;.
         /// </summary>
         internal static string WRN_IllegalPPChecksum {
@@ -10858,15 +10885,6 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string WRN_SequentialOnPartialClass {
             get {
                 return ResourceManager.GetString("WRN_SequentialOnPartialClass", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to String or numeric literal expected.
-        /// </summary>
-        internal static string WRN_StringOrNumericLiteralExpected {
-            get {
-                return ResourceManager.GetString("WRN_StringOrNumericLiteralExpected", resourceCulture);
             }
         }
         

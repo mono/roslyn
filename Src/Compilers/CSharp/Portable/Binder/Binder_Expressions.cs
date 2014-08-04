@@ -1243,30 +1243,16 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             var currentType = this.ContainingType;
             var declaringType = members[0].ContainingType;
-            var instanceType = (NamedTypeSymbol)declaringType.OriginalDefinition;
 
-            if (SynthesizeMethodGroupReceiverIsInstanceTypeOrAnyBaseInstanceType(instanceType, currentType))
+            HashSet<DiagnosticInfo> unused = null;
+            if (currentType.IsEqualToOrDerivedFrom(declaringType, ignoreDynamic: false, useSiteDiagnostics: ref unused))
             {
-                return ThisReference(syntax, wasCompilerGenerated: true);
+                return ThisReference(syntax, currentType, wasCompilerGenerated: true);
             }
             else
             {
                 return TryBindInteractiveReceiver(syntax, this.ContainingMemberOrLambda, currentType, declaringType);
             }
-        }
-
-        // is the instance type of symbol1 identical to the instance type of symbol2, or 
-        // the instance type of any base type of symbol2?
-        private static bool SynthesizeMethodGroupReceiverIsInstanceTypeOrAnyBaseInstanceType(NamedTypeSymbol symbol1, NamedTypeSymbol symbol2)
-        {
-            for (var current = symbol2; (object)current != null; current = current.BaseTypeNoUseSiteDiagnostics)
-            {
-                if (symbol1 == current.OriginalDefinition)
-                {
-                    return true;
-                }
-            }
-            return false;
         }
 
         private bool IsBindingImplicitlyTypedLocal(LocalSymbol symbol)
@@ -1423,7 +1409,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                                 VariableDeclaratorSyntax declarator;
                                 DeclarationExpressionSyntax declarationExpression;
 
-                                if (declarationParent != null && 
+                                if (declarationParent != null &&
                                     declarationParent.Kind == SyntaxKind.VariableDeclarator &&
                                     (declarator = (VariableDeclaratorSyntax)declarationParent) != null &&
                                     (declarationParent = declarator.Parent) != null &&
@@ -1439,25 +1425,25 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                                     // Skip parentheses and checked/unchecked expressions
                                     while (possibleArgument != null)
-                                {
+                                    {
                                         switch (possibleArgument.Kind)
-                            {
+                                        {
                                             case SyntaxKind.ParenthesizedExpression:
                                             case SyntaxKind.CheckedExpression:
                                             case SyntaxKind.UncheckedExpression:
                                                 possibleArgument = possibleArgument.Parent;
                                                 continue;
-                        }
+                                        }
 
                                         break;
-                    }
+                                    }
 
                                     if (possibleArgument != null && possibleArgument.Kind == SyntaxKind.Argument && possibleArgument.Parent != null)
-                    {
+                                    {
                                         bool isInTheSameArgumentList;
 
                                         switch (possibleArgument.Parent.Kind)
-                            {
+                                        {
                                             case SyntaxKind.ArgumentList:
                                                 isInTheSameArgumentList = node.SpanStart < ((ArgumentListSyntax)possibleArgument.Parent).CloseParenToken.SpanStart;
                                                 break;
@@ -1469,10 +1455,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                                             default:
                                                 isInTheSameArgumentList = false;
                                                 break;
-                            }
+                                        }
 
                                         if (isInTheSameArgumentList && sourceLocal.IsVar)
-                            {
+                                        {
                                             Error(diagnostics, ErrorCode.ERR_VariableUsedInTheSameArgumentList, node, node);
 
                                             // Treat this case as variable used before declaration, we might be able to infer type of the variable anyway and SemanticModel 
@@ -1482,12 +1468,12 @@ namespace Microsoft.CodeAnalysis.CSharp
                                     }
                                 }
                             }
-                            
+
                             if ((object)type == null)
                             {
                                 type = localSymbol.Type;
                             }
-                            }
+                        }
 
                         return new BoundLocal(node, localSymbol, constantValueOpt, type, hasErrors: isError);
                         }
@@ -1612,7 +1598,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 }
 
                 hasErrors = hasErrors || IsRefOrOutThisParameterCaptured(node, diagnostics);
-                return ThisReference(node, hasErrors, wasCompilerGenerated: true);
+                return ThisReference(node, currentType, hasErrors, wasCompilerGenerated: true);
             }
             else
             {
@@ -1763,17 +1749,17 @@ namespace Microsoft.CodeAnalysis.CSharp
                 hasErrors = IsRefOrOutThisParameterCaptured(node, diagnostics);
             }
 
-            return ThisReference(node, hasErrors);
+            return ThisReference(node, this.ContainingType, hasErrors);
         }
 
-        private BoundThisReference ThisReference(CSharpSyntaxNode node, bool hasErrors = false, bool wasCompilerGenerated = false)
+        private BoundThisReference ThisReference(CSharpSyntaxNode node, NamedTypeSymbol thisTypeOpt, bool hasErrors = false, bool wasCompilerGenerated = false)
         {
-            return new BoundThisReference(node, this.ContainingType ?? CreateErrorType(), hasErrors) { WasCompilerGenerated = wasCompilerGenerated };
+            return new BoundThisReference(node, thisTypeOpt ?? CreateErrorType(), hasErrors) { WasCompilerGenerated = wasCompilerGenerated };
         }
 
         private bool IsRefOrOutThisParameterCaptured(CSharpSyntaxNode node, DiagnosticBag diagnostics)
         {
-            ParameterSymbol thisSymbol = this.ThisParameter;
+            ParameterSymbol thisSymbol = this.ContainingMemberOrLambda.EnclosingThisSymbol();
             // If there is no this parameter, then it is definitely not captured and 
             // any diagnostic would be cascading.
             if ((object)thisSymbol != null && thisSymbol.ContainingSymbol != ContainingMemberOrLambda && thisSymbol.RefKind != RefKind.None)
@@ -3975,7 +3961,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     errorLocation = constructor.Locations[0];
                 }
 
-                BoundExpression receiver = new BoundThisReference(nonNullSyntax, initializerType) { WasCompilerGenerated = true };
+                BoundExpression receiver = ThisReference(nonNullSyntax, initializerType, wasCompilerGenerated: true);
 
                 if (initializerType.IsErrorType())
                 {
@@ -7705,13 +7691,6 @@ namespace Microsoft.CodeAnalysis.CSharp
             if (receiverType == null)
             {
                 Error(diagnostics, ErrorCode.ERR_BadUnaryOp, operatorToken.GetLocation(), operatorToken.Text, receiver.Display);
-                return BadExpression(receiverSyntax, receiver);
-            }
-
-            // receiver cannot have unconstrained generic type
-            if (!receiverType.IsReferenceType && !receiverType.IsValueType)
-            {
-                Error(diagnostics, ErrorCode.ERR_BadUnaryOp, operatorToken.GetLocation(), operatorToken.Text, receiverType);
                 return BadExpression(receiverSyntax, receiver);
             }
 

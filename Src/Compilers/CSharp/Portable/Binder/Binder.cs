@@ -258,20 +258,15 @@ namespace Microsoft.CodeAnalysis.CSharp
             get
             {
                 var member = this.ContainingMemberOrLambda;
-                var type = member as NamedTypeSymbol;
-                if ((object)type == null && (object)member != null)
-                {
-                    type = member.ContainingType;
-                }
-
-                return type;
+                Debug.Assert((object)member == null || member.Kind != SymbolKind.ErrorType);
+                return (object)member == null
+                    ? null
+                    : member.Kind == SymbolKind.NamedType
+                        ? (NamedTypeSymbol)member 
+                        : member.ContainingType;
             }
         }
 
-        internal ParameterSymbol ThisParameter
-        {
-            get { return this.ContainingMemberOrLambda.EnclosingThisSymbol(); }
-        }
 
         /// <summary>
         /// Returns true if the binder is binding top-level script code.

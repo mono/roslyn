@@ -14,9 +14,10 @@ using System.Threading.Tasks;
 namespace Microsoft.CodeAnalysis.Diagnostics
 {
     /// <summary>
-    /// A proposed replacement for AnalyzerDriver that uses a <see cref="AsyncQueue{TElement}"/> of <see cref="CompilationEvent"/>s to drive its analysis.
+    /// Driver to execute diagnostic analyzers for a given compilation.
+    /// It uses a <see cref="AsyncQueue{TElement}"/> of <see cref="CompilationEvent"/>s to drive its analysis.
     /// </summary>
-    public abstract class AnalyzerDriver3 : IDisposable
+    public abstract class AnalyzerDriver : IDisposable
     {
         readonly TimeSpan timeoutPeriod = TimeSpan.FromMinutes(2); // 2 minutes timeout. TODO: configurable?
         private static readonly ConditionalWeakTable<Compilation, SuppressMessageAttributeState> suppressMessageStateByCompilation = new ConditionalWeakTable<Compilation, SuppressMessageAttributeState>();
@@ -54,7 +55,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             get; private set;
         }
 
-        internal static Compilation AttachAnalyzerDriverToCompilation(Compilation compilation, ImmutableArray<IDiagnosticAnalyzer> analyzers, out AnalyzerDriver3 analyzerDriver3, AnalyzerOptions options, CancellationToken cancellationToken)
+        internal static Compilation AttachAnalyzerDriverToCompilation(Compilation compilation, ImmutableArray<IDiagnosticAnalyzer> analyzers, out AnalyzerDriver analyzerDriver3, AnalyzerOptions options, CancellationToken cancellationToken)
         {
             analyzerDriver3 = compilation.AnalyzerForLanguage(analyzers, options, cancellationToken);
             return compilation.WithEventQueue(analyzerDriver3.CompilationEventQueue);
@@ -66,7 +67,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         /// <param name="analyzers">The set of analyzers to include in the analysis</param>
         /// <param name="options">Options that are passed to analyzers</param>
         /// <param name="cancellationToken">a cancellation token that can be used to abort analysis</param>
-        protected AnalyzerDriver3(ImmutableArray<IDiagnosticAnalyzer> analyzers, AnalyzerOptions options, CancellationToken cancellationToken)
+        protected AnalyzerDriver(ImmutableArray<IDiagnosticAnalyzer> analyzers, AnalyzerOptions options, CancellationToken cancellationToken)
         {
             CompilationEventQueue = new AsyncQueue<CompilationEvent>();
             DiagnosticQueue = new AsyncQueue<Diagnostic>();
@@ -160,7 +161,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             }
         }
 
-        private async Task InitialWorker(ImmutableArray<IDiagnosticAnalyzer> analyzers, bool continueOnError, CancellationToken cancellationToken)
+        private async Task InitialWorker(ImmutableArray<IDiagnosticAnalyzer> initialAnalyzers, bool continueOnError, CancellationToken cancellationToken)
         {
             // Pull out the first event, which should be the "start compilation" event.
             var firstEvent = await CompilationEventQueue.DequeueAsync(/*cancellationToken*/).ConfigureAwait(false);
@@ -181,21 +182,21 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             Interlocked.CompareExchange(ref this.compilation, compilation, null);
 
             // Compute the set of effective analyzers based on suppression, and running the initial analyzers
-            var effectiveAnalyzers = GetEffectiveAnalyzers(analyzers, compilation, analyzerOptions, addDiagnostic, continueOnError, cancellationToken);
+            var effectiveAnalyzers = GetEffectiveAnalyzers(initialAnalyzers, compilation, analyzerOptions, addDiagnostic, continueOnError, cancellationToken);
             
             ImmutableInterlocked.InterlockedInitialize(ref this.analyzers, effectiveAnalyzers);
             ImmutableInterlocked.InterlockedInitialize(ref declarationAnalyzersByKind, MakeDeclarationAnalyzersByKind());
-            ImmutableInterlocked.InterlockedInitialize(ref bodyAnalyzers, analyzers.OfType<ICodeBlockNestedAnalyzerFactory>().ToImmutableArray());
-            ImmutableInterlocked.InterlockedInitialize(ref semanticModelAnalyzers, analyzers.OfType<ISemanticModelAnalyzer>().ToImmutableArray());
-            ImmutableInterlocked.InterlockedInitialize(ref codeBlockStartedAnalyzers, analyzers.OfType<ICodeBlockNestedAnalyzerFactory>().ToImmutableArray());
-            ImmutableInterlocked.InterlockedInitialize(ref codeBlockEndedAnalyzers, analyzers.OfType<ICodeBlockAnalyzer>().ToImmutableArray());
+            ImmutableInterlocked.InterlockedInitialize(ref bodyAnalyzers, effectiveAnalyzers.OfType<ICodeBlockNestedAnalyzerFactory>().ToImmutableArray());
+            ImmutableInterlocked.InterlockedInitialize(ref semanticModelAnalyzers, effectiveAnalyzers.OfType<ISemanticModelAnalyzer>().ToImmutableArray());
+            ImmutableInterlocked.InterlockedInitialize(ref codeBlockStartedAnalyzers, effectiveAnalyzers.OfType<ICodeBlockNestedAnalyzerFactory>().ToImmutableArray());
+            ImmutableInterlocked.InterlockedInitialize(ref codeBlockEndedAnalyzers, effectiveAnalyzers.OfType<ICodeBlockAnalyzer>().ToImmutableArray());
 
             // Invoke the syntax tree analyzers
             // TODO: How can the caller restrict this to one or a set of trees, or a span in a tree, rather than all trees in the compilation?
             var syntaxAnalyzers = ArrayBuilder<Task>.GetInstance();
             foreach (var tree in compilation.SyntaxTrees)
             {
-                foreach (var a in analyzers.OfType<ISyntaxTreeAnalyzer>())
+                foreach (var a in effectiveAnalyzers.OfType<ISyntaxTreeAnalyzer>())
                 {
                     var runningAsynchronously = Task.Run(() =>
                     {
@@ -220,9 +221,6 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             }
 
             ImmutableInterlocked.InterlockedInitialize(ref this.workers, workers.ToImmutableAndFree());
-
-            // TODO: Analyze nodes for those parts of each syntax tree that are not inside declarations that are analyzed.
-            // For example, compilation units and namespaces, usings, etc. Perhaps those should be processed here?
         }
 
         private ImmutableArray<ImmutableArray<ISymbolAnalyzer>> MakeDeclarationAnalyzersByKind()
@@ -356,25 +354,33 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                 }
             }
 
-            // TODO: what about syntax references elsewhere, for example in a class base clause?
-            switch (symbol.Kind)
+            foreach (var decl in symbol.DeclaringSyntaxReferences)
             {
-                // TODO: what about other syntax, such as base clauses, using directives, top-level attributes, etc?
-                case SymbolKind.Method:
-                case SymbolKind.Field:
-                case SymbolKind.Event: // TODO: should this be restricted to field-like events?
-                    foreach (var decl in symbol.DeclaringSyntaxReferences)
-                    {
-                        tasks.Add(AnalyzeDeclaringReference(symbolEvent, decl, addDiagnostic, cancellationToken));
-                    }
-                    break;
+                tasks.Add(AnalyzeDeclaringReference(symbolEvent, decl, addDiagnostic, cancellationToken));
             }
 
             return Task.WhenAll(tasks.ToImmutableAndFree());
         }
 
-        protected abstract Task AnalyzeDeclaringReference(SymbolDeclaredCompilationEvent symbolEvent, SyntaxReference decl, Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken);
+        protected bool CanHaveExecutableCodeBlock(ISymbol symbol)
+        {
+            switch (symbol.Kind)
+            {
+                case SymbolKind.Method:
+                case SymbolKind.Event:
+                    return true;
 
+                case SymbolKind.Field:
+                    // Check if this is not a compiler generated backing field.
+                    return ((IFieldSymbol)symbol).AssociatedSymbol == null;
+
+                default:
+                    return false;
+            }
+        }
+
+        protected abstract Task AnalyzeDeclaringReference(SymbolDeclaredCompilationEvent symbolEvent, SyntaxReference decl, Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken);
+        
         private Task ProcessCompilationUnitCompleted(CompilationUnitCompletedEvent completedEvent, CancellationToken cancellationToken)
         {
             // When the compiler is finished with a compilation unit, we can run user diagnostics which
@@ -428,7 +434,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             DiagnosticQueue.Complete();
         }
 
-        private Action<Diagnostic> GetDiagnosticSinkWithSuppression(ISymbol symbolOpt = null)
+        internal protected Action<Diagnostic> GetDiagnosticSinkWithSuppression(ISymbol symbolOpt = null)
         {
             return diagnostic =>
             {
@@ -601,11 +607,13 @@ namespace Microsoft.CodeAnalysis.Diagnostics
     }
 
     /// <summary>
-    /// A proposed replacement for AnalyzerDriver that uses a <see cref="AsyncQueue{TElement}"/> of <see cref="CompilationEvent"/>s to drive its analysis.
+    /// Driver to execute diagnostic analyzers for a given compilation.
+    /// It uses a <see cref="AsyncQueue{TElement}"/> of <see cref="CompilationEvent"/>s to drive its analysis.
     /// </summary>
-    public class AnalyzerDriver3<TSyntaxKind> : AnalyzerDriver3
+    public class AnalyzerDriver<TSyntaxKind> : AnalyzerDriver
     {
         private Func<SyntaxNode, TSyntaxKind> GetKind;
+        private ImmutableDictionary<TSyntaxKind, ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>>> lazyNodeAnalyzersByKind = null;
 
         /// <summary>
         /// Create an analyzer driver.
@@ -614,78 +622,110 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         /// <param name="getKind">A delegate that returns the language-specific kind for a given syntax node</param>
         /// <param name="options">Options that are passed to analyzers</param>
         /// <param name="cancellationToken">a cancellation token that can be used to abort analysis</param>
-        public AnalyzerDriver3(ImmutableArray<IDiagnosticAnalyzer> analyzers, Func<SyntaxNode, TSyntaxKind> getKind, AnalyzerOptions options, CancellationToken cancellationToken) : base(analyzers, options, cancellationToken)
+        public AnalyzerDriver(ImmutableArray<IDiagnosticAnalyzer> analyzers, Func<SyntaxNode, TSyntaxKind> getKind, AnalyzerOptions options, CancellationToken cancellationToken) : base(analyzers, options, cancellationToken)
         {
             GetKind = getKind;
+        }
+
+        private ImmutableDictionary<TSyntaxKind, ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>>> NodeAnalyzersByKind
+        {
+            get
+            {
+                if (lazyNodeAnalyzersByKind == null)
+                {
+                    var nodeAnalyzers = base.analyzers.OfType<ISyntaxNodeAnalyzer<TSyntaxKind>>();
+                    var analyzersByKind = PooledDictionary<TSyntaxKind, ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>>>.GetInstance();
+                    if (nodeAnalyzers.Any())
+                    {
+                        var addDiagnostic = GetDiagnosticSinkWithSuppression();
+                        AddNodeAnalyzersByKind(nodeAnalyzers, analyzersByKind, addDiagnostic);
+                    }
+
+                    lazyNodeAnalyzersByKind = analyzersByKind.ToImmutableDictionaryOrEmpty();
+                }
+
+                return lazyNodeAnalyzersByKind;
+            }
         }
 
         protected override async Task AnalyzeDeclaringReference(SymbolDeclaredCompilationEvent symbolEvent, SyntaxReference decl, Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken)
         {
             var symbol = symbolEvent.Symbol;
-            var syntax = await decl.GetSyntaxAsync().ConfigureAwait(false);
+            SemanticModel semanticModel = symbolEvent.SemanticModel(decl);
+            var declaringSyntax = await decl.GetSyntaxAsync().ConfigureAwait(false);
+            var syntax = semanticModel.GetTopmostNodeForDiagnosticAnalysis(symbol, declaringSyntax);
+
             var endedAnalyzers = ArrayBuilder<ICodeBlockAnalyzer>.GetInstance();
-            endedAnalyzers.AddRange(codeBlockEndedAnalyzers);
             var nodeAnalyzers = ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>>.GetInstance();
-            nodeAnalyzers.AddRange(analyzers.OfType<ISyntaxNodeAnalyzer<TSyntaxKind>>());
-            foreach (var da in codeBlockStartedAnalyzers)
+
+            var hasExecutableCode = CanHaveExecutableCodeBlock(symbol);
+            if (hasExecutableCode)
             {
-                // Catch Exception from da.OnCodeBlockStarted
-                ExecuteAndCatchIfThrows(da, addDiagnostic, continueOnError, cancellationToken, () =>
+                endedAnalyzers.AddRange(codeBlockEndedAnalyzers);
+                foreach (var da in codeBlockStartedAnalyzers)
                 {
-                    var blockStatefulAnalyzer = da.CreateAnalyzerWithinCodeBlock(syntax, symbol, symbolEvent.SemanticModel(decl), analyzerOptions, cancellationToken);
-                    var endedAnalyzer = blockStatefulAnalyzer as ICodeBlockAnalyzer;
-                    if (endedAnalyzer != null)
+                    // Catch Exception from da.OnCodeBlockStarted
+                    ExecuteAndCatchIfThrows(da, addDiagnostic, continueOnError, cancellationToken, () =>
                     {
-                        endedAnalyzers.Add(endedAnalyzer);
-                    }
-                    var nodeAnalyzer = blockStatefulAnalyzer as ISyntaxNodeAnalyzer<TSyntaxKind>;
-                    if (nodeAnalyzer != null)
-                    {
-                        nodeAnalyzers.Add(nodeAnalyzer);
-                    }
-                });
+                        var blockStatefulAnalyzer = da.CreateAnalyzerWithinCodeBlock(syntax, symbol, semanticModel, analyzerOptions, cancellationToken);
+                        var endedAnalyzer = blockStatefulAnalyzer as ICodeBlockAnalyzer;
+                        if (endedAnalyzer != null)
+                        {
+                            endedAnalyzers.Add(endedAnalyzer);
+                        }
+
+                        var nodeAnalyzer = blockStatefulAnalyzer as ISyntaxNodeAnalyzer<TSyntaxKind>;
+                        if (nodeAnalyzer != null)
+                        {
+                            nodeAnalyzers.Add(nodeAnalyzer);
+                        }
+                    });
+                }
             }
 
             PooledDictionary<TSyntaxKind, ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>>> nodeAnalyzersByKind = null;
-            foreach (var nodeAnalyzer in nodeAnalyzers)
+
+            if (this.NodeAnalyzersByKind.Any() || nodeAnalyzers.Any())
             {
-                // Catch Exception from  nodeAnalyzer.SyntaxKindsOfInterest
-                try
+                nodeAnalyzersByKind = PooledDictionary<TSyntaxKind, ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>>>.GetInstance();
+                foreach (var kvp in this.NodeAnalyzersByKind)
                 {
-                    foreach (var kind in nodeAnalyzer.SyntaxKindsOfInterest)
-                    {
-                        if (nodeAnalyzersByKind == null) nodeAnalyzersByKind = PooledDictionary<TSyntaxKind, ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>>>.GetInstance();
-                        ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>> analyzersForKind;
-                        if (!nodeAnalyzersByKind.TryGetValue(kind, out analyzersForKind))
-                        {
-                            nodeAnalyzersByKind.Add(kind, analyzersForKind = ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>>.GetInstance());
-                        }
-                        analyzersForKind.Add(nodeAnalyzer);
-                    }
+                    var builder = ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>>.GetInstance();
+                    builder.AddRange(kvp.Value);
+                    nodeAnalyzersByKind.Add(kvp.Key, builder);
                 }
-                catch (Exception e)
+
+                if (nodeAnalyzers.Any())
                 {
-                    // Create a info diagnostic saying that the analyzer failed
-                    addDiagnostic(GetAnalyzerDiagnostic(nodeAnalyzer, e));
+                    AddNodeAnalyzersByKind(nodeAnalyzers, nodeAnalyzersByKind, addDiagnostic);
                 }
             }
+
             nodeAnalyzers.Free();
 
-            SemanticModel semanticModel = (nodeAnalyzersByKind != null || endedAnalyzers.Any()) ? symbolEvent.SemanticModel(decl) : null;
             if (nodeAnalyzersByKind != null)
             {
-                foreach (var child in syntax.DescendantNodesAndSelf())
+                // Eliminate syntax nodes for descendant member declarations within declarations.
+                // There will be separate symbols declared for the members, hence we avoid duplicate syntax analysis by skipping these here.
+                HashSet<SyntaxNode> descendantDeclsToSkip = null;
+                foreach (var declInNode in semanticModel.DeclarationsInNodeInternal(syntax))
                 {
-                    ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>> analyzersForKind;
-                    if (nodeAnalyzersByKind.TryGetValue(GetKind(child), out analyzersForKind))
+                    if (declInNode.Declaration != syntax)
                     {
-                        foreach (var analyzer in analyzersForKind)
+                        if (descendantDeclsToSkip == null)
                         {
-                            // Catch Exception from analyzer.AnalyzeNode
-                            ExecuteAndCatchIfThrows(analyzer, addDiagnostic, continueOnError, cancellationToken, () => analyzer.AnalyzeNode(child, semanticModel, addDiagnostic, analyzerOptions, cancellationToken));
+                            descendantDeclsToSkip = new HashSet<SyntaxNode>();
                         }
+
+                        descendantDeclsToSkip.Add(declInNode.Declaration);
                     }
                 }
+
+                var nodesToAnalyze = descendantDeclsToSkip == null ?
+                    syntax.DescendantNodesAndSelf(descendIntoTrivia: true) :
+                    syntax.DescendantNodesAndSelf(n => !descendantDeclsToSkip.Contains(n), descendIntoTrivia: true).Except(descendantDeclsToSkip);
+
+                ExecuteSyntaxAnalyzers(nodesToAnalyze, nodeAnalyzersByKind.ToImmutableDictionary(), semanticModel, addDiagnostic, cancellationToken);
 
                 foreach (var b in nodeAnalyzersByKind.Values)
                 {
@@ -702,6 +742,67 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             }
 
             endedAnalyzers.Free();
+        }
+
+        private static void AddNodeAnalyzersByKind(IEnumerable<ISyntaxNodeAnalyzer<TSyntaxKind>> nodeAnalyzers, Dictionary<TSyntaxKind, ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>>> nodeAnalyzersByKind, Action<Diagnostic> addDiagnostic)
+        {
+            Debug.Assert(nodeAnalyzersByKind != null);
+            Debug.Assert(nodeAnalyzers != null && nodeAnalyzers.Any());
+
+            foreach (var nodeAnalyzer in nodeAnalyzers)
+            {
+                // Catch Exception from nodeAnalyzer.SyntaxKindsOfInterest
+                try
+                {
+                    foreach (var kind in nodeAnalyzer.SyntaxKindsOfInterest)
+                    {
+                        ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>> analyzersForKind;
+                        if (!nodeAnalyzersByKind.TryGetValue(kind, out analyzersForKind))
+                        {
+                            nodeAnalyzersByKind.Add(kind, analyzersForKind = ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>>.GetInstance());
+                        }
+                        analyzersForKind.Add(nodeAnalyzer);
+                    }
+                }
+                catch (Exception e)
+                {
+                    // Create a info diagnostic saying that the analyzer failed
+                    addDiagnostic(GetAnalyzerDiagnostic(nodeAnalyzer, e));
+                }
+            }
+        }
+
+        private void ExecuteSyntaxAnalyzers(
+            IEnumerable<SyntaxNode> nodesToAnalyze,
+            ImmutableDictionary<TSyntaxKind, ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>>> nodeAnalyzersByKind,
+            SemanticModel model,
+            Action<Diagnostic> addDiagnostic,
+            CancellationToken cancellationToken)
+        {
+            Debug.Assert(nodeAnalyzersByKind != null);
+            Debug.Assert(nodeAnalyzersByKind.Any());
+
+            foreach (var child in nodesToAnalyze)
+            {
+                ArrayBuilder<ISyntaxNodeAnalyzer<TSyntaxKind>> analyzersForKind;
+                if (nodeAnalyzersByKind.TryGetValue(GetKind(child), out analyzersForKind))
+                {
+                    foreach (var analyzer in analyzersForKind)
+                    {
+                        // Catch Exception from analyzer.AnalyzeNode
+                        ExecuteAndCatchIfThrows(analyzer, addDiagnostic, continueOnError, cancellationToken, () => analyzer.AnalyzeNode(child, model, addDiagnostic, analyzerOptions, cancellationToken));
+                    }
+                }
+            }
+        }
+
+        public new void Dispose()
+        {
+            base.Dispose();
+            foreach (var kvp in this.NodeAnalyzersByKind)
+            {
+                kvp.Value.Free();
+            }
         }
     }
 }

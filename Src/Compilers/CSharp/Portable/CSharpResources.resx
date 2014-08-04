@@ -3024,6 +3024,9 @@
   <data name="ERR_VarargsAsync" xml:space="preserve">
     <value>__arglist is not allowed in the parameter list of async methods</value>
   </data>
+  <data name="ERR_ByRefTypeAndAwait" xml:space="preserve">
+    <value>'await' cannot be used in an expression containing the type 'System.TypedReference'</value>
+  </data>
   <data name="ERR_UnsafeAsyncArgType" xml:space="preserve">
     <value>Async methods cannot have unsafe parameters or return types</value>
   </data>
@@ -3807,8 +3810,8 @@
   <data name="OperationCausedStackOverflow" xml:space="preserve">
     <value>Operation caused a stack overflow.</value>
   </data>
-  <data name="WRN_StringOrNumericLiteralExpected" xml:space="preserve">
-    <value>String or numeric literal expected</value>
+  <data name="WRN_IdentifierOrNumericLiteralExpected" xml:space="preserve">
+    <value>Expected identifier or numeric literal.</value>
   </data>
   <data name="ERR_SeveralPartialsDeclarePrimaryCtor" xml:space="preserve">
     <value>Only one part of a partial type can declare primary constructor parameters.</value>
@@ -3863,6 +3866,9 @@
   </data>
   <data name="ERR_UnexpectedBoundGenericName" xml:space="preserve">
     <value>Type arguments are not allowed in the nameof operator.</value>
+  </data>
+  <data name="ERR_NullPropagatingOpInExpressionTree" xml:space="preserve">
+    <value>An expression tree lambda may not contain a null propagating operator.</value>
   </data>
   <data name="IDS_FeatureNameof" xml:space="preserve">
     <value>nameof operator</value>
