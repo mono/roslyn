@@ -7,6 +7,7 @@
   </ImportGroup>
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <OutDir>..\..\..\Binaries\$(Configuration)\</OutDir>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <ProjectGuid>{21B239D0-D144-430F-A394-C066D58EE267}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -15,7 +16,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
-    <OutDir>..\..\..\Binaries\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemGroup Label="File References">
     <Reference Include="System.Collections.Immutable">
@@ -205,7 +205,6 @@
     <Compile Include="LanguageServices\CSharpSyntaxTreeFactoryService.NullSyntaxReference.cs" />
     <Compile Include="LanguageServices\CSharpSyntaxTreeFactoryService.PositionalSyntaxReference.cs" />
     <Compile Include="LanguageServices\CSharpSyntaxTreeFactoryService.RecoverableSyntaxTree.cs" />
-    <Compile Include="LanguageServices\CSharpSyntaxVersionService.cs" />
     <Compile Include="LanguageServices\CSharpTypeInferenceService.cs" />
     <Compile Include="LanguageServices\CSharpTypeInferenceService.TypeInferrer.cs" />
     <Compile Include="LinkedFiles\CSharpLinkedFileMergeConflictCommentAdditionService.cs" />
@@ -268,8 +267,8 @@
   </ItemGroup>
   <ImportGroup Label="Targets">
     <Import Project="..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Imports.targets" />
-    <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
     <Import Project="..\..\packages\StyleCop.MSBuild.4.7.48.2\build\StyleCop.MSBuild.Targets" Condition="Exists('..\..\packages\StyleCop.MSBuild.4.7.48.2\build\StyleCop.MSBuild.Targets')" />
+    <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

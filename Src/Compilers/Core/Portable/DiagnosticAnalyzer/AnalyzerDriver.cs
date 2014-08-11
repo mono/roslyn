@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using Microsoft.CodeAnalysis.Collections;
+using Roslyn.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -19,7 +20,6 @@ namespace Microsoft.CodeAnalysis.Diagnostics
     /// </summary>
     public abstract class AnalyzerDriver : IDisposable
     {
-        readonly TimeSpan timeoutPeriod = TimeSpan.FromMinutes(2); // 2 minutes timeout. TODO: configurable?
         private static readonly ConditionalWeakTable<Compilation, SuppressMessageAttributeState> suppressMessageStateByCompilation = new ConditionalWeakTable<Compilation, SuppressMessageAttributeState>();
 
         private const string DiagnosticId = "AnalyzerDriver";
@@ -98,18 +98,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             var allDiagnostics = DiagnosticBag.GetInstance();
             if (CompilationEventQueue.IsCompleted)
             {
-                Task completed = DiagnosticQueue.WhenCompleted;
-                Task timeout = Task.Delay(timeoutPeriod);
-                if (await Task.WhenAny(completed, timeout).ConfigureAwait(false) == timeout)
-                {
-                    var desc = new DiagnosticDescriptor(DiagnosticId,
-                          CodeAnalysisResources.CompilerAnalyzerFailure,
-                          "event queue completed but not diagnostic queue after " + timeoutPeriod,
-                          category: Diagnostic.CompilerDiagnosticCategory,
-                          defaultSeverity: DiagnosticSeverity.Error,
-                          isEnabledByDefault: true);
-                    allDiagnostics.Add(Diagnostic.Create(desc, Location.None));
-                }
+                await DiagnosticQueue.WhenCompleted.ConfigureAwait(false);
             }
 
             Diagnostic d;
@@ -135,30 +124,9 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         /// </summary>
         public async Task WhenCompleted()
         {
-            Task completed = CompilationEventQueue.WhenCompleted;
-            Task timeout = Task.Delay(timeoutPeriod);
-            if (await Task.WhenAny(completed, timeout).ConfigureAwait(false) == timeout)
-            {
-                var desc = new DiagnosticDescriptor(DiagnosticId,
-                      CodeAnalysisResources.CompilerAnalyzerFailure,
-                      "compilation event queue not completed after " + timeoutPeriod,
-                      category: Diagnostic.CompilerDiagnosticCategory,
-                      defaultSeverity: DiagnosticSeverity.Error,
-                      isEnabledByDefault: true);
-                addDiagnostic(Diagnostic.Create(desc, Location.None));
-            }
-
-            Task timeout2 = Task.Delay(timeoutPeriod);
-            if (await Task.WhenAny(Task.WhenAll(workers), timeout2).ConfigureAwait(false) == timeout2)
-            {
-                var desc = new DiagnosticDescriptor(DiagnosticId,
-                      CodeAnalysisResources.CompilerAnalyzerFailure,
-                      "workers not completed after " + timeoutPeriod,
-                      category: Diagnostic.CompilerDiagnosticCategory,
-                      defaultSeverity: DiagnosticSeverity.Error,
-                      isEnabledByDefault: true);
-                addDiagnostic(Diagnostic.Create(desc, Location.None));
-            }
+            await Task.WhenAll(SpecializedCollections.SingletonEnumerable(CompilationEventQueue.WhenCompleted)
+                .Concat(workers))
+                .ConfigureAwait(false);
         }
 
         private async Task InitialWorker(ImmutableArray<IDiagnosticAnalyzer> initialAnalyzers, bool continueOnError, CancellationToken cancellationToken)

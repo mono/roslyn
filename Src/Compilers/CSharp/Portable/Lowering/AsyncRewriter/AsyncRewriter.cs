@@ -34,7 +34,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             // The CLR doesn't support adding fields to structs, so in order to enable EnC in an async method we need to generate a class.
             var typeKind = compilationState.Compilation.Options.EnableEditAndContinue ? TypeKind.Class : TypeKind.Struct;
 
-            var bodyWithAwaitLifted = AwaitLiftingRewriter.Rewrite(body, method, compilationState, diagnostics);
+            var bodyWithAwaitLifted = AwaitExpressionSpiller.Rewrite(body, method, compilationState, diagnostics);
 
             stateMachineType = new AsyncStateMachine(method, typeKind);
             compilationState.ModuleBuilderOpt.CompilationState.SetStateMachineType(method, stateMachineType);
@@ -90,13 +90,13 @@ namespace Microsoft.CodeAnalysis.CSharp
             var IAsyncStateMachine_SetStateMachine = F.WellKnownMethod(WellKnownMember.System_Runtime_CompilerServices_IAsyncStateMachine_SetStateMachine);
 
             // Add IAsyncStateMachine.MoveNext()
-            
-            var moveNextMethod = OpenMethodImplementation(IAsyncStateMachine_MoveNext, "MoveNext", asyncKickoffMethod: this.method, hasMethodBodyDependency: true);
+
+            var moveNextMethod = OpenMethodImplementation(IAsyncStateMachine_MoveNext, "MoveNext", asyncKickoffMethod: this.method, hasMethodBodyDependency: true, debuggerHidden: IsDebuggerHidden(this.method), generateDebugInfo: true);
             GenerateMoveNext(moveNextMethod);
 
             // Add IAsyncStateMachine.SetStateMachine()
             
-            OpenMethodImplementation(IAsyncStateMachine_SetStateMachine, "SetStateMachine", debuggerHidden: true, hasMethodBodyDependency: false);
+            OpenMethodImplementation(IAsyncStateMachine_SetStateMachine, "SetStateMachine", debuggerHidden: true, generateDebugInfo: false, hasMethodBodyDependency: false);
 
             // SetStateMachine is used to initialize the underlying AsyncMethodBuilder's reference to the boxed copy of the state machine.
             // If the state machine is a class there is no copy made and thus the initialization is not necessary. 
