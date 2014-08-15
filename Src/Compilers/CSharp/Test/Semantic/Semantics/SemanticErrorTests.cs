@@ -894,7 +894,7 @@ namespace x
     }
 }";
             DiagnosticsUtils.VerifyErrorsAndGetCompilationWithMscorlib(text,
-                new ErrorDescription[] { 
+                new ErrorDescription[] {
                     new ErrorDescription { Code = (int)ErrorCode.ERR_IntDivByZero, Line = 8, Column = 26 },
                     new ErrorDescription { Code = (int)ErrorCode.ERR_IntDivByZero, Line = 9, Column = 26 },
                     new ErrorDescription { Code = (int)ErrorCode.ERR_IntDivByZero, Line = 10, Column = 26 } });
@@ -1469,8 +1469,8 @@ namespace x
     }
 }";
             CreateCompilationWithMscorlib(text).VerifyDiagnostics(
-                // (8,20): error CS0030: Cannot convert type 'int' to 'x.iii'
-                //             return (iii)0;   // CS0030
+               // (8,20): error CS0030: Cannot convert type 'int' to 'x.iii'
+               //             return (iii)0;   // CS0030
                Diagnostic(ErrorCode.ERR_NoExplicitConv, "(iii)0").WithArguments("int", "x.iii"));
         }
 
@@ -1551,7 +1551,7 @@ class A
     byte bt = 256;
 }
 ";
-        CreateCompilationWithMscorlib(text).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text).VerifyDiagnostics(
             // (10,9): error CS0031: Constant value '240' cannot be converted to a 'sbyte'
             //     B = 0xf0, // CS0031
             Diagnostic(ErrorCode.ERR_ConstOutOfRange, "0xf0").WithArguments("240", "sbyte"),
@@ -1865,7 +1865,7 @@ class Program
 
         }
 
-        [Fact(),WorkItem(528875, "DevDiv")]
+        [Fact(), WorkItem(528875, "DevDiv")]
         public void CS0038ERR_WrongNestedThis()
         {
             var text = @"
@@ -1891,7 +1891,11 @@ class OuterClass
    }
 }";
             // Triage decided not to implement the more specific error (WrongNestedThis) and stick with ObjectRequired.
-            var comp = CreateCompilationWithMscorlib(text, compOptions: OptionsDll.WithSpecificDiagnosticOptions(new Dictionary<string, ReportDiagnostic>() { { MessageProvider.Instance.GetIdForErrorCode(649), ReportDiagnostic.Suppress } }));
+            var comp = CreateCompilationWithMscorlib(text, options: TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(new Dictionary<string, ReportDiagnostic>()
+            {
+                { MessageProvider.Instance.GetIdForErrorCode(649), ReportDiagnostic.Suppress }
+            }));
+
             comp.VerifyDiagnostics(Diagnostic(ErrorCode.ERR_ObjectRequired, "count").WithArguments("OuterClass.count"));
         }
 
@@ -2001,10 +2005,10 @@ interface I
                 //     event System.Action E3 { add; remove; } // CS0069 on both (i.e. x 2)
                 Diagnostic(ErrorCode.ERR_EventPropertyInInterface, "remove"),
 
-            // CONSIDER: dev10 doesn't report these, but we report them in the parser so they're
+                // CONSIDER: dev10 doesn't report these, but we report them in the parser so they're
                 // hard to suppress.
 
-            // (4,33): error CS0073: An add or remove accessor must have a body
+                // (4,33): error CS0073: An add or remove accessor must have a body
                 //     event System.Action E1 { add; } // CS0069 on add
                 Diagnostic(ErrorCode.ERR_AddRemoveMustHaveBody, ";"),
                 // (5,36): error CS0073: An add or remove accessor must have a body
@@ -2191,7 +2195,7 @@ class NamedExample
                 Diagnostic(ErrorCode.ERR_NoConversionForDefaultParam, "height").WithArguments("?", "int"),
                 // (1,1): info CS8019: Unnecessary using directive.
                 // using System;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using System;"));
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using System;"));
         }
 
         [Fact]
@@ -2891,7 +2895,7 @@ class F
   ProtectionLevel Prop { get { return 0; } }
 }
 ";
-            CreateCompilationWithMscorlib(text, references: new[] { SystemRef}) .VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, references: new[] { SystemRef }).VerifyDiagnostics(
                 // (9,17): error CS0120: An object reference is required for the non-static field, method, or property 'F.Prop'
                 //   [DefaultValue(Prop.Privacy)] // CS0120
                 Diagnostic(ErrorCode.ERR_ObjectRequired, "Prop").WithArguments("F.Prop"),
@@ -3400,11 +3404,11 @@ namespace MyNamespace
 }";
             CreateCompilationWithMscorlib(text).
                 VerifyDiagnostics(
-                // (9,14): error CS0128: A local variable named 'i' is already defined in this scope
-                //          int i = 2;   // CS0128
+                    // (9,14): error CS0128: A local variable named 'i' is already defined in this scope
+                    //          int i = 2;   // CS0128
                     Diagnostic(ErrorCode.ERR_LocalDuplicate, "i").WithArguments("i"),
-                // (9,14): warning CS0219: The variable 'i' is assigned but its value is never used
-                //          int i = 2;   // CS0128
+                    // (9,14): warning CS0219: The variable 'i' is assigned but its value is never used
+                    //          int i = 2;   // CS0128
                     Diagnostic(ErrorCode.WRN_UnreferencedVarAssg, "i").WithArguments("i")
                 );
         }
@@ -5790,11 +5794,11 @@ class Test
     }
 }")
                 .VerifyDiagnostics(
-                // (18,16): error CS0165: Use of unassigned local variable 'c'
+                    // (18,16): error CS0165: Use of unassigned local variable 'c'
                     Diagnostic(ErrorCode.ERR_UseDefViolation, "c").WithArguments("c"),
-                // (22,18): error CS0165: Use of unassigned local variable 'unassigned1'
+                    // (22,18): error CS0165: Use of unassigned local variable 'unassigned1'
                     Diagnostic(ErrorCode.ERR_UseDefViolation, "unassigned1").WithArguments("unassigned1"),
-                // (29,18): error CS0165: Use of unassigned local variable 'unassigned2'
+                    // (29,18): error CS0165: Use of unassigned local variable 'unassigned2'
                     Diagnostic(ErrorCode.ERR_UseDefViolation, "unassigned2").WithArguments("unassigned2"));
         }
 
@@ -6080,17 +6084,17 @@ class C
 }
 ";
             CreateCompilationWithMscorlib(source).VerifyDiagnostics(
-                // (9,9): error CS0176: Member 'C.field' cannot be accessed with an instance reference; qualify it with a type name instead
-                //         this.field = this.Property;
+    // (9,9): error CS0176: Member 'C.field' cannot be accessed with an instance reference; qualify it with a type name instead
+    //         this.field = this.Property;
     Diagnostic(ErrorCode.ERR_ObjectProhibited, "this.field").WithArguments("C.field"),
-                // (9,22): error CS0176: Member 'C.Property' cannot be accessed with an instance reference; qualify it with a type name instead
-                //         this.field = this.Property;
+    // (9,22): error CS0176: Member 'C.Property' cannot be accessed with an instance reference; qualify it with a type name instead
+    //         this.field = this.Property;
     Diagnostic(ErrorCode.ERR_ObjectProhibited, "this.Property").WithArguments("C.Property"),
-                // (10,9): error CS0176: Member 'C.Property' cannot be accessed with an instance reference; qualify it with a type name instead
-                //         c.Property = c.field;
+    // (10,9): error CS0176: Member 'C.Property' cannot be accessed with an instance reference; qualify it with a type name instead
+    //         c.Property = c.field;
     Diagnostic(ErrorCode.ERR_ObjectProhibited, "c.Property").WithArguments("C.Property"),
-                // (10,22): error CS0176: Member 'C.field' cannot be accessed with an instance reference; qualify it with a type name instead
-                //         c.Property = c.field;
+    // (10,22): error CS0176: Member 'C.field' cannot be accessed with an instance reference; qualify it with a type name instead
+    //         c.Property = c.field;
     Diagnostic(ErrorCode.ERR_ObjectProhibited, "c.field").WithArguments("C.field")
                                     );
         }
@@ -6680,7 +6684,7 @@ unsafe public class MyClass
       // j = i[1];
    }
 }";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (8,11): error CS0196: A pointer must be indexed by only one value
                 //       j = i[1,2];   // CS0196
                 Diagnostic(ErrorCode.ERR_PtrIndexSingle, "i[1,2]"));
@@ -7189,7 +7193,7 @@ public class MyClass
 }
 
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (25,9): error CS0208: Cannot take the address of, get the size of, or declare a pointer to a managed type ('myClass')
                 //         myClass* s2 = &s;    // CS0208
                 Diagnostic(ErrorCode.ERR_ManagedAddr, "myClass*").WithArguments("myClass"),
@@ -7251,7 +7255,7 @@ unsafe class C
     I* i;
     C* c;
 }";
-            CreateCompilationWithMscorlibAndSystemCore(source, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlibAndSystemCore(source, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (7,5): error CS0208: Cannot take the address of, get the size of, or declare a pointer to a managed type ('object')
                 //     object* _object;
                 Diagnostic(ErrorCode.ERR_ManagedAddr, "object*").WithArguments("object"),
@@ -7374,7 +7378,7 @@ public class MyClass
    }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (13,18): error CS0209: The type of a local declared in a fixed statement must be a pointer type
                 //       fixed (int i)    // CS0209
                 Diagnostic(ErrorCode.ERR_BadFixedInitType, "i"),
@@ -7468,7 +7472,7 @@ public class MyClass
    }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (7,18): error CS0211: Cannot take the address of the given expression
                 //       int *i = &(a + b);   // CS0211, the addition of two local variables
                 Diagnostic(ErrorCode.ERR_InvalidAddrOp, "a + b"));
@@ -7493,7 +7497,7 @@ public class A {
    }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (7,18): error CS0212: You can only take the address of an unfixed expression inside of a fixed statement initializer
                 //       int* ptr = &a.iField;   // CS0212 
                 Diagnostic(ErrorCode.ERR_FixedNeeded, "&a.iField"));
@@ -7522,7 +7526,7 @@ public class MyClass
    }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (7,23): error CS0213: You cannot use the fixed statement to take the address of an already fixed expression
                 //       fixed (int *j = &i) { }  // CS0213
                 Diagnostic(ErrorCode.ERR_FixedNotNeeded, "&i"),
@@ -7985,7 +7989,7 @@ class TestClass
     }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (7,9): error CS0242: The operation in question is undefined on void pointers
                 //         p++; //CS0242
                 Diagnostic(ErrorCode.ERR_VoidError, "p++"),
@@ -8021,7 +8025,7 @@ class UnsafeTest
    }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (6,16): error CS0244: Neither 'is' nor 'as' is valid on pointer types
                 //       bool b = p is object;   // CS0244 p is pointer
                 Diagnostic(ErrorCode.ERR_PointerInAsOrIs, "p is object"));
@@ -8110,7 +8114,7 @@ public class MyClass
    }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (6,32): error CS0247: Cannot use a negative size with stackalloc
                 //       int *p = stackalloc int [-30];   // CS0247
                 Diagnostic(ErrorCode.ERR_NegativeStackAllocSize, "-30"));
@@ -8210,7 +8214,7 @@ class FixedTest
    }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (20,23): error CS0254: The right hand side of a fixed statement assignment may not be a cast expression
                 //       fixed (int* p = (int*)&pt.x)   // CS0254
                 Diagnostic(ErrorCode.ERR_BadCastInFixed, "(int*)&pt.x"));
@@ -8248,7 +8252,7 @@ public class TestTryFinally
    }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (21,21): error CS0255: stackalloc may not be used in a catch or finally block
                 //          int* fib = stackalloc int[100];   // CS0255
                 Diagnostic(ErrorCode.ERR_StackallocInCatchFinally, "stackalloc int[100]"));
@@ -9459,41 +9463,41 @@ class B<T1, T2, T3, T4, T5, T6, T7>
     static T7 F7() { return null; }
 }";
             CreateCompilationWithMscorlib(source).VerifyDiagnostics(
-                // (13,17): error CS0403: Cannot convert null to type parameter 'T1' because it could be a non-nullable value type. Consider using 'default(T1)' instead.
-                //         T1 t1 = null;
+    // (13,17): error CS0403: Cannot convert null to type parameter 'T1' because it could be a non-nullable value type. Consider using 'default(T1)' instead.
+    //         T1 t1 = null;
     Diagnostic(ErrorCode.ERR_TypeVarCantBeNull, "null").WithArguments("T1"),
-                // (15,17): error CS0403: Cannot convert null to type parameter 'T3' because it could be a non-nullable value type. Consider using 'default(T3)' instead.
-                //         T3 t3 = null;
+    // (15,17): error CS0403: Cannot convert null to type parameter 'T3' because it could be a non-nullable value type. Consider using 'default(T3)' instead.
+    //         T3 t3 = null;
     Diagnostic(ErrorCode.ERR_TypeVarCantBeNull, "null").WithArguments("T3"),
-                // (16,17): error CS0403: Cannot convert null to type parameter 'T4' because it could be a non-nullable value type. Consider using 'default(T4)' instead.
-                //         T4 t4 = null;
+    // (16,17): error CS0403: Cannot convert null to type parameter 'T4' because it could be a non-nullable value type. Consider using 'default(T4)' instead.
+    //         T4 t4 = null;
     Diagnostic(ErrorCode.ERR_TypeVarCantBeNull, "null").WithArguments("T4"),
-                // (17,17): error CS0403: Cannot convert null to type parameter 'T5' because it could be a non-nullable value type. Consider using 'default(T5)' instead.
-                //         T5 t5 = null;
+    // (17,17): error CS0403: Cannot convert null to type parameter 'T5' because it could be a non-nullable value type. Consider using 'default(T5)' instead.
+    //         T5 t5 = null;
     Diagnostic(ErrorCode.ERR_TypeVarCantBeNull, "null").WithArguments("T5"),
-                // (19,17): error CS0403: Cannot convert null to type parameter 'T7' because it could be a non-nullable value type. Consider using 'default(T7)' instead.
-                //         T7 t7 = null;
+    // (19,17): error CS0403: Cannot convert null to type parameter 'T7' because it could be a non-nullable value type. Consider using 'default(T7)' instead.
+    //         T7 t7 = null;
     Diagnostic(ErrorCode.ERR_TypeVarCantBeNull, "null").WithArguments("T7"),
-                // (14,12): warning CS0219: The variable 't2' is assigned but its value is never used
-                //         T2 t2 = null;
+    // (14,12): warning CS0219: The variable 't2' is assigned but its value is never used
+    //         T2 t2 = null;
     Diagnostic(ErrorCode.WRN_UnreferencedVarAssg, "t2").WithArguments("t2"),
-                // (18,12): warning CS0219: The variable 't6' is assigned but its value is never used
-                //         T6 t6 = null;
+    // (18,12): warning CS0219: The variable 't6' is assigned but its value is never used
+    //         T6 t6 = null;
     Diagnostic(ErrorCode.WRN_UnreferencedVarAssg, "t6").WithArguments("t6"),
-                // (21,29): error CS0403: Cannot convert null to type parameter 'T1' because it could be a non-nullable value type. Consider using 'default(T1)' instead.
-                //     static T1 F1() { return null; }
+    // (21,29): error CS0403: Cannot convert null to type parameter 'T1' because it could be a non-nullable value type. Consider using 'default(T1)' instead.
+    //     static T1 F1() { return null; }
     Diagnostic(ErrorCode.ERR_TypeVarCantBeNull, "null").WithArguments("T1"),
-                // (23,29): error CS0403: Cannot convert null to type parameter 'T3' because it could be a non-nullable value type. Consider using 'default(T3)' instead.
-                //     static T3 F3() { return null; }
+    // (23,29): error CS0403: Cannot convert null to type parameter 'T3' because it could be a non-nullable value type. Consider using 'default(T3)' instead.
+    //     static T3 F3() { return null; }
     Diagnostic(ErrorCode.ERR_TypeVarCantBeNull, "null").WithArguments("T3"),
-                // (24,29): error CS0403: Cannot convert null to type parameter 'T4' because it could be a non-nullable value type. Consider using 'default(T4)' instead.
-                //     static T4 F4() { return null; }
+    // (24,29): error CS0403: Cannot convert null to type parameter 'T4' because it could be a non-nullable value type. Consider using 'default(T4)' instead.
+    //     static T4 F4() { return null; }
     Diagnostic(ErrorCode.ERR_TypeVarCantBeNull, "null").WithArguments("T4"),
-                // (25,29): error CS0403: Cannot convert null to type parameter 'T5' because it could be a non-nullable value type. Consider using 'default(T5)' instead.
-                //     static T5 F5() { return null; }
+    // (25,29): error CS0403: Cannot convert null to type parameter 'T5' because it could be a non-nullable value type. Consider using 'default(T5)' instead.
+    //     static T5 F5() { return null; }
     Diagnostic(ErrorCode.ERR_TypeVarCantBeNull, "null").WithArguments("T5"),
-                // (27,29): error CS0403: Cannot convert null to type parameter 'T7' because it could be a non-nullable value type. Consider using 'default(T7)' instead.
-                //     static T7 F7() { return null; }
+    // (27,29): error CS0403: Cannot convert null to type parameter 'T7' because it could be a non-nullable value type. Consider using 'default(T7)' instead.
+    //     static T7 F7() { return null; }
     Diagnostic(ErrorCode.ERR_TypeVarCantBeNull, "null").WithArguments("T7")
             );
         }
@@ -9920,7 +9924,7 @@ class A
     private int _i = 0;
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (9,23): error CS0459: Cannot take the address of a read-only local variable
                 //             int *j = &i;  // CS0459
                 Diagnostic(ErrorCode.ERR_AddrOnReadOnlyLocal, "i"),
@@ -10005,15 +10009,15 @@ class Test
             var noWarns = new Dictionary<string, ReportDiagnostic>();
             noWarns.Add(MessageProvider.Instance.GetIdForErrorCode(219), ReportDiagnostic.Suppress);
 
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.Dll.WithSpecificDiagnosticOptions(noWarns)).VerifyDiagnostics(
-                            // (8,13): error CS0118: 'b' is a variable but is used like a type
-                            //         F(a<b, c>(3));    // CS0471
+            CreateCompilationWithMscorlib(text, options: TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(noWarns)).VerifyDiagnostics(
+                // (8,13): error CS0118: 'b' is a variable but is used like a type
+                //         F(a<b, c>(3));    // CS0471
                 Diagnostic(ErrorCode.ERR_BadSKknown, "b").WithArguments("b", "variable", "type"),
-                            // (8,16): error CS0118: 'c' is a variable but is used like a type
-                            //         F(a<b, c>(3));    // CS0471
+                // (8,16): error CS0118: 'c' is a variable but is used like a type
+                //         F(a<b, c>(3));    // CS0471
                 Diagnostic(ErrorCode.ERR_BadSKknown, "c").WithArguments("c", "variable", "type"),
-                            // (8,11): error CS0307: The variable 'a' cannot be used with type arguments
-                            //         F(a<b, c>(3));    // CS0471
+                // (8,11): error CS0307: The variable 'a' cannot be used with type arguments
+                //         F(a<b, c>(3));    // CS0471
                 Diagnostic(ErrorCode.ERR_TypeArgsNotAllowed, "a<b, c>").WithArguments("a", "variable"));
         }
 
@@ -10685,11 +10689,11 @@ public class Test
     {
     }
 }").VerifyDiagnostics(
-                // (5,9): error CS0723: Cannot declare a variable of static type 'SC'
+            // (5,9): error CS0723: Cannot declare a variable of static type 'SC'
             Diagnostic(ErrorCode.ERR_VarDeclIsStaticClass, "SC").WithArguments("SC"),
-                // (7,19): error CS0712: Cannot create an instance of the static class 'SC'
+            // (7,19): error CS0712: Cannot create an instance of the static class 'SC'
             Diagnostic(ErrorCode.ERR_InstantiatingStaticClass, "new SC()").WithArguments("SC"),
-                // (7,9): error CS0723: Cannot declare a variable of static type 'SC'
+            // (7,9): error CS0723: Cannot declare a variable of static type 'SC'
             Diagnostic(ErrorCode.ERR_VarDeclIsStaticClass, "var").WithArguments("SC"));
         }
 
@@ -10701,9 +10705,9 @@ static class SC {}
 
 var sc2 = new SC();
 ", parseOptions: TestOptions.Script).VerifyDiagnostics(
-                // (4,5): error CS0723: Cannot declare a variable of static type 'SC'
+            // (4,5): error CS0723: Cannot declare a variable of static type 'SC'
             Diagnostic(ErrorCode.ERR_VarDeclIsStaticClass, "sc2").WithArguments("SC"),
-                // (4,11): error CS0712: Cannot create an instance of the static class 'SC'
+            // (4,11): error CS0712: Cannot create an instance of the static class 'SC'
             Diagnostic(ErrorCode.ERR_InstantiatingStaticClass, "new SC()").WithArguments("SC"));
         }
 
@@ -10848,26 +10852,26 @@ class Test
     }
     static void M() {}
 }", parseOptions: TestOptions.Script).VerifyDiagnostics(
-                // (6,13): error CS0815: Cannot assign method group to an implicitly-typed variable
-                //         var m = Main; // CS0815
+    // (6,13): error CS0815: Cannot assign method group to an implicitly-typed variable
+    //         var m = Main; // CS0815
     Diagnostic(ErrorCode.ERR_ImplicitlyTypedVariableAssignedBadValue, "m = Main").WithArguments("method group"),
-                // (7,13): error CS0815: Cannot assign lambda expression to an implicitly-typed variable
-                //         var d = s => -1; // CS0815
+    // (7,13): error CS0815: Cannot assign lambda expression to an implicitly-typed variable
+    //         var d = s => -1; // CS0815
     Diagnostic(ErrorCode.ERR_ImplicitlyTypedVariableAssignedBadValue, "d = s => -1").WithArguments("lambda expression"),
-                // (8,13): error CS0815: Cannot assign lambda expression to an implicitly-typed variable
-                //         var e = (string s) => 0; // CS0815
+    // (8,13): error CS0815: Cannot assign lambda expression to an implicitly-typed variable
+    //         var e = (string s) => 0; // CS0815
     Diagnostic(ErrorCode.ERR_ImplicitlyTypedVariableAssignedBadValue, "e = (string s) => 0").WithArguments("lambda expression"),
-                // (9,13): error CS0815: Cannot assign <null> to an implicitly-typed variable
-                //         var p = null;//CS0815
+    // (9,13): error CS0815: Cannot assign <null> to an implicitly-typed variable
+    //         var p = null;//CS0815
     Diagnostic(ErrorCode.ERR_ImplicitlyTypedVariableAssignedBadValue, "p = null").WithArguments("<null>"),
-                // (10,13): error CS0815: Cannot assign anonymous method to an implicitly-typed variable
-                //         var del = delegate(string a) { return -1; };// CS0815
+    // (10,13): error CS0815: Cannot assign anonymous method to an implicitly-typed variable
+    //         var del = delegate(string a) { return -1; };// CS0815
     Diagnostic(ErrorCode.ERR_ImplicitlyTypedVariableAssignedBadValue, "del = delegate(string a) { return -1; }").WithArguments("anonymous method"),
-                // (11,13): error CS0815: Cannot assign void to an implicitly-typed variable
-                //         var v = M(); // CS0815
+    // (11,13): error CS0815: Cannot assign void to an implicitly-typed variable
+    //         var v = M(); // CS0815
     Diagnostic(ErrorCode.ERR_ImplicitlyTypedVariableAssignedBadValue, "v = M()").WithArguments("void"),
-                // (9,13): warning CS0219: The variable 'p' is assigned but its value is never used
-                //         var p = null;//CS0815
+    // (9,13): warning CS0219: The variable 'p' is assigned but its value is never used
+    //         var p = null;//CS0815
     Diagnostic(ErrorCode.WRN_UnreferencedVarAssg, "p").WithArguments("p")
                 );
         }
@@ -10995,7 +10999,7 @@ class G
             CreateCompilationWithMscorlib(@"
 var y = { 1, 2, 3 };
 ", parseOptions: TestOptions.Script).VerifyDiagnostics(
-                // (1,5): error CS0820: Cannot initialize an implicitly-typed variable with an array initializer
+            // (1,5): error CS0820: Cannot initialize an implicitly-typed variable with an array initializer
             Diagnostic(ErrorCode.ERR_ImplicitlyTypedVariableAssignedArrayInitializer, "y = { 1, 2, 3 }"));
         }
 
@@ -11016,7 +11020,7 @@ class A
         return -1;
     }
 }";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (10,24): error CS0821: Implicitly-typed local variables cannot be fixed
                 //             fixed (var p = &x) { }
                 Diagnostic(ErrorCode.ERR_ImplicitlyTypedLocalCannotBeFixed, "p = &x"));
@@ -12300,8 +12304,8 @@ class Test
 }
 ")
                 .VerifyDiagnostics(
-                // (7,17): error CS1061: 'int' does not contain a definition for 'Select' and no extension method 'Select' accepting a first argument of type 'int' could be found (are you missing a using directive or an assembly reference?)
-                //         var q = 1.Select(z => z);
+                    // (7,17): error CS1061: 'int' does not contain a definition for 'Select' and no extension method 'Select' accepting a first argument of type 'int' could be found (are you missing a using directive or an assembly reference?)
+                    //         var q = 1.Select(z => z);
                     Diagnostic(ErrorCode.ERR_NoSuchMemberOrExtension, "Select").WithArguments("int", "Select").WithLocation(7, 19));
         }
 
@@ -12594,7 +12598,7 @@ namespace x
     }
 }
 ",
-                //"'C' error CS1502: The best overloaded method match for 'X.C.C(int, char)' has some invalid arguments",  //specifically omitted by roslyn
+                 //"'C' error CS1502: The best overloaded method match for 'X.C.C(int, char)' has some invalid arguments",  //specifically omitted by roslyn
                  "'2' error CS1503: Argument 2: cannot convert from 'int' to 'char'");
         }
 
@@ -12619,13 +12623,13 @@ class C
     }
 }
 ",
-                //"'F' error CS1502: The best overloaded method match for 'C.F(int)' has some invalid arguments",    //specifically omitted by roslyn              
+                 //"'F' error CS1502: The best overloaded method match for 'C.F(int)' has some invalid arguments",    //specifically omitted by roslyn              
                  "'E1.A' error CS1503: Argument 1: cannot convert from 'E1' to 'int'",
-                //"'F' error CS1502: The best overloaded method match for 'C.F(int)' has some invalid arguments",  //specifically omitted by roslyn
+                 //"'F' error CS1502: The best overloaded method match for 'C.F(int)' has some invalid arguments",  //specifically omitted by roslyn
                  "'(E2)E1.B' error CS1503: Argument 1: cannot convert from 'E2' to 'int'",
-                //"'G' error CS1502: The best overloaded method match for 'C.G(E1)' has some invalid arguments",  //specifically omitted by roslyn
+                 //"'G' error CS1502: The best overloaded method match for 'C.G(E1)' has some invalid arguments",  //specifically omitted by roslyn
                  "'E2.X' error CS1503: Argument 1: cannot convert from 'E2' to 'E1'",
-                //"'G' error CS1502: The best overloaded method match for 'C.G(E1)' has some invalid arguments",  //specifically omitted by roslyn
+                 //"'G' error CS1502: The best overloaded method match for 'C.G(E1)' has some invalid arguments",  //specifically omitted by roslyn
                  "'(int)E2.Z' error CS1503: Argument 1: cannot convert from 'int' to 'E1'");
         }
 
@@ -13157,7 +13161,7 @@ public class C {
 ";
             //EDMAURER no need to enforce a limit here.
             DiagnosticsUtils.VerifyErrorsAndGetCompilationWithMscorlib(text);//,
-                //new ErrorDescription[] { new ErrorDescription { Code = (int)ErrorCode.ERR_FileNameTooLong, Line = 1, Column = 25 } });
+                                                                             //new ErrorDescription[] { new ErrorDescription { Code = (int)ErrorCode.ERR_FileNameTooLong, Line = 1, Column = 25 } });
         }
 
         [Fact]
@@ -13344,7 +13348,7 @@ class a
             //EDMAURER Giving errors for the individual argument problems is better than generic "delegate 'blah' has some invalid arguments"
             DiagnosticsUtils.VerifyErrorsAndGetCompilationWithMscorlib(text,
                 new ErrorDescription[] { new ErrorDescription { Code = (int)ErrorCode.ERR_BadArgType, Line = 21, Column = 15 } });
-                //new ErrorDescription[] { new ErrorDescription { Code = (int)ErrorCode.ERR_BadDelArgTypes, Line = 21, Column = 9 } });
+            //new ErrorDescription[] { new ErrorDescription { Code = (int)ErrorCode.ERR_BadDelArgTypes, Line = 21, Column = 9 } });
         }
 
         // TODO: change this to CS0051 in Roslyn?
@@ -13793,7 +13797,7 @@ class C
     }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (7,7): error CS1629: Unsafe code may not appear in iterators
                 //       unsafe  // CS1629
                 Diagnostic(ErrorCode.ERR_IllegalInnerUnsafe, "unsafe"),
@@ -13913,7 +13917,7 @@ public unsafe class C
     }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (6,39): error CS1637: Iterators cannot have unsafe parameters or yield types
                 Diagnostic(ErrorCode.ERR_UnsafeIteratorArgType, "p"));
         }
@@ -14280,7 +14284,7 @@ class CMain
     }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (13,13): error CS1656: Cannot assign to 'c' because it is a 'using variable'
                 Diagnostic(ErrorCode.ERR_AssgReadonlyLocalCause, "c").WithArguments("c", "using variable").WithLocation(15, 13),
                 // (19,13): error CS1656: Cannot assign to 'p' because it is a 'fixed variable'
@@ -14445,7 +14449,7 @@ unsafe class Test
     }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (13,17): error CS1666: You cannot use fixed size buffers contained in unfixed expressions. Try using the fixed statement.
                 //         return (field.buffer[0] == 0);   // CS1666 error
                 Diagnostic(ErrorCode.ERR_FixedBufferNotFixed, "field.buffer")
@@ -14718,7 +14722,7 @@ class myClass
                 Diagnostic(ErrorCode.ERR_BadExternAlias, "global").WithArguments("global"),
                 // (2,1): info CS8020: Unused extern alias.
                 // extern alias global;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias global;")
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias global;")
                 );
         }
 
@@ -14738,7 +14742,7 @@ class MyClass
     }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (9,42): error CS1686: Local 'j' or its members cannot have their address taken and be used inside an anonymous method or lambda expression
                 //         MyDelegate d = delegate { return &j; };   // CS1686
                 Diagnostic(ErrorCode.ERR_LocalCantBeFixedAndHoisted, "&j").WithArguments("j"));
@@ -14768,7 +14772,7 @@ unsafe class Test
         int *q = data.buffer; // fail due to lambda capture
     }
 }";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (16,25): error CS0213: You cannot use the fixed statement to take the address of an already fixed expression
                 //         fixed (int* p = data.buffer) // fail due to receiver being a local
                 Diagnostic(ErrorCode.ERR_FixedNotNeeded, "data.buffer"),
@@ -14797,7 +14801,7 @@ public struct Test
         };
     }
 }";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (9,9): error CS1686: Local 't' or its members cannot have their address taken and be used inside an anonymous method or lambda expression
                 //         t.i[0] = 5;
                 Diagnostic(ErrorCode.ERR_LocalCantBeFixedAndHoisted, "t.i").WithArguments("t")
@@ -14859,7 +14863,7 @@ public unsafe class C
     static readonly S _s1;
     public readonly S _s2;
 }";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (18,9): error CS1708: Fixed size buffers can only be accessed through locals or fields
                 //         myC.UnsafeMethod().name[3] = 'a';  // CS1708
                 Diagnostic(ErrorCode.ERR_FixedNeedsLvalue, "myC.UnsafeMethod().name"),
@@ -15254,7 +15258,7 @@ unsafe public class C
     }
 }
 ";
-            CreateCompilationWithMscorlib(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (6,20): error CS1919: Unsafe type 'int*' cannot be used in object creation
                 Diagnostic(ErrorCode.ERR_UnsafeTypeInObjectCreation, "new int*()").WithArguments("int*"),
                 // (7,20): error CS1919: Unsafe type 'char*' cannot be used in object creation
@@ -15479,8 +15483,8 @@ static class Test
     }
 }
 ").VerifyDiagnostics(
-                // (9,27): error CS1934: Could not find an implementation of the query pattern for source type 'System.Collections.ArrayList'.  'Select' not found.  Consider explicitly specifying the type of the range variable 'x'.
-                // list
+             // (9,27): error CS1934: Could not find an implementation of the query pattern for source type 'System.Collections.ArrayList'.  'Select' not found.  Consider explicitly specifying the type of the range variable 'x'.
+             // list
              Diagnostic(ErrorCode.ERR_QueryNoProviderCastable, "list").WithArguments("System.Collections.ArrayList", "Select", "x"));
         }
 
@@ -15501,8 +15505,8 @@ class Test
     }
 }
 ").VerifyDiagnostics(
-                // (8,40): error CS1935: Could not find an implementation of the query pattern for source type 'int[]'.  'Where' not found.  Are you missing a reference to 'System.Core.dll' or a using directive for 'System.Linq'?
-                // nums
+             // (8,40): error CS1935: Could not find an implementation of the query pattern for source type 'int[]'.  'Where' not found.  Are you missing a reference to 'System.Core.dll' or a using directive for 'System.Linq'?
+             // nums
              Diagnostic(ErrorCode.ERR_QueryNoProviderStandard, "nums").WithArguments("int[]", "Where"));
         }
 
@@ -15523,8 +15527,8 @@ class Test
     }
 }
 ").VerifyDiagnostics(
-                // (10,35): error CS1936: Could not find an implementation of the query pattern for source type 'object'.  'Select' not found.
-                // obj
+             // (10,35): error CS1936: Could not find an implementation of the query pattern for source type 'object'.  'Select' not found.
+             // obj
              Diagnostic(ErrorCode.ERR_QueryNoProvider, "obj").WithArguments("object", "Select"));
         }
 
@@ -15773,7 +15777,7 @@ unsafe class Test
 }
 ";
             //Assert.Equal("", text);
-            CreateCompilationWithMscorlibAndSystemCore(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateCompilationWithMscorlibAndSystemCore(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (10,35): error CS1944: An expression tree may not contain an unsafe pointer operation
                 //         Expression<D> tree = x => &x; // CS1944
                 Diagnostic(ErrorCode.ERR_ExpressionTreeContainsPointerOp, "&x"),
@@ -16734,8 +16738,8 @@ public class D : B
 
             var comp = CreateCompilationWithMscorlibAndSystemCore(text);
             comp.VerifyDiagnostics(
-// (14,17): error CS1972: The indexer access needs to be dynamically dispatched, but cannot be because it is part of a base access expression. Consider casting the dynamic arguments or eliminating the base access.
-//         int s = base[(dynamic)o];
+                // (14,17): error CS1972: The indexer access needs to be dynamically dispatched, but cannot be because it is part of a base access expression. Consider casting the dynamic arguments or eliminating the base access.
+                //         int s = base[(dynamic)o];
                 Diagnostic(ErrorCode.ERR_NoDynamicPhantomOnBaseIndexer, "base[(dynamic)o]"));
         }
 
@@ -16763,7 +16767,7 @@ static public class Extension
 // (8,9): error CS1973: 'B' has no applicable method named 'Foo' but appears to have an extension method by that name. Extension methods cannot be dynamically dispatched. Consider casting the dynamic arguments or calling the extension method without the extension method syntax.
 //         b.Foo(d);
 Diagnostic(ErrorCode.ERR_BadArgTypeDynamicExtension, "b.Foo(d)").WithArguments("B", "Foo"));
-}
+        }
 
         [Fact]
         public void CS1975ERR_NoDynamicPhantomOnBaseCtor_Base()
@@ -16923,7 +16927,7 @@ unsafe  class C : IEnumerable<object>
         return null;
     }
 }";
-            var comp = CreateCompilationWithMscorlibAndSystemCore(source, new[] { CSharpRef }, compOptions: TestOptions.UnsafeDll);
+            var comp = CreateCompilationWithMscorlibAndSystemCore(source, new[] { CSharpRef }, options: TestOptions.UnsafeReleaseDll);
             comp.VerifyDiagnostics(
                 // (16,18): error CS1977: Cannot use a lambda expression as an argument to a dynamically dispatched operation without first casting it to a delegate or expression tree type.
                 Diagnostic(ErrorCode.ERR_BadDynamicMethodArgLambda, "delegate() { }"),
@@ -16960,8 +16964,8 @@ class Program
     }
 }
 ";
-            
-            var comp = CreateCompilationWithMscorlibAndSystemCore(text, compOptions: TestOptions.UnsafeDll);
+
+            var comp = CreateCompilationWithMscorlibAndSystemCore(text, options: TestOptions.UnsafeReleaseDll);
             comp.VerifyDiagnostics(
                 // (6,15): error CS1978: Cannot use an expression of type 'int*' as an argument to a dynamically dispatched operation.
                 Diagnostic(ErrorCode.ERR_BadDynamicMethodArg, "i").WithArguments("int*"),
@@ -17181,7 +17185,7 @@ class MyClass
             CreateCompilationWithMscorlib(text).VerifyDiagnostics(
                 Diagnostic(ErrorCode.WRN_UnreachableCode, "int"),
                 Diagnostic(ErrorCode.WRN_UnreachableCode, "return"));
-       }
+        }
 
         [Fact, WorkItem(530037, "DevDiv")]
         public void CS0162WRN_UnreachableCode02()
@@ -17666,8 +17670,8 @@ class Derived : ByRef
     }
 }";
             CreateCompilationWithMscorlib(text).VerifyDiagnostics(
-                // (5,13): warning CS0219: The variable 'a' is assigned but its value is never used
-                //         int a = 0;   // CS0219
+    // (5,13): warning CS0219: The variable 'a' is assigned but its value is never used
+    //         int a = 0;   // CS0219
     Diagnostic(ErrorCode.WRN_UnreferencedVarAssg, "a").WithArguments("a")
                 );
         }
@@ -18340,7 +18344,7 @@ class Test
     }
 }
 ";
-            CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(source, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (9,27): error CS0212: You can only take the address of an unfixed expression inside of a fixed statement initializer
                 //         unsafe { Test.foo(&x); }
                 Diagnostic(ErrorCode.ERR_FixedNeeded, "&x"),
@@ -19122,102 +19126,102 @@ tf
 ftftftft";
             var comp = this.CompileAndVerify(source: text, expectedOutput: expected);
             comp.VerifyDiagnostics(
-                // (17,11): warning CS0472: The result of the expression is always 'false' since a value of type 'int' is never equal to 'null' of type 'int?'
+                // (19,11): warning CS0472: The result of the expression is always 'false' since a value of type 'int' is never equal to 'null' of type 'int?'
                 //         W(i == null);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "i == null").WithArguments("false", "int", "int?"),
-                // (18,11): warning CS0472: The result of the expression is always 'true' since a value of type 'int' is never equal to 'null' of type 'int?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "i == null").WithArguments("false", "int", "int?").WithLocation(19, 11),
+                // (20,11): warning CS0472: The result of the expression is always 'true' since a value of type 'int' is never equal to 'null' of type 'int?'
                 //         W(i != null);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "i != null").WithArguments("true", "int", "int?"),
-                // (21,11): warning CS0472: The result of the expression is always 'false' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "i != null").WithArguments("true", "int", "int?").WithLocation(20, 11),
+                // (23,11): warning CS8073: The result of the expression is always 'false' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
                 //         W(g == null);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "g == null").WithArguments("false", "System.Guid", "System.Guid?"),
-                // (22,11): warning CS0472: The result of the expression is always 'true' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool2, "g == null").WithArguments("false", "System.Guid", "System.Guid?").WithLocation(23, 11),
+                // (24,11): warning CS8073: The result of the expression is always 'true' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
                 //         W(g != null);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "g != null").WithArguments("true", "System.Guid", "System.Guid?"),
-                // (26,11): warning CS0472: The result of the expression is always 'false' since a value of type 'int' is never equal to 'null' of type 'short?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool2, "g != null").WithArguments("true", "System.Guid", "System.Guid?").WithLocation(24, 11),
+                // (28,11): warning CS0472: The result of the expression is always 'false' since a value of type 'int' is never equal to 'null' of type 'short?'
                 //         W(i == default(short?));            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "i == default(short?)").WithArguments("false", "int", "short?"),
-                // (27,11): warning CS0472: The result of the expression is always 'true' since a value of type 'int' is never equal to 'null' of type 'short?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "i == default(short?)").WithArguments("false", "int", "short?").WithLocation(28, 11),
+                // (29,11): warning CS0472: The result of the expression is always 'true' since a value of type 'int' is never equal to 'null' of type 'short?'
                 //         W(i != default(short?));            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "i != default(short?)").WithArguments("true", "int", "short?"),
-                // (30,11): warning CS0472: The result of the expression is always 'false' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "i != default(short?)").WithArguments("true", "int", "short?").WithLocation(29, 11),
+                // (32,11): warning CS8073: The result of the expression is always 'false' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
                 //         W(g == default(Guid?));             // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "g == default(Guid?)").WithArguments("false", "System.Guid", "System.Guid?"),
-                // (31,11): warning CS0472: The result of the expression is always 'true' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool2, "g == default(Guid?)").WithArguments("false", "System.Guid", "System.Guid?").WithLocation(32, 11),
+                // (33,11): warning CS8073: The result of the expression is always 'true' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
                 //         W(g != default(Guid?));             // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "g != default(Guid?)").WithArguments("true", "System.Guid", "System.Guid?"),
-                // (35,11): warning CS0472: The result of the expression is always 'false' since a value of type 'int' is never equal to 'null' of type 'sbyte?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool2, "g != default(Guid?)").WithArguments("true", "System.Guid", "System.Guid?").WithLocation(33, 11),
+                // (37,11): warning CS0472: The result of the expression is always 'false' since a value of type 'int' is never equal to 'null' of type 'sbyte?'
                 //         W(i == new sbyte?());            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "i == new sbyte?()").WithArguments("false", "int", "sbyte?"),
-                // (36,11): warning CS0472: The result of the expression is always 'true' since a value of type 'int' is never equal to 'null' of type 'sbyte?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "i == new sbyte?()").WithArguments("false", "int", "sbyte?").WithLocation(37, 11),
+                // (38,11): warning CS0472: The result of the expression is always 'true' since a value of type 'int' is never equal to 'null' of type 'sbyte?'
                 //         W(i != new sbyte?());            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "i != new sbyte?()").WithArguments("true", "int", "sbyte?"),
-                // (39,11): warning CS0472: The result of the expression is always 'false' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "i != new sbyte?()").WithArguments("true", "int", "sbyte?").WithLocation(38, 11),
+                // (41,11): warning CS8073: The result of the expression is always 'false' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
                 //         W(g == new Guid?());             // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "g == new Guid?()").WithArguments("false", "System.Guid", "System.Guid?"),
-                // (40,11): warning CS0472: The result of the expression is always 'true' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool2, "g == new Guid?()").WithArguments("false", "System.Guid", "System.Guid?").WithLocation(41, 11),
+                // (42,11): warning CS8073: The result of the expression is always 'true' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
                 //         W(g != new Guid?());             // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "g != new Guid?()").WithArguments("true", "System.Guid", "System.Guid?"),
-                // (47,11): warning CS0472: The result of the expression is always 'false' since a value of type 'int' is never equal to 'null' of type 'int?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool2, "g != new Guid?()").WithArguments("true", "System.Guid", "System.Guid?").WithLocation(42, 11),
+                // (49,11): warning CS0472: The result of the expression is always 'false' since a value of type 'int' is never equal to 'null' of type 'int?'
                 //         W(null == i);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "null == i").WithArguments("false", "int", "int?"),
-                // (48,11): warning CS0472: The result of the expression is always 'true' since a value of type 'int' is never equal to 'null' of type 'int?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "null == i").WithArguments("false", "int", "int?").WithLocation(49, 11),
+                // (50,11): warning CS0472: The result of the expression is always 'true' since a value of type 'int' is never equal to 'null' of type 'int?'
                 //         W(null != i);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "null != i").WithArguments("true", "int", "int?"),
-                // (51,11): warning CS0472: The result of the expression is always 'false' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "null != i").WithArguments("true", "int", "int?").WithLocation(50, 11),
+                // (53,11): warning CS8073: The result of the expression is always 'false' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
                 //         W(null == g);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "null == g").WithArguments("false", "System.Guid", "System.Guid?"),
-                // (52,11): warning CS0472: The result of the expression is always 'true' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool2, "null == g").WithArguments("false", "System.Guid", "System.Guid?").WithLocation(53, 11),
+                // (54,11): warning CS8073: The result of the expression is always 'true' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
                 //         W(null != g);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "null != g").WithArguments("true", "System.Guid", "System.Guid?"),
-                // (56,11): warning CS0472: The result of the expression is always 'false' since a value of type 'long' is never equal to 'null' of type 'long?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool2, "null != g").WithArguments("true", "System.Guid", "System.Guid?").WithLocation(54, 11),
+                // (58,11): warning CS0472: The result of the expression is always 'false' since a value of type 'long' is never equal to 'null' of type 'long?'
                 //         W(default(long?) == i);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "default(long?) == i").WithArguments("false", "long", "long?"),
-                // (57,11): warning CS0472: The result of the expression is always 'true' since a value of type 'long' is never equal to 'null' of type 'long?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "default(long?) == i").WithArguments("false", "long", "long?").WithLocation(58, 11),
+                // (59,11): warning CS0472: The result of the expression is always 'true' since a value of type 'long' is never equal to 'null' of type 'long?'
                 //         W(default(long?) != i);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "default(long?) != i").WithArguments("true", "long", "long?"),
-                // (60,11): warning CS0472: The result of the expression is always 'false' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "default(long?) != i").WithArguments("true", "long", "long?").WithLocation(59, 11),
+                // (62,11): warning CS8073: The result of the expression is always 'false' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
                 //         W(default(Guid?) == g);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "default(Guid?) == g").WithArguments("false", "System.Guid", "System.Guid?"),
-                // (61,11): warning CS0472: The result of the expression is always 'true' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool2, "default(Guid?) == g").WithArguments("false", "System.Guid", "System.Guid?").WithLocation(62, 11),
+                // (63,11): warning CS8073: The result of the expression is always 'true' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
                 //         W(default(Guid?) != g);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "default(Guid?) != g").WithArguments("true", "System.Guid", "System.Guid?"),
-                // (65,11): warning CS0472: The result of the expression is always 'false' since a value of type 'double' is never equal to 'null' of type 'double?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool2, "default(Guid?) != g").WithArguments("true", "System.Guid", "System.Guid?").WithLocation(63, 11),
+                // (67,11): warning CS0472: The result of the expression is always 'false' since a value of type 'double' is never equal to 'null' of type 'double?'
                 //         W(new double?() == i);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "new double?() == i").WithArguments("false", "double", "double?"),
-                // (66,11): warning CS0472: The result of the expression is always 'true' since a value of type 'double' is never equal to 'null' of type 'double?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "new double?() == i").WithArguments("false", "double", "double?").WithLocation(67, 11),
+                // (68,11): warning CS0472: The result of the expression is always 'true' since a value of type 'double' is never equal to 'null' of type 'double?'
                 //         W(new double?() != i);            // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "new double?() != i").WithArguments("true", "double", "double?"),
-                // (69,11): warning CS0472: The result of the expression is always 'false' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "new double?() != i").WithArguments("true", "double", "double?").WithLocation(68, 11),
+                // (71,11): warning CS8073: The result of the expression is always 'false' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
                 //         W(new Guid?() == g);              // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "new Guid?() == g").WithArguments("false", "System.Guid", "System.Guid?"),
-                // (70,11): warning CS0472: The result of the expression is always 'true' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool2, "new Guid?() == g").WithArguments("false", "System.Guid", "System.Guid?").WithLocation(71, 11),
+                // (72,11): warning CS8073: The result of the expression is always 'true' since a value of type 'System.Guid' is never equal to 'null' of type 'System.Guid?'
                 //         W(new Guid?() != g);              // CS0472
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "new Guid?() != g").WithArguments("true", "System.Guid", "System.Guid?"),
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool2, "new Guid?() != g").WithArguments("true", "System.Guid", "System.Guid?").WithLocation(72, 11),
                 // (84,11): warning CS0472: The result of the expression is always 'false' since a value of type 'MyClass.E' is never equal to 'null' of type 'MyClass.E?'
                 //         W((E?)1 == null);
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "(E?)1 == null").WithArguments("false", "MyClass.E", "MyClass.E?"),
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "(E?)1 == null").WithArguments("false", "MyClass.E", "MyClass.E?").WithLocation(84, 11),
                 // (85,11): warning CS0472: The result of the expression is always 'true' since a value of type 'MyClass.E' is never equal to 'null' of type 'MyClass.E?'
                 //         W(null != (E?)1);
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "null != (E?)1").WithArguments("true", "MyClass.E", "MyClass.E?"),
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "null != (E?)1").WithArguments("true", "MyClass.E", "MyClass.E?").WithLocation(85, 11),
                 // (87,11): warning CS0472: The result of the expression is always 'false' since a value of type 'int' is never equal to 'null' of type 'int?'
                 //         W((int?)1 == null);
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "(int?)1 == null").WithArguments("false", "int", "int?"),
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "(int?)1 == null").WithArguments("false", "int", "int?").WithLocation(87, 11),
                 // (88,11): warning CS0472: The result of the expression is always 'true' since a value of type 'int' is never equal to 'null' of type 'int?'
                 //         W(null != (int?)1);
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "null != (int?)1").WithArguments("true", "int", "int?"),
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "null != (int?)1").WithArguments("true", "int", "int?").WithLocation(88, 11),
                 // (92,11): warning CS0472: The result of the expression is always 'false' since a value of type 'int' is never equal to 'null' of type 'int?'
                 //         W(0 == (int?)null);
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "0 == (int?)null").WithArguments("false", "int", "int?"),
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "0 == (int?)null").WithArguments("false", "int", "int?").WithLocation(92, 11),
                 // (93,11): warning CS0472: The result of the expression is always 'true' since a value of type 'int' is never equal to 'null' of type 'int?'
                 //         W((int?)null != 0);
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "(int?)null != 0").WithArguments("true", "int", "int?"),
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "(int?)null != 0").WithArguments("true", "int", "int?").WithLocation(93, 11),
                 // (95,11): warning CS0472: The result of the expression is always 'false' since a value of type 'MyClass.E' is never equal to 'null' of type 'MyClass.E?'
                 //         W(0 == (E?)null);
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "0 == (E?)null").WithArguments("false", "MyClass.E", "MyClass.E?"),
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "0 == (E?)null").WithArguments("false", "MyClass.E", "MyClass.E?").WithLocation(95, 11),
                 // (96,11): warning CS0472: The result of the expression is always 'true' since a value of type 'MyClass.E' is never equal to 'null' of type 'MyClass.E?'
                 //         W((E?)null != 0);
-                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "(E?)null != 0").WithArguments("true", "MyClass.E", "MyClass.E?")
+                Diagnostic(ErrorCode.WRN_NubExprIsConstBool, "(E?)null != 0").WithArguments("true", "MyClass.E", "MyClass.E?").WithLocation(96, 11)
                     );
 
         }
@@ -19666,7 +19670,7 @@ namespace TestNamespace
 }
 ";
 
-            var compilation = CreateCompilationWithMscorlib(text, compOptions: TestOptions.Exe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(false));
+            var compilation = CreateCompilationWithMscorlib(text, options: TestOptions.DebugExe);
 
             var exebits = new System.IO.MemoryStream();
             var pdbbits = new System.IO.MemoryStream();
@@ -19988,7 +19992,7 @@ class Test
 ";
             var c = CreateCompilationWithMscorlib(
                 new[] { Parse(text, options: TestOptions.RegularWithDocumentationComments) },
-                compOptions: TestOptions.Dll.WithXmlReferenceResolver(null));
+                options: TestOptions.ReleaseDll.WithXmlReferenceResolver(null));
 
             c.VerifyDiagnostics(
                 // (2,5): warning CS1589: Unable to include XML fragment 'MyDocs/MyMembers[@name="test"]/' of file 'CS1589.doc' -- References to XML documents are not supported.
@@ -20255,7 +20259,7 @@ class Test
             //EDMAURER no longer giving this low-value warning.
             CreateCompilationWithMscorlib(text).
                 VerifyDiagnostics();
-                //VerifyDiagnostics(Diagnostic(ErrorCode.WRN_EmptyFileName, @""""));
+            //VerifyDiagnostics(Diagnostic(ErrorCode.WRN_EmptyFileName, @""""));
         }
 
         [Fact]
@@ -20722,7 +20726,7 @@ class C
         default(T4)[1] = o;
     }
 }";
-            CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(source, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (23,13): warning CS1720: Expression will always cause a System.NullReferenceException because the default value of 'A' is null
                 Diagnostic(ErrorCode.WRN_DotOnDefault, "default(A)[0]").WithArguments("A").WithLocation(23, 13),
                 // (25,13): warning CS1720: Expression will always cause a System.NullReferenceException because the default value of 'I' is null
@@ -20743,7 +20747,7 @@ class C
                 Diagnostic(ErrorCode.WRN_DotOnDefault, "default(T1)[1]").WithArguments("T1").WithLocation(35, 9),
                 // (37,9): error CS0131: The left-hand side of an assignment must be a variable, property or indexer
                 Diagnostic(ErrorCode.ERR_AssgLvalueExpected, "default(T3)[1]").WithLocation(37, 9), // Incorrect? See CS0131ERR_AssgLvalueExpected03 unit test.
-                // (38,9): warning CS1720: Expression will always cause a System.NullReferenceException because the default value of 'T4' is null
+                                                                                                    // (38,9): warning CS1720: Expression will always cause a System.NullReferenceException because the default value of 'T4' is null
                 Diagnostic(ErrorCode.WRN_DotOnDefault, "default(T4)[1]").WithArguments("T4").WithLocation(38, 9));
         }
 
@@ -20790,8 +20794,8 @@ class Myclass
 
             var comp = CreateCompilationWithMscorlibAndSystemCore(text);
             comp.VerifyDiagnostics(
-                // (9,9): warning CS1974: The dynamically dispatched call to method 'Foo' may fail at runtime because one or more applicable overloads are conditional methods.
-                //         Foo(d); 
+// (9,9): warning CS1974: The dynamically dispatched call to method 'Foo' may fail at runtime because one or more applicable overloads are conditional methods.
+//         Foo(d); 
 Diagnostic(ErrorCode.WRN_DynamicDispatchToConditionalMethod, "Foo(d)").WithArguments("Foo"));
         }
 
@@ -21381,7 +21385,7 @@ class C
             builder.Append(@"
 class C
 {
-");         
+");
             builder.AppendFormat("int {0}1;\n", longE);
             builder.AppendFormat("event System.Action {0}2;\n", longE);
             builder.AppendFormat("public void {0}3() {{ }}\n", longE);
@@ -21391,7 +21395,7 @@ class C
             builder.AppendLine(@"
 }
 ");
-            CreateCompilationWithMscorlib(builder.ToString(), null, OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Suppress)).VerifyEmitDiagnostics(
+            CreateCompilationWithMscorlib(builder.ToString(), null, TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Suppress)).VerifyEmitDiagnostics(
                 Diagnostic(ErrorCode.ERR_MetadataNameTooLong, longE + 2).WithArguments(longE + 2),  //event
                 Diagnostic(ErrorCode.ERR_MetadataNameTooLong, longE + 2).WithArguments(longE + 2),  //backing field
                 Diagnostic(ErrorCode.ERR_MetadataNameTooLong, longE + 2).WithArguments("add_" + longE + 2),  //accessor
@@ -21931,7 +21935,7 @@ class Program
     Diagnostic(ErrorCode.ERR_BadUnaryOp, "?").WithArguments("?", "method group").WithLocation(14, 23)
                );
         }
-        
+
 
         [Fact]
         public void ConditionalElementAccess001()
@@ -22006,7 +22010,7 @@ class Program
 }
 
 ";
-            CreateExperimentalCompilationWithMscorlib45(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateExperimentalCompilationWithMscorlib45(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
     // (9,23): error CS0023: Operator '?' cannot be applied to operand of type 'void*'
     //         var p = intPtr?.ToPointer();
     Diagnostic(ErrorCode.ERR_BadUnaryOp, "?").WithArguments("?", "void*").WithLocation(9, 23)
@@ -22038,7 +22042,7 @@ class Program
     }
 }
 ";
-            CreateCompilationWithMscorlib45(text, new[] { SystemRef_v4_0_30319_17929, SystemCoreRef_v4_0_30319_17929, CSharpRef }, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateCompilationWithMscorlib45(text, new[] { SystemRef_v4_0_30319_17929, SystemCoreRef_v4_0_30319_17929, CSharpRef }, options: TestOptions.ReleaseDll).VerifyDiagnostics(
     // (9,44): error CS8072: An expression tree lambda may not contain a null propagating operator.
     //         Expression<Func<string>> s = () => x?.ToString();
     Diagnostic(ErrorCode.ERR_NullPropagatingOpInExpressionTree, "x?.ToString()").WithLocation(9, 44),
@@ -22051,9 +22055,124 @@ class Program
     // (13,43): error CS8072: An expression tree lambda may not contain a null propagating operator.
     //         Expression<Func<int?>> c2 = () => x?.ToString()?.Length;
     Diagnostic(ErrorCode.ERR_NullPropagatingOpInExpressionTree, "x?.ToString()?.Length").WithLocation(13, 43),
-    // (13,43): error CS8072: An expression tree lambda may not contain a null propagating operator.
+    // (13,45): error CS8072: An expression tree lambda may not contain a null propagating operator.
     //         Expression<Func<int?>> c2 = () => x?.ToString()?.Length;
-    Diagnostic(ErrorCode.ERR_NullPropagatingOpInExpressionTree, "x?.ToString()").WithLocation(13, 43)
+    Diagnostic(ErrorCode.ERR_NullPropagatingOpInExpressionTree, ".ToString()?.Length").WithLocation(13, 45)
+               );
+        }
+
+        [Fact]
+        [WorkItem(915609, "DevDiv")]
+        public void DictionaryInitializerInExprLambda()
+        {
+            var text = @"
+using System;
+using System.Linq.Expressions;
+using System.Collections.Generic;
+
+class Program
+{
+    static void M<T>(T x)
+    {
+        Expression<Func<Dictionary<int, int>>> s = () => new Dictionary<int, int> () {[1] = 2};
+}
+
+    static void Main()
+    {
+        M((string)null);
+    }
+}
+";
+            CreateCompilationWithMscorlib45(text, new[] { SystemRef_v4_0_30319_17929, SystemCoreRef_v4_0_30319_17929, CSharpRef }).VerifyDiagnostics(
+    // (10,87): error CS8073: An expression tree lambda may not contain a dictionary initializer.
+    //         Expression<Func<Dictionary<int, int>>> s = () => new Dictionary<int, int> () {[1] = 2};
+    Diagnostic(ErrorCode.ERR_DictionaryInitializerInExpressionTree, "[1]").WithLocation(10, 87)
+               );
+        }
+
+        [Fact]
+        [WorkItem(915609, "DevDiv")]
+        public void DictionaryInitializerInExprLambda1()
+        {
+            var text = @"
+using System;
+using System.Collections;
+using System.Linq.Expressions;
+class C
+{
+    static void Main()
+    {
+        Expression<Func<C>> e = () => new C { H = { [""Key""] = ""Value"" } };
+        Console.WriteLine(e);
+        var c = e.Compile().Invoke();
+        Console.WriteLine(c.H[""Key""]);
+    }
+    readonly Hashtable H = new Hashtable();
+}
+
+";
+            CreateCompilationWithMscorlib45(text, new[] { SystemRef_v4_0_30319_17929, SystemCoreRef_v4_0_30319_17929, CSharpRef }).VerifyDiagnostics(
+    // (9,53): error CS8073: An expression tree lambda may not contain a dictionary initializer.
+    //         Expression<Func<C>> e = () => new C { H = { ["Key"] = "Value" } };
+    Diagnostic(ErrorCode.ERR_DictionaryInitializerInExpressionTree, @"[""Key""]").WithLocation(9, 53)
+               );
+        }
+
+        [Fact]
+        public void DictionaryInitializerInCS5()
+        {
+            var text = @"
+using System.Collections.Generic;
+
+class Program
+{
+    static void Main()
+    {
+        var s = new Dictionary<int, int> () {[1] = 2};
+    }
+}
+";
+            CreateCompilationWithMscorlib45(text,
+                new[] { SystemRef_v4_0_30319_17929, SystemCoreRef_v4_0_30319_17929, CSharpRef },
+                parseOptions: TestOptions.Regular.WithLanguageVersion(LanguageVersion.CSharp5)).VerifyDiagnostics(
+    // (8,46): error CS8026: Feature 'dictionary initializer' is not available in C# 5.  Please use language version 6 or greater.
+    //         var s = new Dictionary<int, int> () {[1] = 2};
+    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "[1] = 2").WithArguments("dictionary initializer", "6").WithLocation(8, 46)
+               );
+        }
+
+        [Fact]
+        public void DictionaryInitializerDataFlow()
+        {
+            var text = @"
+using System.Collections.Generic;
+
+class Program
+{
+    static void Main()
+    {
+        int i;
+        var s = new Dictionary<int, int> () {[i] = 2};
+
+        i = 1;
+        System.Console.WriteLine(i);
+    }
+
+    static void Foo()
+    {
+        int i;
+        var s = new Dictionary<int, int> () {[i = 1] = 2};
+
+        System.Console.WriteLine(i);
+    }
+}
+";
+            CreateCompilationWithMscorlib45(text,
+                new[] { SystemRef_v4_0_30319_17929, SystemCoreRef_v4_0_30319_17929, CSharpRef },
+                parseOptions: TestOptions.Regular).VerifyDiagnostics(
+    // (9,47): error CS0165: Use of unassigned local variable 'i'
+    //         var s = new Dictionary<int, int> () {[i] = 2};
+    Diagnostic(ErrorCode.ERR_UseDefViolation, "i").WithArguments("i").WithLocation(9, 47)
                );
         }
 
@@ -22073,7 +22192,7 @@ class Program
     }
 }
 ";
-            CreateExperimentalCompilationWithMscorlib45(text, compOptions: TestOptions.UnsafeExe).VerifyDiagnostics(
+            CreateExperimentalCompilationWithMscorlib45(text, options: TestOptions.ReleaseDll).VerifyDiagnostics(
     // (8,9): error CS0201: Only assignment, call, increment, decrement, and new object expressions can be used as a statement
     //         x?.Length;
     Diagnostic(ErrorCode.ERR_IllegalStatement, "x?.Length").WithLocation(8, 9),

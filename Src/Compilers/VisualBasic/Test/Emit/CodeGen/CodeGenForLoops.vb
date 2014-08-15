@@ -1,12 +1,5 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-Imports Microsoft.CodeAnalysis
-Imports Microsoft.CodeAnalysis.Test.Utilities
-Imports Microsoft.CodeAnalysis.Text
-Imports Microsoft.CodeAnalysis.VisualBasic
-Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
-Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
-Imports Microsoft.CodeAnalysis.VisualBasic.UnitTests.Emit
 Imports Roslyn.Test.Utilities
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
@@ -16,7 +9,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
         <WorkItem(541539, "DevDiv")>
         <Fact>
         Public Sub SimpleForLoopsTest()
-            Dim TEMP = CompileAndVerify(
+            CompileAndVerify(
 <compilation>
     <file name="a.vb">
 Public Class MyClass1
@@ -32,12 +25,12 @@ End Class
 1
 2
 3
-]]>, emitPdb:=True)
+]]>)
         End Sub
 
         <Fact>
         Public Sub SimpleForLoopsTestConversion()
-            Dim TEMP = CompileAndVerify(
+            CompileAndVerify(
 <compilation>
     <file name="a.vb">
 option strict off
@@ -1659,7 +1652,7 @@ Module MyClass1
     End Sub
 End Module
     </file>
-</compilation>, options:=OptionsExe).VerifyIL("MyClass1.Main", <![CDATA[
+</compilation>, options:=TestOptions.ReleaseExe).VerifyIL("MyClass1.Main", <![CDATA[
 {
   // Code size       11 (0xb)
   .maxstack  2
@@ -1695,7 +1688,7 @@ Module MyClass1
     End Sub
 End Module
     </file>
-</compilation>, options:=OptionsExe).VerifyIL("MyClass1.Main", <![CDATA[
+</compilation>, options:=TestOptions.ReleaseExe).VerifyIL("MyClass1.Main", <![CDATA[
 {
   // Code size       15 (0xf)
   .maxstack  2
@@ -1734,7 +1727,7 @@ Module MyClass1
     End Sub
 End Module
     </file>
-</compilation>, options:=OptionsExe).VerifyIL("MyClass1.Main", <![CDATA[
+</compilation>, options:=TestOptions.ReleaseExe).VerifyIL("MyClass1.Main", <![CDATA[
 {
   // Code size       19 (0x13)
   .maxstack  2

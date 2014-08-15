@@ -83,7 +83,7 @@ public class N : D.K<M>
                 System.Xml.Linq.XElement dumpXML = DumpTypeInfo(module);
 
                 Assert.Equal(baseLine.ToString(), dumpXML.ToString());
-            }, options: TestOptions.DllAlwaysImportInternals);
+            }, options: TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal));
         }
 
         [Fact]
@@ -193,12 +193,8 @@ public class Test : Class2
         {
             CompileAndVerify(
                 "public class C { }",
-                emitPdb: true,
                 verify: false,
-                options: new CSharpCompilationOptions(
-                    OutputKind.NetModule,
-                    optimize: false,
-                    debugInformationKind: DebugInformationKind.PdbOnly));
+                options: TestOptions.DebugDll.WithOutputKind(OutputKind.NetModule));
         }
 
         [Fact]
@@ -241,7 +237,6 @@ public class Test : Class2
                     stream,
                     pdbWriter: null,
                     allowMissingMethodBodies: false,
-                    foldDuplicateMethodBodies: false,
                     deterministic: false,
                     cancellationToken: CancellationToken.None);
 
@@ -438,7 +433,7 @@ abstract public class A
     public abstract void M5<T, S>(T p17, S p18);
 }";
 
-            CompileAndVerify(source, emitOptions: EmitOptions.CCI, symbolValidator: module =>
+            CompileAndVerify(source, options: TestOptions.ReleaseDll, emitOptions: EmitOptions.CCI, symbolValidator: module =>
             {
                 var classA = module.GlobalNamespace.GetTypeMembers("A").Single();
 
@@ -466,63 +461,32 @@ abstract public class A
                 var parameter1Type = parameter1.Type;
 
                 Assert.Equal(RefKind.Ref, parameter1.RefKind);
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_Array), parameter1Type);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_Boolean),
-                    m2.Parameters.Single().Type);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_Char),
-                    m3.Parameters.Single().Type);
+                Assert.Same(module.GetCorLibType(SpecialType.System_Array), parameter1Type);
+                Assert.Same(module.GetCorLibType(SpecialType.System_Boolean), m2.Parameters.Single().Type);
+                Assert.Same(module.GetCorLibType(SpecialType.System_Char), m3.Parameters.Single().Type);
 
                 var method4ParamTypes = m4.Parameters.Select(p => p.Type).ToArray();
 
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_Void),
-                    m4.ReturnType);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_SByte),
-                    method4ParamTypes[0]);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_Single),
-                    method4ParamTypes[1]);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_Double),
-                    method4ParamTypes[2]);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_Int16),
-                    method4ParamTypes[3]);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_Int32),
-                    method4ParamTypes[4]);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_Int64),
-                    method4ParamTypes[5]);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_IntPtr),
-                    method4ParamTypes[6]);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_String),
-                    method4ParamTypes[7]);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_Byte),
-                    method4ParamTypes[8]);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_UInt16),
-                    method4ParamTypes[9]);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_UInt32),
-                    method4ParamTypes[10]);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_UInt64),
-                    method4ParamTypes[11]);
-
-                Assert.Same(((PEModuleSymbol)module).GetCorLibType(SpecialType.System_UIntPtr),
-                    method4ParamTypes[12]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_Void), m4.ReturnType);
+                Assert.Same(module.GetCorLibType(SpecialType.System_SByte), method4ParamTypes[0]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_Single), method4ParamTypes[1]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_Double), method4ParamTypes[2]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_Int16), method4ParamTypes[3]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_Int32), method4ParamTypes[4]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_Int64), method4ParamTypes[5]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_IntPtr), method4ParamTypes[6]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_String), method4ParamTypes[7]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_Byte), method4ParamTypes[8]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_UInt16), method4ParamTypes[9]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_UInt32), method4ParamTypes[10]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_UInt64), method4ParamTypes[11]);
+                Assert.Same(module.GetCorLibType(SpecialType.System_UIntPtr), method4ParamTypes[12]);
 
                 Assert.True(m5.IsGenericMethod);
                 Assert.Same(m5.TypeParameters[0], m5.Parameters[0].Type);
                 Assert.Same(m5.TypeParameters[1], m5.Parameters[1].Type);
 
-                Assert.Equal(4, ((PEModuleSymbol)module).Module.GetMetadataReader().TypeReferences.Count);
+                Assert.Equal(6, ((PEModuleSymbol)module).Module.GetMetadataReader().TypeReferences.Count);
             });
         }
 
@@ -574,10 +538,10 @@ static class C
                 var peModuleSymbol = module as PEModuleSymbol;
                 if (peModuleSymbol != null)
                 {
-                    Assert.Equal(3, peModuleSymbol.Module.GetMetadataReader().TypeReferences.Count);
+                    Assert.Equal(5, peModuleSymbol.Module.GetMetadataReader().TypeReferences.Count);
                 }
             };
-            CompileAndVerify(source, emitOptions: EmitOptions.CCI, sourceSymbolValidator: validator(true), symbolValidator: validator(false));
+            CompileAndVerify(source, options: TestOptions.ReleaseDll, emitOptions: EmitOptions.CCI, sourceSymbolValidator: validator(true), symbolValidator: validator(false));
         }
 
         [Fact]
@@ -627,7 +591,7 @@ public class A
                 Assert.Equal("System.Runtime.CompilerServices.IsVolatile", mod.Modifier.ToTestDisplayString());
             };
 
-            CompileAndVerify(source, sourceSymbolValidator: validator(true), symbolValidator: validator(false), options: TestOptions.DllAlwaysImportInternals);
+            CompileAndVerify(source, sourceSymbolValidator: validator(true), symbolValidator: validator(false), options: TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal));
         }
 
         [Fact]
@@ -721,7 +685,7 @@ public class A
                 CheckConstantField(type, "S", Accessibility.Public, SpecialType.System_String, "string");
             };
 
-            CompileAndVerify(source: source, sourceSymbolValidator: validator(true), symbolValidator: validator(false), options: TestOptions.DllAlwaysImportInternals);
+            CompileAndVerify(source: source, sourceSymbolValidator: validator(true), symbolValidator: validator(false), options: TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal));
         }
 
         private void CheckConstantField(NamedTypeSymbol type, string name, Accessibility declaredAccessibility, SpecialType fieldType, object value)
@@ -789,7 +753,7 @@ class Properties
                 CheckPrivateMembers(module.GlobalNamespace.GetTypeMembers("Properties").Single(), isFromSource, false);
             };
 
-            CompileAndVerify(source: source, sourceSymbolValidator: validator(true), symbolValidator: validator(false), options: TestOptions.DllAlwaysImportInternals);
+            CompileAndVerify(source: source, sourceSymbolValidator: validator(true), symbolValidator: validator(false), options: TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal));
         }
 
         private void CheckPrivateMembers(NamedTypeSymbol type, bool isFromSource, bool importPrivates)
@@ -936,7 +900,7 @@ class C : I
                 }
             };
 
-            CompileAndVerify(source: source, sourceSymbolValidator: validator(true), symbolValidator: validator(false), options: TestOptions.DllAlwaysImportInternals);
+            CompileAndVerify(source: source, sourceSymbolValidator: validator(true), symbolValidator: validator(false), options: TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal));
         }
 
         [Fact]
@@ -959,7 +923,7 @@ class C
         Console.Write(C.S);
     }
 }", parseOptions: TestOptions.ExperimentalParseOptions,
-    compOptions: TestOptions.ExeAlwaysImportInternals);
+    options: TestOptions.ReleaseExe.WithMetadataImportOptions(MetadataImportOptions.Internal));
             Action<ModuleSymbol> validator = module =>
             {
                 var type = module.GlobalNamespace.GetMember<NamedTypeSymbol>("C");
@@ -1026,7 +990,7 @@ struct S
         Console.Write(S.T);
     }
 }", parseOptions: TestOptions.ExperimentalParseOptions,
-    compOptions: TestOptions.ExeAlwaysImportInternals);
+    options: TestOptions.ReleaseExe.WithMetadataImportOptions(MetadataImportOptions.Internal));
 
             Action<ModuleSymbol> validator = module =>
             {
@@ -1300,7 +1264,7 @@ class C : B<string>
                 Assert.Equal(p.GetMethod.AssociatedSymbol, p);
             };
 
-            CompileAndVerify(source, sourceSymbolValidator: validator(true), symbolValidator: validator(false), options: TestOptions.DllAlwaysImportInternals);
+            CompileAndVerify(source, sourceSymbolValidator: validator(true), symbolValidator: validator(false), options: TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal));
         }
 
         private static void VerifyAutoProperty(PropertySymbol property, bool isFromSource)
@@ -1550,7 +1514,7 @@ class TC3<T8>
 
 ";
 
-            var verifier = CompileAndVerify(source, options: TestOptions.Exe.WithOptimizations(false), emitPdb: true, expectedOutput:
+            var verifier = CompileAndVerify(source, options: TestOptions.ReleaseExe, expectedOutput:
 @"TC1
 TC2`1[System.Byte]
 TC3`1+TC4[System.Byte]
@@ -1558,79 +1522,65 @@ TC3`1+TC4[System.Byte]
 
             verifier.VerifyIL("TC1.TM1<T1>",
 @"{
-  // Code size        9 (0x9)
+  // Code size        7 (0x7)
   .maxstack  1
-  IL_0000:  nop       
-  IL_0001:  ldarg.0   
-  IL_0002:  call       ""void TC1.TM1<T1>()""
-  IL_0007:  nop
-  IL_0008:  ret
+  IL_0000:  ldarg.0
+  IL_0001:  call       ""void TC1.TM1<T1>()""
+  IL_0006:  ret
 }
 ");
 
             verifier.VerifyIL("TC1.TM2<T2>",
 @"{
-  // Code size        9 (0x9)
+  // Code size        7 (0x7)
   .maxstack  1
-  IL_0000:  nop       
-  IL_0001:  ldarg.0   
-  IL_0002:  call       ""void TC1.TM2<int>()""
-  IL_0007:  nop
-  IL_0008:  ret
+  IL_0000:  ldarg.0
+  IL_0001:  call       ""void TC1.TM2<int>()""
+  IL_0006:  ret
 }
 ");
 
             verifier.VerifyIL("TC2<T3>.TM3<T4>",
 @"{
-  // Code size       16 (0x10)
+  // Code size       13 (0xd)
   .maxstack  1
-  IL_0000:  nop
-  IL_0001:  ldarg.0
-  IL_0002:  call       ""void TC2<T3>.TM3<T4>()""
-  IL_0007:  nop
-  IL_0008:  ldarg.0
-  IL_0009:  call       ""void TC2<T3>.TM3<T4>()""
-  IL_000e:  nop
-  IL_000f:  ret     
+  IL_0000:  ldarg.0
+  IL_0001:  call       ""void TC2<T3>.TM3<T4>()""
+  IL_0006:  ldarg.0
+  IL_0007:  call       ""void TC2<T3>.TM3<T4>()""
+  IL_000c:  ret
 }
 ");
 
             verifier.VerifyIL("TC2<T3>.TM4<T5>",
 @"{
-  // Code size       16 (0x10)
+  // Code size       13 (0xd)
   .maxstack  1
-  IL_0000:  nop
-  IL_0001:  ldarg.0
-  IL_0002:  call       ""void TC2<T3>.TM4<int>()""
-  IL_0007:  nop
-  IL_0008:  ldarg.0
-  IL_0009:  call       ""void TC2<T3>.TM4<int>()""
-  IL_000e:  nop
-  IL_000f:  ret
+  IL_0000:  ldarg.0
+  IL_0001:  call       ""void TC2<T3>.TM4<int>()""
+  IL_0006:  ldarg.0
+  IL_0007:  call       ""void TC2<T3>.TM4<int>()""
+  IL_000c:  ret
 }
 ");
 
             verifier.VerifyIL("TC2<T3>.TM5<T6>",
 @"{
-  // Code size        9 (0x9)
+  // Code size        7 (0x7)
   .maxstack  1
-  IL_0000:  nop       
-  IL_0001:  ldarg.0   
-  IL_0002:  call       ""void TC2<int>.TM5<T6>(T6)""
-  IL_0007:  nop
-  IL_0008:  ret
+  IL_0000:  ldarg.0
+  IL_0001:  call       ""void TC2<int>.TM5<T6>(T6)""
+  IL_0006:  ret
 }
 ");
 
             verifier.VerifyIL("TC2<T3>.TM6<T7>",
 @"{
-  // Code size        9 (0x9)
+  // Code size        7 (0x7)
   .maxstack  1
-  IL_0000:  nop       
-  IL_0001:  ldc.i4.1  
-  IL_0002:  call       ""void TC2<int>.TM6<int>(int)""
-  IL_0007:  nop
-  IL_0008:  ret
+  IL_0000:  ldc.i4.1
+  IL_0001:  call       ""void TC2<int>.TM6<int>(int)""
+  IL_0006:  ret
 }
 ");
         }
@@ -2207,11 +2157,7 @@ public class Methods
 
         private static void VerifyEmitWithNoResources(CSharpCompilation comp, Platform platform)
         {
-            var options = new CSharpCompilationOptions(
-                OutputKind.ConsoleApplication,
-                optimize: true,
-                platform: platform,
-                debugInformationKind: DebugInformationKind.None);
+            var options = TestOptions.ReleaseExe.WithPlatform(platform);
 
             using (var outputStream = new MemoryStream())
             {

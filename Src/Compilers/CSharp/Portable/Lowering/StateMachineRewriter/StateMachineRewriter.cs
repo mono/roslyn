@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -18,25 +19,22 @@ namespace Microsoft.CodeAnalysis.CSharp
         protected readonly SyntheticBoundNodeFactory F;
         protected readonly SynthesizedContainer stateMachineClass;
         protected FieldSymbol stateField;
-        protected IReadOnlyDictionary<Symbol, CapturedSymbolReplacement> variableProxies;
-        protected HashSet<Symbol> variablesCaptured;
+        protected IReadOnlyDictionary<Symbol, CapturedSymbolReplacement> nonReusableLocalProxies;
+        protected IReadOnlySet<Symbol> variablesCaptured;
         protected Dictionary<Symbol, CapturedSymbolReplacement> initialParameters;
-        protected readonly bool generateDebugInfo;
 
         protected StateMachineRewriter(
             BoundStatement body,
             MethodSymbol method,
             SynthesizedContainer stateMachineClass,
             TypeCompilationState compilationState,
-            DiagnosticBag diagnostics,
-            bool generateDebugInfo)
+            DiagnosticBag diagnostics)
         {
             this.body = body;
             this.method = method;
             this.stateMachineClass = stateMachineClass;
             this.compilationState = compilationState;
             this.diagnostics = diagnostics;
-            this.generateDebugInfo = generateDebugInfo;
             this.F = new SyntheticBoundNodeFactory(method, body.Syntax, compilationState, diagnostics);
             Debug.Assert(F.CurrentClass == method.ContainingType);
             Debug.Assert(F.Syntax == body.Syntax);
@@ -92,11 +90,9 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
 
             // fields for the captured variables of the method
-            var captured = IteratorAndAsyncCaptureWalker.Analyze(compilationState.ModuleBuilderOpt.Compilation, method, body);
-
-            this.variablesCaptured = new HashSet<Symbol>(captured.Keys);
-
-            this.variableProxies = CreateInitialProxies(captured);
+            var variablesCaptured = IteratorAndAsyncCaptureWalker.Analyze(compilationState.ModuleBuilderOpt.Compilation, method, body);
+            this.nonReusableLocalProxies = CreateNonReusableLocalProxies(variablesCaptured);
+            this.variablesCaptured = variablesCaptured;
 
             GenerateMethodImplementations();
 
@@ -104,14 +100,14 @@ namespace Microsoft.CodeAnalysis.CSharp
             return ReplaceOriginalMethod();
         }
 
-        private IReadOnlyDictionary<Symbol, CapturedSymbolReplacement> CreateInitialProxies(MultiDictionary<Symbol, CSharpSyntaxNode> captured)
+        private IReadOnlyDictionary<Symbol, CapturedSymbolReplacement> CreateNonReusableLocalProxies(MultiDictionary<Symbol, CSharpSyntaxNode> variablesCaptured)
         {
             var proxies = new Dictionary<Symbol, CapturedSymbolReplacement>();
 
             var typeMap = stateMachineClass.TypeMap;
 
             var orderedCaptured =
-                from local in captured.Keys
+                from local in variablesCaptured.Keys
                 orderby local.Name, (local.Locations.Length == 0) ? 0 : local.Locations[0].SourceSpan.Start
                 select local;
 
@@ -125,7 +121,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     {
                         // create proxies for user-defined variables and for lambda closures:
                         Debug.Assert(local.RefKind == RefKind.None);
-                        proxies.Add(local, MakeInitialProxy(typeMap, captured, local));
+                        proxies.Add(local, MakeNonReusableLocalProxy(typeMap, variablesCaptured, local));
                     }
                 }
                 else
@@ -134,26 +130,27 @@ namespace Microsoft.CodeAnalysis.CSharp
                     if (parameter.IsThis)
                     {
                         var proxyField = F.StateMachineField(method.ContainingType, GeneratedNames.ThisProxyName(), isPublic: true);
-                        proxies.Add(parameter, new CapturedToFrameSymbolReplacement(proxyField));
+                        proxies.Add(parameter, new CapturedToFrameSymbolReplacement(proxyField, isReusable: false));
 
                         if (PreserveInitialParameterValues)
                         {
                             var initialThis = method.ContainingType.IsStructType() ?
                                 F.StateMachineField(method.ContainingType, GeneratedNames.StateMachineThisParameterProxyName(), isPublic: true) : proxyField;
 
-                            initialParameters.Add(parameter, new CapturedToFrameSymbolReplacement(initialThis));
+                            initialParameters.Add(parameter, new CapturedToFrameSymbolReplacement(initialThis, isReusable: false));
                         }
                     }
                     else
                     {
                         var proxyField = F.StateMachineField(typeMap.SubstituteType(parameter.Type), parameter.Name, isPublic: true);
-                        proxies.Add(parameter, new CapturedToFrameSymbolReplacement(proxyField));
+                        proxies.Add(parameter, new CapturedToFrameSymbolReplacement(proxyField, isReusable: false));
 
                         if (PreserveInitialParameterValues)
                         {
                             string proxyName = GeneratedNames.StateMachineParameterProxyName(parameter.Name);
                             initialParameters.Add(parameter, new CapturedToFrameSymbolReplacement(
-                                F.StateMachineField(typeMap.SubstituteType(parameter.Type), proxyName, isPublic: true)));
+                                F.StateMachineField(typeMap.SubstituteType(parameter.Type), proxyName, isPublic: true), 
+                                isReusable: false));
                         }
 
                         if (parameter.Type.IsRestrictedType())
@@ -168,10 +165,10 @@ namespace Microsoft.CodeAnalysis.CSharp
             return proxies;
         }
 
-        private CapturedSymbolReplacement MakeInitialProxy(TypeMap TypeMap, MultiDictionary<Symbol, CSharpSyntaxNode> locations, LocalSymbol local)
+        private CapturedSymbolReplacement MakeNonReusableLocalProxy(TypeMap TypeMap, MultiDictionary<Symbol, CSharpSyntaxNode> locations, LocalSymbol local)
         {
             Debug.Assert(local.RefKind == RefKind.None);
-            CapturedSymbolReplacement result = new CapturedToFrameSymbolReplacement(MakeHoistedLocalField(TypeMap, local, local.Type));
+            CapturedSymbolReplacement result = new CapturedToFrameSymbolReplacement(MakeHoistedLocalField(TypeMap, local, local.Type), isReusable: false);
 
             if (local.Type.IsRestrictedType())
             {
@@ -214,7 +211,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             InitializeStateMachine(bodyBuilder, frameType, stateMachineVariable);
 
             // plus code to initialize all of the parameter proxies result.proxy
-            var proxies = PreserveInitialParameterValues ? initialParameters : variableProxies;
+            var proxies = PreserveInitialParameterValues ? initialParameters : nonReusableLocalProxies;
 
             // starting with the "this" proxy
             if (!method.IsStatic)

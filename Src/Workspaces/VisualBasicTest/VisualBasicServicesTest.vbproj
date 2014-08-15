@@ -49,6 +49,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup Label="File References">
+    <Reference Include="Microsoft.CodeAnalysis.Desktop, Version=42.42.42.42, Culture=neutral, PublicKeyToken=fc793a00266884fb, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Binaries\Debug\Microsoft.CodeAnalysis.Desktop.dll</HintPath>
+    </Reference>
     <Reference Include="System.Collections.Immutable">
       <HintPath>..\..\packages\Microsoft.Bcl.Immutable.1.1.20-beta\lib\portable-net45+win8\System.Collections.Immutable.dll</HintPath>
     </Reference>
@@ -78,18 +82,31 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
+    <!-- workaround for bug 967430 -->
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Resources.ResourceManager" />
+    <Reference Include="System.Xml.ReaderWriter" />
+    <Reference Include="System.Xml.XDocument" />
+    <Reference Include="System.Linq" />
+    <Reference Include="System.Runtime.InteropServices" />
+    <Reference Include="System.Runtime.Extensions" />
+    <Reference Include="System.Collections.Concurrent" />
+    <Reference Include="System.Reflection" />
+    <Reference Include="System.Reflection.Primitives" />
+    <Reference Include="System.Globalization" />
+    <Reference Include="System.IO" />
+    <Reference Include="System.Collections" />
+    <Reference Include="System.Threading.Tasks" />
+    <Reference Include="System.Text.Encoding" />
   </ItemGroup>
   <ItemGroup>
     <Import Include="Microsoft.VisualBasic" />
     <Import Include="System" />
     <Import Include="System.Collections" />
     <Import Include="System.Collections.Generic" />
-    <Import Include="System.Data" />
     <Import Include="System.Diagnostics" />
     <Import Include="System.Linq" />
     <Import Include="System.Xml.Linq" />
@@ -99,6 +116,7 @@
     <Folder Include="My Project\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CodeGeneration\SyntaxGeneratorTests.vb" />
     <Compile Include="Formatting\FormattingTests.vb" />
     <Compile Include="Formatting\VisualBasicFormattingTestBase.vb" />
     <Compile Include="Formatting\XmlLiterals.Designer.vb">

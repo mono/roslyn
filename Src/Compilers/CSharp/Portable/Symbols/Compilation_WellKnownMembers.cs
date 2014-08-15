@@ -325,7 +325,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         internal SynthesizedAttributeData SynthesizeDebuggerBrowsableNeverAttribute()
         {
-            if (Options.DebugInformationKind != DebugInformationKind.Full)
+            if (Options.OptimizationLevel != OptimizationLevel.Debug)
             {
                 return null;
             }
@@ -353,50 +353,53 @@ namespace Microsoft.CodeAnalysis.CSharp
                 return null;
             }
 
-            var defaulDebuggingMode = (FieldSymbol)GetWellKnownTypeMember(WellKnownMember.System_Diagnostics_DebuggableAttribute_DebuggingModes__Default);
-            if ((object)defaulDebuggingMode == null || !defaulDebuggingMode.HasConstantValue)
+            // IgnoreSymbolStoreDebuggingMode flag is checked by the CLR, it is not referred to by the debugger.
+            // It tells the JIT that it doesn't need to load the PDB at the time it generates jitted code. 
+            // The PDB would still be used by a debugger, or even by the runtime for putting source line information 
+            // on exception stack traces. We always set this flag to avoid overhead of JIT loading the PDB. 
+            // The theoretical scenario for not setting it would be a language compiler that wants their sequence points 
+            // at specific places, but those places don't match what CLR's heuristics calculate when scanning the IL.
+            var ignoreSymbolStoreDebuggingMode = (FieldSymbol)GetWellKnownTypeMember(WellKnownMember.System_Diagnostics_DebuggableAttribute_DebuggingModes__IgnoreSymbolStoreSequencePoints);
+            if ((object)ignoreSymbolStoreDebuggingMode == null || !ignoreSymbolStoreDebuggingMode.HasConstantValue)
             {
                 return null;
             }
 
-            var disableOptsDebuggingMode = (FieldSymbol)GetWellKnownTypeMember(WellKnownMember.System_Diagnostics_DebuggableAttribute_DebuggingModes__DisableOptimizations);
-            if ((object)disableOptsDebuggingMode == null || !disableOptsDebuggingMode.HasConstantValue)
+            int constantVal = ignoreSymbolStoreDebuggingMode.GetConstantValue(ConstantFieldsInProgress.Empty, earlyDecodingWellKnownAttributes: false).Int32Value;
+
+            // Since .NET 2.0 the combinations of None, Default and DisableOptimizations have the following effect:
+            // 
+            // None                                         JIT optimizations enabled
+            // Default                                      JIT optimizations enabled
+            // DisableOptimizations                         JIT optimizations enabled
+            // Default | DisableOptimizations               JIT optimizations disabled
+            if (options.OptimizationLevel == OptimizationLevel.Debug)
             {
-                return null;
-            }
+                var defaultDebuggingMode = (FieldSymbol)GetWellKnownTypeMember(WellKnownMember.System_Diagnostics_DebuggableAttribute_DebuggingModes__Default);
+                if ((object)defaultDebuggingMode == null || !defaultDebuggingMode.HasConstantValue)
+                {
+                    return null;
+                }
 
-            var enableENCDebuggingMode = (FieldSymbol)GetWellKnownTypeMember(WellKnownMember.System_Diagnostics_DebuggableAttribute_DebuggingModes__EnableEditAndContinue);
-            if ((object)enableENCDebuggingMode == null || !enableENCDebuggingMode.HasConstantValue)
-            {
-                return null;
-            }
+                var disableOptimizationsDebuggingMode = (FieldSymbol)GetWellKnownTypeMember(WellKnownMember.System_Diagnostics_DebuggableAttribute_DebuggingModes__DisableOptimizations);
+                if ((object)disableOptimizationsDebuggingMode == null || !disableOptimizationsDebuggingMode.HasConstantValue)
+                {
+                    return null;
+                }
 
-            var ignorePDBDebuggingMode = (FieldSymbol)GetWellKnownTypeMember(WellKnownMember.System_Diagnostics_DebuggableAttribute_DebuggingModes__IgnoreSymbolStoreSequencePoints);
-            if ((object)ignorePDBDebuggingMode == null || !ignorePDBDebuggingMode.HasConstantValue)
-            {
-                return null;
-            }
-
-            Debug.Assert(options.DebugInformationKind.IsValid() && options.DebugInformationKind != DebugInformationKind.None);
-
-            bool emittingFullDebugInfo = options.DebugInformationKind == DebugInformationKind.Full;
-            bool optimizationsDisabled = !options.Optimize;
-
-            int constantVal = ignorePDBDebuggingMode.GetConstantValue(ConstantFieldsInProgress.Empty, earlyDecodingWellKnownAttributes: false).Int32Value;
-
-            if (emittingFullDebugInfo)
-            {
-                constantVal |= defaulDebuggingMode.GetConstantValue(ConstantFieldsInProgress.Empty, earlyDecodingWellKnownAttributes: false).Int32Value;
-            }
-
-            if (optimizationsDisabled)
-            {
-                constantVal |= disableOptsDebuggingMode.GetConstantValue(ConstantFieldsInProgress.Empty, earlyDecodingWellKnownAttributes: false).Int32Value;
+                constantVal |= defaultDebuggingMode.GetConstantValue(ConstantFieldsInProgress.Empty, earlyDecodingWellKnownAttributes: false).Int32Value;
+                constantVal |= disableOptimizationsDebuggingMode.GetConstantValue(ConstantFieldsInProgress.Empty, earlyDecodingWellKnownAttributes: false).Int32Value;
             }
 
             if (options.EnableEditAndContinue)
             {
-                constantVal |= enableENCDebuggingMode.GetConstantValue(ConstantFieldsInProgress.Empty, earlyDecodingWellKnownAttributes: false).Int32Value;
+                var enableEncDebuggingMode = (FieldSymbol)GetWellKnownTypeMember(WellKnownMember.System_Diagnostics_DebuggableAttribute_DebuggingModes__EnableEditAndContinue);
+                if ((object)enableEncDebuggingMode == null || !enableEncDebuggingMode.HasConstantValue)
+                {
+                    return null;
+                }
+
+                constantVal |= enableEncDebuggingMode.GetConstantValue(ConstantFieldsInProgress.Empty, earlyDecodingWellKnownAttributes: false).Int32Value;
             }
 
             var typedConstantDebugMode = new TypedConstant(debuggingModesType, TypedConstantKind.Enum, constantVal);

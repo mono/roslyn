@@ -28,7 +28,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim awaiterTemp As LocalSymbol = Me.F.SynthesizedLocal(awaiterType)
                 builder.AddLocal(awaiterTemp)
 
-                builder.AddStatement(Me.F.SequencePoint(Me.GenerateDebugInfo, If(Me._enclosingSequencePointSyntax, node.Syntax)))
+                builder.AddStatement(Me.F.SequencePoint(If(Me._enclosingSequencePointSyntax, node.Syntax)))
 
                 ' Replace 'awaiter' with the local
                 Dim awaiterInstancePlaceholder As BoundLValuePlaceholder = node.AwaiterInstancePlaceholder
@@ -168,7 +168,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                 Me._owner._builderType,
                                 "AwaitUnsafeOnCompleted",
                                 ImmutableArray.Create(Of TypeSymbol)(asCriticalNotifyCompletion.Type, Me.F.Me().Type),
-                                {criticalNotifyCompletionAsLValue, Me.F.ValueTypeMe()}))
+                                {criticalNotifyCompletionAsLValue, Me.F.ReferenceOrByrefMe()}))
 
                     ' >>>>   dcast2 = DirectCast(AwaiterLocalTemp, INotifyCompletion)
                     ' TODO: POSTPROCESS ASSIGNMENT
@@ -185,7 +185,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                 Me._owner._builderType,
                                 "AwaitOnCompleted",
                                 ImmutableArray.Create(Of TypeSymbol)(asNotifyCompletion.Type, Me.F.Me().Type),
-                                {notifyCompletionAsLValue, Me.F.ValueTypeMe()}))
+                                {notifyCompletionAsLValue, Me.F.ReferenceOrByrefMe()}))
 
                     blockBuilder.Add(
                         Me.F.Block(
@@ -216,7 +216,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                 Me._owner._builderType,
                                 If(useUnsafeOnCompleted, "AwaitUnsafeOnCompleted", "AwaitOnCompleted"),
                                 ImmutableArray.Create(Of TypeSymbol)(awaiterType, Me.F.Me().Type),
-                                {Me.F.Local(awaiterTemp, True), Me.F.ValueTypeMe()})))
+                                {Me.F.Local(awaiterTemp, True), Me.F.ReferenceOrByrefMe()})))
                 End If
 
                 '----------------------------------------------

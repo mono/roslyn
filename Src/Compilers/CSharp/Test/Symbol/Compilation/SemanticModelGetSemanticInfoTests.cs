@@ -14759,7 +14759,7 @@ namespace Test
         void Add(int x);
     }
 }
-", compOptions: TestOptions.Dll);
+", options: TestOptions.ReleaseDll);
 
             pia.VerifyDiagnostics();
 
@@ -14999,22 +14999,22 @@ public class C
 {
     static void Main()
     {
-        var dummy1 = /*<bind>*/((string)null) ?.ToString().Length/*</bind>*/ ?.ToString();
-        var dummy2 = ""qqq"" ?.ToString().Length.ToString();
-        var dummy3 = 1.ToString() ?.ToString().Length.ToString();
+        var dummy1 = ((string)null)?.ToString()./*<bind>*/Length/*</bind>*/?.ToString();
+        var dummy2 = ""qqq""?.ToString().Length.ToString();
+        var dummy3 = 1.ToString()?.ToString().Length.ToString();
     }
 }
 ";
-            var semanticInfo = GetSemanticInfoForTestExperimental<ConditionalAccessExpressionSyntax>(sourceCode);
+            var semanticInfo = GetSemanticInfoForTest<IdentifierNameSyntax>(sourceCode);
 
             Assert.Equal("int", semanticInfo.Type.ToDisplayString());
             Assert.Equal(TypeKind.Struct, semanticInfo.Type.TypeKind);
-            Assert.Equal("int?", semanticInfo.ConvertedType.ToDisplayString());
-            Assert.Equal(TypeKind.Struct, semanticInfo.ConvertedType.TypeKind);
+            Assert.Equal("?", semanticInfo.ConvertedType.ToDisplayString());
+            Assert.Equal(TypeKind.Error, semanticInfo.ConvertedType.TypeKind);
             Assert.Equal(ConversionKind.Identity, semanticInfo.ImplicitConversion.Kind);
 
-            Assert.Null(semanticInfo.Symbol);
-            Assert.Equal(CandidateReason.None, semanticInfo.CandidateReason);
+            Assert.Equal("string.Length", semanticInfo.Symbol.ToDisplayString());
+            Assert.Equal(SymbolKind.Property, semanticInfo.Symbol.Kind);
             Assert.Equal(0, semanticInfo.CandidateSymbols.Length);
 
             Assert.Equal(0, semanticInfo.MethodGroup.Length);
@@ -15030,7 +15030,7 @@ public class C
 {
     static void Main()
     {
-        var dummy1 = ((string)null) ?.ToString()./*<bind>*/Length/*</bind>*/ ?.ToString();
+        var dummy1 = ((string)null) ?.ToString()./*<bind>*/Length/*</bind>*/ .ToString();
         var dummy2 = ""qqq"" ?.ToString().Length.ToString();
         var dummy3 = 1.ToString() ?.ToString().Length.ToString();
     }
@@ -15061,7 +15061,7 @@ public class C
 {
     static void Main()
     {
-        var dummy1 = ((string)null) ?.ToString() ?/*<bind>*/[1]/*</bind>*/ ?.ToString();
+        var dummy1 = ((string)null) ?.ToString() ?/*<bind>*/[1]/*</bind>*/ .ToString();
         var dummy2 = ""qqq"" ?.ToString().Length.ToString();
         var dummy3 = 1.ToString() ?.ToString().Length.ToString();
     }
@@ -15129,6 +15129,33 @@ struct Program(int i)
 
             Assert.Equal("int", semanticInfo.Symbol.ToDisplayString());
             Assert.Equal(SymbolKind.Parameter, semanticInfo.Symbol.Kind);
+            Assert.Equal(0, semanticInfo.CandidateSymbols.Length);
+
+            Assert.Equal(0, semanticInfo.MethodGroup.Length);
+
+            Assert.False(semanticInfo.IsCompileTimeConstant);
+        }
+
+        [Fact, WorkItem(998050, "DevDiv")]
+        public void Bug998050()
+        {
+            var comp = CreateCompilationWithMscorlib(@"
+class BaselineLog
+{}
+
+public static BaselineLog Log
+{
+get
+{
+}
+}= new /*<bind>*/BaselineLog/*</bind>*/();
+", parseOptions: TestOptions.ExperimentalParseOptions);
+            var semanticInfo = GetSemanticInfoForTest<IdentifierNameSyntax>(comp);
+
+            Assert.Null(semanticInfo.Type);
+
+            Assert.Equal("BaselineLog", semanticInfo.Symbol.ToDisplayString());
+            Assert.Equal(SymbolKind.NamedType, semanticInfo.Symbol.Kind);
             Assert.Equal(0, semanticInfo.CandidateSymbols.Length);
 
             Assert.Equal(0, semanticInfo.MethodGroup.Length);
@@ -15339,6 +15366,41 @@ class C(C c)
 
             var semanticInfo = GetSemanticInfoForTest<IdentifierNameSyntax>(comp);
             Assert.Null(semanticInfo.Symbol);
+        }
+
+        [Fact, WorkItem(982479, "DevDiv")]
+        public void Bug982479()
+        {
+            const string sourceCode = @"
+class C
+{
+    static void Main()
+    {
+        new C { Dynamic = { /*<bind>*/Name/*</bind>*/ = 1 } };
+    }
+ 
+    public dynamic Dynamic;
+}
+ 
+class Name
+{
+}
+";
+            var semanticInfo = GetSemanticInfoForTest<IdentifierNameSyntax>(sourceCode);
+
+            Assert.Equal("dynamic", semanticInfo.Type.ToDisplayString());
+            Assert.Equal(TypeKind.DynamicType, semanticInfo.Type.TypeKind);
+            Assert.Equal("dynamic", semanticInfo.ConvertedType.ToDisplayString());
+            Assert.Equal(TypeKind.DynamicType, semanticInfo.ConvertedType.TypeKind);
+            Assert.Equal(ConversionKind.Identity, semanticInfo.ImplicitConversion.Kind);
+
+            Assert.Null(semanticInfo.Symbol);
+            Assert.Equal(CandidateReason.None, semanticInfo.CandidateReason);
+            Assert.Equal(0, semanticInfo.CandidateSymbols.Length);
+
+            Assert.Equal(0, semanticInfo.MethodGroup.Length);
+
+            Assert.False(semanticInfo.IsCompileTimeConstant);
         }
     }
 }

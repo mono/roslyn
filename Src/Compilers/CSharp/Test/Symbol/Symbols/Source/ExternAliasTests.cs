@@ -2,7 +2,6 @@
 
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
@@ -31,7 +30,7 @@ namespace NS
     }
 }
 ";
-                    var comp = CreateCompilationWithMscorlib(src, assemblyName: "Foo1", compOptions: TestOptions.Dll);
+                    var comp = CreateCompilationWithMscorlib(src, assemblyName: "Foo1", options: TestOptions.ReleaseDll);
                     foo1 = new MetadataImageReference(comp.EmitToArray(), aliases: ImmutableArray.Create("Bar"));
                 }
 
@@ -56,7 +55,7 @@ namespace NS
     }
 }
 ";
-                    var comp = CreateCompilationWithMscorlib(src, assemblyName: "Foo2", compOptions: TestOptions.Dll);
+                    var comp = CreateCompilationWithMscorlib(src, assemblyName: "Foo2", options: TestOptions.ReleaseDll);
                     foo2 = new MetadataImageReference(comp.EmitToArray(), aliases: ImmutableArray.Create("Bar"));
                 }
 
@@ -94,7 +93,7 @@ class Maine
 extern alias Bar;
 Bar::NS.Foo d = new Bar::NS.Foo();
 ";
-            var comp = CreateCompilationWithMscorlib(src, compOptions: new CSharpCompilationOptions(OutputKind.ConsoleApplication), parseOptions: TestOptions.Script);
+            var comp = CreateCompilationWithMscorlib(src, options: new CSharpCompilationOptions(OutputKind.ConsoleApplication), parseOptions: TestOptions.Script);
             comp = comp.AddReferences(Foo1, Foo2);
             comp.VerifyDiagnostics();
         }
@@ -115,7 +114,7 @@ Bar::NS.Foo d = new Bar::NS.Foo();
                 Diagnostic(ErrorCode.ERR_ExternAliasNotAllowed, "extern alias Bar;"),
                 // (1,1): info CS8020: Unused extern alias.
                 // extern alias Bar;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias Bar;"));
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias Bar;"));
         }
 
         [Fact]
@@ -164,12 +163,12 @@ class Maine
                 Diagnostic(ErrorCode.ERR_DuplicateAlias, "using Bar = System.Console;").WithArguments("Bar"),
                 // (3,1): info CS8019: Unnecessary using directive.
                 // using Bar = System.Console;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using Bar = System.Console;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using Bar = System.Console;"),
                 // (2,1): info CS8020: Unused extern alias.
                 // extern alias Bar;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias Bar;"));
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias Bar;"));
         }
-                         
+
         [Fact]
         public void Error_BadExternAlias()
         {
@@ -192,7 +191,7 @@ class Maine
                 Diagnostic(ErrorCode.ERR_BadExternAlias, "bar").WithArguments("bar"),
                 // (2,1): info CS8020: Unused extern alias.
                 // extern alias bar;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias bar;"));
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias bar;"));
         }
 
         [Fact]
@@ -211,7 +210,7 @@ namespace NS
     }
 }
 ";
-            var comp = CreateCompilationWithMscorlib(src, assemblyName: "Baz.dll", compOptions: TestOptions.Dll);
+            var comp = CreateCompilationWithMscorlib(src, assemblyName: "Baz.dll", options: TestOptions.ReleaseDll);
             var outputBytes = comp.EmitToArray();
             var foo1 = new MetadataImageReference(outputBytes);
             var foo1Alias = new MetadataImageReference(outputBytes, aliases: ImmutableArray.Create("Baz"));
@@ -226,7 +225,7 @@ namespace NS
     }
 }
 ";
-            comp = CreateCompilationWithMscorlib(src, assemblyName: "Bar.dll", compOptions: TestOptions.Dll);
+            comp = CreateCompilationWithMscorlib(src, assemblyName: "Bar.dll", options: TestOptions.ReleaseDll);
             comp = comp.AddReferences(foo1);
             var foo2 = new MetadataImageReference(comp.EmitToArray());
 
@@ -294,10 +293,10 @@ class Maine
                 Diagnostic(ErrorCode.ERR_DuplicateAlias, "Bar").WithArguments("Bar"),
                 // (2,1): info CS8020: Unused extern alias.
                 // extern alias Bar;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias Bar;"),
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias Bar;"),
                 // (3,1): info CS8020: Unused extern alias.
                 // extern alias Bar;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias Bar;"));
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias Bar;"));
         }
 
         [Fact]
@@ -313,7 +312,7 @@ namespace NS
     }
 }
 ";
-            var comp = CreateCompilationWithMscorlib(src, compOptions: TestOptions.Dll);
+            var comp = CreateCompilationWithMscorlib(src, options: TestOptions.ReleaseDll);
             var foo1Alias = new MetadataImageReference(comp.EmitToArray(), aliases: ImmutableArray.Create("global"));
 
             src =
@@ -335,7 +334,7 @@ class Maine
                 Diagnostic(ErrorCode.ERR_GlobalExternAlias, "global"),
                 // (2,1): info CS8020: Unused extern alias.
                 // extern alias global;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias global;"));
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias global;"));
         }
 
         [Fact]
@@ -385,7 +384,7 @@ class A : Bar::NS.Foo {}
             comp.VerifyDiagnostics(
                 // (3,5): info CS8020: Unused extern alias.
                 //     extern alias Bar;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias Bar;"));
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias Bar;"));
         }
 
         [WorkItem(529751, "DevDiv")]

@@ -6,6 +6,7 @@ Imports System.Runtime.Serialization
 Imports System.Threading
 Imports Microsoft.CodeAnalysis.Diagnostics
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
+Imports Roslyn.Test.Utilities
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.Semantics
 
@@ -192,7 +193,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.Semantics
             specificDiagOptions.Add(noneDiagDesciptor.Id, ReportDiagnostic.[Error])
             specificDiagOptions.Add(infoDiagDesciptor.Id, ReportDiagnostic.[Error])
             specificDiagOptions.Add(warningDiagDesciptor.Id, ReportDiagnostic.[Error])
-            Dim options = OptionsDll.WithSpecificDiagnosticOptions(specificDiagOptions)
+            Dim options = TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(specificDiagOptions)
 
             Dim comp = CreateCompilationWithMscorlib({""}, compOptions:=options)
             Dim effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray()
@@ -208,12 +209,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.Semantics
             specificDiagOptions.Add(infoDiagDesciptor.Id, ReportDiagnostic.Suppress)
             specificDiagOptions.Add(warningDiagDesciptor.Id, ReportDiagnostic.Suppress)
             specificDiagOptions.Add(errorDiagDesciptor.Id, ReportDiagnostic.Suppress)
-            options = OptionsDll.WithSpecificDiagnosticOptions(specificDiagOptions)
+            options = TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(specificDiagOptions)
 
             comp = CreateCompilationWithMscorlib({""}, compOptions:=options)
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray()
-            Assert.Equal(1, effectiveDiags.Length)
-            Assert.Equal(errorDiagDesciptor.Id, effectiveDiags(0).Id)
+            Assert.Equal(0, effectiveDiags.Length)
 
             ' Shuffle diagnostic severity.
             specificDiagOptions = New Dictionary(Of String, ReportDiagnostic)()
@@ -221,7 +221,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.Semantics
             specificDiagOptions.Add(infoDiagDesciptor.Id, ReportDiagnostic.Hidden)
             specificDiagOptions.Add(warningDiagDesciptor.Id, ReportDiagnostic.[Error])
             specificDiagOptions.Add(errorDiagDesciptor.Id, ReportDiagnostic.Warn)
-            options = OptionsDll.WithSpecificDiagnosticOptions(specificDiagOptions)
+            options = TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(specificDiagOptions)
 
             comp = CreateCompilationWithMscorlib({""}, compOptions:=options)
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray()
@@ -240,7 +240,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.Semantics
 
                     Case DiagnosticSeverity.Warning
                         If Not effectiveDiag.IsWarningAsError Then
-                            Assert.Equal(infoDiagDesciptor.Id, effectiveDiag.Id)
+                            Assert.Equal(errorDiagDesciptor.Id, effectiveDiag.Id)
                         Else
                             Assert.Equal(warningDiagDesciptor.Id, effectiveDiag.Id)
                         End If
@@ -275,39 +275,39 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.Semantics
 
             Dim diags = New Diagnostic() {noneDiag, infoDiag, warningDiag, errorDiag}
 
-            Dim options = OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Default)
+            Dim options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Default)
             Dim comp = CreateCompilationWithMscorlib({""}, compOptions:=options)
             Dim effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray()
             Assert.Equal(4, effectiveDiags.Length)
 
-            options = OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Error)
+            options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Error)
             comp = CreateCompilationWithMscorlib({""}, compOptions:=options)
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray()
             Assert.Equal(4, effectiveDiags.Length)
             Assert.Equal(1, effectiveDiags.Count(Function(d) d.IsWarningAsError))
 
-            options = OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Warn)
+            options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Warn)
             comp = CreateCompilationWithMscorlib({""}, compOptions:=options)
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray()
             Assert.Equal(4, effectiveDiags.Length)
             Assert.Equal(1, effectiveDiags.Count(Function(d) d.Severity = DiagnosticSeverity.Error))
             Assert.Equal(1, effectiveDiags.Count(Function(d) d.Severity = DiagnosticSeverity.Warning))
 
-            options = OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Info)
+            options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Info)
             comp = CreateCompilationWithMscorlib({""}, compOptions:=options)
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray()
             Assert.Equal(4, effectiveDiags.Length)
             Assert.Equal(1, effectiveDiags.Count(Function(d) d.Severity = DiagnosticSeverity.Error))
             Assert.Equal(1, effectiveDiags.Count(Function(d) d.Severity = DiagnosticSeverity.Info))
 
-            options = OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Hidden)
+            options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Hidden)
             comp = CreateCompilationWithMscorlib({""}, compOptions:=options)
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray()
             Assert.Equal(4, effectiveDiags.Length)
             Assert.Equal(1, effectiveDiags.Count(Function(d) d.Severity = DiagnosticSeverity.Error))
             Assert.Equal(1, effectiveDiags.Count(Function(d) d.Severity = DiagnosticSeverity.Hidden))
 
-            options = OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Suppress)
+            options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Suppress)
             comp = CreateCompilationWithMscorlib({""}, compOptions:=options)
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray()
             Assert.Equal(2, effectiveDiags.Length)
@@ -327,7 +327,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.Semantics
             Dim diags = {disabledDiag, enabledDiag}
 
             ' Verify that only the enabled diag shows up after filtering.
-            Dim options = OptionsDll
+            Dim options = TestOptions.ReleaseDll
             Dim comp = CreateCompilationWithMscorlib({""}, compOptions:=options)
             Dim effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray()
             Assert.Equal(1, effectiveDiags.Length)
@@ -338,7 +338,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.Semantics
             specificDiagOptions.Add(disabledDiagDescriptor.Id, ReportDiagnostic.Warn)
             specificDiagOptions.Add(enabledDiagDescriptor.Id, ReportDiagnostic.Suppress)
 
-            options = OptionsDll.WithSpecificDiagnosticOptions(specificDiagOptions)
+            options = TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(specificDiagOptions)
             comp = CreateCompilationWithMscorlib({""}, compOptions:=options)
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray()
             Assert.Equal(1, effectiveDiags.Length)
@@ -376,7 +376,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.Semantics
             Dim FullyDisabledAnalyzer = New FullyDisabledAnalyzer()
             Dim PartiallyDisabledAnalyzer = New PartiallyDisabledAnalyzer()
 
-            Dim options = OptionsDll
+            Dim options = TestOptions.ReleaseDll
             Assert.True(FullyDisabledAnalyzer.IsDiagnosticAnalyzerSuppressed(options))
             Assert.False(PartiallyDisabledAnalyzer.IsDiagnosticAnalyzerSuppressed(options))
 
@@ -384,7 +384,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.Semantics
             specificDiagOptions.Add(FullyDisabledAnalyzer.desc1.Id, ReportDiagnostic.Warn)
             specificDiagOptions.Add(PartiallyDisabledAnalyzer.desc2.Id, ReportDiagnostic.Suppress)
 
-            options = OptionsDll.WithSpecificDiagnosticOptions(specificDiagOptions)
+            options = TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(specificDiagOptions)
             Assert.False(FullyDisabledAnalyzer.IsDiagnosticAnalyzerSuppressed(options))
             Assert.True(PartiallyDisabledAnalyzer.IsDiagnosticAnalyzerSuppressed(options))
         End Sub
@@ -426,8 +426,56 @@ End Module
 
             Dim comp = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(source)
             comp.VerifyDiagnostics()
-            comp.VerifyAnalyzerDiagnostics({analyzer},
+            comp.VerifyAnalyzerDiagnostics({analyzer}, Nothing,
                                            AnalyzerDiagnostic("XX001", <![CDATA[Public Module ThisModule]]>))
+        End Sub
+
+        Class MockSymbolAnalyzer
+            Implements ISymbolAnalyzer
+
+            Public Shared desc1 As New DiagnosticDescriptor("XX001", "DummyDescription", "DummyMessage", "DummyCategory", DiagnosticSeverity.Warning, isEnabledByDefault:=True)
+
+            Public ReadOnly Property SupportedDiagnostics As ImmutableArray(Of DiagnosticDescriptor) Implements IDiagnosticAnalyzer.SupportedDiagnostics
+                Get
+                    Return ImmutableArray.Create(desc1)
+                End Get
+            End Property
+
+            Public ReadOnly Property SymbolKindsOfInterest As ImmutableArray(Of SymbolKind) Implements ISymbolAnalyzer.SymbolKindsOfInterest
+                Get
+                    Return ImmutableArray.Create(SymbolKind.NamedType)
+                End Get
+            End Property
+
+            Public Sub AnalyzeSymbol(symbol As ISymbol, compilation As Compilation, addDiagnostic As Action(Of Diagnostic), options As AnalyzerOptions, cancellationToken As CancellationToken) Implements ISymbolAnalyzer.AnalyzeSymbol
+                Dim sourceLoc = symbol.Locations.First(Function(l) l.IsInSource)
+                addDiagnostic(CodeAnalysis.Diagnostic.Create(desc1, sourceLoc))
+            End Sub
+        End Class
+
+        <WorkItem(998724)>
+        <Fact>
+        Sub TestSymbolAnalyzerNotInvokedForMyTemplateSymbols()
+            Dim analyzer = New MockSymbolAnalyzer()
+            Dim sources = <compilation>
+                              <file name="c.vb">
+                                  <![CDATA[
+Public Class C
+End Class
+]]>
+                              </file>
+                          </compilation>
+
+            Dim compilation = CreateCompilationWithMscorlibAndReferences(sources,
+                references:={SystemCoreRef, MsvbRef},
+                options:=TestOptions.ReleaseDll)
+
+            Dim MyTemplate = MyTemplateTests.GetMyTemplateTree(compilation)
+            Assert.NotNull(MyTemplate)
+
+            compilation.VerifyDiagnostics()
+            compilation.VerifyAnalyzerDiagnostics({analyzer}, Nothing,
+                                           AnalyzerDiagnostic("XX001", <![CDATA[C]]>))
         End Sub
     End Class
 End Namespace

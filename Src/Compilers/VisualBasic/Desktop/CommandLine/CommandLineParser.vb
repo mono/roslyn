@@ -3,7 +3,6 @@
 Imports System.Collections.Immutable
 Imports System.Globalization
 Imports System.IO
-Imports System.Reflection
 Imports System.Runtime.InteropServices
 Imports System.Text
 Imports Microsoft.CodeAnalysis.Instrumentation
@@ -88,8 +87,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim optimize As Boolean = False
                 Dim checkOverflow As Boolean = True
                 Dim concurrentBuild As Boolean = True
-                Dim emitDebugInformation As Boolean = False
-                Dim emitDebugInformationKind = DebugInformationKind.Full
+                Dim emitPdb As Boolean = False
                 Dim noStdLib As Boolean = False
                 Dim utf8output As Boolean = False
                 Dim outputFileName As String = Nothing
@@ -131,7 +129,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim vbRuntimePath As String = Nothing
                 Dim includeVbRuntimeReference As Boolean = True
                 Dim generalDiagnosticOption As ReportDiagnostic = ReportDiagnostic.Default
-                Dim specificDiagnosticOptions = New Dictionary(Of String, ReportDiagnostic)()
+
+                ' Diagnostic ids specified via /nowarn /warnaserror must be processed in case-insensitive fashion.
+                Dim specificDiagnosticOptions = New Dictionary(Of String, ReportDiagnostic)(CaseInsensitiveComparison.Comparer)
                 Dim keyFileSetting As String = Nothing
                 Dim keyContainerSetting As String = Nothing
                 Dim delaySignSetting As Boolean? = Nothing
@@ -140,6 +140,24 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim sqmsessionguid As Guid = Nothing
                 Dim touchedFilesPath As String = Nothing
                 Dim features = New List(Of String)()
+
+                ' Process ruleset files first so that diagnostic severity settings specified on the command line via
+                ' /nowarn and /warnaserror can override diagnostic severity settings specified in the ruleset file.
+                If Not IsInteractive Then
+                    For Each arg In flattenedArgs
+                        Dim name As String = Nothing
+                        Dim value As String = Nothing
+                        If TryParseOption(arg, name, value) AndAlso (name = "ruleset") Then
+                            Dim unquoted = RemoveAllQuotes(value)
+                            If String.IsNullOrEmpty(unquoted) Then
+                                AddDiagnostic(diagnostics, ERRID.ERR_ArgumentRequired, name, ":<file>")
+                                Continue For
+                            End If
+
+                            generalDiagnosticOption = GetDiagnosticOptionsFromRulesetFile(specificDiagnosticOptions, diagnostics, unquoted, baseDirectory)
+                        End If
+                    Next
+                End If
 
                 For Each arg In flattenedArgs
                     Debug.Assert(Not arg.StartsWith("@", StringComparison.Ordinal))
@@ -500,19 +518,18 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                 Continue For
 
                             Case "debug"
+
+                                ' parse only for backwards compat
                                 If value IsNot Nothing Then
                                     If String.IsNullOrEmpty(value) Then
                                         AddDiagnostic(diagnostics, ERRID.ERR_ArgumentRequired, "debug", ":pdbonly|full")
-                                    ElseIf String.Equals(value, "full", StringComparison.OrdinalIgnoreCase) Then
-                                        emitDebugInformationKind = DebugInformationKind.Full
-                                    ElseIf String.Equals(value, "pdbonly", StringComparison.OrdinalIgnoreCase) Then
-                                        emitDebugInformationKind = DebugInformationKind.PdbOnly
-                                    Else
+                                    ElseIf Not String.Equals(value, "full", StringComparison.OrdinalIgnoreCase) AndAlso
+                                           Not String.Equals(value, "pdbonly", StringComparison.OrdinalIgnoreCase) Then
                                         AddDiagnostic(diagnostics, ERRID.ERR_InvalidSwitchValue, value, "debug")
                                     End If
                                 End If
 
-                                emitDebugInformation = True
+                                emitPdb = True
                                 Continue For
 
                             Case "debug+"
@@ -520,7 +537,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                     AddDiagnostic(diagnostics, ERRID.ERR_SwitchNeedsBool, "debug")
                                 End If
 
-                                emitDebugInformation = True
+                                emitPdb = True
                                 Continue For
 
                             Case "debug-"
@@ -528,7 +545,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                     AddDiagnostic(diagnostics, ERRID.ERR_SwitchNeedsBool, "debug")
                                 End If
 
-                                emitDebugInformation = False
+                                emitPdb = False
                                 Continue For
 
                             Case "optimize", "optimize+"
@@ -582,7 +599,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                     Continue For
                                 End If
 
-                                AddWarnings(specificDiagnosticOptions, ReportDiagnostic.Error, ParseWarnings(name, value, diagnostics))
+                                AddWarnings(specificDiagnosticOptions, ReportDiagnostic.Error, ParseWarnings(value))
                                 Continue For
 
                             Case "warnaserror-"
@@ -593,7 +610,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                     Continue For
                                 End If
 
-                                AddWarnings(specificDiagnosticOptions, ReportDiagnostic.Warn, ParseWarnings(name, value, diagnostics))
+                                AddWarnings(specificDiagnosticOptions, ReportDiagnostic.Default, ParseWarnings(value))
                                 Continue For
 
                             Case "nowarn"
@@ -602,7 +619,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                     Continue For
                                 End If
 
-                                AddWarnings(specificDiagnosticOptions, ReportDiagnostic.Suppress, ParseWarnings(name, value, diagnostics))
+                                AddWarnings(specificDiagnosticOptions, ReportDiagnostic.Suppress, ParseWarnings(value))
                                 Continue For
 
                             Case "langversion"
@@ -923,13 +940,7 @@ lVbRuntimePlus:
                                 Continue For
 
                             Case "ruleset"
-                                Dim unquoted = RemoveAllQuotes(value)
-                                If (String.IsNullOrEmpty(unquoted)) Then
-                                    AddDiagnostic(diagnostics, ERRID.ERR_ArgumentRequired, name, ":<file>")
-                                    Continue For
-                                End If
-
-                                generalDiagnosticOption = GetDiagnosticOptionsFromRulesetFile(specificDiagnosticOptions, diagnostics, unquoted, baseDirectory)
+                                '  The ruleset arg has already been processed in a separate pass above.
                                 Continue For
 
                             Case "features"
@@ -1049,10 +1060,6 @@ lVbRuntimePlus:
                     keyFileSearchPaths.Add(outputDirectory)
                 End If
 
-                If Not emitDebugInformation Then
-                    emitDebugInformationKind = DebugInformationKind.None
-                End If
-
                 Dim compilationName As String = Nothing
                 GetCompilationAndModuleNames(diagnostics, outputKind, sourceFiles, moduleAssemblyName, outputFileName, moduleName, compilationName)
 
@@ -1095,8 +1102,7 @@ lVbRuntimePlus:
                         generalDiagnosticOption:=generalDiagnosticOption,
                         specificDiagnosticOptions:=specificDiagnosticOptions,
                         highEntropyVirtualAddressSpace:=highEntropyVA,
-                        debugInformationKind:=emitDebugInformationKind,
-                        optimize:=optimize,
+                        optimizationLevel:=If(optimize, OptimizationLevel.Release, OptimizationLevel.Debug),
                         subsystemVersion:=ssVersion,
                         parseOptions:=parseOptions).WithFeatures(features.AsImmutable())
 
@@ -1138,6 +1144,7 @@ lVbRuntimePlus:
                     .ScriptArguments = scriptArgs.AsImmutableOrEmpty(),
                     .TouchedFilesPath = touchedFilesPath,
                     .OutputLevel = outputLevel,
+                    .EmitPdb = emitPdb,
                     .DefaultCoreLibraryReference = defaultCoreLibraryReference,
                     .PreferredUILang = preferredUILang,
                     .SqmSessionGuid = sqmsessionguid
@@ -1841,37 +1848,35 @@ lVbRuntimePlus:
         ''' <summary>
         ''' Parses the warning option.
         ''' </summary>
-        ''' <param name="name">The name of the option.</param>
         ''' <param name="value">The value for the option.</param>
-        ''' <param name="errors">The error bag.</param><returns></returns>
-        Private Shared Function ParseWarnings(name As String, value As String, errors As List(Of Diagnostic)) As IEnumerable(Of Integer)
-            Dim values As String() = value.Split(","c)
-            Dim results As List(Of Integer) = New List(Of Integer)()
+        Private Shared Function ParseWarnings(value As String) As IEnumerable(Of String)
+            Dim values = value.Split(","c)
+            Dim results = New List(Of String)()
 
             For Each id In values
-                Dim number As Long
-                If Not Long.TryParse(id, NumberStyles.Integer, CultureInfo.InvariantCulture, number) Then
-                    AddDiagnostic(errors, ERRID.ERR_InvalidSwitchValue, value.ToString(), name)
-                ElseIf number <= Int32.MaxValue AndAlso number >= 0 AndAlso
-                       VisualBasic.MessageProvider.Instance.GetSeverity(CInt(number)) = DiagnosticSeverity.Warning AndAlso
-                       VisualBasic.MessageProvider.Instance.GetWarningLevel(CInt(number)) = 1 AndAlso
-                       ERRID.IsDefined(GetType(ERRID), CInt(number)) Then
-
-                    ' only accept real warnings from the compiler not including the command line warnings.
-                    ' also only accept the numbers that are actually declared in the enum
-                    results.Add(CInt(number))
+                Dim number As UShort
+                If UShort.TryParse(id, NumberStyles.Integer, CultureInfo.InvariantCulture, number) AndAlso
+                   (VisualBasic.MessageProvider.Instance.GetSeverity(number) = DiagnosticSeverity.Warning) AndAlso
+                   (VisualBasic.MessageProvider.Instance.GetWarningLevel(number) = 1) Then
+                    ' The id refers to a compiler warning.
+                    ' Only accept real warnings from the compiler not including the command line warnings.
+                    ' Also only accept the numbers that are actually declared in the enum.
+                    results.Add(VisualBasic.MessageProvider.Instance.GetIdForErrorCode(CInt(number)))
                 Else
-                    AddDiagnostic(errors, ERRID.WRN_InvalidWarningId, number, name)
+                    ' Previous versions of the compiler used to report warnings (BC2026, BC2014)
+                    ' whenever unrecognized warning codes were supplied in /nowarn or 
+                    ' /warnaserror. We no longer generate a warning in such cases.
+                    ' Instead we assume that the unrecognized id refers to a custom diagnostic.
+                    results.Add(id)
                 End If
             Next
 
             Return results
         End Function
 
-        Private Shared Sub AddWarnings(d As IDictionary(Of String, ReportDiagnostic), kind As ReportDiagnostic, items As IEnumerable(Of Integer))
-            For Each i In items
+        Private Shared Sub AddWarnings(d As IDictionary(Of String, ReportDiagnostic), kind As ReportDiagnostic, items As IEnumerable(Of String))
+            For Each id In items
                 Dim existing As ReportDiagnostic
-                Dim id = VisualBasic.MessageProvider.Instance.GetIdForErrorCode(i)
                 If d.TryGetValue(id, existing) Then
                     ' Rewrite the existing value with the latest one unless it is for /nowarn.
                     If existing <> ReportDiagnostic.Suppress Then

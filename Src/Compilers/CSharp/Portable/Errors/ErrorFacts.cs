@@ -27,6 +27,10 @@ namespace Microsoft.CodeAnalysis.CSharp
             {
                 return DiagnosticSeverity.Info;
             }
+            else if (IsHidden(code))
+            {
+                return DiagnosticSeverity.Hidden;
+            }
             else
             {
                 return DiagnosticSeverity.Error;
@@ -139,6 +143,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case ErrorCode.WRN_AmbigLookupMeth:
                 case ErrorCode.WRN_GotoCaseShouldConvert:
                 case ErrorCode.WRN_NubExprIsConstBool:
+                case ErrorCode.WRN_NubExprIsConstBool2:
                 case ErrorCode.WRN_ExplicitImplCollision:
                 case ErrorCode.WRN_DeprecatedSymbolStr:
                 case ErrorCode.WRN_VacuousIntegralComp:

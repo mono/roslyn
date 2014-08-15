@@ -2195,7 +2195,7 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &apos;await&apos; cannot be used in an expression containing the type &apos;System.TypedReference&apos;.
+        ///   Looks up a localized string similar to &apos;await&apos; cannot be used in an expression containing the type &apos;{0}&apos;.
         /// </summary>
         internal static string ERR_ByRefTypeAndAwait {
             get {
@@ -3118,6 +3118,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string ERR_DestructorInStaticClass {
             get {
                 return ResourceManager.GetString("ERR_DestructorInStaticClass", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An expression tree lambda may not contain a dictionary initializer..
+        /// </summary>
+        internal static string ERR_DictionaryInitializerInExpressionTree {
+            get {
+                return ResourceManager.GetString("ERR_DictionaryInitializerInExpressionTree", resourceCulture);
             }
         }
         
@@ -5548,15 +5557,6 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string ERR_MissingCoClass {
             get {
                 return ResourceManager.GetString("ERR_MissingCoClass", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The /pdb option requires that the /debug option also be used.
-        /// </summary>
-        internal static string ERR_MissingDebugSwitch {
-            get {
-                return ResourceManager.GetString("ERR_MissingDebugSwitch", resourceCulture);
             }
         }
         
@@ -8486,6 +8486,24 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unused extern alias..
+        /// </summary>
+        internal static string HDN_UnusedExternAlias {
+            get {
+                return ResourceManager.GetString("HDN_UnusedExternAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unnecessary using directive..
+        /// </summary>
+        internal static string HDN_UnusedUsingDirective {
+            get {
+                return ResourceManager.GetString("HDN_UnusedUsingDirective", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to anonymous method.
         /// </summary>
         internal static string IDS_AnonMethod {
@@ -8644,6 +8662,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string IDS_FeatureDefault {
             get {
                 return ResourceManager.GetString("IDS_FeatureDefault", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to dictionary initializer.
+        /// </summary>
+        internal static string IDS_FeatureDictionaryInitializer {
+            get {
+                return ResourceManager.GetString("IDS_FeatureDictionaryInitializer", resourceCulture);
             }
         }
         
@@ -9319,24 +9346,6 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string INF_UnableToLoadSomeTypesInAnalyzer {
             get {
                 return ResourceManager.GetString("INF_UnableToLoadSomeTypesInAnalyzer", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unused extern alias..
-        /// </summary>
-        internal static string INF_UnusedExternAlias {
-            get {
-                return ResourceManager.GetString("INF_UnusedExternAlias", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unnecessary using directive..
-        /// </summary>
-        internal static string INF_UnusedUsingDirective {
-            get {
-                return ResourceManager.GetString("INF_UnusedUsingDirective", resourceCulture);
             }
         }
         
@@ -10759,6 +10768,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string WRN_NubExprIsConstBool {
             get {
                 return ResourceManager.GetString("WRN_NubExprIsConstBool", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The result of the expression is always &apos;{0}&apos; since a value of type &apos;{1}&apos; is never equal to &apos;null&apos; of type &apos;{2}&apos;.
+        /// </summary>
+        internal static string WRN_NubExprIsConstBool2 {
+            get {
+                return ResourceManager.GetString("WRN_NubExprIsConstBool2", resourceCulture);
             }
         }
         

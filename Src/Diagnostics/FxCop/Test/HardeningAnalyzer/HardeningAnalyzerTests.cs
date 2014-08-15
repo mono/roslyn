@@ -41,7 +41,7 @@ public class Class6<TTypeParameter>
 ";
             var diagnosticsBag = DiagnosticBag.GetInstance();
             var documentsAndSpan = GetDocumentsAndSpans(new[] { source }, LanguageNames.CSharp);
-            AnalyzeDocumentCore(GetCSharpDiagnosticAnalyzer(), documentsAndSpan.Item1[0], diagnosticsBag.Add, null, continueOnError: true);
+            AnalyzeDocumentCore(GetCSharpDiagnosticAnalyzer(), documentsAndSpan.Item1[0], diagnosticsBag.Add, null, continueOnAnalyzerException: DiagnosticExtensions.AlwaysCatchAnalyzerExceptions);
             var diagnostics = diagnosticsBag.ToReadOnlyAndFree();
             Assert.True(diagnostics.Length > 0);
             Assert.Equal(diagnostics[0].ToString(), "info AnalyzerDriver: The Compiler Analyzer '" + GetCSharpDiagnosticAnalyzer().GetType() + "' threw an exception with message 'The method or operation is not implemented.'.");
@@ -64,7 +64,7 @@ public class Class6<TTypeParameter>
         private static readonly ImmutableArray<DiagnosticDescriptor> SupportedRules = ImmutableArray.Create(InterfaceRule, TypeParameterRule);
 
         [DiagnosticAnalyzer]
-        [ExportDiagnosticAnalyzer(RuleId, LanguageNames.CSharp)]
+        [ExportDiagnosticAnalyzer(LanguageNames.CSharp)]
         internal class ExceptionThrowingSymbolAnalyzer_ThrowSymbolKindsOfInterest : ISymbolAnalyzer
         {
             public ImmutableArray<SymbolKind> SymbolKindsOfInterest

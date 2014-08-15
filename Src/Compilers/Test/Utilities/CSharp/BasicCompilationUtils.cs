@@ -33,7 +33,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
                 assemblyName = TestBase.GetUniqueName();
             }
             var tree = VisualBasicSyntaxTree.ParseText(source);
-            var options = new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary, optimize: true);
+            var options = new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary, optimizationLevel: OptimizationLevel.Release);
             return VisualBasicCompilation.Create(assemblyName, new[] { tree }, references, options);
         }
 
@@ -41,12 +41,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
         private sealed class BasicTestBase : CommonTestBase
         {
-            protected override CompilationOptions DefaultCompilationOptions
-            {
-                get { throw new NotImplementedException(); }
-            }
-
-            protected override CompilationOptions OptionsDll
+            protected override CompilationOptions CompilationOptionsReleaseDll
             {
                 get { throw new NotImplementedException(); }
             }

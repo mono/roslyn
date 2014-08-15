@@ -161,7 +161,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim localVar = LocalSymbol.Create(_containerOfLocals,
                                            Me,
                                            nameSyntax.Identifier,
-                                           LocalSymbol.LocalDeclarationKind.ImplicitVariable,
+                                           LocalDeclarationKind.ImplicitVariable,
                                            GetSpecialType(localSpecialType, nameSyntax, diagnostics))
 
             If _implicitLocals Is Nothing Then
@@ -202,7 +202,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End Sub
         End Structure
 
-        Protected Overrides Sub LookupInSingleBinder(lookupResult As LookupResult,
+        Friend Overrides Sub LookupInSingleBinder(lookupResult As LookupResult,
                                                       name As String,
                                                       arity As Integer,
                                                       options As LookupOptions,
@@ -222,7 +222,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return
         End Sub
 
-        Protected Overrides Sub AddLookupSymbolsInfoInSingleBinder(nameSet As LookupSymbolsInfo,
+        Friend Overrides Sub AddLookupSymbolsInfoInSingleBinder(nameSet As LookupSymbolsInfo,
                                                                    options As LookupOptions,
                                                                    originalBinder As Binder)
 #If DEBUG Then

@@ -1,12 +1,9 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-Imports System.Collections.Generic
-Imports Microsoft.CodeAnalysis.VisualBasic
-Imports Microsoft.CodeAnalysis.VisualBasic.UnitTests
-Imports ProprietaryTestResources = Microsoft.CodeAnalysis.Test.Resources.Proprietary
 Imports Microsoft.CodeAnalysis.Test.Utilities
+Imports Microsoft.CodeAnalysis.VisualBasic.UnitTests
 Imports Roslyn.Test.Utilities
-Imports Xunit
+Imports ProprietaryTestResources = Microsoft.CodeAnalysis.Test.Resources.Proprietary
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.CodeGen
     Public Class WinRTCollectionTests
@@ -4439,7 +4436,7 @@ End Class
   IL_005b:  ldc.i4.5
   IL_005c:  newarr     "Integer"
   IL_0061:  dup
-  IL_0062:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=20 <PrivateImplementationDetails>.$$method0x6000001-0"
+  IL_0062:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=20 <PrivateImplementationDetails>.$$method0x6000001-864782BF337E3DBC1A27023D5C0C065C80F17087"
   IL_0067:  call       "Sub System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray(System.Array, System.RuntimeFieldHandle)"
   IL_006c:  ldloc.0
   IL_006d:  ldftn      "Function AllMembers._Closure$__1._Lambda$__3(Integer) As Boolean"
@@ -6269,7 +6266,7 @@ End Class
                                         additionalRefs:=LegacyRefs,
                                         emitOptions:=EmitOptions.RefEmitBug,
                                         verify:=False,
-                                        options:=OptionsExe)
+                                        options:=TestOptions.ReleaseExe)
 
             comp.VerifyIL("A.Main", <![CDATA[
 {
@@ -6314,7 +6311,7 @@ End Namespace
 
 
             Dim verifier As CompilationVerifier = CompileAndVerify(source,
-                options:=OptionsWinMDObj,
+                options:=TestOptions.ReleaseWinMD,
                 emitOptions:=EmitOptions.RefEmitBug,
                 additionalRefs:=WinRtRefs)
 
@@ -6329,7 +6326,7 @@ End Namespace
 
 ]]>.Value)
 
-            Dim compRef = verifier.Compilation.EmitToImageReference(Diagnostic(ERRID.INF_UnusedImportStatement, "Imports System"))
+            Dim compRef = verifier.Compilation.EmitToImageReference(Diagnostic(ERRID.HDN_UnusedImportStatement, "Imports System"))
             Dim allRefs = New List(Of MetadataReference)(WinRtRefs)
             allRefs.Add(compRef)
             source =
@@ -6370,7 +6367,7 @@ End Namespace
         End Sub
 
         Private Shared Sub AssertNoErrorsOrWarnings(verifier As CompilationVerifier)
-            verifier.Diagnostics.AsEnumerable().Where(Function(d) d.Severity <> DiagnosticSeverity.Info).Verify()
+            verifier.Diagnostics.AsEnumerable().Where(Function(d) d.Severity > DiagnosticSeverity.Info).Verify()
         End Sub
     End Class
 End Namespace

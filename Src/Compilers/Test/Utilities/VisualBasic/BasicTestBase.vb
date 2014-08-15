@@ -1,28 +1,15 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports System.Collections.Immutable
-Imports System.IO
 Imports System.Xml.Linq
+Imports Microsoft.CodeAnalysis.CodeGen
 Imports Microsoft.CodeAnalysis.Test.Utilities
 Imports Microsoft.CodeAnalysis.Text
 Imports Roslyn.Test.Utilities
-Imports Microsoft.CodeAnalysis.CodeGen
 Imports Xunit
 
 Public MustInherit Class BasicTestBase
     Inherits BasicTestBaseBase
-
-    Protected Shadows ReadOnly Property DefaultCompilationOptions As VisualBasicCompilationOptions
-        Get
-            Return DirectCast(MyBase.DefaultCompilationOptions, VisualBasicCompilationOptions)
-        End Get
-    End Property
-
-    Protected Shadows ReadOnly Property OptionsDll As VisualBasicCompilationOptions
-        Get
-            Return DirectCast(MyBase.OptionsDll, VisualBasicCompilationOptions)
-        End Get
-    End Property
 
     Protected Overloads Function GetCompilationForEmit(
         source As IEnumerable(Of String),
@@ -61,7 +48,6 @@ Public MustInherit Class BasicTestBase
         Optional expectedSignatures As SignatureDescription() = Nothing,
         Optional options As VisualBasicCompilationOptions = Nothing,
         Optional collectEmittedAssembly As Boolean = True,
-        Optional emitPdb As Boolean = False,
         Optional parseOptions As VisualBasicParseOptions = Nothing,
         Optional verify As Boolean = True
     ) As CompilationVerifier
@@ -77,7 +63,6 @@ Public MustInherit Class BasicTestBase
             expectedSignatures,
             options,
             collectEmittedAssembly,
-            emitPdb,
             parseOptions,
             verify)
     End Function
@@ -94,7 +79,6 @@ Public MustInherit Class BasicTestBase
         Optional expectedSignatures As SignatureDescription() = Nothing,
         Optional expectedOutput As String = Nothing,
         Optional collectEmittedAssembly As Boolean = True,
-        Optional emitPdb As Boolean = False,
         Optional verify As Boolean = True) As CompilationVerifier
 
         Return MyBase.CompileAndVerify(
@@ -108,7 +92,6 @@ Public MustInherit Class BasicTestBase
             expectedSignatures,
             expectedOutput,
             collectEmittedAssembly,
-            emitPdb,
             verify)
     End Function
 
@@ -122,7 +105,6 @@ Public MustInherit Class BasicTestBase
         Optional symbolValidator As Action(Of ModuleSymbol) = Nothing,
         Optional expectedSignatures As SignatureDescription() = Nothing,
         Optional collectEmittedAssembly As Boolean = True,
-        Optional emitPdb As Boolean = False,
         Optional verify As Boolean = True) As CompilationVerifier
 
         Return CompileAndVerify(
@@ -136,7 +118,6 @@ Public MustInherit Class BasicTestBase
             expectedSignatures,
             If(expectedOutput IsNot Nothing, expectedOutput.Value.Replace(vbLf, Environment.NewLine), Nothing),
             collectEmittedAssembly,
-            emitPdb,
             verify)
     End Function
 
@@ -153,7 +134,6 @@ Public MustInherit Class BasicTestBase
         Optional expectedSignatures As SignatureDescription() = Nothing,
         Optional options As VisualBasicCompilationOptions = Nothing,
         Optional collectEmittedAssembly As Boolean = True,
-        Optional emitPdb As Boolean = False,
         Optional parseOptions As VisualBasicParseOptions = Nothing,
         Optional verify As Boolean = True,
         Optional useLatestFramework As Boolean = False
@@ -173,7 +153,6 @@ Public MustInherit Class BasicTestBase
                                    expectedSignatures,
                                    options,
                                    collectEmittedAssembly,
-                                   emitPdb,
                                    parseOptions,
                                    verify)
 
@@ -192,17 +171,12 @@ Public MustInherit Class BasicTestBase
         Optional expectedSignatures As SignatureDescription() = Nothing,
         Optional options As VisualBasicCompilationOptions = Nothing,
         Optional collectEmittedAssembly As Boolean = True,
-        Optional emitPdb As Boolean = False,
         Optional parseOptions As VisualBasicParseOptions = Nothing,
         Optional verify As Boolean = True
     ) As CompilationVerifier
 
         If options Is Nothing Then
-            options = DefaultCompilationOptions.WithOutputKind(If(expectedOutput IsNot Nothing, OutputKind.ConsoleApplication, OutputKind.DynamicallyLinkedLibrary))
-        End If
-
-        If emitPdb Then
-            options = options.WithOptimizations(False)
+            options = If(expectedOutput Is Nothing, TestOptions.ReleaseDll, TestOptions.ReleaseExe)
         End If
 
         Dim compilation = CompilationUtils.CreateCompilationWithReferences(source, references:=allReferences, options:=options, parseOptions:=parseOptions)
@@ -218,7 +192,6 @@ Public MustInherit Class BasicTestBase
             expectedSignatures,
             expectedOutput,
             collectEmittedAssembly,
-            emitPdb,
             verify)
     End Function
 
@@ -234,7 +207,6 @@ Public MustInherit Class BasicTestBase
         Optional expectedSignatures As SignatureDescription() = Nothing,
         Optional options As VisualBasicCompilationOptions = Nothing,
         Optional collectEmittedAssembly As Boolean = True,
-        Optional emitPdb As Boolean = False,
         Optional parseOptions As VisualBasicParseOptions = Nothing,
         Optional verify As Boolean = True
     ) As CompilationVerifier
@@ -250,7 +222,6 @@ Public MustInherit Class BasicTestBase
             expectedSignatures,
             options,
             collectEmittedAssembly,
-            emitPdb,
             parseOptions,
             verify:=OSVersion.IsWin8)
     End Function
@@ -268,7 +239,6 @@ Public MustInherit Class BasicTestBase
         Optional expectedSignatures As SignatureDescription() = Nothing,
         Optional options As VisualBasicCompilationOptions = Nothing,
         Optional collectEmittedAssembly As Boolean = True,
-        Optional emitPdb As Boolean = False,
         Optional parseOptions As VisualBasicParseOptions = Nothing,
         Optional verify As Boolean = True
     ) As CompilationVerifier
@@ -284,7 +254,6 @@ Public MustInherit Class BasicTestBase
             expectedSignatures,
             options,
             collectEmittedAssembly,
-            emitPdb,
             parseOptions,
             verify)
     End Function
@@ -301,7 +270,6 @@ Public MustInherit Class BasicTestBase
         Optional expectedSignatures As SignatureDescription() = Nothing,
         Optional options As VisualBasicCompilationOptions = Nothing,
         Optional collectEmittedAssembly As Boolean = True,
-        Optional emitPdb As Boolean = False,
         Optional parseOptions As VisualBasicParseOptions = Nothing,
         Optional verify As Boolean = True,
         Optional useLatestFramework As Boolean = False
@@ -318,7 +286,6 @@ Public MustInherit Class BasicTestBase
             expectedSignatures:=expectedSignatures,
             options:=options,
             collectEmittedAssembly:=collectEmittedAssembly,
-            emitPdb:=emitPdb,
             parseOptions:=parseOptions,
             verify:=OSVersion.IsWin8 AndAlso verify,
             useLatestFramework:=useLatestFramework)
@@ -394,7 +361,7 @@ Public MustInherit Class BasicTestBase
                                                            Optional expectedSignatures As SignatureDescription() = Nothing,
                                                            Optional isField As Boolean = True) As CompilationVerifier
         Return CompileAndVerify(source,
-                                options:=OptionsDll,
+                                options:=TestOptions.ReleaseDll,
                                 validator:=Sub(assembly, emitOptions) MarshalAsMetadataValidator(assembly, getExpectedBlob, emitOptions, isField),
                                 expectedSignatures:=expectedSignatures)
     End Function
@@ -462,7 +429,7 @@ Public MustInherit Class BasicTestBaseBase
     End Function
 
     Friend Overrides Function ReferencesToModuleSymbols(references As IEnumerable(Of MetadataReference), Optional importOptions As MetadataImportOptions = MetadataImportOptions.Public) As IEnumerable(Of IModuleSymbol)
-        Dim options = DirectCast(OptionsDll, VisualBasicCompilationOptions).WithMetadataImportOptions(importOptions)
+        Dim options = DirectCast(CompilationOptionsReleaseDll, VisualBasicCompilationOptions).WithMetadataImportOptions(importOptions)
         Dim tc1 = VisualBasicCompilation.Create("Dummy", references:=references, options:=options)
         Return references.Select(
             Function(r)
@@ -475,15 +442,9 @@ Public MustInherit Class BasicTestBaseBase
             End Function)
     End Function
 
-    Protected Overrides ReadOnly Property DefaultCompilationOptions As CompilationOptions
+    Protected Overrides ReadOnly Property CompilationOptionsReleaseDll As CompilationOptions
         Get
-            Return New VisualBasicCompilationOptions(OutputKind.ConsoleApplication, optimize:=True)
-        End Get
-    End Property
-
-    Protected Overrides ReadOnly Property OptionsDll As CompilationOptions
-        Get
-            Return New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary, optimize:=True)
+            Return TestOptions.ReleaseDll
         End Get
     End Property
 

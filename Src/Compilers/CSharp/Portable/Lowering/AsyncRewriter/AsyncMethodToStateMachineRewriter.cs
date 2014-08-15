@@ -58,13 +58,10 @@ namespace Microsoft.CodeAnalysis.CSharp
             SyntheticBoundNodeFactory F,
             FieldSymbol state,
             FieldSymbol builder,
-            HashSet<Symbol> variablesCaptured,
-            IReadOnlyDictionary<Symbol, CapturedSymbolReplacement> initialProxies,
-            DiagnosticBag diagnostics,
-            bool generateDebugInfo)
-            : base(F, method, state, variablesCaptured, initialProxies, diagnostics,
-                   useFinalizerBookkeeping: false,
-                   generateDebugInfo: generateDebugInfo)
+            IReadOnlySet<Symbol> variablesCaptured,
+            IReadOnlyDictionary<Symbol, CapturedSymbolReplacement> nonReusableLocalProxies,
+            DiagnosticBag diagnostics)
+            : base(F, method, state, variablesCaptured, nonReusableLocalProxies, diagnostics, useFinalizerBookkeeping: false)
         {
             this.method = method;
             this.asyncMethodBuilderMemberCollection = asyncMethodBuilderMemberCollection;

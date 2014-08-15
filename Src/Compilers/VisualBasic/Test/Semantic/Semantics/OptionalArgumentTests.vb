@@ -1,5 +1,6 @@
 ' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+Imports System.Text
 Imports Microsoft.CodeAnalysis
 Imports Microsoft.CodeAnalysis.Test.Utilities
 Imports Microsoft.CodeAnalysis.VisualBasic
@@ -1078,7 +1079,7 @@ End Class
 ]]>
     </file>
 </compilation>
-            Dim comp = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntimeAndReferences(source, options:=OptionsDll)
+            Dim comp = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntimeAndReferences(source, options:=TestOptions.ReleaseDll)
 
             AssertTheseDiagnostics(comp,
 <expected><![CDATA[
@@ -1335,7 +1336,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithReferences(source, {MscorlibRef_v4_0_30316_17626, MsvbRef}, OptionsExe)
+            Dim compilation = CreateCompilationWithReferences(source, {MscorlibRef_v4_0_30316_17626, MsvbRef}, TestOptions.ReleaseExe)
 
             CompileAndVerify(compilation,
      expectedOutput:=
@@ -1481,7 +1482,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithReferences(source, {MscorlibRef_v4_0_30316_17626, MsvbRef}, OptionsExe)
+            Dim compilation = CreateCompilationWithReferences(source, {MscorlibRef_v4_0_30316_17626, MsvbRef}, TestOptions.ReleaseExe)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -1651,13 +1652,13 @@ Void add_E3(System.Action) - 88, E3, a.vb
 Void Main() - 10, Main, a.vb
 ]]>
 
-            Dim attributeCompilation = CreateCompilationWithReferences(attributeSource, {MscorlibRef_v4_0_30316_17626}, OptionsDll)
+            Dim attributeCompilation = CreateCompilationWithReferences(attributeSource, {MscorlibRef_v4_0_30316_17626}, TestOptions.ReleaseDll)
             CompileAndVerify(attributeCompilation)
 
-            Dim compilation = CreateCompilationWithReferences(source, {MscorlibRef_v4_0_30316_17626, MsvbRef, New VisualBasicCompilationReference(attributeCompilation)}, OptionsExe)
+            Dim compilation = CreateCompilationWithReferences(source, {MscorlibRef_v4_0_30316_17626, MsvbRef, New VisualBasicCompilationReference(attributeCompilation)}, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput)
 
-            compilation = CreateCompilationWithReferences(source, {MscorlibRef_v4_0_30316_17626, MsvbRef, New MetadataImageReference(attributeCompilation.EmitToArray())}, OptionsExe)
+            compilation = CreateCompilationWithReferences(source, {MscorlibRef_v4_0_30316_17626, MsvbRef, New MetadataImageReference(attributeCompilation.EmitToArray())}, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput)
         End Sub
 
@@ -1809,7 +1810,7 @@ Void add_E3(System.Action) - 88, E3, a.vb
 Void Main() - 10, Main, a.vb
 ]]>
 
-            Dim compilation = CreateCompilationWithReferences(source, {MscorlibRef_v4_0_30316_17626, MsvbRef}, OptionsExe)
+            Dim compilation = CreateCompilationWithReferences(source, {MscorlibRef_v4_0_30316_17626, MsvbRef}, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput)
         End Sub
 
@@ -1858,13 +1859,13 @@ End Module
 "
             Dim compilation = CreateCompilationWithReferences(
                 {
-                    SyntaxFactory.ParseSyntaxTree(source1, path:="C:\filename"),
-                    SyntaxFactory.ParseSyntaxTree(source2, path:="a\b\..\c\d"),
-                    SyntaxFactory.ParseSyntaxTree(source3, path:="*"),
-                    SyntaxFactory.ParseSyntaxTree(source4, path:="       ")
+                    SyntaxFactory.ParseSyntaxTree(source1, path:="C:\filename", encoding:=Encoding.UTF8),
+                    SyntaxFactory.ParseSyntaxTree(source2, path:="a\b\..\c\d", encoding:=Encoding.UTF8),
+                    SyntaxFactory.ParseSyntaxTree(source3, path:="*", encoding:=Encoding.UTF8),
+                    SyntaxFactory.ParseSyntaxTree(source4, path:="       ", encoding:=Encoding.UTF8)
                 },
                 {MscorlibRef_v4_0_30316_17626, MsvbRef},
-                Options.OptionsExe.WithSourceReferenceResolver(SourceFileResolver.Default))
+                TestOptions.ReleaseExe.WithSourceReferenceResolver(SourceFileResolver.Default))
 
             CompileAndVerify(compilation, expectedOutput:="
 1: 'C:\filename'
@@ -1938,14 +1939,14 @@ End Module
 
             Dim compilation = CreateCompilationWithReferences(
                 {
-                    SyntaxFactory.ParseSyntaxTree(source1, path:="C:\filename"),
-                    SyntaxFactory.ParseSyntaxTree(source2, path:="a\b\..\c\d.vb"),
-                    SyntaxFactory.ParseSyntaxTree(source3, path:="*"),
-                    SyntaxFactory.ParseSyntaxTree(source4, path:="C:\x.vb"),
-                    SyntaxFactory.ParseSyntaxTree(source5, path:="C:\x.vb")
+                    SyntaxFactory.ParseSyntaxTree(source1, path:="C:\filename", encoding:=Encoding.UTF8),
+                    SyntaxFactory.ParseSyntaxTree(source2, path:="a\b\..\c\d.vb", encoding:=Encoding.UTF8),
+                    SyntaxFactory.ParseSyntaxTree(source3, path:="*", encoding:=Encoding.UTF8),
+                    SyntaxFactory.ParseSyntaxTree(source4, path:="C:\x.vb", encoding:=Encoding.UTF8),
+                    SyntaxFactory.ParseSyntaxTree(source5, path:="C:\x.vb", encoding:=Encoding.UTF8)
                 },
                 {MscorlibRef_v4_0_30316_17626, MsvbRef},
-                Options.OptionsExe.WithSourceReferenceResolver(New SourceFileResolver({}, baseDirectory:="C:\A\B")))
+                TestOptions.ReleaseExe.WithSourceReferenceResolver(New SourceFileResolver({}, baseDirectory:="C:\A\B")))
 
             CompileAndVerify(compilation, expectedOutput:="
 1: 'C:\filename'

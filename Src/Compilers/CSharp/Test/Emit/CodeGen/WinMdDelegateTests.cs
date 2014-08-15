@@ -21,7 +21,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.CodeGen
         /// When the output type is .winmdobj, delegate types shouldn't output Begin/End invoke 
         /// members.
         /// </summary>
-        [Fact]
+        [Fact(Skip = "1003193"), WorkItem(1003193)]
         public void SimpleDelegateMembersTest()
         {
             const string libSrc =
@@ -50,7 +50,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.CodeGen
                     libSrc,
                     sourceSymbolValidator: validator,
                     symbolValidator: validator,
-                    options: winmd ? TestOptions.WinMDObj : TestOptions.Dll);
+                    options: winmd ? TestOptions.ReleaseWinMD : TestOptions.ReleaseDll);
                 verifier.VerifyDiagnostics();
             };
 
@@ -138,10 +138,7 @@ namespace WinRTDelegateLibrary
             var winRtDelegateLibrary = CreateCompilation(
                 winRtDelegateLibrarySrc,
                 references: coreRefs45,
-                compOptions:
-                    new CSharpCompilationOptions(
-                	    OutputKind.WindowsRuntimeMetadata,
-                	    allowUnsafe: true),
+                options: TestOptions.ReleaseWinMD.WithAllowUnsafe(true),
                 assemblyName: "WinRTDelegateLibrary").EmitToImageReference();
 
             var nonWinRtLibrarySrc = winRtDelegateLibrarySrc.Replace("WinRTDelegateLibrary", "NonWinRTDelegateLibrary");
@@ -149,7 +146,7 @@ namespace WinRTDelegateLibrary
             var nonWinRtDelegateLibrary = CreateCompilation(
                 nonWinRtLibrarySrc,
                 references: coreRefs45,
-                compOptions: TestOptions.UnsafeDll,
+                options: TestOptions.UnsafeReleaseDll,
                 assemblyName: "NonWinRTDelegateLibrary").EmitToImageReference();
 
             var allDelegates =

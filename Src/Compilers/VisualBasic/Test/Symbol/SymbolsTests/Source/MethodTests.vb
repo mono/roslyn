@@ -702,7 +702,7 @@ End Class
             Assert.Same(alphaConstructedM1.TypeArguments(1), m1.TypeParameters(0))
             Assert.NotSame(alphaConstructedM1.TypeArguments(1), m1_1.TypeParameters(0))
 
-            alphaConstructedM1 = m1.Construct(New List(Of TypeSymbol) From {m1_1.TypeParameters(0), constructedC})
+            alphaConstructedM1 = m1.Construct(m1_1.TypeParameters(0), constructedC)
 
             Assert.Same(m1, alphaConstructedM1.ConstructedFrom)
             Assert.Same(alphaConstructedM1.TypeArguments(0), m1.TypeParameters(0))
@@ -1589,7 +1589,7 @@ Module M2
 
 End Module
 ]]></file>
-</compilation>, additionalRefs:={SystemCoreRef, SystemRef}, options:=OptionsDll.WithGlobalImports(GlobalImport.Parse("AnExt=System.Runtime.CompilerServices.ExtensionAttribute")))
+</compilation>, additionalRefs:={SystemCoreRef, SystemRef}, options:=TestOptions.ReleaseDll.WithGlobalImports(GlobalImport.Parse("AnExt=System.Runtime.CompilerServices.ExtensionAttribute")))
 
             Dim globalNS = compilation.SourceModule.GlobalNamespace
             Dim sourceMod = DirectCast(compilation.SourceModule, SourceModuleSymbol)
@@ -1713,7 +1713,7 @@ End Class
 ]]>.Value
 
             ' Used to raise an exception.
-            Dim comp = CreateCompilationWithMscorlib({Parse(source)}, OptionsDll)
+            Dim comp = CreateCompilationWithMscorlib({Parse(source)}, TestOptions.ReleaseDll)
             comp.AssertTheseDiagnostics(<errors><![CDATA[
 BC33016: Operator '+' must have either one or two parameters.
     Public Shared Operator +(Of T)

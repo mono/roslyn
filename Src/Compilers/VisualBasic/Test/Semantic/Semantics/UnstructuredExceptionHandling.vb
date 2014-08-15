@@ -1,14 +1,5 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-Imports System.IO
-Imports Microsoft.CodeAnalysis
-Imports Microsoft.CodeAnalysis.SpecialType
-Imports Microsoft.CodeAnalysis.Test.Utilities
-Imports Microsoft.CodeAnalysis.Text
-Imports Microsoft.CodeAnalysis.VisualBasic
-Imports Microsoft.CodeAnalysis.VisualBasic.OverloadResolution
-Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
-Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 Imports Roslyn.Test.Utilities
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.Semantics
@@ -32,7 +23,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
@@ -93,9 +84,9 @@ End Module
 }
 ]]>)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True,
+            compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
             <![CDATA[
 1
@@ -181,7 +172,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
@@ -263,7 +254,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
@@ -350,7 +341,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
@@ -459,11 +450,9 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe)
 
-            Dim compilationVerifier = CompileAndVerify(compilation, emitPdb:=True,
-                         expectedOutput:=
-            <![CDATA[
+            Dim compilationVerifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[
 1
 2
 3
@@ -600,7 +589,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
@@ -714,7 +703,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
@@ -827,7 +816,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
@@ -927,7 +916,7 @@ End Class
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
@@ -1133,7 +1122,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -1215,7 +1204,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -1276,7 +1265,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -1314,7 +1303,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -1343,7 +1332,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -1442,7 +1431,7 @@ End Class
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlib(source, options:=OptionsDll.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlib(source, options:=TestOptions.ReleaseDll)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -1651,7 +1640,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -1836,13 +1825,13 @@ M5 - 1
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
         End Sub
 
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_If_1()
             Dim source =
 <compilation name="ErrorHandling">
@@ -1942,7 +1931,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -2483,9 +2472,9 @@ End Module
 }
 ]]>)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Test1",
             <![CDATA[
@@ -3220,7 +3209,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -3274,12 +3263,12 @@ M5 - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_Select_1()
             Dim source =
 <compilation name="ErrorHandling">
@@ -3329,7 +3318,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -3441,9 +3430,9 @@ End Module
 ]]>)
 
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -3635,7 +3624,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -3671,9 +3660,9 @@ M3 - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
         End Sub
 
         <Fact()>
@@ -3716,7 +3705,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -3815,9 +3804,9 @@ End Module
 ]]>)
 
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -3998,7 +3987,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -4066,9 +4055,9 @@ M6 - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
         End Sub
 
         <Fact()>
@@ -4124,7 +4113,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -4234,9 +4223,9 @@ End Module
 ]]>)
 
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -4422,7 +4411,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -4440,9 +4429,9 @@ M2 - 0]]>
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
         End Sub
 
         <Fact()>
@@ -4503,8 +4492,8 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
-            Dim compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe)
+            Dim compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
   // Code size      241 (0xf1)
@@ -4664,11 +4653,11 @@ End Module
             'M2 - 0
             ']]>
 
-            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
+            compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
-  // Code size      219 (0xdb)
+  // Code size      208 (0xd0)
   .maxstack  3
   .locals init (Integer V_0, //VB$ActiveHandler
   Integer V_1, //VB$ResumeTarget
@@ -4694,7 +4683,7 @@ End Module
   IL_001e:  ldc.i4.2
   IL_001f:  call       "Function Program.M(Integer) As Integer"
   IL_0024:  pop
-  IL_0025:  leave      IL_00d2
+    IL_0025:  leave      IL_00c7
   IL_002a:  ldc.i4.8
   IL_002b:  stloc.2
   IL_002c:  ldstr      "OnError"
@@ -4703,18 +4692,18 @@ End Module
   IL_0038:  stloc.2
   IL_0039:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
   IL_003e:  ldloc.1
-  IL_003f:  brtrue.s   IL_0051
+    IL_003f:  brtrue.s   IL_004e
   IL_0041:  ldc.i4     0x800a0014
   IL_0046:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
   IL_004b:  throw
-  IL_004c:  leave      IL_00d2
-  IL_0051:  ldloc.1
-  IL_0052:  ldc.i4.1
-  IL_0053:  add
-  IL_0054:  ldc.i4.0
-  IL_0055:  stloc.1
-  IL_0056:  switch    (
-  IL_0087,
+    IL_004c:  leave.s    IL_00c7
+    IL_004e:  ldloc.1
+    IL_004f:  ldc.i4.1
+    IL_0050:  add
+    IL_0051:  ldc.i4.0
+    IL_0052:  stloc.1
+    IL_0053:  switch    (
+        IL_0084,
   IL_0000,
   IL_0012,
   IL_0012,
@@ -4725,54 +4714,49 @@ End Module
   IL_002a,
   IL_0036,
   IL_004c)
-  IL_0087:  leave.s    IL_00c7
-  IL_0089:  ldloc.2
-  IL_008a:  stloc.1
-  IL_008b:  ldloc.0
-  IL_008c:  ldc.i4.s   -2
-  IL_008e:  bgt.s      IL_0093
-  IL_0090:  ldc.i4.1
-  IL_0091:  br.s       IL_0094
-  IL_0093:  ldloc.0
-  IL_0094:  switch    (
-  IL_00a5,
-  IL_0051,
+    IL_0084:  leave.s    IL_00bc
+    IL_0086:  ldloc.2
+    IL_0087:  stloc.1
+    IL_0088:  ldloc.0
+    IL_0089:  switch    (
+        IL_009a,
+        IL_004e,
   IL_002a)
-  IL_00a5:  leave.s    IL_00c7
+    IL_009a:  leave.s    IL_00bc
 }
   filter
 {
-  IL_00a7:  isinst     "System.Exception"
-  IL_00ac:  ldnull
-  IL_00ad:  cgt.un
-  IL_00af:  ldloc.0
-  IL_00b0:  ldc.i4.0
-  IL_00b1:  cgt.un
-  IL_00b3:  and
-  IL_00b4:  ldloc.1
-  IL_00b5:  ldc.i4.0
-  IL_00b6:  ceq
-  IL_00b8:  and
-  IL_00b9:  endfilter
+    IL_009c:  isinst     "System.Exception"
+    IL_00a1:  ldnull
+    IL_00a2:  cgt.un
+    IL_00a4:  ldloc.0
+    IL_00a5:  ldc.i4.0
+    IL_00a6:  cgt.un
+    IL_00a8:  and
+    IL_00a9:  ldloc.1
+    IL_00aa:  ldc.i4.0
+    IL_00ab:  ceq
+    IL_00ad:  and
+    IL_00ae:  endfilter
 }  // end filter
 {  // handler
-  IL_00bb:  castclass  "System.Exception"
-  IL_00c0:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
-  IL_00c5:  leave.s    IL_0089
+    IL_00b0:  castclass  "System.Exception"
+    IL_00b5:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
+    IL_00ba:  leave.s    IL_0086
 }
-  IL_00c7:  ldc.i4     0x800a0033
-  IL_00cc:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
-  IL_00d1:  throw
-  IL_00d2:  ldloc.1
-  IL_00d3:  brfalse.s  IL_00da
-  IL_00d5:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
-  IL_00da:  ret
+  IL_00bc:  ldc.i4     0x800a0033
+  IL_00c1:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
+  IL_00c6:  throw
+  IL_00c7:  ldloc.1
+  IL_00c8:  brfalse.s  IL_00cf
+  IL_00ca:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
+  IL_00cf:  ret
 }]]>)
 
 
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_While_1()
             Dim source =
 <compilation name="ErrorHandling">
@@ -4814,7 +4798,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -4907,9 +4891,9 @@ End Module
 ]]>)
 
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -5029,7 +5013,7 @@ End Module
 ]]>)
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_Do_While_1()
             Dim source =
 <compilation name="ErrorHandling">
@@ -5071,7 +5055,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -5164,9 +5148,9 @@ End Module
 ]]>)
 
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -5286,7 +5270,7 @@ End Module
 ]]>)
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_Do_Until_1()
             Dim source =
 <compilation name="ErrorHandling">
@@ -5328,7 +5312,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -5421,9 +5405,9 @@ End Module
 ]]>)
 
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -5602,8 +5586,8 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
-            Dim compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe)
+            Dim compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
   // Code size      232 (0xe8)
@@ -5751,11 +5735,11 @@ End Module
             'M2 - 0
             ']]>
 
-            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
+            compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
-  // Code size      209 (0xd1)
+  // Code size      201 (0xc9)
   .maxstack  3
   .locals init (Integer V_0, //VB$ActiveHandler
   Integer V_1, //VB$ResumeTarget
@@ -5780,7 +5764,7 @@ End Module
   IL_001c:  ldc.i4.2
   IL_001d:  call       "Function Program.M(Integer) As Integer"
   IL_0022:  pop
-  IL_0023:  leave      IL_00c8
+    IL_0023:  leave      IL_00c0
   IL_0028:  ldc.i4.7
   IL_0029:  stloc.2
   IL_002a:  ldstr      "OnError"
@@ -5793,7 +5777,7 @@ End Module
   IL_003e:  ldc.i4     0x800a0014
   IL_0043:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
   IL_0048:  throw
-  IL_0049:  leave.s    IL_00c8
+    IL_0049:  leave.s    IL_00c0
   IL_004b:  ldloc.1
   IL_004c:  ldc.i4.1
   IL_004d:  add
@@ -5810,52 +5794,47 @@ End Module
   IL_0028,
   IL_0034,
   IL_0049)
-  IL_007d:  leave.s    IL_00bd
+    IL_007d:  leave.s    IL_00b5
   IL_007f:  ldloc.2
   IL_0080:  stloc.1
   IL_0081:  ldloc.0
-  IL_0082:  ldc.i4.s   -2
-  IL_0084:  bgt.s      IL_0089
-  IL_0086:  ldc.i4.1
-  IL_0087:  br.s       IL_008a
-  IL_0089:  ldloc.0
-  IL_008a:  switch    (
-  IL_009b,
+    IL_0082:  switch    (
+        IL_0093,
   IL_004b,
   IL_0028)
-  IL_009b:  leave.s    IL_00bd
+    IL_0093:  leave.s    IL_00b5
 }
   filter
 {
-  IL_009d:  isinst     "System.Exception"
-  IL_00a2:  ldnull
-  IL_00a3:  cgt.un
-  IL_00a5:  ldloc.0
-  IL_00a6:  ldc.i4.0
-  IL_00a7:  cgt.un
-  IL_00a9:  and
-  IL_00aa:  ldloc.1
-  IL_00ab:  ldc.i4.0
-  IL_00ac:  ceq
-  IL_00ae:  and
-  IL_00af:  endfilter
+    IL_0095:  isinst     "System.Exception"
+    IL_009a:  ldnull
+    IL_009b:  cgt.un
+    IL_009d:  ldloc.0
+    IL_009e:  ldc.i4.0
+    IL_009f:  cgt.un
+    IL_00a1:  and
+    IL_00a2:  ldloc.1
+    IL_00a3:  ldc.i4.0
+    IL_00a4:  ceq
+    IL_00a6:  and
+    IL_00a7:  endfilter
 }  // end filter
 {  // handler
-  IL_00b1:  castclass  "System.Exception"
-  IL_00b6:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
-  IL_00bb:  leave.s    IL_007f
+    IL_00a9:  castclass  "System.Exception"
+    IL_00ae:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
+    IL_00b3:  leave.s    IL_007f
 }
-  IL_00bd:  ldc.i4     0x800a0033
-  IL_00c2:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
-  IL_00c7:  throw
-  IL_00c8:  ldloc.1
-  IL_00c9:  brfalse.s  IL_00d0
-  IL_00cb:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
-  IL_00d0:  ret
+  IL_00b5:  ldc.i4     0x800a0033
+  IL_00ba:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
+  IL_00bf:  throw
+  IL_00c0:  ldloc.1
+  IL_00c1:  brfalse.s  IL_00c8
+  IL_00c3:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
+  IL_00c8:  ret
 }]]>)
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_Do_Loop_While_1()
             Dim source =
 <compilation name="ErrorHandling">
@@ -5897,7 +5876,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -5988,9 +5967,9 @@ End Module
 ]]>)
 
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -6109,7 +6088,7 @@ End Module
 ]]>)
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_Do_Loop_Until_1()
             Dim source =
 <compilation name="ErrorHandling">
@@ -6151,7 +6130,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -6240,11 +6219,53 @@ End Module
   IL_00a9:  ret
 }
 ]]>)
+        End Sub
 
+        <Fact>
+        Sub Resume_in_Do_Loop_Until_1_Debug()
+            Dim source =
+<compilation name="ErrorHandling">
+    <file name="a.vb">
+        <![CDATA[
+Module Program
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+    Sub Main()
+        On Error Resume Next
+        M0()
+        Do 
+            If M4()
+                Continue Do
+            End If
+            M1()
+ContinueLabel:
+        Loop Until M2()
+        M3()
+    End Sub
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+    Sub M0()
+    End Sub
+
+    Sub M1()
+    End Sub
+
+    Function M2() As Boolean
+        Return False
+    End Function
+
+    Sub M3()
+    End Sub
+
+    Function M4() As Boolean
+        Return False
+    End Function
+End Module
+    ]]>
+    </file>
+</compilation>
+
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe)
+
+            Dim compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -6421,8 +6442,8 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
-            Dim compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe)
+            Dim compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
   // Code size      242 (0xf2)
@@ -6559,11 +6580,11 @@ End Module
             'OnError
             'M0 - 0]]>
 
-            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
+            compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
-  // Code size      215 (0xd7)
+  // Code size      204 (0xcc)
   .maxstack  3
   .locals init (Integer V_0, //VB$ActiveHandler
   Integer V_1, //VB$ResumeTarget
@@ -6578,7 +6599,7 @@ End Module
   IL_0009:  ldc.i4.0
   IL_000a:  call       "Function Program.M(Integer) As Integer"
   IL_000f:  brtrue.s   IL_0016
-  IL_0011:  leave      IL_00ce
+    IL_0011:  leave      IL_00c3
   IL_0016:  ldc.i4.6
   IL_0017:  stloc.2
   IL_0018:  ldc.i4.1
@@ -6593,18 +6614,18 @@ End Module
   IL_0030:  stloc.2
   IL_0031:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
   IL_0036:  ldloc.1
-  IL_0037:  brtrue.s   IL_0049
+    IL_0037:  brtrue.s   IL_0046
   IL_0039:  ldc.i4     0x800a0014
   IL_003e:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
   IL_0043:  throw
-  IL_0044:  leave      IL_00ce
-  IL_0049:  ldloc.1
-  IL_004a:  ldc.i4.1
-  IL_004b:  add
-  IL_004c:  ldc.i4.0
-  IL_004d:  stloc.1
-  IL_004e:  switch    (
-  IL_0083,
+    IL_0044:  leave.s    IL_00c3
+    IL_0046:  ldloc.1
+    IL_0047:  ldc.i4.1
+    IL_0048:  add
+    IL_0049:  ldc.i4.0
+    IL_004a:  stloc.1
+    IL_004b:  switch    (
+        IL_0080,
   IL_0000,
   IL_0007,
   IL_0007,
@@ -6616,52 +6637,47 @@ End Module
   IL_0021,
   IL_002e,
   IL_0044)
-  IL_0083:  leave.s    IL_00c3
-  IL_0085:  ldloc.2
-  IL_0086:  stloc.1
-  IL_0087:  ldloc.0
-  IL_0088:  ldc.i4.s   -2
-  IL_008a:  bgt.s      IL_008f
-  IL_008c:  ldc.i4.1
-  IL_008d:  br.s       IL_0090
-  IL_008f:  ldloc.0
-  IL_0090:  switch    (
-  IL_00a1,
-  IL_0049,
+    IL_0080:  leave.s    IL_00b8
+    IL_0082:  ldloc.2
+    IL_0083:  stloc.1
+    IL_0084:  ldloc.0
+    IL_0085:  switch    (
+        IL_0096,
+        IL_0046,
   IL_0021)
-  IL_00a1:  leave.s    IL_00c3
+    IL_0096:  leave.s    IL_00b8
 }
   filter
 {
-  IL_00a3:  isinst     "System.Exception"
-  IL_00a8:  ldnull
-  IL_00a9:  cgt.un
-  IL_00ab:  ldloc.0
-  IL_00ac:  ldc.i4.0
-  IL_00ad:  cgt.un
-  IL_00af:  and
-  IL_00b0:  ldloc.1
-  IL_00b1:  ldc.i4.0
-  IL_00b2:  ceq
-  IL_00b4:  and
-  IL_00b5:  endfilter
+    IL_0098:  isinst     "System.Exception"
+    IL_009d:  ldnull
+    IL_009e:  cgt.un
+    IL_00a0:  ldloc.0
+    IL_00a1:  ldc.i4.0
+    IL_00a2:  cgt.un
+    IL_00a4:  and
+    IL_00a5:  ldloc.1
+    IL_00a6:  ldc.i4.0
+    IL_00a7:  ceq
+    IL_00a9:  and
+    IL_00aa:  endfilter
 }  // end filter
 {  // handler
-  IL_00b7:  castclass  "System.Exception"
-  IL_00bc:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
-  IL_00c1:  leave.s    IL_0085
+    IL_00ac:  castclass  "System.Exception"
+    IL_00b1:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
+    IL_00b6:  leave.s    IL_0082
 }
-  IL_00c3:  ldc.i4     0x800a0033
-  IL_00c8:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
-  IL_00cd:  throw
-  IL_00ce:  ldloc.1
-  IL_00cf:  brfalse.s  IL_00d6
-  IL_00d1:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
-  IL_00d6:  ret
+  IL_00b8:  ldc.i4     0x800a0033
+  IL_00bd:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
+  IL_00c2:  throw
+  IL_00c3:  ldloc.1
+  IL_00c4:  brfalse.s  IL_00cb
+  IL_00c6:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
+  IL_00cb:  ret
 }]]>)
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_Do_Loop_1()
             Dim source =
 <compilation name="ErrorHandling">
@@ -6699,7 +6715,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -6787,9 +6803,9 @@ End Module
 ]]>)
 
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -7010,7 +7026,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             CompileAndVerify(compilation).
                 VerifyIL("Program.Test", <![CDATA[
@@ -7145,9 +7161,9 @@ End Module
 }
 ]]>)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, emitPdb:=True).
+            CompileAndVerify(compilation).
                 VerifyIL("Program.Test", <![CDATA[
 {
   // Code size      356 (0x164)
@@ -7312,7 +7328,7 @@ End Module
 
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_ForEach_Enumerable_1()
             Dim source =
 <compilation name="ErrorHandling">
@@ -7354,7 +7370,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -7465,9 +7481,9 @@ End Module
 }
 ]]>)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -7722,8 +7738,8 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
-            Dim compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe)
+            Dim compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
   // Code size      308 (0x134)
@@ -7929,11 +7945,11 @@ End Module
             'Exception - Program+TestException
             ']]>
 
-            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
+            compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
-  // Code size      276 (0x114)
+  // Code size      268 (0x10c)
   .maxstack  3
   .locals init (Integer V_0, //VB$ActiveHandler
   Integer V_1, //VB$ResumeTarget
@@ -7982,7 +7998,7 @@ End Module
   IL_005c:  ldstr      "2"
   IL_0061:  call       "Function Program.M(String) As Integer"
   IL_0066:  pop
-  IL_0067:  leave      IL_010b
+    IL_0067:  leave      IL_0103
   IL_006c:  ldc.i4.4
   IL_006d:  stloc.2
   IL_006e:  ldstr      "OnError - {0}"
@@ -7998,7 +8014,7 @@ End Module
   IL_0091:  ldc.i4     0x800a0014
   IL_0096:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
   IL_009b:  throw
-  IL_009c:  leave.s    IL_010b
+    IL_009c:  leave.s    IL_0103
   IL_009e:  ldloc.1
   IL_009f:  ldc.i4.1
   IL_00a0:  add
@@ -8012,47 +8028,42 @@ End Module
   IL_006c,
   IL_0087,
   IL_009c)
-  IL_00c4:  leave.s    IL_0100
+    IL_00c4:  leave.s    IL_00f8
   IL_00c6:  ldloc.2
   IL_00c7:  stloc.1
   IL_00c8:  ldloc.0
-  IL_00c9:  ldc.i4.s   -2
-  IL_00cb:  bgt.s      IL_00d0
-  IL_00cd:  ldc.i4.1
-  IL_00ce:  br.s       IL_00d1
-  IL_00d0:  ldloc.0
-  IL_00d1:  switch    (
-  IL_00de,
+    IL_00c9:  switch    (
+        IL_00d6,
   IL_009e)
-  IL_00de:  leave.s    IL_0100
+    IL_00d6:  leave.s    IL_00f8
 }
   filter
 {
-  IL_00e0:  isinst     "System.Exception"
-  IL_00e5:  ldnull
-  IL_00e6:  cgt.un
-  IL_00e8:  ldloc.0
-  IL_00e9:  ldc.i4.0
-  IL_00ea:  cgt.un
-  IL_00ec:  and
-  IL_00ed:  ldloc.1
-  IL_00ee:  ldc.i4.0
-  IL_00ef:  ceq
-  IL_00f1:  and
-  IL_00f2:  endfilter
+    IL_00d8:  isinst     "System.Exception"
+    IL_00dd:  ldnull
+    IL_00de:  cgt.un
+    IL_00e0:  ldloc.0
+    IL_00e1:  ldc.i4.0
+    IL_00e2:  cgt.un
+    IL_00e4:  and
+    IL_00e5:  ldloc.1
+    IL_00e6:  ldc.i4.0
+    IL_00e7:  ceq
+    IL_00e9:  and
+    IL_00ea:  endfilter
 }  // end filter
 {  // handler
-  IL_00f4:  castclass  "System.Exception"
-  IL_00f9:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
-  IL_00fe:  leave.s    IL_00c6
+    IL_00ec:  castclass  "System.Exception"
+    IL_00f1:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
+    IL_00f6:  leave.s    IL_00c6
 }
-  IL_0100:  ldc.i4     0x800a0033
-  IL_0105:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
-  IL_010a:  throw
-  IL_010b:  ldloc.1
-  IL_010c:  brfalse.s  IL_0113
-  IL_010e:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
-  IL_0113:  ret
+  IL_00f8:  ldc.i4     0x800a0033
+  IL_00fd:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
+  IL_0102:  throw
+  IL_0103:  ldloc.1
+  IL_0104:  brfalse.s  IL_010b
+  IL_0106:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
+  IL_010b:  ret
 }]]>)
         End Sub
 
@@ -8090,7 +8101,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -8196,9 +8207,9 @@ End Module
 }
 ]]>)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -8444,8 +8455,8 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
-            Dim compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe)
+            Dim compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
   // Code size      374 (0x176)
@@ -8766,8 +8777,8 @@ End Module
             'M(3) - 0
             ']]>
 
-            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe)
+            compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
   // Code size      374 (0x176)
@@ -8942,7 +8953,7 @@ End Module
 
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_ForTo_1()
             Dim source =
 <compilation name="ErrorHandling">
@@ -9009,7 +9020,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -9133,9 +9144,9 @@ End Module
 }
 ]]>)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -9401,8 +9412,8 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
-            Dim compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe)
+            Dim compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
   // Code size      344 (0x158)
@@ -9720,11 +9731,11 @@ End Module
             'M(3) - 0
             ']]>
 
-            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
+            compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
-  // Code size      313 (0x139)
+  // Code size      302 (0x12e)
   .maxstack  6
   .locals init (Integer V_0, //VB$ActiveHandler
   Integer V_1, //VB$ResumeTarget
@@ -9777,7 +9788,7 @@ End Module
   IL_0064:  ldstr      "3"
   IL_0069:  call       "Function Program.M(String) As Integer"
   IL_006e:  pop
-  IL_006f:  leave      IL_0130
+    IL_006f:  leave      IL_0125
   IL_0074:  ldc.i4.s   9
   IL_0076:  stloc.2
   IL_0077:  ldstr      "OnError - {0}"
@@ -9789,18 +9800,18 @@ End Module
   IL_0092:  stloc.2
   IL_0093:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
   IL_0098:  ldloc.1
-  IL_0099:  brtrue.s   IL_00ab
+    IL_0099:  brtrue.s   IL_00a8
   IL_009b:  ldc.i4     0x800a0014
   IL_00a0:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
   IL_00a5:  throw
-  IL_00a6:  leave      IL_0130
-  IL_00ab:  ldloc.1
-  IL_00ac:  ldc.i4.1
-  IL_00ad:  add
-  IL_00ae:  ldc.i4.0
-  IL_00af:  stloc.1
-  IL_00b0:  switch    (
-  IL_00e5,
+    IL_00a6:  leave.s    IL_0125
+    IL_00a8:  ldloc.1
+    IL_00a9:  ldc.i4.1
+    IL_00aa:  add
+    IL_00ab:  ldc.i4.0
+    IL_00ac:  stloc.1
+    IL_00ad:  switch    (
+        IL_00e2,
   IL_0000,
   IL_0007,
   IL_0014,
@@ -9812,52 +9823,47 @@ End Module
   IL_0074,
   IL_0090,
   IL_00a6)
-  IL_00e5:  leave.s    IL_0125
-  IL_00e7:  ldloc.2
-  IL_00e8:  stloc.1
-  IL_00e9:  ldloc.0
-  IL_00ea:  ldc.i4.s   -2
-  IL_00ec:  bgt.s      IL_00f1
-  IL_00ee:  ldc.i4.1
-  IL_00ef:  br.s       IL_00f2
-  IL_00f1:  ldloc.0
-  IL_00f2:  switch    (
-  IL_0103,
-  IL_00ab,
+    IL_00e2:  leave.s    IL_011a
+    IL_00e4:  ldloc.2
+    IL_00e5:  stloc.1
+    IL_00e6:  ldloc.0
+    IL_00e7:  switch    (
+        IL_00f8,
+        IL_00a8,
   IL_0074)
-  IL_0103:  leave.s    IL_0125
+    IL_00f8:  leave.s    IL_011a
 }
   filter
 {
-  IL_0105:  isinst     "System.Exception"
-  IL_010a:  ldnull
-  IL_010b:  cgt.un
-  IL_010d:  ldloc.0
-  IL_010e:  ldc.i4.0
-  IL_010f:  cgt.un
-  IL_0111:  and
-  IL_0112:  ldloc.1
-  IL_0113:  ldc.i4.0
-  IL_0114:  ceq
-  IL_0116:  and
-  IL_0117:  endfilter
+    IL_00fa:  isinst     "System.Exception"
+    IL_00ff:  ldnull
+    IL_0100:  cgt.un
+    IL_0102:  ldloc.0
+    IL_0103:  ldc.i4.0
+    IL_0104:  cgt.un
+    IL_0106:  and
+    IL_0107:  ldloc.1
+    IL_0108:  ldc.i4.0
+    IL_0109:  ceq
+    IL_010b:  and
+    IL_010c:  endfilter
 }  // end filter
 {  // handler
-  IL_0119:  castclass  "System.Exception"
-  IL_011e:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
-  IL_0123:  leave.s    IL_00e7
+    IL_010e:  castclass  "System.Exception"
+    IL_0113:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
+    IL_0118:  leave.s    IL_00e4
 }
-  IL_0125:  ldc.i4     0x800a0033
-  IL_012a:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
-  IL_012f:  throw
-  IL_0130:  ldloc.1
-  IL_0131:  brfalse.s  IL_0138
-  IL_0133:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
-  IL_0138:  ret
+  IL_011a:  ldc.i4     0x800a0033
+  IL_011f:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
+  IL_0124:  throw
+  IL_0125:  ldloc.1
+  IL_0126:  brfalse.s  IL_012d
+  IL_0128:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
+  IL_012d:  ret
 }]]>)
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_ForTo_3()
             Dim source =
 <compilation name="ErrorHandling">
@@ -9924,7 +9930,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -10033,9 +10039,9 @@ End Module
 }
 ]]>)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -10251,9 +10257,9 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe)
 
-            Dim compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            Dim compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
@@ -10457,11 +10463,11 @@ End Module
             'M(3) - 0
             ']]>
 
-            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
+            compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Program.Test",
             <![CDATA[{
-  // Code size      325 (0x145)
+  // Code size      317 (0x13d)
   .maxstack  3
   .locals init (Integer V_0, //VB$ActiveHandler
   Integer V_1, //VB$ResumeTarget
@@ -10521,7 +10527,7 @@ End Module
   IL_006c:  ldstr      "3"
   IL_0071:  call       "Function Program.M(String) As Integer"
   IL_0076:  pop
-  IL_0077:  leave      IL_013c
+    IL_0077:  leave      IL_0134
   IL_007c:  ldc.i4.s   10
   IL_007e:  stloc.2
   IL_007f:  ldstr      "OnError - {0}"
@@ -10537,7 +10543,7 @@ End Module
   IL_00a3:  ldc.i4     0x800a0014
   IL_00a8:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
   IL_00ad:  throw
-  IL_00ae:  leave      IL_013c
+    IL_00ae:  leave      IL_0134
   IL_00b3:  ldloc.1
   IL_00b4:  ldc.i4.1
   IL_00b5:  add
@@ -10557,52 +10563,47 @@ End Module
   IL_007c,
   IL_0098,
   IL_00ae)
-  IL_00f1:  leave.s    IL_0131
+    IL_00f1:  leave.s    IL_0129
   IL_00f3:  ldloc.2
   IL_00f4:  stloc.1
   IL_00f5:  ldloc.0
-  IL_00f6:  ldc.i4.s   -2
-  IL_00f8:  bgt.s      IL_00fd
-  IL_00fa:  ldc.i4.1
-  IL_00fb:  br.s       IL_00fe
-  IL_00fd:  ldloc.0
-  IL_00fe:  switch    (
-  IL_010f,
+    IL_00f6:  switch    (
+        IL_0107,
   IL_00b3,
   IL_007c)
-  IL_010f:  leave.s    IL_0131
+    IL_0107:  leave.s    IL_0129
 }
   filter
 {
-  IL_0111:  isinst     "System.Exception"
-  IL_0116:  ldnull
-  IL_0117:  cgt.un
-  IL_0119:  ldloc.0
-  IL_011a:  ldc.i4.0
-  IL_011b:  cgt.un
-  IL_011d:  and
-  IL_011e:  ldloc.1
-  IL_011f:  ldc.i4.0
-  IL_0120:  ceq
-  IL_0122:  and
-  IL_0123:  endfilter
+    IL_0109:  isinst     "System.Exception"
+    IL_010e:  ldnull
+    IL_010f:  cgt.un
+    IL_0111:  ldloc.0
+    IL_0112:  ldc.i4.0
+    IL_0113:  cgt.un
+    IL_0115:  and
+    IL_0116:  ldloc.1
+    IL_0117:  ldc.i4.0
+    IL_0118:  ceq
+    IL_011a:  and
+    IL_011b:  endfilter
 }  // end filter
 {  // handler
-  IL_0125:  castclass  "System.Exception"
-  IL_012a:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
-  IL_012f:  leave.s    IL_00f3
+    IL_011d:  castclass  "System.Exception"
+    IL_0122:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
+    IL_0127:  leave.s    IL_00f3
 }
-  IL_0131:  ldc.i4     0x800a0033
-  IL_0136:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
-  IL_013b:  throw
-  IL_013c:  ldloc.1
-  IL_013d:  brfalse.s  IL_0144
-  IL_013f:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
-  IL_0144:  ret
+  IL_0129:  ldc.i4     0x800a0033
+  IL_012e:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
+  IL_0133:  throw
+  IL_0134:  ldloc.1
+  IL_0135:  brfalse.s  IL_013c
+  IL_0137:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
+  IL_013c:  ret
 }]]>)
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_ForEach_String_1()
             Dim source =
 <compilation name="ErrorHandling">
@@ -10644,7 +10645,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -10753,9 +10754,9 @@ End Module
 }
 ]]>)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -10969,17 +10970,17 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             CompileAndVerify(compilation)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, emitPdb:=True)
+            CompileAndVerify(compilation)
 
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Public Sub Resume_in_ForEach_Array_1()
             Dim source =
 <compilation name="ErrorHandling">
@@ -11021,7 +11022,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -11131,9 +11132,9 @@ End Module
 }
 ]]>)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.Main",
             <![CDATA[
@@ -11349,7 +11350,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -11376,9 +11377,9 @@ M(3) - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -11477,7 +11478,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -11528,9 +11529,9 @@ M(3) - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -11637,7 +11638,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -11713,9 +11714,9 @@ M(3) - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -11807,7 +11808,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -11895,9 +11896,9 @@ M(14) - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -11984,7 +11985,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -12029,9 +12030,9 @@ M(4) - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -12131,7 +12132,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe)
 
 
             Dim expected =
@@ -12184,9 +12185,9 @@ y(0) is Changed = System.Int32[]; Content is preserved]]>
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -12277,7 +12278,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -12319,9 +12320,9 @@ y(0) is Changed = System.Int32[]
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -12414,7 +12415,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -12481,9 +12482,9 @@ y(0) is Nothing
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -12569,7 +12570,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -12595,9 +12596,9 @@ x(0) is Nothing
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -12683,7 +12684,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -12704,9 +12705,9 @@ M(3) - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -12793,7 +12794,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -12807,9 +12808,9 @@ M(4) - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -12896,9 +12897,9 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe)
 
-            Dim compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            Dim compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.TestInstance.Test",
             <![CDATA[{
@@ -13090,13 +13091,13 @@ End Module
             'M(4) - 0
             ']]>
 
-            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
-            compilationVerifier = CompileAndVerify(compilation, emitPdb:=True)
+            compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Program.TestInstance.Test",
             <![CDATA[{
-  // Code size      338 (0x152)
+  // Code size      330 (0x14a)
   .maxstack  4
   .locals init (Integer V_0, //VB$ActiveHandler
   Integer V_1, //VB$ResumeTarget
@@ -13134,7 +13135,7 @@ End Module
   IL_0044:  ldstr      "4"
   IL_0049:  call       "Function Program.M(String) As Integer"
   IL_004e:  pop
-  IL_004f:  leave      IL_0149
+    IL_004f:  leave      IL_0141
   IL_0054:  ldc.i4.s   12
   IL_0056:  stloc.2
   IL_0057:  call       "Function Microsoft.VisualBasic.Information.Err() As Microsoft.VisualBasic.ErrObject"
@@ -13164,7 +13165,7 @@ End Module
   IL_00a4:  ldc.i4     0x800a0014
   IL_00a9:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
   IL_00ae:  throw
-  IL_00af:  leave      IL_0149
+    IL_00af:  leave      IL_0141
   IL_00b4:  ldloc.1
   IL_00b5:  ldc.i4.1
   IL_00b6:  add
@@ -13187,48 +13188,43 @@ End Module
   IL_0062,
   IL_0099,
   IL_00af)
-  IL_00fe:  leave.s    IL_013e
+    IL_00fe:  leave.s    IL_0136
   IL_0100:  ldloc.2
   IL_0101:  stloc.1
   IL_0102:  ldloc.0
-  IL_0103:  ldc.i4.s   -2
-  IL_0105:  bgt.s      IL_010a
-  IL_0107:  ldc.i4.1
-  IL_0108:  br.s       IL_010b
-  IL_010a:  ldloc.0
-  IL_010b:  switch    (
-  IL_011c,
+    IL_0103:  switch    (
+        IL_0114,
   IL_00b4,
   IL_0054)
-  IL_011c:  leave.s    IL_013e
+    IL_0114:  leave.s    IL_0136
 }
   filter
 {
-  IL_011e:  isinst     "System.Exception"
-  IL_0123:  ldnull
-  IL_0124:  cgt.un
-  IL_0126:  ldloc.0
-  IL_0127:  ldc.i4.0
-  IL_0128:  cgt.un
-  IL_012a:  and
-  IL_012b:  ldloc.1
-  IL_012c:  ldc.i4.0
-  IL_012d:  ceq
-  IL_012f:  and
-  IL_0130:  endfilter
+    IL_0116:  isinst     "System.Exception"
+    IL_011b:  ldnull
+    IL_011c:  cgt.un
+    IL_011e:  ldloc.0
+    IL_011f:  ldc.i4.0
+    IL_0120:  cgt.un
+    IL_0122:  and
+    IL_0123:  ldloc.1
+    IL_0124:  ldc.i4.0
+    IL_0125:  ceq
+    IL_0127:  and
+    IL_0128:  endfilter
 }  // end filter
 {  // handler
-  IL_0132:  castclass  "System.Exception"
-  IL_0137:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
-  IL_013c:  leave.s    IL_0100
+    IL_012a:  castclass  "System.Exception"
+    IL_012f:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)"
+    IL_0134:  leave.s    IL_0100
 }
-  IL_013e:  ldc.i4     0x800a0033
-  IL_0143:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
-  IL_0148:  throw
-  IL_0149:  ldloc.1
-  IL_014a:  brfalse.s  IL_0151
-  IL_014c:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
-  IL_0151:  ret
+  IL_0136:  ldc.i4     0x800a0033
+  IL_013b:  call       "Function Microsoft.VisualBasic.CompilerServices.ProjectData.CreateProjectError(Integer) As System.Exception"
+  IL_0140:  throw
+  IL_0141:  ldloc.1
+  IL_0142:  brfalse.s  IL_0149
+  IL_0144:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
+  IL_0149:  ret
 }]]>)
 
 
@@ -13331,7 +13327,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -13412,9 +13408,9 @@ M(6) - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -13422,8 +13418,8 @@ M(6) - 0
         Public Sub Resume_in_ObjectConstruction_0()
             Dim source =
 <compilation name="ErrorHandling">
-                        <file name="a.vb">
-                            <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Module Program
@@ -13521,10 +13517,10 @@ OnError:
     End Class
 End Module
         ]]>
-                        </file>
-                    </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -13570,9 +13566,9 @@ M(TestInstance.New(x As Integer) 2) - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -13580,8 +13576,8 @@ M(TestInstance.New(x As Integer) 2) - 0
         Public Sub Resume_in_ObjectConstruction_1()
             Dim source =
 <compilation name="ErrorHandling">
-                            <file name="a.vb">
-                                <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Module Program
@@ -13662,10 +13658,10 @@ OnError:
     End Class
 End Module
         ]]>
-                            </file>
-                        </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -13698,9 +13694,9 @@ M(TestInstance.New 2) - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -13708,8 +13704,8 @@ M(TestInstance.New 2) - 0
         Public Sub Resume_in_TypeInitialization_0()
             Dim source =
 <compilation name="ErrorHandling">
-                                <file name="a.vb">
-                                    <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Module Program
@@ -13798,10 +13794,10 @@ OnError:
     End Class
 End Module
         ]]>
-                                </file>
-                            </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -13817,9 +13813,9 @@ Exception - System.TypeInitializationException
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -13827,8 +13823,8 @@ Exception - System.TypeInitializationException
         Public Sub Resume_in_Lambda_0()
             Dim source =
 <compilation name="ErrorHandling">
-                                    <file name="a.vb">
-                                        <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Module Program
@@ -13929,10 +13925,10 @@ Module Program
     End Class
 End Module
         ]]>
-                                    </file>
-                                </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -14114,9 +14110,9 @@ M(15) - 0
 
             CompileAndVerify(compilation, expectedOutput:=expected)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
 
-            CompileAndVerify(compilation, expectedOutput:=expected, emitPdb:=True)
+            CompileAndVerify(compilation, expectedOutput:=expected)
 
         End Sub
 
@@ -14124,8 +14120,8 @@ M(15) - 0
         Public Sub Resume_in_Lambda_1()
             Dim source =
 <compilation name="ErrorHandling">
-                                        <file name="a.vb">
-                                            <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Class TestOnError1
@@ -14148,10 +14144,10 @@ Label:
 
 End Class
     ]]>
-                                        </file>
-                                    </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsDll)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseDll)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -14165,8 +14161,8 @@ BC36595: Method cannot contain both a 'Resume' statement and a definition of a v
         Public Sub Resume_in_Lambda_2()
             Dim source =
 <compilation name="ErrorHandling">
-                                            <file name="a.vb">
-                                                <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Class TestOnError1
@@ -14189,10 +14185,10 @@ Label:
 
 End Class
     ]]>
-                                            </file>
-                                        </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsDll)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseDll)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -14206,8 +14202,8 @@ BC36595: Method cannot contain both a 'Resume Next' statement and a definition o
         Public Sub Resume_in_Lambda_3()
             Dim source =
 <compilation name="ErrorHandling">
-                                                <file name="a.vb">
-                                                    <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Class TestOnError1
@@ -14230,10 +14226,10 @@ Label:
 
 End Class
     ]]>
-                                                </file>
-                                            </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsDll)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseDll)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -14247,8 +14243,8 @@ BC36595: Method cannot contain both a 'On Error Resume Next' statement and a def
         Public Sub Resume_in_Lambda_4()
             Dim source =
 <compilation name="ErrorHandling">
-                                                    <file name="a.vb">
-                                                        <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Class TestOnError1
@@ -14271,10 +14267,10 @@ Label:
 
 End Class
     ]]>
-                                                    </file>
-                                                </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsDll)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseDll)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -14288,8 +14284,8 @@ BC36597: 'On Error Goto Label' is not valid because 'Label' is inside a scope th
         Public Sub Resume_in_Lambda_5()
             Dim source =
 <compilation name="ErrorHandling">
-                                                        <file name="a.vb">
-                                                            <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Class TestOnError1
@@ -14366,22 +14362,22 @@ Label:
 
 End Class
     ]]>
-                                                        </file>
-                                                    </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsDll)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseDll)
 
             AssertTheseDiagnostics(compilation,
 <expected>
-                                                    </expected>)
+</expected>)
         End Sub
 
         <Fact()>
         Public Sub Resume_in_Lambda_6()
             Dim source =
 <compilation name="ErrorHandling">
-                                                            <file name="a.vb">
-                                                                <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Class TestOnError1
@@ -14403,10 +14399,10 @@ Class TestOnError1
 
 End Class
     ]]>
-                                                            </file>
-                                                        </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsDll)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseDll)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -14420,8 +14416,8 @@ BC36595: Method cannot contain both a 'On Error Resume Next' statement and a def
         Public Sub Resume_in_Lambda_7()
             Dim source =
 <compilation name="ErrorHandling">
-                                                                <file name="a.vb">
-                                                                    <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Class TestOnError1
@@ -14444,22 +14440,22 @@ Label:
 
 End Class
     ]]>
-                                                                </file>
-                                                            </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             AssertTheseDiagnostics(compilation,
 <expected>
-                                                            </expected>)
+</expected>)
         End Sub
 
         <Fact()>
         Public Sub Resume_in_Lambda_8()
             Dim source =
 <compilation name="ErrorHandling">
-                                                                    <file name="a.vb">
-                                                                        <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Class TestOnError1
@@ -14484,10 +14480,10 @@ Label:
 
 End Class
     ]]>
-                                                                    </file>
-                                                                </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -14501,8 +14497,8 @@ BC36597: 'Resume Label2' is not valid because 'Label2' is inside a scope that de
         Public Sub Resume_in_Lambda_9()
             Dim source =
 <compilation name="ErrorHandling">
-                                                                        <file name="a.vb">
-                                                                            <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Class TestOnError1
@@ -14524,10 +14520,10 @@ Label2:
 
 End Class
     ]]>
-                                                                        </file>
-                                                                    </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -14541,8 +14537,8 @@ BC36597: 'On Error Goto Label2' is not valid because 'Label2' is inside a scope 
         Public Sub ErrorStatement_0()
             Dim source =
 <compilation name="ErrorHandling">
-                                                                            <file name="a.vb">
-                                                                                <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 Imports Microsoft.VisualBasic.Constants
 
@@ -14556,10 +14552,10 @@ Module Program
     End Sub
 End Module
         ]]>
-                                                                            </file>
-                                                                        </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -14574,8 +14570,8 @@ System.InvalidOperationException: Resume without error.
         Public Sub ErrorStatement_1()
             Dim source =
 <compilation name="ErrorHandling">
-                                                                                <file name="a.vb">
-                                                                                    <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 Imports Microsoft.VisualBasic.Constants
 
@@ -14585,10 +14581,10 @@ Module Program
     End Sub
 End Module
         ]]>
-                                                                                </file>
-                                                                            </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -14602,8 +14598,8 @@ BC30311: Value of type 'System.NotImplementedException' cannot be converted to '
         Public Sub ErrorStatement_2()
             Dim source =
 <compilation name="ErrorHandling">
-                                                                                    <file name="a.vb">
-                                                                                        <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Class Program
@@ -14612,10 +14608,10 @@ Class Program
     End Sub
 End Class
         ]]>
-                                                                                    </file>
-                                                                                </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlib(source, options:=OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlib(source, options:=TestOptions.ReleaseExe)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -14629,8 +14625,8 @@ BC35000: Requested operation is not available because the runtime library functi
         Public Sub UnusedLocal()
             Dim source =
 <compilation name="ErrorHandling">
-                                                                                        <file name="a.vb">
-                                                                                            <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Class TestOnError1
@@ -14716,10 +14712,10 @@ Label:
     End Sub
 End Class
         ]]>
-                                                                                        </file>
-                                                                                    </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsDll)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseDll)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -14739,8 +14735,8 @@ BC42099: Unused local constant: 'z'.
         Public Sub MissingReturn()
             Dim source =
 <compilation name="ErrorHandling">
-                                                                                            <file name="a.vb">
-                                                                                                <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Class TestOnError1
@@ -14793,10 +14789,10 @@ Label:
     End Function ' 8
 End Class
         ]]>
-                                                                                            </file>
-                                                                                        </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsDll)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseDll)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -14810,8 +14806,8 @@ BC42105: Function 'test1' doesn't return a value on all code paths. A null refer
         Public Sub Bug17937()
             Dim source =
 <compilation name="AscW">
-                                                                                                <file name="a.vb">
-                                                                                                    <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 Module Program
     Sub Main()
@@ -14829,10 +14825,10 @@ trap:
     End Sub
 End Module
         ]]>
-                                                                                                </file>
-                                                                                            </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim expected =
             <![CDATA[
@@ -14849,8 +14845,8 @@ after throw
         Public Sub SingleLabelErrorHandler()
             Dim source =
 <compilation name="ErrorHandling">
-                                                                                                    <file name="a.vb">
-                                                                                                        <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Module Module1
@@ -14872,22 +14868,22 @@ foo:
 End Module
 
         ]]>
-                                                                                                    </file>
-                                                                                                </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:="Test2foo")
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
-            CompileAndVerify(compilation, expectedOutput:="Test2foo", emitPdb:=True)
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
+            CompileAndVerify(compilation, expectedOutput:="Test2foo")
         End Sub
 
         <Fact()>
         Public Sub MultipleLabelErrorHandler()
             Dim source =
 <compilation name="ErrorHandling">
-                                                                                                        <file name="a.vb">
-                                                                                                            <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Module Module1
@@ -14909,14 +14905,14 @@ foo:
 End Module
 
         ]]>
-                                                                                                        </file>
-                                                                                                    </compilation>
+    </file>
+</compilation>
 
             'Just to verify with/without optimizations
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:="Test3foofooReturn")
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
             CompileAndVerify(compilation, expectedOutput:="Test3foofooReturn")
         End Sub
 
@@ -14924,8 +14920,8 @@ End Module
         Public Sub OnError_In_Single_Method_With_Resume_Next()
             Dim source =
 <compilation name="ErrorHandling">
-                                                                                                            <file name="a.vb">
-                                                                                                                <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Module Module1
@@ -14947,14 +14943,14 @@ foo:
     End Sub
 End Module
         ]]>
-                                                                                                            </file>
-                                                                                                        </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:=<![CDATA[Start
 End]]>)
 
-            compilation = compilation.WithOptions(OptionsExe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(False))
+            compilation = compilation.WithOptions(TestOptions.DebugExe)
             CompileAndVerify(compilation, expectedOutput:=<![CDATA[Start
 End]]>)
         End Sub
@@ -14964,8 +14960,8 @@ End]]>)
             'IL Baseline check only as it will fail with an unhandled exception at runtime
             Dim source =
 <compilation name="ErrorHandling">
-                                                                                                                <file name="a.vb">
-                                                                                                                    <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 
 Module Module1
@@ -14987,10 +14983,10 @@ foo:
     End Sub
 End Module
         ]]>
-                                                                                                                </file>
-                                                                                                            </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Module1.Main", <![CDATA[{
   // Code size       87 (0x57)
@@ -15050,8 +15046,8 @@ End Module
 
             Dim source =
 <compilation name="ErrorHandling">
-                                                                                                                    <file name="a.vb">
-                                                                                                                        <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
         Imports System
 
 Module Module1
@@ -15072,10 +15068,10 @@ foo:
     End Sub
 End Module
                 ]]>
-                                                                                                                    </file>
-                                                                                                                </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Module1.Main", <![CDATA[{
@@ -15136,8 +15132,8 @@ End Module
             'statement to trigger the Errors
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                        <file name="a.vb">
-                                                                                                                            <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -15171,10 +15167,10 @@ EndSection:
     End Sub
 End Module
         ]]>
-                                                                                                                        </file>
-                                                                                                                    </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:=<![CDATA[foo
 bar
 zoo
@@ -15187,8 +15183,8 @@ EndSection]]>)
             ' So we will only IL Baseline this 
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                            <file name="a.vb">
-                                                                                                                                <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -15219,10 +15215,10 @@ EndSection:
     End Sub
 End Module
         ]]>
-                                                                                                                            </file>
-                                                                                                                        </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Module1.Main", <![CDATA[{
   // Code size      184 (0xb8)
@@ -15310,8 +15306,8 @@ End Module
             'This will fail at 2nd call as handler has not been reset correctly
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                <file name="a.vb">
-                                                                                                                                    <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -15340,10 +15336,10 @@ EndSection:
 End Module
 
         ]]>
-                                                                                                                                </file>
-                                                                                                                            </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation)
             compilationVerifier.VerifyIL("Module1.Main", <![CDATA[{
   // Code size      163 (0xa3)
@@ -15422,8 +15418,8 @@ End Module
         Sub OnError_With_Explicit_Throw()
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                    <file name="a.vb">
-                                                                                                                                        <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -15438,10 +15434,10 @@ Handler:
 End Module
 
         ]]>
-                                                                                                                                    </file>
-                                                                                                                                </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:="StartHandler")
         End Sub
 
@@ -15449,8 +15445,8 @@ End Module
         Sub OnError_With_Explicit_Error()
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                        <file name="a.vb">
-                                                                                                                                            <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -15465,10 +15461,10 @@ Handler:
 End Module
 
         ]]>
-                                                                                                                                        </file>
-                                                                                                                                    </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:="StartHandler")
         End Sub
 
@@ -15476,8 +15472,8 @@ End Module
         Sub OnError_Resume_Next_With_Explicit_Error()
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                            <file name="a.vb">
-                                                                                                                                                <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -15492,10 +15488,10 @@ Handler:
 End Module
 
         ]]>
-                                                                                                                                            </file>
-                                                                                                                                        </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:="Start")
         End Sub
 
@@ -15504,8 +15500,8 @@ End Module
             'This ensures that the Handler is not called
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                <file name="a.vb">
-                                                                                                                                                    <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -15520,10 +15516,10 @@ Handler:
 End Module
 
         ]]>
-                                                                                                                                                </file>
-                                                                                                                                            </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[Start]]>)
             compilationVerifier.VerifyIL("Module1.Main", <![CDATA[{
   // Code size      151 (0x97)
@@ -15607,8 +15603,8 @@ End Module
             'This ensures that the Handler is not called
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                    <file name="a.vb">
-                                                                                                                                                        <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -15623,10 +15619,10 @@ Module Module1
 End Module
 
         ]]>
-                                                                                                                                                    </file>
-                                                                                                                                                </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[Start]]>)
             compilationVerifier.VerifyIL("Module1.Main", <![CDATA[{
   // Code size      151 (0x97)
@@ -15710,8 +15706,8 @@ End Module
             'This ensures that the Handler is not called as the current handler should be the last one
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                        <file name="a.vb">
-                                                                                                                                                            <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -15727,10 +15723,10 @@ Handler:
     End Sub
 End Module
         ]]>
-                                                                                                                                                        </file>
-                                                                                                                                                    </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[Start]]>)
             compilationVerifier.VerifyIL("Module1.Main", <![CDATA[{
   // Code size      166 (0xa6)
@@ -15813,14 +15809,15 @@ End Module
 }]]>)
         End Sub
 
-        <Fact(), WorkItem(737273, "DevDiv")>
+        <WorkItem(737273, "DevDiv")>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Sub OnError_WithLoopingConstructs()
             'Various Looping constructs with Errors and capturing the behaviour of Resume Next as going into the loop rather
             ' then skipping to the next statement outstide of the loop
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                            <file name="a.vb">
-                                                                                                                                                                <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 Imports System.Collections
 Imports System.Collections.Generic
@@ -15913,10 +15910,10 @@ errhandler:
 
 End Module
         ]]>
-                                                                                                                                                            </file>
-                                                                                                                                                        </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation)
 
@@ -16375,8 +16372,8 @@ End Module
             'an unhandled exception.   Will IL Baseline  the test
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                <file name="a.vb">
-                                                                                                                                                                    <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -16396,10 +16393,10 @@ foo:
     End Sub
 End Module
         ]]>
-                                                                                                                                                                </file>
-                                                                                                                                                            </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Module1.GotoMinus0", <![CDATA[{
@@ -16499,8 +16496,8 @@ End Module
         Sub OnError_GotoZeroBaselineInHandler()
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                    <file name="a.vb">
-                                                                                                                                                                        <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -16522,10 +16519,10 @@ foo:
 
 End Module
         ]]>
-                                                                                                                                                                    </file>
-                                                                                                                                                                </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Module1.GotoMinus0", <![CDATA[{
@@ -16624,8 +16621,8 @@ End Module
             'will resume in the Handler and hence the 2nd error will not be generated
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                        <file name="a.vb">
-                                                                                                                                                                            <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -16661,10 +16658,10 @@ foo:
     End Sub
 End Module
         ]]>
-                                                                                                                                                                        </file>
-                                                                                                                                                                    </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[Before 1st Error
 Foo
 In Foo Before Reset
@@ -16814,8 +16811,8 @@ Foo
             'will resume in the Handler and hence the 2nd error will not be generated
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                            <file name="a.vb">
-                                                                                                                                                                                <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -16853,10 +16850,10 @@ foo:
     End Sub
 End Module
         ]]>
-                                                                                                                                                                            </file>
-                                                                                                                                                                        </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[Before 1st Error
 Foo
 In Main Block Before Reset
@@ -16864,7 +16861,8 @@ In Main Block After Reset
 Before 2nd Error
 Foo]]>)
 
-            compilationVerifier.VerifyIL("Module1.GotoMinus1", <![CDATA[{
+            compilationVerifier.VerifyIL("Module1.GotoMinus1", <![CDATA[
+{
   // Code size      298 (0x12a)
   .maxstack  3
   .locals init (Integer V_0, //VB$ActiveHandler
@@ -17001,8 +16999,8 @@ Foo]]>)
         Sub OnError_GotoMinusBaselineInMainBlock_ThrowException()
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                <file name="a.vb">
-                                                                                                                                                                                    <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -17030,10 +17028,10 @@ foo:
     End Sub
 End Module
         ]]>
-                                                                                                                                                                                </file>
-                                                                                                                                                                            </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[Before 1 Exception
 Foo
 After 1 Exception
@@ -17153,15 +17151,14 @@ After 2 Exception]]>)
 }]]>)
         End Sub
 
-
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Sub OnError_WithSyncLock_1()
             'This is the typical scenario documented in the spec to ensure that infinite
             'recursion does not occur
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                    <file name="a.vb">
-                                                                                                                                                                                        <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Class LockClass
@@ -17190,10 +17187,10 @@ handler:
     End Sub
 End Module   
         ]]>
-                                                                                                                                                                                    </file>
-                                                                                                                                                                                </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation, expectedOutput:="Before Exception" & Environment.NewLine & "Before Exception")
 
 
@@ -17337,8 +17334,8 @@ End Module
             'This needs to baseline only because of infinite recursion issue
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                        <file name="a.vb">
-                                                                                                                                                                                            <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Class LockClass
@@ -17362,10 +17359,10 @@ handler:
     End Sub
 End Module
         ]]>
-                                                                                                                                                                                        </file>
-                                                                                                                                                                                    </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim compilationVerifier = CompileAndVerify(compilation)
 
             compilationVerifier.VerifyIL("Module1.Main", <![CDATA[
@@ -17484,8 +17481,8 @@ End Module
             'This verifies that resume next will resume outside the sync block
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                            <file name="a.vb">
-                                                                                                                                                                                                <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Class LockClass
@@ -17509,10 +17506,10 @@ handler:
     End Sub
 End Module
         ]]>
-                                                                                                                                                                                            </file>
-                                                                                                                                                                                        </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim CompilationVerifier = CompileAndVerify(compilation, expectedOutput:="Before Exception")
 
             CompilationVerifier.VerifyIL("Module1.Main", <![CDATA[
@@ -17621,14 +17618,14 @@ End Module
 ]]>)
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1005639"), WorkItem(1005639)>
         Sub OnError_ResumeWithConditionBlocks()
             'This verifies that resume next will resume inside the IF block when an error occurs in the
             'IF statement / ELSEIF and also and multiple condition IF With ANDALSO
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                                <file name="a.vb">
-                                                                                                                                                                                                    <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -17707,10 +17704,10 @@ Module Module1
 End Module
 
         ]]>
-                                                                                                                                                                                                </file>
-                                                                                                                                                                                            </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim CompilationVerifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[*********************************************
 IF Block(1) Test
 If Block
@@ -18042,8 +18039,8 @@ End]]>)
             'This verifies that resume next will resumes outside the select caser block rather than at the next case statement or within the block            
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                                    <file name="a.vb">
-                                                                                                                                                                                                        <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -18070,10 +18067,10 @@ handler:
     End Function
 End Module
         ]]>
-                                                                                                                                                                                                    </file>
-                                                                                                                                                                                                </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim CompilationVerifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[Before Select
 In Handler
 After Case]]>)
@@ -18216,8 +18213,8 @@ After Case]]>)
             'This verifies that resume next will resumes 
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                                        <file name="a.vb">
-                                                                                                                                                                                                            <![CDATA[Imports System
+        <file name="a.vb">
+            <![CDATA[Imports System
 
         Module Module1
             Sub Main()
@@ -18247,10 +18244,10 @@ handler:
 
 
         ]]>
-                                                                                                                                                                                                        </file>
-                                                                                                                                                                                                    </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim CompilationVerifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[Before Select
 In Handler
 1
@@ -18262,8 +18259,8 @@ After Case]]>)
         Sub OnError_ResumeWithSelectCase_Error_On_Case_Condition()
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                                            <file name="a.vb">
-                                                                                                                                                                                                                <![CDATA[Imports System
+        <file name="a.vb">
+            <![CDATA[Imports System
 
         Module Module1
             Sub Main()
@@ -18293,10 +18290,10 @@ handler:
 
 
         ]]>
-                                                                                                                                                                                                            </file>
-                                                                                                                                                                                                        </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim CompilationVerifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[Before Select
 In Handler
 1
@@ -18308,8 +18305,8 @@ After Case]]>)
 
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                                                <file name="a.vb">
-                                                                                                                                                                                                                    <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 
 Module Module1
@@ -18339,10 +18336,10 @@ handler:
     End Function
 End Module
         ]]>
-                                                                                                                                                                                                                </file>
-                                                                                                                                                                                                            </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             Dim CompilationVerifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[Before Select
 In Handler
 1
@@ -18355,8 +18352,8 @@ After Case]]>)
             'We are causing the error by throwing an exception or by using the Error or Err.Raise
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                                                    <file name="a.vb">
-                                                                                                                                                                                                                        <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 Imports Microsoft.VisualBasic
 
@@ -18402,10 +18399,10 @@ Handler:
 End Module
 
         ]]>
-                                                                                                                                                                                                                    </file>
-                                                                                                                                                                                                                </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:=<![CDATA[StartHandler11Attempted to divide by zero.StartHandler11Division by zero.StartHandler12Application-defined or object-defined error.]]>)
         End Sub
 
@@ -18413,7 +18410,7 @@ End Module
         Sub ErrorHandler_ResumeNext_ErrorObjectFunctionality()
             Dim compilationDef =
     <compilation name="ErrorHandlerTest">
-                                                                                                                                                                                                                        <file name="a.vb">
+        <file name="a.vb">
 Imports System
 Imports Microsoft.VisualBasic
 
@@ -18441,9 +18438,9 @@ Module Module1
     End Sub
 End Module
 </file>
-                                                                                                                                                                                                                    </compilation>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(compilationDef, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(compilationDef, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:=<![CDATA[Error #  6 was generated by ErrorHandlerTest
 Overflow.
 Error #  0 was generated by 
@@ -18459,7 +18456,7 @@ Procedure call or argument is not valid.
             'In other collection initializer we would result in all or nothing behaviour
             Dim compilationDef =
     <compilation name="ErrorHandlerTest">
-                                                                                                                                                                                                                            <file name="a.vb">
+        <file name="a.vb">
 Imports System
 Imports System.Runtime.CompilerServices
 Imports System.Collections.Generic
@@ -18492,9 +18489,9 @@ handler:
     End Sub
 End Module
         </file>
-                                                                                                                                                                                                                        </compilation>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(compilationDef, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(compilationDef, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:="2")
         End Sub
 
@@ -18521,7 +18518,7 @@ End Module
         </file>
     </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(compilationDef, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(compilationDef, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:="Nothing")
         End Sub
 
@@ -18531,7 +18528,7 @@ End Module
             'This should result in Nothing - All or nothing 
             Dim compilationDef =
     <compilation name="ErrorHandlerTest">
-                                                                                                                                                                                                                                    <file name="a.vb">
+        <file name="a.vb">
 Imports System
 Imports System.Runtime.CompilerServices
 Imports System.Collections.Generic
@@ -18548,9 +18545,9 @@ Handler:
     End Sub
 End Module
         </file>
-                                                                                                                                                                                                                                </compilation>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(compilationDef, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(compilationDef, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:="Nothing")
         End Sub
 
@@ -18673,7 +18670,7 @@ End Module        ]]>
         </file>
     </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:=<![CDATA[*****************************************
 Before Error
 Number:0
@@ -18702,8 +18699,8 @@ GetException:Nothing]]>)
         Sub ErrorObject_Properties()
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                                                                        <file name="a.vb">
-                                                                                                                                                                                                                                            <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 Imports  Microsoft.VisualBasic
 
@@ -18743,10 +18740,10 @@ handler:
         Resume Next
     End Sub
 End Module]]>
-                                                                                                                                                                                                                                        </file>
-                                                                                                                                                                                                                                    </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:=<![CDATA[*****************************************
 Before Error
 Number:0
@@ -18776,8 +18773,8 @@ GetException:Nothing]]>)
         Sub ErrorObject_Properties_AfterGeneratedInDifferentWays()
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                                                                            <file name="a.vb">
-                                                                                                                                                                                                                                                <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 Imports  Microsoft.VisualBasic
 
@@ -18824,10 +18821,10 @@ handler:
         Resume Next
     End Sub
 End Module]]>
-                                                                                                                                                                                                                                            </file>
-                                                                                                                                                                                                                                        </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:=<![CDATA[   *****************************************
 Before Error
 Number:0
@@ -18895,8 +18892,8 @@ GetException:Nothing]]>)
             'Unsure why...
             Dim source =
     <compilation name="ErrorHandling">
-                                                                                                                                                                                                                                                <file name="a.vb">
-                                                                                                                                                                                                                                                    <![CDATA[
+        <file name="a.vb">
+            <![CDATA[
 Imports System
 Imports  Microsoft.VisualBasic
 
@@ -18935,10 +18932,10 @@ Module Module1
         End If
     End Sub
 End Module]]>
-                                                                                                                                                                                                                                                </file>
-                                                                                                                                                                                                                                            </compilation>
+        </file>
+    </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, expectedOutput:=<![CDATA[1400
 Invalid window handle.    Error!
 1400]]>)
@@ -18948,8 +18945,8 @@ Invalid window handle.    Error!
         Public Sub ERL_01()
             Dim source =
 <compilation>
-                                                                                                                                                                                                                                                    <file name="a.vb">
-                                                                                                                                                                                                                                                        <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 Imports Microsoft.VisualBasic
 
@@ -18978,10 +18975,10 @@ Module Program
     End Sub
 End Module
     ]]>
-                                                                                                                                                                                                                                                    </file>
-                                                                                                                                                                                                                                                </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
@@ -18995,8 +18992,8 @@ End Module
         Public Sub ERL_02()
             Dim source =
 <compilation>
-                                                                                                                                                                                                                                                        <file name="a.vb">
-                                                                                                                                                                                                                                                            <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 Imports Microsoft.VisualBasic
 
@@ -19023,10 +19020,10 @@ Handler:
     End Sub
 End Module
     ]]>
-                                                                                                                                                                                                                                                        </file>
-                                                                                                                                                                                                                                                    </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
@@ -19043,8 +19040,8 @@ L500
         Public Sub ERL_03()
             Dim source =
 <compilation>
-                                                                                                                                                                                                                                                            <file name="a.vb">
-                                                                                                                                                                                                                                                                <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 Imports System.Collections.Generic
 Imports Microsoft.VisualBasic
@@ -19066,10 +19063,10 @@ Module Program
     End Function
 End Module
     ]]>
-                                                                                                                                                                                                                                                            </file>
-                                                                                                                                                                                                                                                        </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
@@ -19082,8 +19079,8 @@ End Module
         Public Sub ERL_04()
             Dim source =
 <compilation>
-                                                                                                                                                                                                                                                                <file name="a.vb">
-                                                                                                                                                                                                                                                                    <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 Imports Microsoft.VisualBasic
 
@@ -19110,10 +19107,10 @@ Handler:
     End Sub
 End Module
     ]]>
-                                                                                                                                                                                                                                                                </file>
-                                                                                                                                                                                                                                                            </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             Dim compilationVerifier = CompileAndVerify(compilation,
                          expectedOutput:=
@@ -19130,8 +19127,8 @@ L500
         Public Sub ERL_05()
             Dim source =
 <compilation>
-                                                                                                                                                                                                                                                                    <file name="a.vb">
-                                                                                                                                                                                                                                                                        <![CDATA[
+    <file name="a.vb">
+        <![CDATA[
 Imports System
 Imports Microsoft.VisualBasic
 
@@ -19149,10 +19146,10 @@ Handler:
     End Sub
 End Module
     ]]>
-                                                                                                                                                                                                                                                                    </file>
-                                                                                                                                                                                                                                                                </compilation>
+    </file>
+</compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe.WithDebugInformationKind(DebugInformationKind.None).WithOptimizations(True))
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             AssertTheseDiagnostics(compilation,
 <expected>

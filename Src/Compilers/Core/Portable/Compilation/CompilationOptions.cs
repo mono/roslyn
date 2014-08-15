@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Runtime.Serialization;
 using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis
@@ -95,18 +94,10 @@ namespace Microsoft.CodeAnalysis
         public bool HighEntropyVirtualAddressSpace { get; protected set; }
 
         /// <summary>
-        /// Specifies the kind of debug information to be emitted.
-        /// </summary>
-        /// <remarks>
-        /// This value is set based on the "/debug", "/debug+", "/debug-" and "/debug:{full|pdbonly}" command line switches.
-        /// </remarks>
-        public DebugInformationKind DebugInformationKind { get; protected set; }
-
-        /// <summary>
         /// Specifies whether or not optimizations should be performed on the output IL.
         /// This is independent of whether or not PDB information is generated.
         /// </summary>
-        public bool Optimize { get; protected set; }
+        public OptimizationLevel OptimizationLevel { get; protected set; }
 
         /// <summary>
         /// Global warning report option
@@ -188,16 +179,15 @@ namespace Microsoft.CodeAnalysis
             string cryptoKeyContainer,
             string cryptoKeyFile,
             bool? delaySign,
-            bool optimize,
+            OptimizationLevel optimizationLevel,
             bool checkOverflow,
             int fileAlignment,
             ulong baseAddress,
             Platform platform,
             ReportDiagnostic generalDiagnosticOption,
             int warningLevel,
-            IEnumerable<KeyValuePair<string, ReportDiagnostic>> specificDiagnosticOptions,
+            ImmutableDictionary<string, ReportDiagnostic> specificDiagnosticOptions,
             bool highEntropyVirtualAddressSpace,
-            DebugInformationKind debugInformationKind,
             SubsystemVersion subsystemVersion,
             bool concurrentBuild,
             XmlReferenceResolver xmlReferenceResolver,
@@ -222,10 +212,9 @@ namespace Microsoft.CodeAnalysis
             this.Platform = platform;
             this.GeneralDiagnosticOption = generalDiagnosticOption;
             this.WarningLevel = warningLevel;
-            this.SpecificDiagnosticOptions = specificDiagnosticOptions.ToImmutableDictionaryOrEmpty();
+            this.SpecificDiagnosticOptions = specificDiagnosticOptions;
             this.HighEntropyVirtualAddressSpace = highEntropyVirtualAddressSpace;
-            this.DebugInformationKind = debugInformationKind;
-            this.Optimize = optimize;
+            this.OptimizationLevel = optimizationLevel;
             this.ConcurrentBuild = concurrentBuild;
             this.SubsystemVersion = subsystemVersion;
             this.XmlReferenceResolver = xmlReferenceResolver;
@@ -236,7 +225,7 @@ namespace Microsoft.CodeAnalysis
             this.AssemblyIdentityComparer = assemblyIdentityComparer ?? AssemblyIdentityComparer.Default;
             this.MetadataImportOptions = metadataImportOptions;
             this.Features = features;
-            
+
             this.lazyErrors = new Lazy<ImmutableArray<Diagnostic>>(() =>
             {
                 var builder = ArrayBuilder<Diagnostic>.GetInstance();
@@ -263,7 +252,7 @@ namespace Microsoft.CodeAnalysis
         {
             get
             {
-                return DebugInformationKind == DebugInformationKind.Full && !Optimize;
+                return OptimizationLevel == OptimizationLevel.Debug;
             }
         }
 
@@ -326,9 +315,9 @@ namespace Microsoft.CodeAnalysis
         /// <summary>
         /// Creates a new options instance with optimizations enabled or disabled.
         /// </summary>
-        public CompilationOptions WithOptimizations(bool enabled)
+        public CompilationOptions WithOptimizationLevel(OptimizationLevel value)
         {
-            return CommonWithOptimizations(enabled);
+            return CommonWithOptimizationLevel(value);
         }
 
         public CompilationOptions WithXmlReferenceResolver(XmlReferenceResolver resolver)
@@ -368,7 +357,7 @@ namespace Microsoft.CodeAnalysis
 
         protected abstract CompilationOptions CommonWithOutputKind(OutputKind kind);
         protected abstract CompilationOptions CommonWithPlatform(Platform platform);
-        protected abstract CompilationOptions CommonWithOptimizations(bool enabled);
+        protected abstract CompilationOptions CommonWithOptimizationLevel(OptimizationLevel value);
         protected abstract CompilationOptions CommonWithXmlReferenceResolver(XmlReferenceResolver resolver);
         protected abstract CompilationOptions CommonWithSourceReferenceResolver(SourceReferenceResolver resolver);
         protected abstract CompilationOptions CommonWithMetadataReferenceResolver(MetadataReferenceResolver resolver);
@@ -410,7 +399,6 @@ namespace Microsoft.CodeAnalysis
                    this.ConcurrentBuild == other.ConcurrentBuild &&
                    string.Equals(this.CryptoKeyContainer, other.CryptoKeyContainer, StringComparison.Ordinal) &&
                    string.Equals(this.CryptoKeyFile, other.CryptoKeyFile, StringComparison.Ordinal) &&
-                   this.DebugInformationKind == other.DebugInformationKind &&
                    this.DelaySign == other.DelaySign &&
                    this.FileAlignment == other.FileAlignment &&
                    this.GeneralDiagnosticOption == other.GeneralDiagnosticOption &&
@@ -418,7 +406,7 @@ namespace Microsoft.CodeAnalysis
                    string.Equals(this.MainTypeName, other.MainTypeName, StringComparison.Ordinal) &&
                    this.MetadataImportOptions == other.MetadataImportOptions &&
                    string.Equals(this.ModuleName, other.ModuleName, StringComparison.Ordinal) &&
-                   this.Optimize == other.Optimize &&
+                   this.OptimizationLevel == other.OptimizationLevel &&
                    this.OutputKind == other.OutputKind &&
                    this.Platform == other.Platform &&
                    string.Equals(this.ScriptClassName, other.ScriptClassName, StringComparison.Ordinal) &&
@@ -445,7 +433,6 @@ namespace Microsoft.CodeAnalysis
                    Hash.Combine(this.ConcurrentBuild,
                    Hash.Combine(this.CryptoKeyContainer != null ? StringComparer.Ordinal.GetHashCode(this.CryptoKeyContainer) : 0,
                    Hash.Combine(this.CryptoKeyFile != null ? StringComparer.Ordinal.GetHashCode(this.CryptoKeyFile) : 0,
-                   Hash.Combine((int)this.DebugInformationKind,
                    Hash.Combine(this.DelaySign.HasValue ? this.DelaySign.Value : false,
                    Hash.Combine(this.FileAlignment,
                    Hash.Combine((int)this.GeneralDiagnosticOption,
@@ -453,7 +440,7 @@ namespace Microsoft.CodeAnalysis
                    Hash.Combine(this.MainTypeName != null ? StringComparer.Ordinal.GetHashCode(this.MainTypeName) : 0,
                    Hash.Combine((int)this.MetadataImportOptions,
                    Hash.Combine(this.ModuleName != null ? StringComparer.Ordinal.GetHashCode(this.ModuleName) : 0,
-                   Hash.Combine(this.Optimize,
+                   Hash.Combine((int)this.OptimizationLevel,
                    Hash.Combine((int)this.OutputKind,
                    Hash.Combine((int)this.Platform,
                    Hash.Combine(this.ScriptClassName != null ? StringComparer.Ordinal.GetHashCode(this.ScriptClassName) : 0,
@@ -466,7 +453,7 @@ namespace Microsoft.CodeAnalysis
                    Hash.Combine(this.SourceReferenceResolver,
                    Hash.Combine(this.StrongNameProvider,
                    Hash.Combine(this.AssemblyIdentityComparer,
-                   Hash.Combine(Hash.CombineValues(this.Features, StringComparer.Ordinal), 0)))))))))))))))))))))))))));
+                   Hash.Combine(Hash.CombineValues(this.Features, StringComparer.Ordinal), 0))))))))))))))))))))))))));
         }
 
         public static bool operator ==(CompilationOptions left, CompilationOptions right)

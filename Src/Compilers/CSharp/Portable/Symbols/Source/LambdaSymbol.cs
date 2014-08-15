@@ -232,13 +232,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             get { return this.parameters; }
         }
 
-        internal override ParameterSymbol ThisParameter
+        internal override bool TryGetThisParameter(out ParameterSymbol thisParameter)
         {
-            get
-            {
-                // Lambda symbols have no "this" parameter
-                return null;
-            }
+            // Lambda symbols have no "this" parameter
+            thisParameter = null;
+            return true;
         }
 
         public override Accessibility DeclaredAccessibility

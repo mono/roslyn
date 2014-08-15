@@ -1,14 +1,10 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports Microsoft.CodeAnalysis
-Imports ProprietaryTestResources = Microsoft.CodeAnalysis.Test.Resources.Proprietary
 Imports Microsoft.CodeAnalysis.Test.Utilities
-Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic
-Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
-Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
-Imports Microsoft.CodeAnalysis.VisualBasic.UnitTests.Emit
 Imports Roslyn.Test.Utilities
+Imports ProprietaryTestResources = Microsoft.CodeAnalysis.Test.Resources.Proprietary
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
     Public Class CodeGenWinMdEvents
@@ -205,7 +201,7 @@ End Class
                 Diagnostic(ERRID.ERR_MissingRuntimeHelper, "E").WithArguments("System.Runtime.InteropServices.WindowsRuntime.EventRegistrationTokenTable`1.RemoveEventHandler"),
                 Diagnostic(ERRID.ERR_MissingRuntimeHelper, "E").WithArguments("System.Runtime.InteropServices.WindowsRuntime.EventRegistrationTokenTable`1.AddEventHandler"),
                 Diagnostic(ERRID.ERR_MissingRuntimeHelper, "E").WithArguments("System.Runtime.InteropServices.WindowsRuntime.EventRegistrationTokenTable`1.RemoveEventHandler"),
-                Diagnostic(ERRID.INF_UnusedImportStatement, "Imports System.Runtime.InteropServices.WindowsRuntime"))
+                Diagnostic(ERRID.HDN_UnusedImportStatement, "Imports System.Runtime.InteropServices.WindowsRuntime"))
 
             ' Throws *test* exception, but does not assert or throw produce exception.
             Assert.Throws(Of EmitException)(Sub() CompileAndVerify(comp))
@@ -220,7 +216,7 @@ Class C
     Event E As System.Action
 End Class
     </file>
-    </compilation>, WinRtRefs, options:=Options.OptionsWinMDObj)
+    </compilation>, WinRtRefs, options:=TestOptions.ReleaseWinMD)
 
             verifier.VerifyIL("C.add_E", <![CDATA[
 {
@@ -258,7 +254,7 @@ Class C
     Shared Event E As System.Action
 End Class
     </file>
-    </compilation>, WinRtRefs, options:=Options.OptionsWinMDObj)
+    </compilation>, WinRtRefs, options:=TestOptions.ReleaseWinMD)
 
             verifier.VerifyIL("C.add_E", <![CDATA[
 {
@@ -318,7 +314,7 @@ Class D
     End Sub
 End Class
     </file>
-    </compilation>, WinRtRefs, options:=Options.OptionsWinMDObj)
+    </compilation>, WinRtRefs, options:=TestOptions.ReleaseWinMD)
 
             verifier.VerifyIL("D.InstanceAdd", <![CDATA[
 {
@@ -413,7 +409,7 @@ Class C
     End Sub
 End Class
     </file>
-    </compilation>, WinRtRefs, options:=Options.OptionsWinMDObj)
+    </compilation>, WinRtRefs, options:=TestOptions.ReleaseWinMD)
 
             verifier.VerifyIL("C.InstanceRaise", <![CDATA[
 {
@@ -459,7 +455,7 @@ End Class
         ''' <remarks>
         ''' I'm assuming this is why the final dev11 impl uses GetOrCreateEventRegistrationTokenTable.
         ''' </remarks>
-        <Fact>
+        <Fact(), WorkItem(1003209)>
         Public Sub FieldLikeEventSerialization()
 
             Dim source1 =
@@ -536,14 +532,14 @@ End Namespace
     </file>
 </compilation>
 
-            Dim comp1 = CreateCompilationWithReferences(source1, WinRtRefs, options:=Options.OptionsWinMDObj)
+            Dim comp1 = CreateCompilationWithReferences(source1, WinRtRefs, options:=TestOptions.ReleaseWinMD)
             comp1.VerifyDiagnostics()
 
             Dim serializationRef As New MetadataImageReference(
                 ProprietaryTestResources.NetFX.v4_0_30319_17929.System_Runtime_Serialization.AsImmutableOrNull(),
                 display:="System.Runtime.Serialization.dll")
 
-            Dim comp2 = CreateCompilationWithReferences(source2, WinRtRefs.Concat({New VisualBasicCompilationReference(comp1), serializationRef, MsvbRef, SystemXmlRef}), options:=Options.OptionsExe)
+            Dim comp2 = CreateCompilationWithReferences(source2, WinRtRefs.Concat({New VisualBasicCompilationReference(comp1), serializationRef, MsvbRef, SystemXmlRef}), options:=TestOptions.ReleaseExe)
             CompileAndVerify(comp2, emitOptions:=EmitOptions.RefEmitBug, expectedOutput:=<![CDATA[
 A
 False
@@ -607,7 +603,7 @@ End Class
     </file>
 </compilation>
 
-            Dim comp = CreateCompilationWithReferences(source, WinRtRefs, options:=Options.OptionsWinMDObj)
+            Dim comp = CreateCompilationWithReferences(source, WinRtRefs, options:=TestOptions.ReleaseWinMD)
             Dim verifier = CompileAndVerify(comp)
 
             ' Attach Me.InstanceHandler to {Base/Derived/Derived}.{InstanceEvent/SharedEvent} (from {MyBase/MyClass/Me}.{InstanceEvent/SharedEvent}).
@@ -905,7 +901,7 @@ End Class
         End Sub
 
         ' Field-like and custom events are not treated differently.
-        <Fact>
+        <Fact(), WorkItem(1003209)>
         Public Sub HandlesClauses_EventKinds()
 
             Dim source =
@@ -947,7 +943,7 @@ End Class
     </file>
 </compilation>
 
-            Dim comp = CreateCompilationWithReferences(source, WinRtRefs, options:=Options.OptionsWinMDObj)
+            Dim comp = CreateCompilationWithReferences(source, WinRtRefs, options:=TestOptions.ReleaseWinMD)
             Dim verifier = CompileAndVerify(comp)
 
             verifier.VerifyIL("Test..ctor", <![CDATA[
@@ -1064,7 +1060,7 @@ End Class
     </file>
 </compilation>
 
-            Dim comp = CreateCompilationWithReferences(source, WinRtRefs, options:=Options.OptionsWinMDObj)
+            Dim comp = CreateCompilationWithReferences(source, WinRtRefs, options:=TestOptions.ReleaseWinMD)
             Dim verifier = CompileAndVerify(comp)
 
             ' Note: actually attaching a lambda.

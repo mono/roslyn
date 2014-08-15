@@ -153,7 +153,7 @@ namespace Microsoft.CodeAnalysis
         }
 
         /// <summary>
-        /// Gets the SyntaxTree for this document asynchronously.
+        /// Gets the <see cref="SyntaxTree" /> for this document asynchronously.
         /// </summary>
         public Task<SyntaxTree> GetSyntaxTreeAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -311,7 +311,7 @@ namespace Microsoft.CodeAnalysis
         {
             try
             {
-                using (Logger.LogBlock(FeatureId.Document, FunctionId.Document_GetTextChanges, this.Name, cancellationToken))
+                using (Logger.LogBlock(FunctionId.Workspace_Document_GetTextChanges, this.Name, cancellationToken))
                 {
                     if (oldDocument == this)
                     {

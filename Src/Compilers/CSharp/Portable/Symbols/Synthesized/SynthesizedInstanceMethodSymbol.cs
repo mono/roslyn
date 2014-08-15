@@ -28,22 +28,21 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             }
         }
 
-        internal override ParameterSymbol ThisParameter
+        internal override bool TryGetThisParameter(out ParameterSymbol thisParameter)
         {
-            get
+            if (IsStatic)
             {
-                if (IsStatic)
-                {
-                    return null;
-                }
-
-                if ((object)lazyThisParameter == null)
-                {
-                    Interlocked.CompareExchange(ref lazyThisParameter, new ThisParameterSymbol(this), null);
-                }
-
-                return lazyThisParameter;
+                thisParameter = null;
+                return true;
             }
+
+            if ((object)lazyThisParameter == null)
+            {
+                Interlocked.CompareExchange(ref lazyThisParameter, new ThisParameterSymbol(this), null);
+            }
+
+            thisParameter = lazyThisParameter;
+            return true;
         }
 
         /// <summary>

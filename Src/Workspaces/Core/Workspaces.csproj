@@ -90,6 +90,9 @@
     <Compile Include="..\..\Compilers\Core\Portable\InternalUtilities\MultiDictionary.cs">
       <Link>InternalUtilities\MultiDictionary.cs</Link>
     </Compile>
+    <Compile Include="..\..\Compilers\Core\Portable\InternalUtilities\IReadOnlySet.cs">
+      <Link>InternalUtilities\IReadOnlySet.cs</Link>
+    </Compile>
     <Compile Include="..\..\Compilers\Core\Desktop\PathKind.cs">
       <Link>InternalUtilities\PathKind.cs</Link>
     </Compile>
@@ -250,7 +253,6 @@
     <InternalsVisibleTo Include="Roslyn.Diagnostics.CodeFixes.VisualBasic" />
     <InternalsVisibleTo Include="Roslyn.InteractiveEditorFeatures" />
     <InternalsVisibleTo Include="Roslyn.InteractiveFeatures" />
-    <InternalsVisibleTo Include="Roslyn.Services.Internal.VSFork" />
     <InternalsVisibleTo Include="Roslyn.VisualBasic.InteractiveEditorFeatures" />
     <InternalsVisibleTo Include="Roslyn.VisualStudio.CSharp.Repl" />
     <InternalsVisibleTo Include="Roslyn.VisualStudio.InteractiveServices" />
@@ -271,13 +273,9 @@
     <InternalsVisibleToTest Include="Roslyn.Services.VisualBasic.Perf" />
     <InternalsVisibleToTest Include="Roslyn.Test.Utilities" />
     <InternalsVisibleToTest Include="Roslyn.VisualStudio.CSharp.UnitTests" />
-    <InternalsVisibleToTest Include="Roslyn.VisualStudio.Dev12.Services.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.VisualStudio.PerfTestSetup" />
     <InternalsVisibleToTest Include="Roslyn.VisualStudio.Services.UnitTests" />
-    <InternalsVisibleToTest Include="RoslynConsoleRun" />
     <InternalsVisibleToTest Include="RoslynETAHost" />
-    <!-- Eventually a bunch of these unit tests should move into Roslyn.Services.Implementation.UnitTests
-         and this should be removed. -->
     <InternalsVisibleToTest Include="RoslynTaoActions" />
   </ItemGroup>
   <ItemGroup>
@@ -307,7 +305,6 @@
     <Compile Include="CodeGeneration\AbstractCodeGenerator.cs" />
     <Compile Include="CodeGeneration\AbstractCodeGenerator_Constants.cs" />
     <Compile Include="CodeGeneration\AbstractImportsAdder.cs" />
-    <Compile Include="CodeGeneration\AbstractSyntaxFactory.cs" />
     <Compile Include="CodeGeneration\CodeGenerationDestination.cs" />
     <Compile Include="CodeGeneration\CodeGenerationHelpers.cs" />
     <Compile Include="CodeGeneration\CodeGenerationOperatorKind.cs" />
@@ -316,7 +313,7 @@
     <Compile Include="CodeGeneration\CodeGenerator.cs" />
     <Compile Include="CodeGeneration\ICodeGenerationService.cs" />
     <Compile Include="CodeGeneration\INamedTypeSymbolExtensions.cs" />
-    <Compile Include="CodeGeneration\ISyntaxFactoryService.cs" />
+    <Compile Include="CodeGeneration\SyntaxGenerator.cs" />
     <Compile Include="CodeGeneration\SymbolModifiers.cs" />
     <Compile Include="CodeGeneration\Symbols\CodeGenerationAbstractMethodSymbol.cs" />
     <Compile Include="CodeGeneration\Symbols\CodeGenerationAbstractNamedTypeSymbol.cs" />
@@ -348,7 +345,14 @@
     <Compile Include="CodeGeneration\Symbols\CodeGenerationTypeParameterSymbol.cs" />
     <Compile Include="CodeGeneration\Symbols\CodeGenerationTypeSymbol.cs" />
     <Compile Include="CodeGeneration\SyntaxAnnotationExtensions.cs" />
+    <Compile Include="CodeGeneration\TypeConstraintKind.cs" />
     <Compile Include="CodeGeneration\TypeGenerator.cs" />
+    <Compile Include="Log\AggregateLogger.cs" />
+    <Compile Include="Log\KeyValueLogMessage.cs" />
+    <Compile Include="Log\Logger.LogBlock.cs" />
+    <Compile Include="Log\LogMessage.cs" />
+    <Compile Include="Simplification\SimplifyTypeNameCodeAction.cs" />
+    <Compile Include="Simplification\SimplifyTypeNameFixAllCodeAction.cs" />
     <Compile Include="Utilities\WeakEventHandler.cs" />
     <Compile Include="Workspace\Host\Caching\AbstractCacheServiceFactory.cs" />
     <Compile Include="Workspace\Host\Caching\CacheOptions.cs" />
@@ -529,19 +533,12 @@
     <Compile Include="Log\EmptyLogBlock.cs" />
     <Compile Include="Log\EmptyLogger.cs" />
     <Compile Include="Log\EtwLogger.cs" />
-    <Compile Include="Log\FeatureId.cs" />
-    <Compile Include="Log\FeatureIdOptions.cs" />
     <Compile Include="Log\FunctionId.cs" />
     <Compile Include="Log\FunctionIdOptions.cs" />
     <Compile Include="Log\ILogger.cs" />
     <Compile Include="Log\InteractionClass.cs" />
-    <Compile Include="Log\ITelemetry.cs" />
     <Compile Include="Log\Logger.cs" />
     <Compile Include="Log\RoslynEventSource.cs" />
-    <Compile Include="Log\Telemetry.Parameters.cs">
-      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
-    </Compile>
-    <Compile Include="Log\TelemetryWorkspaceServiceFactory.cs" />
     <Compile Include="Log\TraceLogger.cs" />
     <Compile Include="Notification\AbstractGlobalOperationNotificationService.cs" />
     <Compile Include="Notification\GlobalOperationEventArgs.cs" />

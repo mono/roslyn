@@ -29,10 +29,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                        method As MethodSymbol,
                        asyncKind As AsyncMethodKind,
                        compilationState As TypeCompilationState,
-                       diagnostics As DiagnosticBag,
-                       generateDebugInfo As Boolean)
+                       diagnostics As DiagnosticBag)
 
-            MyBase.New(body, method, compilationState, diagnostics, generateDebugInfo)
+            MyBase.New(body, method, compilationState, diagnostics)
 
             Me._binder = CreateMethodBinder(method)
             Me._stateMachineType = DirectCast(Me.Method.GetAsyncStateMachineType(), AsyncStateMachine)
@@ -101,14 +100,22 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Sub
 
         Protected Overrides Sub InitializeStateMachine(bodyBuilder As ArrayBuilder(Of BoundStatement), frameType As NamedTypeSymbol, stateMachineLocal As LocalSymbol)
-            ' STAT:   localStateMachine = Nothing ' Initialization
-            bodyBuilder.Add(
-                Me.F.Assignment(
-                    Me.F.Local(stateMachineLocal, True),
-                    Me.F.Null(stateMachineLocal.Type)))
+            If frameType.TypeKind = TypeKind.Class Then
+                ' Dim stateMachineLocal = new AsyncImplementationClass()
+                bodyBuilder.Add(
+                    Me.F.Assignment(
+                        Me.F.Local(stateMachineLocal, True),
+                        Me.F.[New](StateMachineClass.Constructor.AsMember(frameType))))
+            Else
+                ' STAT:   localStateMachine = Nothing ' Initialization
+                bodyBuilder.Add(
+                    Me.F.Assignment(
+                        Me.F.Local(stateMachineLocal, True),
+                        Me.F.Null(stateMachineLocal.Type)))
+            End If
         End Sub
 
-        Protected Overrides ReadOnly Property PreserveInitialLocals As Boolean
+        Protected Overrides ReadOnly Property PreserveInitialParameterValues As Boolean
             Get
                 Return False
             End Get
@@ -132,8 +139,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend Overloads Shared Function Rewrite(body As BoundBlock,
                                                  method As MethodSymbol,
                                                  compilationState As TypeCompilationState,
-                                                 diagnostics As DiagnosticBag,
-                                                 generateDebugInfo As Boolean) As BoundBlock
+                                                 diagnostics As DiagnosticBag) As BoundBlock
 
             If body.HasErrors Then
                 Return body
@@ -144,7 +150,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return body
             End If
 
-            Dim rewriter As New AsyncRewriter(body, method, asyncMethodKind, compilationState, diagnostics, generateDebugInfo)
+            Dim rewriter As New AsyncRewriter(body, method, asyncMethodKind, compilationState, diagnostics)
 
             ' check if we have all the types we need
             If rewriter.EnsureAllSymbolsAndSignature() Then
@@ -170,8 +176,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     "System.Runtime.CompilerServices.IAsyncStateMachine.SetStateMachine",
                     DebugAttributes.DebuggerNonUserCodeAttribute, Accessibility.Private, False)
 
-            ' Me.builderField.SetStateMachine(sm)
-            Me.CloseMethod(
+            ' SetStateMachine Is used to initialize the underlying AsyncMethodBuilder's reference to the boxed copy of the state machine.
+            ' If the state machine Is a class there Is no copy made And thus the initialization Is Not necessary. 
+            ' In fact it Is an error to reinitialize the builder since it already Is initialized.
+            If Me.F.CurrentType.TypeKind = TypeKind.Class Then
+                Me.F.CloseMethod(F.Return())
+            Else
+                Me.CloseMethod(
                 Me.F.Block(
                     Me.F.ExpressionStatement(
                         Me.GenerateMethodCall(
@@ -180,6 +191,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                             "SetStateMachine",
                             {Me.F.Parameter(Me.F.CurrentMethod.Parameters(0))})),
                     Me.F.Return()))
+            End If
+
+            ' Constructor
+            If StateMachineClass.TypeKind = TypeKind.Class Then
+                Me.F.CurrentMethod = StateMachineClass.Constructor
+                Me.F.CloseMethod(F.Block(ImmutableArray.Create(F.BaseInitialization(), F.Return())))
+            End If
+
         End Sub
 
         Protected Overrides Function GenerateReplacementBody(stateMachineVariable As LocalSymbol, frameType As NamedTypeSymbol) As BoundStatement
@@ -234,10 +253,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                           F:=Me.F,
                                                           state:=Me.StateField,
                                                           builder:=Me._builderField,
-                                                          localProxies:=Me.LocalProxies,
+                                                          variableProxies:=Me.variableProxies,
                                                           owner:=Me,
-                                                          diagnostics:=Diagnostics,
-                                                          generateDebugInfo:=Me.GenerateDebugInfo)
+                                                          diagnostics:=Diagnostics)
 
             rewriter.GenerateMoveNext(Me.Body, moveNextMethod)
         End Sub
@@ -260,9 +278,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 LocalRewriter.RewritingFlags.AllowEndOfMethodReturnWithExpression Or
                 LocalRewriter.RewritingFlags.AllowCatchWithErrorLineNumberReference
 
-            Return LocalRewriter.Rewrite(DirectCast(body, BoundBlock), topMethod, Me.CompilationState, Nothing,
-                                         False, Me.Diagnostics, rewrittenNodes, hasLambdas, symbolsCapturedWithoutCtor,
-                                         flags:=rewritingFlags, currentMethod:=currentMethod)
+            Return LocalRewriter.Rewrite(DirectCast(body, BoundBlock),
+                                         topMethod,
+                                         Me.CompilationState,
+                                         previousSubmissionFields:=Nothing,
+                                         diagnostics:=Me.Diagnostics,
+                                         rewrittenNodes:=rewrittenNodes,
+                                         hasLambdas:=hasLambdas,
+                                         symbolsCapturedWithoutCopyCtor:=symbolsCapturedWithoutCtor,
+                                         flags:=rewritingFlags,
+                                         currentMethod:=currentMethod)
         End Function
 
         Friend Overrides Function EnsureAllSymbolsAndSignature() As Boolean

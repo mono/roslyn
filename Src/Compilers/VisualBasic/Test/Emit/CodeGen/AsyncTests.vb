@@ -1391,7 +1391,7 @@ End Module
 ]]>)
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1002672"), WorkItem(1002672)>
         Public Sub Simple_LateBinding_1()
             CompileAndVerify(
 <compilation>
@@ -1421,7 +1421,7 @@ Module Program
     End Sub
 End Module
     </file>
-</compilation>, options:=OptionsExe.WithDebugInformationKind(DebugInformationKind.Full), useLatestFramework:=True).
+</compilation>, options:=TestOptions.DebugExe, useLatestFramework:=True).
             VerifyIL("Program.VB$StateMachine_0_Test2.MoveNext",
             <![CDATA[
 {
@@ -1626,7 +1626,7 @@ End Module
 ]]>)
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1002672"), WorkItem(1002672)>
         Public Sub Simple_LateBinding_2()
             CompileAndVerify(
 <compilation>
@@ -1675,7 +1675,7 @@ Module Program
     End Sub
 End Module
     </file>
-</compilation>, options:=OptionsExe.WithDebugInformationKind(DebugInformationKind.Full), useLatestFramework:=True).
+</compilation>, options:=TestOptions.DebugExe, useLatestFramework:=True).
             VerifyIL("Program.VB$StateMachine_0_Test2.MoveNext",
             <![CDATA[
 {
@@ -7012,7 +7012,7 @@ End Module
 </compilation>, useLatestFramework:=True, expectedOutput:="1 3 5 7 9")
         End Sub
 
-        <Fact()>
+        <Fact, WorkItem(1003196)>
         Public Sub AsyncAndPartialMethods()
             CompileAndVerify(
 <compilation>
@@ -7801,10 +7801,9 @@ End Module
 </compilation>, useLatestFramework:=True, expectedOutput:="6 11 1 12 13 8 10 12 13 8 10 0 12 13 8 10 13 8 10 0")
         End Sub
 
-        <Fact()>
+        <Fact>
         Public Sub LiftApparentlyEmptyStructs()
-            Dim csCompilation = CreateCSharpCompilation("Empty_cs",
-            <![CDATA[
+            Dim csCompilation = CreateCSharpCompilation("Empty_cs", <![CDATA[
 /// <summary>
 /// An apparently empty struct that actually encapsulates a byte. Used to see how
 /// the compiler treats empty structs.
@@ -7838,10 +7837,11 @@ public struct Empty
         }
     }
 }]]>,
-                compilationOptions:=New Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithAllowUnsafe(True))
+                compilationOptions:=New CSharp.CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, optimizationLevel:=OptimizationLevel.Release, allowUnsafe:=True))
+
             csCompilation.VerifyDiagnostics()
-            Dim vbexeCompilation = CreateVisualBasicCompilation("VBExe",
-            <![CDATA[Imports System
+            Dim vbexeCompilation = CreateVisualBasicCompilation("VBExe", <![CDATA[
+Imports System
 Imports System.Threading.Tasks
 
 Module Module1
@@ -7858,11 +7858,11 @@ Module Module1
     End Function
 
 End Module]]>,
-                compilationOptions:=New VisualBasicCompilationOptions(OutputKind.ConsoleApplication),
+                compilationOptions:=TestOptions.ReleaseExe,
                 referencedCompilations:={csCompilation},
                 referencedAssemblies:=LatestReferences)
-            Dim vbexeVerifier = CompileAndVerify(vbexeCompilation,
-                expectedOutput:=<![CDATA[12]]>)
+
+            Dim vbexeVerifier = CompileAndVerify(vbexeCompilation, expectedOutput:="12")
             vbexeVerifier.VerifyDiagnostics()
         End Sub
 
@@ -7975,7 +7975,7 @@ End Module
                 Sub(method)
                     Select Case method.Name
                         Case ".ctor"
-                            ' This is an auto-generated constructor, ignore it
+                        ' This is an auto-generated constructor, ignore it
 
                         Case "System.Runtime.CompilerServices.IAsyncStateMachine.SetStateMachine"
                             Assert.Equal(Accessibility.Private, method.DeclaredAccessibility)
@@ -8081,14 +8081,12 @@ Public Class TestCase
     End Function
 End Class
     </file>
-</compilation>, options:=If(dbg,
-                            OptionsDll.WithDebugInformationKind(DebugInformationKind.Full),
-                            OptionsDll.WithDebugInformationKind(DebugInformationKind.None)),
+</compilation>, options:=If(dbg, TestOptions.DebugDll, TestOptions.ReleaseDll),
                 useLatestFramework:=True,
                 symbolValidator:=moduleValidator)
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1002672"), WorkItem(1002672)>
         Public Sub EmittedSymbolsCheck_Debug_Full()
             EmittedSymbolsCheck(True)
         End Sub
@@ -8110,7 +8108,7 @@ End Class
     </file>
                          </compilation>
 
-            Dim comp = CreateCompilationWithReferences(source, {MscorlibRef}, OptionsDll) ' NOTE: 4.0, Not 4.5, so it's missing the async helpers.
+            Dim comp = CreateCompilationWithReferences(source, {MscorlibRef}, TestOptions.ReleaseDll) ' NOTE: 4.0, Not 4.5, so it's missing the async helpers.
 
             Using stream As New MemoryStream()
                 AssertTheseDiagnostics(comp.Emit(stream).Diagnostics, <errors><![CDATA[
@@ -8132,6 +8130,52 @@ BC42356: This async method lacks 'Await' operators and so will run synchronously
 ]]></errors>)
             End Using
         End Sub
-        End Class
+
+        <WorkItem(1004348, "DevDiv")>
+        <Fact>
+        Public Sub StructureVsClass()
+            Dim source =
+<compilation name="Async">
+    <file name="a.vb">
+Imports System.Threading.Tasks
+        
+Module Module1
+
+    Sub Main()
+        Foo(123).Wait()
+    End Sub
+
+    Public Async Function Foo(a As Integer) As Task
+        Await Task.Factory.StartNew(Sub() System.Console.WriteLine(a))
+    End Function
+
+End Module
+    </file>
+</compilation>
+
+            Dim compilation = CompilationUtils.CreateCompilationWithReferences(source, references:=Me.LatestReferences)
+            Dim options As VisualBasicCompilationOptions
+
+            options = TestOptions.ReleaseExe
+            Assert.False(options.EnableEditAndContinue)
+
+            CompileAndVerify(compilation.WithOptions(options),
+                             expectedOutput:="123",
+                             symbolValidator:=Sub(m As ModuleSymbol)
+                                                  Dim stateMachine = m.GlobalNamespace.GetMember(Of NamedTypeSymbol)("Module1").GetMember(Of NamedTypeSymbol)("VB$StateMachine_0_Foo")
+                                                  Assert.Equal(TypeKind.Structure, stateMachine.TypeKind)
+                                              End Sub)
+
+            options = TestOptions.DebugExe
+            Assert.True(options.EnableEditAndContinue)
+
+            CompileAndVerify(compilation.WithOptions(options),
+                             expectedOutput:="123",
+                             symbolValidator:=Sub(m As ModuleSymbol)
+                                                  Dim stateMachine = m.GlobalNamespace.GetMember(Of NamedTypeSymbol)("Module1").GetMember(Of NamedTypeSymbol)("VB$StateMachine_0_Foo")
+                                                  Assert.Equal(TypeKind.Class, stateMachine.TypeKind)
+                                              End Sub)
+        End Sub
+    End Class
 End Namespace
 

@@ -2,15 +2,14 @@
 
 using System;
 using System.Linq;
+using System.Reflection;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Roslyn.Test.Utilities;
 using Xunit;
 using Utils = Microsoft.CodeAnalysis.CSharp.UnitTests.CompilationUtils;
-using Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE;
-using System.Reflection;
 
 namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Symbols
 {
@@ -111,7 +110,7 @@ class C : I<C, object>
             {
                 var type = module.GlobalNamespace.GetMember<NamedTypeSymbol>("C");
                 var method = type.GetMember<MethodSymbol>("I<C,System.Object>.M");
-                CheckConstraints(method.TypeParameters[0], TypeParameterConstraintKind.None, false, true, "C", "C", "C" );
+                CheckConstraints(method.TypeParameters[0], TypeParameterConstraintKind.None, false, true, "C", "C", "C");
             };
 
             CompileAndVerify(
@@ -336,7 +335,7 @@ unsafe interface I
     void M6(A<A<int>.B2>.B1[] o);
     void M7(A<A<int>.B1[]>.B1 o);
 }";
-            CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnsafeDll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(source, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics(
                 // (8,15): error CS0208: Cannot take the address of, get the size of, or declare a pointer to a managed type ('A<int>')
                 Diagnostic(ErrorCode.ERR_ManagedAddr, "A<int>*").WithArguments("A<int>").WithLocation(8, 15),
                 // (9,13): error CS0208: Cannot take the address of, get the size of, or declare a pointer to a managed type ('A<string>.B1')
@@ -516,7 +515,7 @@ abstract class B : A.I<B>
                 Diagnostic(ErrorCode.ERR_NewConstraintNotSatisfied, "A.I<B>").WithArguments("A.I<T>", "T", "B").WithLocation(16, 12),
                 // (17,13): error CS0310: 'B' must be a non-abstract type with a public parameterless constructor in order to use it as parameter 'T' in the generic type or method 'A.I<T>'
                 Diagnostic(ErrorCode.ERR_NewConstraintNotSatisfied, "A.I<B>").WithArguments("A.I<T>", "T", "B").WithLocation(17, 13));
-       }
+        }
 
         /// <summary>
         /// Ensure generic methods are handled in an explicit
@@ -781,7 +780,7 @@ class C<T> where T : class
                 // (2,7): error CS0452: The type 'bool' must be a reference type in order to use it as parameter 'T' in the generic type or method 'C<T>'
                 Diagnostic(ErrorCode.ERR_RefConstraintNotSatisfied, "B").WithArguments("C<T>", "T", "bool").WithLocation(2, 7),
                 // (1,1): info CS8019: Unnecessary using directive.
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using A = C<int>;"));
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using A = C<int>;"));
         }
 
         /// <summary>
@@ -815,13 +814,13 @@ class C<T> where T : class
                 Diagnostic(ErrorCode.ERR_NewConstraintNotSatisfied, "B2").WithArguments("C<int>.D2<U>", "U", "string"),
                 // (1,1): info CS8019: Unnecessary using directive.
                 // using A = C<I<int?>>;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using A = C<I<int?>>;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using A = C<I<int?>>;"),
                 // (2,1): info CS8019: Unnecessary using directive.
                 // using B1 = C<I<int>>.D1<object>;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using B1 = C<I<int>>.D1<object>;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using B1 = C<I<int>>.D1<object>;"),
                 // (3,1): info CS8019: Unnecessary using directive.
                 // using B2 = C<int>.D2<string>;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using B2 = C<int>.D2<string>;"));
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using B2 = C<int>.D2<string>;"));
         }
 
         /// <summary>
@@ -853,7 +852,7 @@ class C
                 // (11,18): error CS0452: The type 'float' must be a reference type in order to use it as parameter 'T' in the generic type or method 'B<T>'
                 Diagnostic(ErrorCode.ERR_RefConstraintNotSatisfied, "float").WithArguments("B<T>", "T", "float").WithLocation(11, 18),
                 // (11,12): error CS0182: An attribute argument must be a constant expression, typeof expression or array creation expression of an attribute parameter type
-                Diagnostic(ErrorCode.ERR_BadAttributeArgument, "new B<float>()").WithLocation(11,12),
+                Diagnostic(ErrorCode.ERR_BadAttributeArgument, "new B<float>()").WithLocation(11, 12),
                 // (10,20): error CS0452: The type 'byte' must be a reference type in order to use it as parameter 'T' in the generic type or method 'B<T>'
                 Diagnostic(ErrorCode.ERR_RefConstraintNotSatisfied, "F").WithArguments("B<T>", "T", "byte").WithLocation(10, 20),
                 // (12,19): error CS0452: The type 'double' must be a reference type in order to use it as parameter 'T' in the generic type or method 'B<T>'
@@ -996,7 +995,7 @@ class C
     fixed int F[C<C<T>>.G];
     const int G = 1;
 }";
-            CreateCompilationWithMscorlib(source, compOptions: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, allowUnsafe: true)).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(source, options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, allowUnsafe: true)).VerifyDiagnostics(
                 // (4,15): error CS1642: Fixed size buffer fields may only be members of structs
                 Diagnostic(ErrorCode.ERR_FixedNotInStruct, "F").WithLocation(4, 15),
                 // (4,19): error CS0310: 'C<T>' must be a non-abstract type with a public parameterless constructor in order to use it as parameter 'T' in the generic type or method 'C<T>'
@@ -1839,7 +1838,7 @@ class B2 : A<object>, I<object>
                 // (16,7): error CS0425: The constraints for type parameter 'U' of method 'A<object>.M2<U>()' must match the constraints for type parameter 'U' of interface method 'I<object>.M2<U>()'. Consider using an explicit interface implementation instead.
                 Diagnostic(ErrorCode.ERR_ImplBadConstraints, "B2").WithArguments("U", "A<object>.M2<U>()", "U", "I<object>.M2<U>()").WithLocation(16, 7));
         }
-        
+
         [Fact]
         public void ImplicitImplementations()
         {
@@ -3589,7 +3588,7 @@ class C : I
 }
 ";
             Action<CSharpCompilation> compilationVerifier =
-                delegate(CSharpCompilation compilation)
+                delegate (CSharpCompilation compilation)
                 {
                     NamedTypeSymbol i2 = compilation.GetTypeByMetadataName("I2");
                     Assert.False(i2.IsErrorType());
@@ -3623,7 +3622,7 @@ class C : I
 }
 ";
             Action<CSharpCompilation> compilationVerifier =
-                delegate(CSharpCompilation compilation)
+                delegate (CSharpCompilation compilation)
                 {
                     NamedTypeSymbol i2 = compilation.GetTypeByMetadataName("I2`2");
                     Assert.False(i2.IsErrorType());
@@ -3657,7 +3656,7 @@ class C : I
 }
 ";
             Action<CSharpCompilation> compilationVerifier =
-                delegate(CSharpCompilation compilation)
+                delegate (CSharpCompilation compilation)
                 {
                     NamedTypeSymbol i2 = compilation.GetTypeByMetadataName("I2`1");
                     Assert.False(i2.IsErrorType());
@@ -3691,7 +3690,7 @@ class C : I
 }
 ";
             Action<CSharpCompilation> compilationVerifier =
-                delegate(CSharpCompilation compilation)
+                delegate (CSharpCompilation compilation)
                 {
                     NamedTypeSymbol i2 = compilation.GetTypeByMetadataName("I2`01");
                     Assert.False(i2.IsErrorType());
@@ -3740,7 +3739,7 @@ class C : I
 }
 ";
             Action<CSharpCompilation> compilationVerifier =
-                delegate(CSharpCompilation compilation)
+                delegate (CSharpCompilation compilation)
                 {
                     NamedTypeSymbol i2 = compilation.GetTypeByMetadataName("I2`1");
                     Assert.False(i2.IsErrorType());
@@ -3767,10 +3766,10 @@ class C : I
                     NamedTypeSymbol t;
                     AssemblySymbol asm = i2.ContainingAssembly;
 
-                    mdName = MetadataTypeName.FromFullName("I3`1",false,-1);
+                    mdName = MetadataTypeName.FromFullName("I3`1", false, -1);
                     t = asm.LookupTopLevelMetadataType(ref mdName, true);
                     Assert.False(t.IsErrorType());
-                    Assert.Equal("I3",t.Name);
+                    Assert.Equal("I3", t.Name);
                     Assert.True(t.MangleName);
                     Assert.Equal(1, t.Arity);
 
@@ -4919,7 +4918,7 @@ class B<T>
                 Diagnostic(ErrorCode.ERR_NoExplicitConv, "(T[])x").WithArguments("U[]", "T[]").WithLocation(32, 16),
                 // (36,16): error CS0030: Cannot convert type 'U[]' to 'T[]'
                 Diagnostic(ErrorCode.ERR_NoExplicitConv, "(T[])x").WithArguments("U[]", "T[]").WithLocation(36, 16));
-      }
+        }
 
         [Fact]
         public void ImplicitReferenceTypeParameterConversion()
@@ -5478,7 +5477,7 @@ class B : A
     }
 } 
 ";
-            CreateCompilationWithMscorlib(source, compOptions: TestOptions.Dll).VerifyDiagnostics();
+            CreateCompilationWithMscorlib(source, options: TestOptions.ReleaseDll).VerifyDiagnostics();
         }
 
         [WorkItem(545410, "DevDiv")]
@@ -5502,7 +5501,7 @@ class B : A
     }
 } 
 ";
-            CreateCompilationWithMscorlib(source, compOptions: TestOptions.Dll).VerifyDiagnostics(
+            CreateCompilationWithMscorlib(source, options: TestOptions.ReleaseDll).VerifyDiagnostics(
                 // (4,23): error CS0453: The type 'T' must be a non-nullable value type in order to use it as parameter 'T' in the generic type or method 'System.Nullable<T>'
                 //     public virtual T? Foo<T>()
                 Diagnostic(ErrorCode.ERR_ValConstraintNotSatisfied, "Foo").WithArguments("System.Nullable<T>", "T", "T"),
@@ -6330,7 +6329,7 @@ class B2 : A<dynamic>, I
             var compilation = CreateCompilationWithMscorlibAndSystemCore("public interface I<W> where W : struct {}").VerifyDiagnostics();
 
             Action<ModuleSymbol> metadataValidator =
-                delegate(ModuleSymbol module)
+                delegate (ModuleSymbol module)
                 {
                     var metadata = ((PEModuleSymbol)module).Module;
 
@@ -6612,7 +6611,7 @@ class P
             var compilation2 = CreateCompilationWithMscorlib(
                 source2,
                 references: new MetadataReference[] { new MetadataImageReference(compilation1.EmitToArray()) },
-                compOptions: TestOptions.Exe);
+                options: TestOptions.ReleaseExe);
             compilation2.VerifyDiagnostics();
             CompileAndVerify(compilation2, emitOptions: EmitOptions.RefEmitBug, expectedOutput:
 @"C0

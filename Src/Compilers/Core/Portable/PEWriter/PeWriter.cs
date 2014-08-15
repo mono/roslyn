@@ -73,7 +73,6 @@ namespace Microsoft.Cci
             CommonMessageProvider messageProvider,
             PdbWriter pdbWriter,
             bool allowMissingMethodBodies,
-            bool foldIdenticalMethodBodies,
             bool deterministic,
             CancellationToken cancellationToken)
         {
@@ -101,10 +100,7 @@ namespace Microsoft.Cci
                 pdbWriter.SetMetadataEmitter(this);
             }
 
-            if (foldIdenticalMethodBodies)
-            {
-                possiblyDuplicateMethodBodies = new Dictionary<byte[], uint>(ByteSequenceComparer.Instance);
-            }
+            this.smallMethodBodies = new Dictionary<byte[], uint>(ByteSequenceComparer.Instance);
 
             // Add zero-th entry to heaps. 
             // Delta metadata requires these to avoid nil generation-relative handles, 
@@ -466,7 +462,10 @@ namespace Microsoft.Cci
         private bool tableIndicesAreComplete;
 
         private uint[] pseudoSymbolTokenToTokenMap;
-        private List<uint> pseudoStringTokenToTokenMap;
+        private IReference[] pseudoSymbolTokenToReferenceMap;
+        private uint[] pseudoStringTokenToTokenMap;
+        private List<string> pseudoStringTokenToStringMap;
+        private ReferenceIndexer referenceVisitor;
 
         private readonly bool emitRuntimeStartupStub;
         private readonly BinaryWriter coverageDataWriter = new BinaryWriter(new MemoryStream());
@@ -503,8 +502,9 @@ namespace Microsoft.Cci
         private readonly Dictionary<IMarshallingInformation, uint> marshallingDescriptorIndex = new Dictionary<IMarshallingInformation, uint>();
         protected readonly List<MethodImplementation> methodImplList = new List<MethodImplementation>();
         private readonly Dictionary<IGenericMethodInstanceReference, uint> methodInstanceSignatureIndex = new Dictionary<IGenericMethodInstanceReference, uint>();
-        // A map of method body to RVA. 
-        private readonly Dictionary<byte[], uint> possiblyDuplicateMethodBodies;
+        
+        // A map of method body to RVA. Used for deduplication of small bodies.
+        private readonly Dictionary<byte[], uint> smallMethodBodies;
 
         private readonly NtHeader ntHeader = new NtHeader();
         private readonly PdbWriter pdbWriter;
@@ -648,11 +648,10 @@ namespace Microsoft.Cci
             Stream stream,
             PdbWriter pdbWriter,
             bool allowMissingMethodBodies,
-            bool foldDuplicateMethodBodies,
             bool deterministic,
             CancellationToken cancellationToken)
         {
-            var writer = new FullPeWriter(context, messageProvider, pdbWriter, allowMissingMethodBodies, foldDuplicateMethodBodies, deterministic, cancellationToken);
+            var writer = new FullPeWriter(context, messageProvider, pdbWriter, allowMissingMethodBodies, deterministic, cancellationToken);
             writer.WritePeToStream(stream);
 
             if (pdbWriter != null)
@@ -1027,37 +1026,12 @@ namespace Microsoft.Cci
             var referencesInIL = module.ReferencesInIL(out count);
 
             this.pseudoSymbolTokenToTokenMap = new uint[count];
+            this.pseudoSymbolTokenToReferenceMap = new IReference[count];
+
             uint cur = 0;
             foreach (IReference o in referencesInIL)
             {
-                ITypeReference typeReference = o as ITypeReference;
-
-                if (typeReference != null)
-                {
-                    this.pseudoSymbolTokenToTokenMap[cur] = this.GetTypeToken(typeReference);
-                }
-                else
-                {
-                    IFieldReference fieldReference = o as IFieldReference;
-
-                    if (fieldReference != null)
-                    {
-                        this.pseudoSymbolTokenToTokenMap[cur] = this.GetFieldToken(fieldReference);
-                    }
-                    else
-                    {
-                        IMethodReference methodReference = o as IMethodReference;
-                        if (methodReference != null)
-                        {
-                            this.pseudoSymbolTokenToTokenMap[cur] = this.GetMethodToken(methodReference);
-                        }
-                        else
-                        {
-                            throw ExceptionUtilities.UnexpectedValue(o);
-                        }
-                    }
-                }
-
+                pseudoSymbolTokenToReferenceMap[cur] = o;
                 cur++;
             }
         }
@@ -1072,26 +1046,23 @@ namespace Microsoft.Cci
             this.CreateIndicesForModule();
             this.CreateInitialExportedTypeIndex();
 
-            // Find out all references. CCI used to do two passes: first without visiting attributes and the second including attributes.
-            // The first pass helped to make type reference tokens be more like C#. We just need a single pass.
-            var visitor = this.CreateReferenceVisitor();
-            this.module.Dispatch(visitor);
-
-            // EDMAURER since method bodies are not visited as they are in CCI, the operations
-            // that would have been done on them are done here.
-            visitor.VisitMethodBodyTypes(this.module);
+            // Find all references and assign tokens.
+            this.referenceVisitor = this.CreateReferenceVisitor();
+            this.module.Dispatch(referenceVisitor);
 
             this.CreateMethodBodyReferenceIndex();
         }
 
         private void CreateUserStringIndices()
         {
-            this.pseudoStringTokenToTokenMap = new List<uint>();
+            this.pseudoStringTokenToStringMap = new List<string>();
 
             foreach (string str in this.module.GetStrings())
             {
-                this.pseudoStringTokenToTokenMap.Add(this.GetUserStringToken(str));
+                this.pseudoStringTokenToStringMap.Add(str);
             }
+
+            this.pseudoStringTokenToTokenMap = new uint[pseudoStringTokenToStringMap.Count];
         }
 
         protected virtual void CreateIndicesForModule()
@@ -5039,60 +5010,50 @@ namespace Microsoft.Cci
             int ilLength = methodBody.IL.Length;
             uint numberOfExceptionHandlers = (uint)methodBody.ExceptionRegions.Length;
             bool isSmallBody = ilLength < 64 && methodBody.MaxStack <= 8 && localSignatureToken == 0 && numberOfExceptionHandlers == 0;
-            uint bodyRva = 0;
 
             byte[] il = this.SerializeMethodBodyIL(methodBody);
 
             // serialization only replaces fake tokens with real tokens, it doesn't remove/insert bytecodes:
             Debug.Assert(il.Length == ilLength);
 
+            uint bodyRva;
             if (isSmallBody)
             {
-                // If 'possiblyDuplicateMethodBodies' is not null, check if an identical
-                // method body has already been serialized. If so, use the RVA
-                // of the already serialized one. 
-                if (possiblyDuplicateMethodBodies != null)
+                // Check if an identical method body has already been serialized. 
+                // If so, use the RVA of the already serialized one.
+                if (!smallMethodBodies.TryGetValue(il, out bodyRva))
                 {
-                    if (!possiblyDuplicateMethodBodies.TryGetValue(il, out bodyRva))
-                    {
-                        possiblyDuplicateMethodBodies.Add(il, writer.BaseStream.Position);
-                    }
+                    bodyRva = writer.BaseStream.Position;
+                    smallMethodBodies.Add(il, bodyRva);
                 }
+
+                writer.WriteByte((byte)((ilLength << 2) | 2));
             }
-
-            if (bodyRva == 0)
+            else
             {
-                if (isSmallBody)
-                {
-                    bodyRva = writer.BaseStream.Position;
-                    writer.WriteByte((byte)((ilLength << 2) | 2));
-                }
-                else
-                {
-                    writer.Align(4);
-                    bodyRva = writer.BaseStream.Position;
-                    ushort flags = (3 << 12) | 0x3;
-                    if (numberOfExceptionHandlers > 0)
-                    {
-                        flags |= 0x08;
-                    }
-
-                    if (methodBody.LocalsAreZeroed)
-                    {
-                        flags |= 0x10;
-                    }
-
-                    writer.WriteUshort(flags);
-                    writer.WriteUshort(methodBody.MaxStack);
-                    writer.WriteUint((uint)ilLength);
-                    writer.WriteUint(localSignatureToken);
-                }
-
-                writer.WriteBytes(il);
+                writer.Align(4);
+                bodyRva = writer.BaseStream.Position;
+                ushort flags = (3 << 12) | 0x3;
                 if (numberOfExceptionHandlers > 0)
                 {
-                    this.SerializeMethodBodyExceptionHandlerTable(methodBody, numberOfExceptionHandlers, writer);
+                    flags |= 0x08;
                 }
+
+                if (methodBody.LocalsAreZeroed)
+                {
+                    flags |= 0x10;
+                }
+
+                writer.WriteUshort(flags);
+                writer.WriteUshort(methodBody.MaxStack);
+                writer.WriteUint((uint)ilLength);
+                writer.WriteUint(localSignatureToken);
+            }
+
+            writer.WriteBytes(il);
+            if (numberOfExceptionHandlers > 0)
+            {
+                this.SerializeMethodBodyExceptionHandlerTable(methodBody, numberOfExceptionHandlers, writer);
             }
 
             return bodyRva;
@@ -5194,6 +5155,71 @@ namespace Microsoft.Cci
             }
         }
 
+        private uint ResolveTokenFromReference(IReference reference)
+        {
+            ITypeReference typeReference = reference as ITypeReference;
+
+            if (typeReference != null)
+            {
+                return this.GetTypeToken(typeReference);
+            }
+            else
+            {
+                IFieldReference fieldReference = reference as IFieldReference;
+
+                if (fieldReference != null)
+                {
+                    return this.GetFieldToken(fieldReference);
+                }
+                else
+                {
+                    IMethodReference methodReference = reference as IMethodReference;
+                    if (methodReference != null)
+                    {
+                        return this.GetMethodToken(methodReference);
+                    }
+                    else
+                    {
+                        throw ExceptionUtilities.UnexpectedValue(reference);
+                    }
+                }
+            }
+        }
+
+        private uint ResolveSymbolTokenFromPseudoSymbolToken(uint pseudoSymbolToken)
+        {
+            var index = (int)pseudoSymbolToken;
+            var reference = pseudoSymbolTokenToReferenceMap[index];
+            if (reference != null)
+            {
+                // EDMAURER since method bodies are not visited as they are in CCI, the operations
+                // that would have been done on them are done here.
+                this.referenceVisitor.VisitMethodBodyReference(reference);
+
+                var token = ResolveTokenFromReference(reference);
+                pseudoSymbolTokenToTokenMap[index] = token;
+                pseudoSymbolTokenToReferenceMap[index] = null; // Set to null to bypass next lookup
+                return token;
+            }
+
+            return pseudoSymbolTokenToTokenMap[index];
+        }
+
+        private uint ResolveStringTokenFromPseudoStringToken(uint pseudoStringToken)
+        {
+            var index = (int)pseudoStringToken;
+            var str = pseudoStringTokenToStringMap[index];
+            if (str != null)
+            {
+                var token = GetUserStringToken(str);
+                pseudoStringTokenToTokenMap[index] = token;
+                pseudoStringTokenToStringMap[index] = null; // Set to null to bypass next lookup
+                return token;
+            }
+
+            return pseudoStringTokenToTokenMap[index];
+        }
+
         private byte[] SerializeMethodBodyIL(IMethodBody methodBody)
         {
             // TODO: instead of writing into the byte[] on MethodBody we should write directly into MemoryStream
@@ -5211,7 +5237,7 @@ namespace Microsoft.Cci
                     case OperandType.InlineType:
                         {
                             uint currentToken = ReadUint(methodBodyIL, curIndex);
-                            uint newToken = this.pseudoSymbolTokenToTokenMap[(int)currentToken];
+                            uint newToken = ResolveSymbolTokenFromPseudoSymbolToken(currentToken);
                             WriteUint(methodBodyIL, newToken, curIndex);
                             curIndex += 4;
                         }
@@ -5220,7 +5246,7 @@ namespace Microsoft.Cci
                     case OperandType.InlineString:
                         {
                             uint currentToken = ReadUint(methodBodyIL, curIndex);
-                            uint newToken = this.pseudoStringTokenToTokenMap[(int)currentToken];
+                            uint newToken = ResolveStringTokenFromPseudoStringToken(currentToken);
                             WriteUint(methodBodyIL, newToken, curIndex);
                             curIndex += 4;
                         }

@@ -2,15 +2,11 @@
 
 Imports System.Collections.Immutable
 Imports System.Globalization
-Imports System.Runtime.CompilerServices
 Imports System.Runtime.InteropServices
 Imports System.Threading
-Imports Microsoft.CodeAnalysis.CodeGen
 Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
-Imports Cci = Microsoft.Cci
-Imports TypeKind = Microsoft.CodeAnalysis.TypeKind
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
     ''' <summary>
@@ -1256,19 +1252,18 @@ lReportErrorOnTwoTokens:
             End Get
         End Property
 
-        Friend NotOverridable Overrides ReadOnly Property MeParameter As ParameterSymbol
-            Get
-                If IsShared Then
-                    Return Nothing
-                Else
-                    If m_lazyMeParameter Is Nothing Then
-                        Interlocked.CompareExchange(Of ParameterSymbol)(m_lazyMeParameter, New MeParameterSymbol(Me), Nothing)
-                    End If
-
-                    Return m_lazyMeParameter
+        Friend NotOverridable Overrides Function TryGetMeParameter(<Out> ByRef meParameter As ParameterSymbol) As Boolean
+            If IsShared Then
+                meParameter = Nothing
+            Else
+                If m_lazyMeParameter Is Nothing Then
+                    Interlocked.CompareExchange(m_lazyMeParameter, New MeParameterSymbol(Me), Nothing)
                 End If
-            End Get
-        End Property
+
+                meParameter = m_lazyMeParameter
+            End If
+            Return True
+        End Function
 
         Public Overrides ReadOnly Property ReturnTypeCustomModifiers As ImmutableArray(Of CustomModifier)
             Get
@@ -2066,9 +2061,9 @@ lReportErrorOnTwoTokens:
                                                                             isOverrides:=True))
                 End If
 
-                Dim overriden = overriddenMembers.OverriddenMember
+                Dim overridden = overriddenMembers.OverriddenMember
 
-                If overriden IsNot Nothing Then
+                If overridden IsNot Nothing Then
                     ' Copy custom modifiers
 
                     ' For the most part, we will copy custom modifiers by copying types.
@@ -2080,9 +2075,9 @@ lReportErrorOnTwoTokens:
                     Dim constructedMethodWithCustomModifiers As MethodSymbol
 
                     If Me.Arity > 0 Then
-                        constructedMethodWithCustomModifiers = overriden.Construct(Me.TypeParameters)
+                        constructedMethodWithCustomModifiers = overridden.Construct(Me.TypeParameters.As(Of TypeSymbol))
                     Else
-                        constructedMethodWithCustomModifiers = overriden
+                        constructedMethodWithCustomModifiers = overridden
                     End If
 
                     Dim returnTypeWithCustomModifiers As TypeSymbol = constructedMethodWithCustomModifiers.ReturnType

@@ -564,7 +564,12 @@ Module Program
 End Module
     </file>
 </compilation>)
-            compilation.AssertTheseDiagnostics(<errors><![CDATA[
+
+            Dim d As Decimal = 0
+            If (Decimal.TryParse("0E1", Globalization.NumberStyles.AllowExponent, Nothing, d)) Then
+                compilation.AssertNoErrors()
+            Else
+                compilation.AssertTheseDiagnostics(<errors><![CDATA[
 BC30036: Overflow.
         Console.WriteLine(0e28d)
                           ~~~~~
@@ -581,6 +586,8 @@ BC30036: Overflow.
         Console.WriteLine(0.000000e34d)
                           ~~~~~~~~~~~~
 ]]></errors>)
+            End If
+
         End Sub
 
         <WorkItem(529861, "DevDiv")>
@@ -742,7 +749,13 @@ Module M
 End Module
     ]]></file>
 </compilation>)
-            compilation.AssertTheseDiagnostics(<errors><![CDATA[
+
+
+            Dim d As Decimal = 0
+            If (Decimal.TryParse("0E1", Globalization.NumberStyles.AllowExponent, Nothing, d)) Then
+                compilation.AssertNoErrors
+            Else
+                compilation.AssertTheseDiagnostics(<errors><![CDATA[
 BC30036: Overflow.
         Console.WriteLine(0E1D)
                           ~~~~
@@ -762,6 +775,7 @@ BC30036: Overflow.
         Console.WriteLine(0E100D) ' Dev11: BC30036: Overflow.
                           ~~~~~~
 ]]></errors>)
+            End If
         End Sub
 
         <Fact()>
@@ -1108,7 +1122,7 @@ End Class
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ClassesWithReadWriteProperties.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ClassesWithReadWriteProperties.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
             VerifyIL("D3.Test",
             <![CDATA[
 {
@@ -1569,7 +1583,7 @@ End Module
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("M.Main",
             <![CDATA[
                                                {
@@ -1650,7 +1664,7 @@ End Module
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.S",
             <![CDATA[
 {
@@ -1723,7 +1737,7 @@ End Module
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("M.Main",
             <![CDATA[
 {
@@ -4831,7 +4845,7 @@ expectedOutput:="3b").VerifyIL("M1.Main",
   IL_0000:  ldc.i4.3
   IL_0001:  newarr     "Integer"
   IL_0006:  dup
-  IL_0007:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=12 <PrivateImplementationDetails>.$$method0x6000001-0"
+  IL_0007:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=12 <PrivateImplementationDetails>.$$method0x6000001-E429CCA3F703A39CC5954A6572FEC9086135B34E"
   IL_000c:  call       "Sub System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray(System.Array, System.RuntimeFieldHandle)"
   IL_0011:  stloc.0
   IL_0012:  ldc.i4.2
@@ -6782,25 +6796,25 @@ End Module
   IL_0000:  ldc.i4.5
   IL_0001:  newarr     "Byte"
   IL_0006:  dup
-  IL_0007:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=5 <PrivateImplementationDetails>.$$method0x6000001-0"
+  IL_0007:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=5 <PrivateImplementationDetails>.$$method0x6000001-9755240DD0C4C1AD226DEBD40C6D2EBD408250CB"
   IL_000c:  call       "Sub System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray(System.Array, System.RuntimeFieldHandle)"
   IL_0011:  pop
   IL_0012:  ldc.i4.5
   IL_0013:  newarr     "Double"
   IL_0018:  dup
-  IL_0019:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=40 <PrivateImplementationDetails>.$$method0x6000001-1"
+  IL_0019:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=40 <PrivateImplementationDetails>.$$method0x6000001-11F3436B917FFBA0FAB0FAD5563AF18FA24AC16A"
   IL_001e:  call       "Sub System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray(System.Array, System.RuntimeFieldHandle)"
   IL_0023:  pop
   IL_0024:  ldc.i4.5
   IL_0025:  newarr     "Boolean"
   IL_002a:  dup
-  IL_002b:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=5 <PrivateImplementationDetails>.$$method0x6000001-2"
+  IL_002b:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=5 <PrivateImplementationDetails>.$$method0x6000001-4E724558F6B816715597A51663AD8F05247E2C4A"
   IL_0030:  call       "Sub System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray(System.Array, System.RuntimeFieldHandle)"
   IL_0035:  pop
   IL_0036:  ldc.i4.5
   IL_0037:  newarr     "Char"
   IL_003c:  dup
-  IL_003d:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=10 <PrivateImplementationDetails>.$$method0x6000001-3"
+  IL_003d:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=10 <PrivateImplementationDetails>.$$method0x6000001-E313A2813013780396D58750DC5D62221C86F42F"
   IL_0042:  call       "Sub System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray(System.Array, System.RuntimeFieldHandle)"
   IL_0047:  pop
   IL_0048:  ret
@@ -7075,14 +7089,13 @@ Module Module1
 End Module
     </file>
 </compilation>,
-                expectedOutput:="",
-                emitPdb:=True)
+                expectedOutput:="")
         End Sub
 
         <WorkItem(540121, "DevDiv")>
         <Fact>
         Public Sub BooleanAndOrInDebug()
-            CompileAndVerify(
+            Dim c = CompileAndVerify(
 <compilation>
     <file name="a.vb">
 Module M1
@@ -7099,9 +7112,10 @@ Module M1
 End Module
             </file>
 </compilation>,
-                expectedOutput:="",
-                emitPdb:=True).
-            VerifyIL("M1.Main",
+                options:=TestOptions.DebugExe,
+                expectedOutput:="")
+
+            c.VerifyIL("M1.Main",
             <![CDATA[
 {
   // Code size       38 (0x26)
@@ -8558,7 +8572,7 @@ End Class
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.M",
             <![CDATA[
 {
@@ -8637,7 +8651,7 @@ End Class
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.M",
             <![CDATA[
 {
@@ -8713,7 +8727,7 @@ End Class
 </compilation>
 
             ' TODO (tomat): verification fails
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.M",
             <![CDATA[
 {
@@ -8780,7 +8794,7 @@ End Class
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.M",
             <![CDATA[
 {
@@ -8853,7 +8867,7 @@ End Class
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.M",
             <![CDATA[
 {
@@ -8918,7 +8932,7 @@ End Class
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.M",
             <![CDATA[
 {
@@ -8989,7 +9003,7 @@ End Class
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.Main",
             <![CDATA[
 {
@@ -9058,7 +9072,7 @@ End Class
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.Main",
             <![CDATA[
 {
@@ -9127,7 +9141,7 @@ End Class
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.Main",
             <![CDATA[
 {
@@ -9197,7 +9211,7 @@ End Class
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.Main",
             <![CDATA[
 {
@@ -9260,7 +9274,7 @@ End Class
     </file>
 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.Main",
             <![CDATA[
 {
@@ -9466,7 +9480,7 @@ End Class
             ' CONSIDER: This is the dev10 behavior.
             ' Shouldn't there be an error for trying to call an inaccessible ctor?
             ' NOTE: Current behaviour is to skip private constructor and use 'initobj'
-            CompileWithCustomILSource(vbSource, ilSource.Value, OptionsDll, emitOptions:=EmitOptions.RefEmitBug).
+            CompileWithCustomILSource(vbSource, ilSource.Value, TestOptions.ReleaseDll, emitOptions:=EmitOptions.RefEmitBug).
                 VerifyIL("C.Main",
             <![CDATA[
 {
@@ -10013,7 +10027,7 @@ End Namespace
     </file>
 </compilation>
 
-            Dim comp = CompileAndVerify(source, options:=OptionsDll.WithRootNamespace("Project"), validator:=
+            Dim comp = CompileAndVerify(source, options:=TestOptions.ReleaseDll.WithRootNamespace("Project"), validator:=
                 Sub(a, _omitted)
                     AssertEx.SetEqual({"<Module>",
                                        "PROJEcT.Quuz.A",
@@ -10043,7 +10057,9 @@ Module Module1
     End Sub
 End Module
     </file>
-</compilation>, emitPdb:=True).VerifyIL("Module1.Main", <![CDATA[
+</compilation>, options:=TestOptions.DebugDll)
+
+            comp.VerifyIL("Module1.Main", <![CDATA[
 {
   // Code size       80 (0x50)
   .maxstack  3
@@ -10107,7 +10123,7 @@ End Module]]>,
         <WorkItem(543243, "DevDiv")>
         <Fact()>
         Public Sub TestOrInDebug()
-            CompileAndVerify(
+            Dim c = CompileAndVerify(
 <compilation>
     <file name="a.vb">
 Imports System
@@ -10124,10 +10140,10 @@ Module Module1
 End Module
     </file>
 </compilation>,
-emitPdb:=True,
-expectedOutput:=<![CDATA[Pass]]>).
-            VerifyIL("Module1.Main",
-            <![CDATA[
+            options:=TestOptions.DebugExe,
+            expectedOutput:="Pass")
+
+            c.VerifyIL("Module1.Main", <![CDATA[
 {
   // Code size       80 (0x50)
   .maxstack  3
@@ -10506,7 +10522,7 @@ True
   IL_0040:  ldc.i4.4
   IL_0041:  newarr     "Boolean"
   IL_0046:  dup
-  IL_0047:  ldtoken    "Integer <PrivateImplementationDetails>.$$method0x6000001-0"
+  IL_0047:  ldtoken    "Integer <PrivateImplementationDetails>.$$method0x6000001-35CCB1599F52363510686EF38B7DB5E7998DB108"
   IL_004c:  call       "Sub System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray(System.Array, System.RuntimeFieldHandle)"
   IL_0051:  ldc.i4.2
   IL_0052:  ldelem.u1
@@ -10525,24 +10541,20 @@ True
         System.Console.WriteLine(Microsoft.VisualBasic.Information.TypeName(x))
     End Sub
 End Module]]>,
-                compilationOptions:=New VisualBasicCompilationOptions(OutputKind.ConsoleApplication))
+                compilationOptions:=TestOptions.ReleaseExe)
 
-            Dim vbVerifier = CompileAndVerify(vbCompilation,
-                expectedOutput:=<![CDATA[UInteger
-]]>)
+            Dim vbVerifier = CompileAndVerify(vbCompilation, expectedOutput:="UInteger")
+
             vbVerifier.VerifyDiagnostics()
             vbVerifier.VerifyIL("Program.Main", <![CDATA[
 {
-  // Code size       19 (0x13)
+  // Code size       17 (0x11)
   .maxstack  1
-  .locals init (UInteger V_0) //x
   IL_0000:  ldc.i4.0
-  IL_0001:  stloc.0
-  IL_0002:  ldloc.0
-  IL_0003:  box        "UInteger"
-  IL_0008:  call       "Function Microsoft.VisualBasic.CompilerServices.Versioned.TypeName(Object) As String"
-  IL_000d:  call       "Sub System.Console.WriteLine(String)"
-  IL_0012:  ret
+  IL_0001:  box        "UInteger"
+  IL_0006:  call       "Function Microsoft.VisualBasic.CompilerServices.Versioned.TypeName(Object) As String"
+  IL_000b:  call       "Sub System.Console.WriteLine(String)"
+  IL_0010:  ret
 }]]>)
         End Sub
 
@@ -10700,7 +10712,7 @@ Class HasAutoProps
 End Class
 ]]>
     </file>
-</compilation>, emitPdb:=True)
+</compilation>)
         End Sub
 
         <Fact(), WorkItem(544182, "DevDiv")>
@@ -11075,7 +11087,7 @@ Module M1
     End Sub
 End Module
     ]]></file>
-</compilation>, OptionsExe)
+</compilation>, TestOptions.ReleaseExe)
             CompileAndVerify(compilation, sourceSymbolValidator:=sourceValidator, expectedOutput:="PASS1, PASS2")
         End Sub
 
@@ -11228,7 +11240,7 @@ Class Program
     End Property
 End Class
     ]]></file>
-</compilation>, Options.OptionsExe)
+</compilation>, TestOptions.ReleaseExe)
             Dim verifier = CompileAndVerify(compilation, expectedOutput:=<![CDATA[
 In get
 1
@@ -11363,14 +11375,14 @@ End Module
   // Code size      118 (0x76)
   .maxstack  6
   .locals init (System.Array V_0, //types
-  System.Array V_1, //arr
-  Integer V_2, //i
-  Integer V_3,
-  Integer V_4) //VB$ForLimit
+                System.Array V_1, //arr
+                Integer V_2, //i
+                Integer V_3,
+                Integer V_4) //VB$ForLimit
   IL_0000:  ldc.i4.4
   IL_0001:  newarr     "Integer"
   IL_0006:  dup
-  IL_0007:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=16 <PrivateImplementationDetails>.$$method0x6000001-0"
+  IL_0007:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=16 <PrivateImplementationDetails>.$$method0x6000001-1456763F890A84558F99AFA687C36B9037697848"
   IL_000c:  call       "Sub System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray(System.Array, System.RuntimeFieldHandle)"
   IL_0011:  stloc.0
   IL_0012:  ldloc.0
@@ -11502,7 +11514,7 @@ Module Module1
     End Function 
 End Module
     </file>
-</compilation>, options:=OptionsExe.WithOptimizations(True),
+</compilation>, options:=TestOptions.ReleaseExe,
 expectedOutput:=
             <![CDATA[
 -100
@@ -11636,7 +11648,7 @@ End Class
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, OptionsExe)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.ReleaseExe)
 
             AssertTheseDiagnostics(compilation,
 <expected>
@@ -11707,10 +11719,9 @@ BC40054: 'Public Sub New(c As Integer)' in designer-generated type 'FromDesigner
         <WorkItem(530067, "DevDiv")>
         <Fact>
         Public Sub NopAfterCall()
-            ' For a nop to be inserted after a call, three conditions must be met:
+            ' For a nop to be inserted after a call, two conditions must be met:
             '   1) sub (vs function)
-            '   2) optimization is disabled
-            '   3) generating debug info
+            '   2) debug build
 
             Dim source =
                 <compilation>
@@ -11731,36 +11742,11 @@ End Module
     </file>
                 </compilation>
 
-            Dim compOpt = CreateCompilationWithMscorlibAndVBRuntime(source, options:=Options.OptionsExe.WithOptimizations(True))
-            Dim compNoOpt = CreateCompilationWithMscorlibAndVBRuntime(source, options:=Options.OptionsExe.WithOptimizations(False))
+            Dim compRelease = CreateCompilationWithMscorlibAndVBRuntime(source, options:=TestOptions.ReleaseExe)
+            Dim compDebug = CreateCompilationWithMscorlibAndVBRuntime(source, options:=TestOptions.DebugExe)
 
             ' (2) is not met.
-            CompileAndVerify(compOpt, emitPdb:=False).VerifyIL("C.Main",
-            <![CDATA[
-{
-  // Code size       12 (0xc)
-  .maxstack  1
-  IL_0000:  call       "Sub C.S()"
-  IL_0005:  call       "Function C.F() As Integer"
-  IL_000a:  pop
-  IL_000b:  ret
-}
-]]>)
-
-            ' Neither (2) nor (3) is met.
-            CompileAndVerify(compOpt, emitPdb:=True).VerifyIL("C.Main",
-            <![CDATA[
-{
-  // Code size       12 (0xc)
-  .maxstack  1
-  IL_0000:  call       "Sub C.S()"
-  IL_0005:  call       "Function C.F() As Integer"
-  IL_000a:  pop
-  IL_000b:  ret
-}]]>)
-
-            ' (3) is not met.
-            CompileAndVerify(compNoOpt, emitPdb:=False).VerifyIL("C.Main",
+            CompileAndVerify(compRelease).VerifyIL("C.Main",
             <![CDATA[
 {
   // Code size       12 (0xc)
@@ -11773,7 +11759,7 @@ End Module
 ]]>)
 
             ' S meets (1), but F does not (it doesn't need a nop since it has a pop).
-            CompileAndVerify(compNoOpt, emitPdb:=True).VerifyIL("C.Main",
+            CompileAndVerify(compDebug).VerifyIL("C.Main",
             <![CDATA[
 {
   // Code size       14 (0xe)
@@ -11841,7 +11827,7 @@ End Module
     </file>
 </compilation>
 
-            Dim compilation = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(source, {SystemCoreRef}, OptionsExe)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(source, {SystemCoreRef}, TestOptions.ReleaseExe)
 
             Dim verifier = CompileAndVerify(compilation,
             <![CDATA[
@@ -12401,7 +12387,7 @@ End Module
         <WorkItem(770557, "DevDiv")>
         <Fact()>
         Public Sub BoolConditionDebug002()
-            CompileAndVerify(
+            Dim c = CompileAndVerify(
 <compilation>
     <file name="a.vb">
 
@@ -12435,42 +12421,54 @@ End Module
 
 ]]>
     </file>
-</compilation>, options:=Me.DefaultCompilationOptions.WithOptimizations(False),
-                expectedOutput:="i=2 -> x.bool = True i=21474836472 -> x.bool = True").
-            VerifyIL("Module1.Main",
+</compilation>, options:=TestOptions.DebugExe,
+                expectedOutput:="i=2 -> x.bool = True i=21474836472 -> x.bool = True")
+
+            c.VerifyIL("Module1.Main",
             <![CDATA[
 {
-  // Code size       85 (0x55)
+  // Code size       96 (0x60)
   .maxstack  2
   .locals init (BoolBreaker V_0, //x
-  Boolean V_1)
-  IL_0000:  ldloca.s   V_0
-  IL_0002:  ldc.i4.2
-  IL_0003:  stfld      "BoolBreaker.i As Integer"
-  IL_0008:  ldloc.0
-  IL_0009:  ldfld      "BoolBreaker.bool As Boolean"
-  IL_000e:  stloc.1
-  IL_000f:  ldloc.1
-  IL_0010:  brtrue.s   IL_001e
-  IL_0012:  ldstr      "i=2 -> x.bool <> True "
-  IL_0017:  call       "Sub System.Console.Write(String)"
-  IL_001c:  br.s       IL_0028
-  IL_001e:  ldstr      "i=2 -> x.bool = True "
-  IL_0023:  call       "Sub System.Console.Write(String)"
-  IL_0028:  ldloca.s   V_0
-  IL_002a:  ldc.i4     0x7fffffff
-  IL_002f:  stfld      "BoolBreaker.i As Integer"
-  IL_0034:  ldloc.0
-  IL_0035:  ldfld      "BoolBreaker.bool As Boolean"
-  IL_003a:  stloc.1
-  IL_003b:  ldloc.1
-  IL_003c:  brtrue.s   IL_004a
-  IL_003e:  ldstr      "i=2147483647 -> x.bool <> True "
-  IL_0043:  call       "Sub System.Console.Write(String)"
-  IL_0048:  br.s       IL_0054
-  IL_004a:  ldstr      "i=21474836472 -> x.bool = True "
-  IL_004f:  call       "Sub System.Console.Write(String)"
-  IL_0054:  ret
+                Boolean V_1)
+  IL_0000:  nop
+  IL_0001:  ldloca.s   V_0
+  IL_0003:  ldc.i4.2
+  IL_0004:  stfld      "BoolBreaker.i As Integer"
+  IL_0009:  ldloc.0
+  IL_000a:  ldfld      "BoolBreaker.bool As Boolean"
+  IL_000f:  stloc.1
+  IL_0010:  ldloc.1
+  IL_0011:  brtrue.s   IL_0021
+  IL_0013:  ldstr      "i=2 -> x.bool <> True "
+  IL_0018:  call       "Sub System.Console.Write(String)"
+  IL_001d:  nop
+  IL_001e:  nop
+  IL_001f:  br.s       IL_002e
+  IL_0021:  nop
+  IL_0022:  ldstr      "i=2 -> x.bool = True "
+  IL_0027:  call       "Sub System.Console.Write(String)"
+  IL_002c:  nop
+  IL_002d:  nop
+  IL_002e:  ldloca.s   V_0
+  IL_0030:  ldc.i4     0x7fffffff
+  IL_0035:  stfld      "BoolBreaker.i As Integer"
+  IL_003a:  ldloc.0
+  IL_003b:  ldfld      "BoolBreaker.bool As Boolean"
+  IL_0040:  stloc.1
+  IL_0041:  ldloc.1
+  IL_0042:  brtrue.s   IL_0052
+  IL_0044:  ldstr      "i=2147483647 -> x.bool <> True "
+  IL_0049:  call       "Sub System.Console.Write(String)"
+  IL_004e:  nop
+  IL_004f:  nop
+  IL_0050:  br.s       IL_005f
+  IL_0052:  nop
+  IL_0053:  ldstr      "i=21474836472 -> x.bool = True "
+  IL_0058:  call       "Sub System.Console.Write(String)"
+  IL_005d:  nop
+  IL_005e:  nop
+  IL_005f:  ret
 }
 ]]>)
         End Sub

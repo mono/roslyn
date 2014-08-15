@@ -183,16 +183,30 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         public abstract ImmutableArray<TypeParameterSymbol> TypeParameters { get; }
 
         /// <summary>
-        /// Get the "this" parameter for this method.  This is only valid for original source methods.
-        /// For other methods it throws an InvalidOperationException. Returns null for a static method,
-        /// or a parameter symbol for a non-static method.
+        /// Call <see cref="TryGetThisParameter"/> and throw if it returns false.
         /// </summary>
-        internal virtual ParameterSymbol ThisParameter
+        internal ParameterSymbol ThisParameter
         {
             get
             {
-                throw ExceptionUtilities.Unreachable;
+                ParameterSymbol thisParameter;
+                if (!TryGetThisParameter(out thisParameter))
+                {
+                    throw ExceptionUtilities.Unreachable;
+                }
+                return thisParameter;
             }
+        }
+
+        /// <returns>
+        /// True if this <see cref="MethodSymbol"/> type supports retrieving the this parameter
+        /// and false otherwise.  Note that a return value of true does not guarantee a non-null
+        /// <paramref name="thisParameter"/> (e.g. fails for static methods).
+        /// </returns>
+        internal virtual bool TryGetThisParameter(out ParameterSymbol thisParameter)
+        {
+            thisParameter = null;
+            return false;
         }
 
         /// <summary>
@@ -690,17 +704,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         /// <returns></returns>
         public MethodSymbol Construct(params TypeSymbol[] typeArguments)
         {
-            return this.Construct(typeArguments.AsImmutableOrNull());
-        }
-
-        /// <summary>
-        /// Apply type substitution to a generic method to create an method symbol with the given type parameters supplied.
-        /// </summary>
-        /// <param name="typeArguments"></param>
-        /// <returns></returns>
-        public MethodSymbol Construct(IEnumerable<TypeSymbol> typeArguments)
-        {
-            return this.Construct(typeArguments.AsImmutableOrNull());
+            return this.Construct(ImmutableArray.Create(typeArguments));
         }
 
         /// <summary>
@@ -883,12 +887,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         }
 
         /// <summary>
-        /// If true and <see cref="CompilationOptions.DebugInformationKind"/> is not <see cref="DebugInformationKind.None"/>, 
-        /// the compiler generates debug information for this method. 
+        /// Return true iff the method contains user code.
         /// </summary>
-        /// <remarks>
-        /// Generally should return true iff the method contains user code.
-        /// </remarks>
         internal abstract bool GenerateDebugInfo { get; }
 
         /// <summary>

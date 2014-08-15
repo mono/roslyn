@@ -16,7 +16,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.PDB
                 GetUniqueName(),
                 new[] { Parse(source, filePath) },
                 new[] { MscorlibRef },
-                TestOptions.Dll.WithSourceReferenceResolver(new SourceFileResolver(ImmutableArray.Create<string>(), baseDirectory)));
+                TestOptions.DebugDll.WithSourceReferenceResolver(new SourceFileResolver(ImmutableArray.Create<string>(), baseDirectory)));
         }
 
         [Fact]
@@ -53,7 +53,7 @@ class C
 }
 ";
             
-            CompileAndVerify(text, emitPdb: true).
+            CompileAndVerify(text, options: TestOptions.DebugExe).
                 VerifyDiagnostics(
                 // (20,1): warning CS1697: Different checksum values given for 'bogus1.cs'
                 // #pragma checksum "bogus1.cs" "{406EA660-64CF-4C82-B6F0-42D48172A798}" "ab007f1d23d9"
@@ -88,7 +88,7 @@ class C
 }
 ";
 
-            CompileAndVerify(text, emitPdb: true).
+            CompileAndVerify(text).
                 VerifyDiagnostics(
                 // (11,71): warning CS1695: Invalid #pragma checksum syntax; should be #pragma checksum "filename" "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}" "XXXX..."
                 // #pragma checksum "bogus1.cs" "{406EA660-64CF-4C82-B6F0-42D48172A799}" "ab007f1d23d"
@@ -139,7 +139,7 @@ class C1
 }
 ";
 
-            CompileAndVerify(new string[] {text1, text2}, emitPdb: true).
+            CompileAndVerify(new string[] {text1, text2}).
                 VerifyDiagnostics(
                 // (11,1): warning CS1697: Different checksum values given for 'bogus.cs'
                 // #pragma checksum "bogus.cs" "{406EA660-64CF-4C82-B6F0-42D48172A799}" "ab007f1d23"
@@ -269,7 +269,7 @@ class C { void M() { } }
 
 ", @"C:\a\..\b.cs") },
                 new[] { MscorlibRef },
-                TestOptions.Dll.WithSourceReferenceResolver(null));
+                TestOptions.DebugDll.WithSourceReferenceResolver(null));
 
             string actual = PDBTests.GetPdbXml(comp, "C.M");
 

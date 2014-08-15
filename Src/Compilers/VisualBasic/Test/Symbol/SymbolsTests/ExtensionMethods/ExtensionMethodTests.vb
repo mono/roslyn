@@ -1,15 +1,10 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-Imports System.Collections.Immutable
 Imports System.IO
-Imports System.Runtime.CompilerServices
 Imports Microsoft.CodeAnalysis.Test.Utilities
-Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
-
-Imports Microsoft.CodeAnalysis.VisualBasic.UnitTests.Symbols
 Imports Roslyn.Test.Utilities
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.ExtensionMethods
@@ -1720,7 +1715,7 @@ End Module
                                                                                                        {SystemCoreRef,
                                                                                                         New VisualBasicCompilationReference(compilation2),
                                                                                                         New VisualBasicCompilationReference(compilation3)},
-                                                                                                       OptionsExe)
+                                                                                                       TestOptions.ReleaseExe)
 
             CompileAndVerify(compilation1, expectedOutput:="345")
 
@@ -1738,7 +1733,7 @@ End Namespace
             Dim compilation1_1 = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntimeAndReferences(compilation1Def,
                                                                                                         {SystemCoreRef,
                                                                                                          New VisualBasicCompilationReference(compilation3_1)},
-                                                                                                         OptionsExe)
+                                                                                                         TestOptions.ReleaseExe)
 
             CompilationUtils.AssertTheseDeclarationDiagnostics(compilation1_1,
 <expected>
@@ -1776,7 +1771,7 @@ End Namespace
             Dim compilation1_2 = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntimeAndReferences(compilation1Def,
                                                                                                         {SystemCoreRef,
                                                                                                          New VisualBasicCompilationReference(compilation3_2)},
-                                                                                                         OptionsExe)
+                                                                                                         TestOptions.ReleaseExe)
 
             CompileAndVerify(compilation1_2, expectedOutput:="345")
 
@@ -1801,7 +1796,7 @@ End Module
             Dim compilation1_3 = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntimeAndReferences(compilation1_3_Def,
                                                                                                         {SystemCoreRef,
                                                                                                          New VisualBasicCompilationReference(compilation3_1)},
-                                                                                                        OptionsExe)
+                                                                                                        TestOptions.ReleaseExe)
 
             CompilationUtils.AssertTheseDeclarationDiagnostics(compilation1_3,
 <expected>
@@ -1846,7 +1841,7 @@ End Namespace
             Dim compilation1_4 = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntimeAndReferences(compilation1_4_Def,
                                                                                                         {SystemCoreRef,
                                                                                                          New VisualBasicCompilationReference(compilation3_1)},
-                                                                                                        OptionsExe)
+                                                                                                        TestOptions.ReleaseExe)
 
 
             CompileAndVerify(compilation1_4, expectedOutput:="345")
@@ -2263,7 +2258,7 @@ End Module
 
                 compilation1.VerifyDiagnostics(
                     Diagnostic(ERRID.ERR_NameNotMember2, "x.Foo").WithArguments("Foo", "Integer"),
-                    Diagnostic(ERRID.INF_UnusedImportStatement, "Imports Extensions"))
+                    Diagnostic(ERRID.HDN_UnusedImportStatement, "Imports Extensions"))
             End Using
 
         End Sub

@@ -180,7 +180,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
                 // public class C : NotFound
                 Diagnostic(ErrorCode.ERR_SingleTypeNameNotFound, "NotFound").WithArguments("NotFound")
                 )
-            .VerifyCSharpAnalyzerDiagnostics(new IDiagnosticAnalyzer[] { new ComplainAboutX() }, null,
+            .VerifyCSharpAnalyzerDiagnostics(new IDiagnosticAnalyzer[] { new ComplainAboutX() }, null, null,
                 // (5,18): warning CA9999_UseOfVariableThatStartsWithX: Use of variable whose name starts with 'x': 'x1'
                 //         int x3 = x1(x2);
                 Diagnostic("CA9999_UseOfVariableThatStartsWithX", "x1").WithArguments("x1"),
@@ -212,7 +212,7 @@ public class C : NotFound
                 // public class C : NotFound
                 Diagnostic(ErrorCode.ERR_SingleTypeNameNotFound, "NotFound").WithArguments("NotFound")
                 )
-            .VerifyCSharpAnalyzerDiagnostics(new IDiagnosticAnalyzer[] { new ComplainAboutX() }, null,
+            .VerifyCSharpAnalyzerDiagnostics(new IDiagnosticAnalyzer[] { new ComplainAboutX() }, null, null,
                 // (6,14): warning CA9999_UseOfVariableThatStartsWithX: Use of variable whose name starts with 'x': 'x1'
                 //     int x3 = x1 + x2;
                 Diagnostic("CA9999_UseOfVariableThatStartsWithX", "x1").WithArguments("x1"),
@@ -242,10 +242,10 @@ public class C : NotFound
     }
 }";
             // TODO: Compilation create doesn't accept analyzers anymore.
-            var options = TestOptions.Dll.WithSpecificDiagnosticOptions(
+            var options = TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(
                 new[] { KeyValuePair.Create("CA9999_UseOfVariableThatStartsWithX", ReportDiagnostic.Suppress) });
 
-            CreateCompilationWithMscorlib45(source, compOptions: options/*, analyzers: new IDiagnosticAnalyzerFactory[] { new ComplainAboutX() }*/).VerifyDiagnostics(
+            CreateCompilationWithMscorlib45(source, options: options/*, analyzers: new IDiagnosticAnalyzerFactory[] { new ComplainAboutX() }*/).VerifyDiagnostics(
                 // (2,18): error CS0246: The type or namespace name 'NotFound' could not be found (are you missing a using directive or an assembly reference?)
                 // public class C : NotFound
                 Diagnostic(ErrorCode.ERR_SingleTypeNameNotFound, "NotFound").WithArguments("NotFound"));
@@ -266,14 +266,14 @@ public class C : NotFound
     }
 }";
             // TODO: Compilation create doesn't accept analyzers anymore.
-            var options = TestOptions.Dll.WithSpecificDiagnosticOptions(
+            var options = TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(
                 new[] { KeyValuePair.Create("CA9999_UseOfVariableThatStartsWithX", ReportDiagnostic.Error) });
 
-            CreateCompilationWithMscorlib45(source, compOptions: options).VerifyDiagnostics(
+            CreateCompilationWithMscorlib45(source, options: options).VerifyDiagnostics(
                 // (2,18): error CS0246: The type or namespace name 'NotFound' could not be found (are you missing a using directive or an assembly reference?)
                 // public class C : NotFound
                 Diagnostic(ErrorCode.ERR_SingleTypeNameNotFound, "NotFound").WithArguments("NotFound"))
-            .VerifyCSharpAnalyzerDiagnostics(new IDiagnosticAnalyzer[] { new ComplainAboutX() }, null,
+            .VerifyCSharpAnalyzerDiagnostics(new IDiagnosticAnalyzer[] { new ComplainAboutX() }, null, null,
                 // (6,18): error CA9999_UseOfVariableThatStartsWithX: Use of variable whose name starts with 'x': 'x1'
                 //         int x3 = x1(x2);
                 Diagnostic("CA9999_UseOfVariableThatStartsWithX", "x1").WithArguments("x1").WithWarningAsError(true),
@@ -299,14 +299,14 @@ public class C : NotFound
         return x3 + 1;
     }
 }";
-            var options = TestOptions.Dll.WithGeneralDiagnosticOption(ReportDiagnostic.Error);
+            var options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Error);
 
-            CreateCompilationWithMscorlib45(source, compOptions: options).VerifyDiagnostics(
+            CreateCompilationWithMscorlib45(source, options: options).VerifyDiagnostics(
                 // (2,18): error CS0246: The type or namespace name 'NotFound' could not be found (are you missing a using directive or an assembly reference?)
                 // public class C : NotFound
                 Diagnostic(ErrorCode.ERR_SingleTypeNameNotFound, "NotFound").WithArguments("NotFound")
                 )
-            .VerifyCSharpAnalyzerDiagnostics(new IDiagnosticAnalyzer[] { new ComplainAboutX() }, null,
+            .VerifyCSharpAnalyzerDiagnostics(new IDiagnosticAnalyzer[] { new ComplainAboutX() }, null, null,
                 // (6,18): error CA9999_UseOfVariableThatStartsWithX: Use of variable whose name starts with 'x': 'x1'
                 //         int x3 = x1(x2);
                 Diagnostic("CA9999_UseOfVariableThatStartsWithX", "x1").WithArguments("x1").WithWarningAsError(true),
@@ -383,11 +383,11 @@ using System;
 
 [Obsolete]
 public class C { }";
-            var options = TestOptions.Dll.WithGeneralDiagnosticOption(ReportDiagnostic.Error);
+            var options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Error);
 
-            CreateCompilationWithMscorlib45(source, compOptions: options)
+            CreateCompilationWithMscorlib45(source, options: options)
                 .VerifyDiagnostics()
-                .VerifyCSharpAnalyzerDiagnostics(new IDiagnosticAnalyzer[] { new SyntaxAndSymbolAnalyzer() }, null,
+                .VerifyCSharpAnalyzerDiagnostics(new IDiagnosticAnalyzer[] { new SyntaxAndSymbolAnalyzer() }, null, null,
                     // Symbol diagnostics
                     Diagnostic("XX0001", "C").WithWarningAsError(true),
                     // Syntax diagnostics
@@ -405,12 +405,12 @@ public class C { }").WithWarningAsError(true)); // class declaration
             var infoDiagDesciptor = new DiagnosticDescriptor("XX0002", "DummyDescription", "DummyMessage", "DummyCategory", DiagnosticSeverity.Info, isEnabledByDefault: true);
             var warningDiagDesciptor = new DiagnosticDescriptor("XX0003", "DummyDescription", "DummyMessage", "DummyCategory", DiagnosticSeverity.Warning, isEnabledByDefault: true);
             var errorDiagDesciptor = new DiagnosticDescriptor("XX0004", "DummyDescription", "DummyMessage", "DummyCategory", DiagnosticSeverity.Error, isEnabledByDefault: true);
-            
+
             var noneDiag = CodeAnalysis.Diagnostic.Create(noneDiagDesciptor, Location.None);
             var infoDiag = CodeAnalysis.Diagnostic.Create(infoDiagDesciptor, Location.None);
             var warningDiag = CodeAnalysis.Diagnostic.Create(warningDiagDesciptor, Location.None);
             var errorDiag = CodeAnalysis.Diagnostic.Create(errorDiagDesciptor, Location.None);
-            
+
             var diags = new[] { noneDiag, infoDiag, warningDiag, errorDiag };
 
             // Escalate all diagnostics to error.
@@ -418,9 +418,9 @@ public class C { }").WithWarningAsError(true)); // class declaration
             specificDiagOptions.Add(noneDiagDesciptor.Id, ReportDiagnostic.Error);
             specificDiagOptions.Add(infoDiagDesciptor.Id, ReportDiagnostic.Error);
             specificDiagOptions.Add(warningDiagDesciptor.Id, ReportDiagnostic.Error);
-            var options = TestOptions.Dll.WithSpecificDiagnosticOptions(specificDiagOptions);
+            var options = TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(specificDiagOptions);
 
-            var comp = CreateCompilationWithMscorlib45("", compOptions: options);
+            var comp = CreateCompilationWithMscorlib45("", options: options);
             var effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray();
             Assert.Equal(diags.Length, effectiveDiags.Length);
             foreach (var effectiveDiag in effectiveDiags)
@@ -430,18 +430,16 @@ public class C { }").WithWarningAsError(true)); // class declaration
             }
 
             // Suppress all diagnostics.
-            // NOTE: Diagnostics with default severity error cannot be suppressed and its severity cannot be lowered.
             specificDiagOptions = new Dictionary<string, ReportDiagnostic>();
             specificDiagOptions.Add(noneDiagDesciptor.Id, ReportDiagnostic.Suppress);
             specificDiagOptions.Add(infoDiagDesciptor.Id, ReportDiagnostic.Suppress);
             specificDiagOptions.Add(warningDiagDesciptor.Id, ReportDiagnostic.Suppress);
             specificDiagOptions.Add(errorDiagDesciptor.Id, ReportDiagnostic.Suppress);
-            options = TestOptions.Dll.WithSpecificDiagnosticOptions(specificDiagOptions);
+            options = TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(specificDiagOptions);
 
-            comp = CreateCompilationWithMscorlib45("", compOptions: options);
+            comp = CreateCompilationWithMscorlib45("", options: options);
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray();
-            Assert.Equal(1, effectiveDiags.Length);
-            Assert.Equal(errorDiagDesciptor.Id, effectiveDiags[0].Id);
+            Assert.Equal(0, effectiveDiags.Length);
 
             // Shuffle diagnostic severity.
             specificDiagOptions = new Dictionary<string, ReportDiagnostic>();
@@ -449,9 +447,9 @@ public class C { }").WithWarningAsError(true)); // class declaration
             specificDiagOptions.Add(infoDiagDesciptor.Id, ReportDiagnostic.Hidden);
             specificDiagOptions.Add(warningDiagDesciptor.Id, ReportDiagnostic.Error);
             specificDiagOptions.Add(errorDiagDesciptor.Id, ReportDiagnostic.Warn);
-            options = TestOptions.Dll.WithSpecificDiagnosticOptions(specificDiagOptions);
+            options = TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(specificDiagOptions);
 
-            comp = CreateCompilationWithMscorlib45("", compOptions: options);
+            comp = CreateCompilationWithMscorlib45("", options: options);
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray();
             Assert.Equal(diags.Length, effectiveDiags.Length);
             var diagIds = new HashSet<string>(diags.Select(d => d.Id));
@@ -472,7 +470,7 @@ public class C { }").WithWarningAsError(true)); // class declaration
                     case DiagnosticSeverity.Warning:
                         if (!effectiveDiag.IsWarningAsError)
                         {
-                            Assert.Equal(infoDiagDesciptor.Id, effectiveDiag.Id);
+                            Assert.Equal(errorDiagDesciptor.Id, effectiveDiag.Id);
                         }
                         else
                         {
@@ -494,7 +492,7 @@ public class C { }").WithWarningAsError(true)); // class declaration
         }
 
         [Fact]
-        void TestGetEffectiveDiagnosticsGlobal()
+        public void TestGetEffectiveDiagnosticsGlobal()
         {
             var noneDiagDesciptor = new DiagnosticDescriptor("XX0001", "DummyDescription", "DummyMessage", "DummyCategory", DiagnosticSeverity.Hidden, isEnabledByDefault: true);
             var infoDiagDesciptor = new DiagnosticDescriptor("XX0002", "DummyDescription", "DummyMessage", "DummyCategory", DiagnosticSeverity.Info, isEnabledByDefault: true);
@@ -506,42 +504,42 @@ public class C { }").WithWarningAsError(true)); // class declaration
             var warningDiag = Microsoft.CodeAnalysis.Diagnostic.Create(warningDiagDesciptor, Location.None);
             var errorDiag = Microsoft.CodeAnalysis.Diagnostic.Create(errorDiagDesciptor, Location.None);
 
-            var diags = new [] { noneDiag, infoDiag, warningDiag, errorDiag };
+            var diags = new[] { noneDiag, infoDiag, warningDiag, errorDiag };
 
-            var options = OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Default);
-            var comp = CreateCompilationWithMscorlib45("", compOptions:options);
+            var options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Default);
+            var comp = CreateCompilationWithMscorlib45("", options: options);
             var effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray();
             Assert.Equal(4, effectiveDiags.Length);
 
-            options = OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Error);
-            comp = CreateCompilationWithMscorlib45("", compOptions:options);
+            options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Error);
+            comp = CreateCompilationWithMscorlib45("", options: options);
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray();
             Assert.Equal(4, effectiveDiags.Length);
             Assert.Equal(1, effectiveDiags.Count(d => d.IsWarningAsError));
 
-            options = OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Warn);
-            comp = CreateCompilationWithMscorlib45("", compOptions:options);
+            options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Warn);
+            comp = CreateCompilationWithMscorlib45("", options: options);
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray();
             Assert.Equal(4, effectiveDiags.Length);
             Assert.Equal(1, effectiveDiags.Count(d => d.Severity == DiagnosticSeverity.Error));
             Assert.Equal(1, effectiveDiags.Count(d => d.Severity == DiagnosticSeverity.Warning));
 
-            options = OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Info);
-            comp = CreateCompilationWithMscorlib45("", compOptions:options);
+            options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Info);
+            comp = CreateCompilationWithMscorlib45("", options: options);
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray();
             Assert.Equal(4, effectiveDiags.Length);
             Assert.Equal(1, effectiveDiags.Count(d => d.Severity == DiagnosticSeverity.Error));
             Assert.Equal(1, effectiveDiags.Count(d => d.Severity == DiagnosticSeverity.Info));
 
-            options = OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Hidden);
-            comp = CreateCompilationWithMscorlib45("", compOptions:options);
+            options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Hidden);
+            comp = CreateCompilationWithMscorlib45("", options: options);
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray();
             Assert.Equal(4, effectiveDiags.Length);
             Assert.Equal(1, effectiveDiags.Count(d => d.Severity == DiagnosticSeverity.Error));
             Assert.Equal(1, effectiveDiags.Count(d => d.Severity == DiagnosticSeverity.Hidden));
 
-            options = OptionsDll.WithGeneralDiagnosticOption(ReportDiagnostic.Suppress);
-            comp = CreateCompilationWithMscorlib45("", compOptions:options);
+            options = TestOptions.ReleaseDll.WithGeneralDiagnosticOption(ReportDiagnostic.Suppress);
+            comp = CreateCompilationWithMscorlib45("", options: options);
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray();
             Assert.Equal(2, effectiveDiags.Length);
             Assert.Equal(1, effectiveDiags.Count(d => d.Severity == DiagnosticSeverity.Error));
@@ -560,8 +558,8 @@ public class C { }").WithWarningAsError(true)); // class declaration
             var diags = new[] { disabledDiag, enabledDiag };
 
             // Verify that only the enabled diag shows up after filtering.
-            var options = TestOptions.Dll;
-            var comp = CreateCompilationWithMscorlib45("", compOptions: options);
+            var options = TestOptions.ReleaseDll;
+            var comp = CreateCompilationWithMscorlib45("", options: options);
             var effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray();
             Assert.Equal(1, effectiveDiags.Length);
             Assert.Contains(enabledDiag, effectiveDiags);
@@ -571,8 +569,8 @@ public class C { }").WithWarningAsError(true)); // class declaration
             specificDiagOptions.Add(disabledDiagDescriptor.Id, ReportDiagnostic.Warn);
             specificDiagOptions.Add(enabledDiagDescriptor.Id, ReportDiagnostic.Suppress);
 
-            options = TestOptions.Dll.WithSpecificDiagnosticOptions(specificDiagOptions);
-            comp = CreateCompilationWithMscorlib45("", compOptions: options);
+            options = TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(specificDiagOptions);
+            comp = CreateCompilationWithMscorlib45("", options: options);
             effectiveDiags = comp.GetEffectiveDiagnostics(diags).ToArray();
             Assert.Equal(1, effectiveDiags.Length);
             Assert.Contains(disabledDiag, effectiveDiags);
@@ -606,7 +604,7 @@ public class C { }").WithWarningAsError(true)); // class declaration
             var fullyDisabledAnalyzer = new FullyDisabledAnalyzer();
             var partiallyDisabledAnalyzer = new PartiallyDisabledAnalyzer();
 
-            var options = TestOptions.Dll;
+            var options = TestOptions.ReleaseDll;
             Assert.True(fullyDisabledAnalyzer.IsDiagnosticAnalyzerSuppressed(options));
             Assert.False(partiallyDisabledAnalyzer.IsDiagnosticAnalyzerSuppressed(options));
 
@@ -614,7 +612,7 @@ public class C { }").WithWarningAsError(true)); // class declaration
             specificDiagOptions.Add(FullyDisabledAnalyzer.desc1.Id, ReportDiagnostic.Warn);
             specificDiagOptions.Add(PartiallyDisabledAnalyzer.desc2.Id, ReportDiagnostic.Suppress);
 
-            options = TestOptions.Dll.WithSpecificDiagnosticOptions(specificDiagOptions);
+            options = TestOptions.ReleaseDll.WithSpecificDiagnosticOptions(specificDiagOptions);
             Assert.False(fullyDisabledAnalyzer.IsDiagnosticAnalyzerSuppressed(options));
             Assert.True(partiallyDisabledAnalyzer.IsDiagnosticAnalyzerSuppressed(options));
         }

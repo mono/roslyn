@@ -530,25 +530,34 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         End Function
 
         Public Function Construct(ParamArray typeArguments() As TypeSymbol) As MethodSymbol
-            Return Construct(typeArguments.AsImmutableOrNull())
-        End Function
-
-        Public Function Construct(typeArguments As IEnumerable(Of TypeSymbol)) As MethodSymbol
-            Return Construct(typeArguments.AsImmutableOrNull())
+            Return Construct(ImmutableArray.Create(typeArguments))
         End Function
 
         Friend MustOverride ReadOnly Property CallingConvention As Microsoft.Cci.CallingConvention
 
         ''' <summary>
-        ''' Get the "this" parameter for this method.  This is only valid for source methods.
-        ''' Returns Nothing for a Shared method, the Me parameter for a non-shared method, and throws
-        ''' InvalidOperationException for a symbol that isn't a original source method.
+        ''' Call <see cref="TryGetMeParameter"/> and throw if it returns false.
         ''' </summary>
-        Friend Overridable ReadOnly Property MeParameter As ParameterSymbol
+        ''' <returns></returns>
+        Friend ReadOnly Property MeParameter As ParameterSymbol
             Get
-                Throw ExceptionUtilities.Unreachable
+                Dim parameter As ParameterSymbol = Nothing
+                If Not Me.TryGetMeParameter(parameter) Then
+                    Throw ExceptionUtilities.Unreachable
+                End If
+                Return parameter
             End Get
         End Property
+
+        ''' <returns>
+        ''' True if this <see cref="MethodSymbol"/> type supports retrieving the Me parameter
+        ''' and false otherwise.  Note that a return value of true does not guarantee a non-Nothing
+        ''' <paramref name="meParameter"/> (e.g. fails for shared methods).
+        ''' </returns>
+        Friend Overridable Function TryGetMeParameter(<Out> ByRef meParameter As ParameterSymbol) As Boolean
+            meParameter = Nothing
+            Return False
+        End Function
 
         Friend Overrides Function GetUseSiteErrorInfo() As DiagnosticInfo
             If Me.IsDefinition Then
@@ -718,12 +727,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Throw ExceptionUtilities.Unreachable
         End Function
 
-        ''' <summary>
-        ''' If true and <see cref="CompilationOptions.DebugInformationKind"/> is not <see cref="DebugInformationKind.None"/>, 
-        ''' the compiler generates debug information for this method. 
-        ''' </summary>
         ''' <remarks>
-        ''' Generally should return true iff the method contains user code.
+        ''' True iff the method contains user code.
         ''' </remarks>
         Friend MustOverride ReadOnly Property GenerateDebugInfoImpl As Boolean
 
@@ -737,7 +742,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         Friend Overrides ReadOnly Property EmbeddedSymbolKind As EmbeddedSymbolKind
             Get
-                Return Me.ContainingSymbol.EmbeddedSymbolKind
+                Return If(Me.ContainingSymbol Is Nothing, EmbeddedSymbolKind.None, Me.ContainingSymbol.EmbeddedSymbolKind)
             End Get
         End Property
 

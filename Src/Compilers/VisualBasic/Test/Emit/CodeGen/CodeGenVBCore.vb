@@ -29,19 +29,19 @@ End Class
             ' With InternalXmlHelper.
             Dim compilation = CreateCompilationWithMscorlibAndReferences(sources,
                 references:=NoVbRuntimeReferences.Concat(XmlReferences),
-                options:=DefaultCompilationOptions.WithEmbedVbCoreRuntime(True).WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+                options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
             compilation.AssertNoErrors()
 
             ' With VBCore.
             compilation = CreateCompilationWithMscorlibAndReferences(sources,
                 references:=NoVbRuntimeReferences,
-                options:=DefaultCompilationOptions.WithEmbedVbCoreRuntime(True).WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+                options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
             compilation.AssertNoErrors()
 
             ' No embedded code.
             compilation = CreateCompilationWithMscorlibAndReferences(sources,
                 references:=NoVbRuntimeReferences,
-                options:=DefaultCompilationOptions.WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+                options:=TestOptions.ReleaseDll)
             compilation.AssertTheseDiagnostics(<errors><![CDATA[
 BC30002: Type 'Microsoft.VisualBasic.Embedded' is not defined.
 <Microsoft.VisualBasic.Embedded()>
@@ -66,7 +66,7 @@ End Class
             ' No embedded code.
             Dim compilation = CreateCompilationWithMscorlibAndReferences(sources,
                 references:=NoVbRuntimeReferences.Concat({MsvbRef, SystemXmlRef, SystemXmlLinqRef}),
-                options:=DefaultCompilationOptions.WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+                options:=TestOptions.ReleaseDll)
             compilation.AssertTheseDiagnostics(<errors><![CDATA[
 BC30002: Type 'Microsoft.VisualBasic.Embedded' is not defined.
 <Microsoft.VisualBasic.Embedded()>
@@ -91,7 +91,7 @@ End Class
             ' No embedded code.
             Dim compilation = CreateCompilationWithMscorlibAndReferences(sources,
                 references:=NoVbRuntimeReferences.Concat({MsvbRef, SystemXmlRef, SystemXmlLinqRef}),
-                options:=DefaultCompilationOptions.WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+                options:=TestOptions.ReleaseDll)
             compilation.AssertTheseDiagnostics(<errors><![CDATA[
 BC30002: Type 'Microsoft.VisualBasic.Embedded' is not defined.
     Public x As Microsoft.VisualBasic.Embedded
@@ -121,8 +121,7 @@ Namespace Global
 End Namespace
 </expected>.Value)
                              End Sub,
-                options:=OptionsDllAlwaysImportInternals,
-                emitPdb:=True)
+                options:=TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal))
             compilationVerifier.Compilation.AssertNoErrors()
         End Sub
 
@@ -148,8 +147,7 @@ Namespace Global
 End Namespace
 </expected>.Value)
                              End Sub,
-                options:=OptionsDllAlwaysImportInternals,
-                emitPdb:=True)
+                options:=TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal))
             compilationVerifier.Compilation.AssertNoErrors()
         End Sub
 
@@ -197,8 +195,7 @@ End Class
             allReferences:=NoVbRuntimeReferences.Concat(XmlReferences),
             sourceSymbolValidator:=Sub([module]) ValidateSourceSymbols([module]),
             symbolValidator:=Sub([module]) ValidateSymbols([module], symbols),
-            options:=OptionsDllAlwaysImportInternals,
-            emitPdb:=True)
+            options:=TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal))
             compilationVerifier.Compilation.AssertNoErrors()
         End Sub
 
@@ -252,8 +249,7 @@ End Class
             allReferences:=NoVbRuntimeReferences.Concat(XmlReferences),
             symbolValidator:=Sub([module]) ValidateSymbols([module], symbols),
             sourceSymbolValidator:=Sub([module]) ValidateSourceSymbols([module]),
-            options:=OptionsDllAlwaysImportInternals,
-            emitPdb:=True)
+            options:=TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal))
             compilationVerifier.Compilation.AssertNoErrors()
         End Sub
 
@@ -268,7 +264,7 @@ End Class
     ]]></file>
 </compilation>,
                 references:=NoVbRuntimeReferences.Concat(XmlReferences),
-                options:=DefaultCompilationOptions.WithEmbedVbCoreRuntime(True).WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+                options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
             compilation.AssertNoErrors()
             Dim globalNamespace = compilation.SourceModule.GlobalNamespace
             Assert.Equal(globalNamespace.Locations.Length, 4)
@@ -476,8 +472,7 @@ End Class
   End Namespace
 </expected>.Value)
                              End Sub,
-                options:=OptionsExe.WithEmbedVbCoreRuntime(True).WithMetadataImportOptions(MetadataImportOptions.Internal).WithDebugInformationKind(DebugInformationKind.Full),
-                emitPdb:=True)
+                options:=TestOptions.DebugExe.WithEmbedVbCoreRuntime(True).WithMetadataImportOptions(MetadataImportOptions.Internal))
         End Sub
 
         <Fact()>
@@ -2210,8 +2205,7 @@ symbolValidator:=Sub([module])
     End Namespace
   End Namespace
 </expected>.Value)
-                 End Sub,
-                 debugKind:=DebugInformationKind.None)
+                 End Sub)
         End Sub
 
         <Fact>
@@ -2235,7 +2229,7 @@ End Class
         </file>
     </compilation>,
             references:=NoVbRuntimeReferences,
-            options:=OptionsDll.WithEmbedVbCoreRuntime(True))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertNoErrors(other)
 
@@ -2253,7 +2247,7 @@ End Class
         </file>
     </compilation>,
             references:=NoVbRuntimeReferences.Concat({New VisualBasicCompilationReference(other)}),
-            options:=OptionsDll)
+            options:=TestOptions.ReleaseDll)
 
             'compilation should not succeed, and internals should not be imported.
             c.GetDiagnostics()
@@ -2279,7 +2273,7 @@ End Class
         </file>
     </compilation>,
             references:=NoVbRuntimeReferences.Concat({New VisualBasicCompilationReference(other)}),
-            options:=OptionsDll)
+            options:=TestOptions.ReleaseDll)
 
             CompilationUtils.AssertTheseDiagnostics(c2,
 <error>
@@ -2313,7 +2307,7 @@ End Class
         </file>
     </compilation>,
             references:=NoVbRuntimeReferences,
-            options:=OptionsDll.WithEmbedVbCoreRuntime(True))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertNoErrors(other)
 
@@ -2333,7 +2327,7 @@ End Class
         </file>
     </compilation>,
             references:=NoVbRuntimeReferences.Concat({New VisualBasicCompilationReference(other)}),
-            options:=OptionsDll)
+            options:=TestOptions.ReleaseDll)
 
             CompilationUtils.AssertTheseDiagnostics(c,
 <error>
@@ -2364,7 +2358,7 @@ End Class
         </file>
     </compilation>,
             references:=NoVbRuntimeReferences,
-            options:=OptionsDll.WithEmbedVbCoreRuntime(True))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertNoErrors(other)
 
@@ -2384,7 +2378,7 @@ End Class
         </file>
     </compilation>,
             references:=NoVbRuntimeReferences.Concat({New VisualBasicCompilationReference(other)}),
-            options:=OptionsDll)
+            options:=TestOptions.ReleaseDll)
 
             CompilationUtils.AssertTheseDiagnostics(c,
 <error>
@@ -2415,7 +2409,7 @@ End Class
         </file>
     </compilation>,
             references:=NoVbRuntimeReferences,
-            options:=OptionsDll.WithEmbedVbCoreRuntime(True))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertNoErrors(other)
 
@@ -2437,7 +2431,7 @@ End Class
          </file>
      </compilation>),
             references:=NoVbRuntimeReferences.Concat({New MetadataImageReference(memory.ToImmutable())}),
-            options:=OptionsDll)
+            options:=TestOptions.ReleaseDll)
 
             CompilationUtils.AssertTheseDiagnostics(c,
 <error>
@@ -2458,7 +2452,7 @@ BC30451: 'ChrW' is not declared. It may be inaccessible due to its protection le
         </file>
     </compilation>,
             references:=NoVbRuntimeReferences,
-            options:=OptionsDll.WithEmbedVbCoreRuntime(True))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertNoErrors(other)
 
@@ -2495,8 +2489,7 @@ End Class
   End Namespace
 </expected>.Value)
                              End Sub,
-                options:=OptionsExeAlwaysImportInternals,
-                emitPdb:=True)
+                options:=TestOptions.ReleaseExe.WithMetadataImportOptions(MetadataImportOptions.Internal))
         End Sub
 
         <Fact()>
@@ -2516,7 +2509,7 @@ End Class
         </file>
     </compilation>,
             references:=NoVbRuntimeReferences,
-            options:=OptionsDll.WithEmbedVbCoreRuntime(False))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(False))
 
             CompilationUtils.AssertTheseDiagnostics(withoutVbCore,
 <error>
@@ -2558,9 +2551,8 @@ End Class
 ]]></file>
 </compilation>
 
-            Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(
-                                    source, DefaultCompilationOptions.WithEmbedVbCoreRuntime(True).WithOptimizations(False))
-            Dim actual = PDB.PDBTests.GetPdbXml(compilation)
+            Dim compilation = CreateCompilationWithMscorlibAndVBRuntime(source, TestOptions.DebugExe.WithEmbedVbCoreRuntime(True))
+            Dim actual = GetPdbXml(compilation)
 
             Dim expected =
 <symbols>
@@ -2608,7 +2600,7 @@ End Namespace
     </file>
 </compilation>,
             references:={SystemRef, SystemCoreRef},
-            options:=DefaultCompilationOptions.WithEmbedVbCoreRuntime(True).WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertTheseDiagnostics(compilation1,
 <errors>
@@ -2634,7 +2626,7 @@ End Namespace
     </file>
 </compilation>,
             references:={SystemRef, SystemCoreRef},
-            options:=DefaultCompilationOptions.WithEmbedVbCoreRuntime(True).WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertTheseDiagnostics(compilation1,
 <errors>
@@ -2660,7 +2652,7 @@ End Namespace
     </file>
 </compilation>,
             references:={SystemRef, SystemCoreRef},
-            options:=DefaultCompilationOptions.WithEmbedVbCoreRuntime(True).WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertTheseDiagnostics(compilation1,
 <errors>
@@ -2686,7 +2678,7 @@ End Namespace
     </file>
 </compilation>,
             references:={SystemRef, SystemCoreRef},
-            options:=DefaultCompilationOptions.WithEmbedVbCoreRuntime(True).WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertTheseDiagnostics(compilation1,
 <errors>
@@ -2718,7 +2710,7 @@ End Namespace
     </file>
 </compilation>,
             references:={SystemRef, SystemCoreRef},
-            options:=DefaultCompilationOptions.WithEmbedVbCoreRuntime(True).WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertTheseDiagnostics(compilation1,
 <errors>
@@ -2763,7 +2755,7 @@ End Namespace
     </file>
 </compilation>,
             references:={SystemRef, SystemCoreRef},
-            options:=DefaultCompilationOptions.WithEmbedVbCoreRuntime(True).WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertTheseDiagnostics(compilation1,
 <errors>
@@ -2779,7 +2771,7 @@ Namespace Global.Microsoft.VisualBasic.Strings
             ' is triggered by the Embedded Attribute.  This occurs on the command line compilers
             ' when the reference to system.xml.linq is added
 
-            Dim compilationOptions = DefaultCompilationOptions.WithOutputKind(OutputKind.ConsoleApplication).WithGlobalImports(GlobalImport.Parse({"System", "Microsoft.VisualBasic"}))
+            Dim compilationOptions = TestOptions.ReleaseExe.WithGlobalImports(GlobalImport.Parse({"System", "Microsoft.VisualBasic"}))
 
             Dim compilation1 = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntimeAndReferences(
 <compilation>
@@ -2854,7 +2846,7 @@ BC31210: module 'VisualBasic' conflicts with a Visual Basic Runtime namespace 'V
     </file>
 </compilation>,
             references:={SystemRef, SystemCoreRef},
-            options:=DefaultCompilationOptions.WithEmbedVbCoreRuntime(True).WithOutputKind(OutputKind.DynamicallyLinkedLibrary))
+            options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertTheseDiagnostics(compilation, <errors></errors>)
 
@@ -2918,7 +2910,7 @@ End Module
           </file>
       </compilation>,
               references:=NoVbRuntimeReferences,
-              options:=OptionsDll.WithEmbedVbCoreRuntime(True))
+              options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(True))
 
             CompilationUtils.AssertNoErrors(compilation)
         End Sub
@@ -2944,7 +2936,7 @@ End Module
           </file>
       </compilation>,
               references:=NoVbRuntimeReferences,
-              options:=OptionsDll.WithEmbedVbCoreRuntime(False))
+              options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(False))
 
             compilation.VerifyDiagnostics(Diagnostic(ERRID.ERR_MissingRuntimeHelper, "Module1").WithArguments("Microsoft.VisualBasic.CompilerServices.StandardModuleAttribute..ctor"))
 
@@ -2987,7 +2979,7 @@ End Namespace
           </file>
       </compilation>,
               references:=NoVbRuntimeReferences,
-              options:=OptionsDll.WithEmbedVbCoreRuntime(False))
+              options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(False))
 
             compilation.AssertNoDiagnostics()
         End Sub
@@ -3027,7 +3019,7 @@ End Namespace
           </file>
       </compilation>,
               references:=NoVbRuntimeReferences,
-              options:=OptionsDll.WithEmbedVbCoreRuntime(False))
+              options:=TestOptions.ReleaseDll.WithEmbedVbCoreRuntime(False))
 
             compilation.VerifyDiagnostics(Diagnostic(ERRID.ERR_NewInStruct, "New"),
                                     Diagnostic(ERRID.ERR_StructCantInherit, "Inherits System.Exception"),
@@ -3080,7 +3072,7 @@ Module Module1
     End Sub
 End Module
     </file>
-</compilation>, emitPdb:=False).VerifyIL("Module1.Main", <![CDATA[
+</compilation>).VerifyIL("Module1.Main", <![CDATA[
 {
   // Code size       29 (0x1d)
   .maxstack  2
@@ -3124,7 +3116,7 @@ End Module
 
             CreateCompilationWithMscorlib(
                 source,
-                options:=OptionsExe.WithEmbedVbCoreRuntime(True)).
+                options:=TestOptions.ReleaseExe.WithEmbedVbCoreRuntime(True)).
             VerifyDiagnostics(
                 Diagnostic(ERRID.ERR_UndefinedType1).WithArguments("Global.System.ComponentModel.EditorBrowsable"),
                 Diagnostic(ERRID.ERR_NameNotMember2).WithArguments("ComponentModel", "System"),
@@ -3303,12 +3295,12 @@ End Module
             Optional expectedOutput As String = Nothing,
             Optional sourceSymbolValidator As Action(Of ModuleSymbol) = Nothing,
             Optional validator As Action(Of PEAssembly) = Nothing,
-            Optional symbolValidator As Action(Of ModuleSymbol) = Nothing,
-            Optional emitPdb As Boolean = True,
-            Optional debugKind As DebugInformationKind = DebugInformationKind.Full
+            Optional symbolValidator As Action(Of ModuleSymbol) = Nothing
         ) As CompilationVerifier
 
-            Dim options = If(expectedOutput IsNot Nothing, OptionsExeAlwaysImportInternals, OptionsDllAlwaysImportInternals).WithEmbedVbCoreRuntime(True).WithDebugInformationKind(debugKind)
+            Dim options = If(expectedOutput IsNot Nothing, TestOptions.ReleaseExe, TestOptions.ReleaseDll).
+                WithMetadataImportOptions(MetadataImportOptions.Internal).
+                WithEmbedVbCoreRuntime(True)
 
             Return MyBase.CompileAndVerify(source:=source,
                                            allReferences:=NoVbRuntimeReferences,
@@ -3316,8 +3308,7 @@ End Module
                                            sourceSymbolValidator:=sourceSymbolValidator,
                                            validator:=Translate(validator),
                                            symbolValidator:=symbolValidator,
-                                           options:=options,
-                                           emitPdb:=emitPdb)
+                                           options:=options)
         End Function
 
         Private Function Translate(action As Action(Of PEAssembly)) As Action(Of PEAssembly, EmitOptions)

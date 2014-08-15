@@ -1266,6 +1266,9 @@
   <data name="WRN_NubExprIsConstBool" xml:space="preserve">
     <value>The result of the expression is always '{0}' since a value of type '{1}' is never equal to 'null' of type '{2}'</value>
   </data>
+  <data name="WRN_NubExprIsConstBool2" xml:space="preserve">
+    <value>The result of the expression is always '{0}' since a value of type '{1}' is never equal to 'null' of type '{2}'</value>
+  </data>
   <data name="WRN_ExplicitImplCollision" xml:space="preserve">
     <value>Explicit interface implementation '{0}' matches more than one interface member. Which interface member is actually chosen is implementation-dependent. Consider using a non-explicit implementation instead.</value>
   </data>
@@ -3025,7 +3028,7 @@
     <value>__arglist is not allowed in the parameter list of async methods</value>
   </data>
   <data name="ERR_ByRefTypeAndAwait" xml:space="preserve">
-    <value>'await' cannot be used in an expression containing the type 'System.TypedReference'</value>
+    <value>'await' cannot be used in an expression containing the type '{0}'</value>
   </data>
   <data name="ERR_UnsafeAsyncArgType" xml:space="preserve">
     <value>Async methods cannot have unsafe parameters or return types</value>
@@ -3702,10 +3705,10 @@
   <data name="NotACSharpSymbol" xml:space="preserve">
     <value>Not a C# symbol.</value>
   </data>
-  <data name="INF_UnusedUsingDirective" xml:space="preserve">
+  <data name="HDN_UnusedUsingDirective" xml:space="preserve">
     <value>Unnecessary using directive.</value>
   </data>
-  <data name="INF_UnusedExternAlias" xml:space="preserve">
+  <data name="HDN_UnusedExternAlias" xml:space="preserve">
     <value>Unused extern alias.</value>
   </data>
   <data name="ElementsCannotBeNull" xml:space="preserve">
@@ -3870,7 +3873,13 @@
   <data name="ERR_NullPropagatingOpInExpressionTree" xml:space="preserve">
     <value>An expression tree lambda may not contain a null propagating operator.</value>
   </data>
+  <data name="ERR_DictionaryInitializerInExpressionTree" xml:space="preserve">
+    <value>An expression tree lambda may not contain a dictionary initializer.</value>
+  </data>
   <data name="IDS_FeatureNameof" xml:space="preserve">
     <value>nameof operator</value>
+  </data>
+  <data name="IDS_FeatureDictionaryInitializer" xml:space="preserve">
+    <value>dictionary initializer</value>
   </data>
 </root>

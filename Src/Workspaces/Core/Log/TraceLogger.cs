@@ -16,10 +16,10 @@ namespace Microsoft.CodeAnalysis.Internal.Log
     {
         public static readonly TraceLogger Instance = new TraceLogger();
 
-        private readonly Func<FeatureId, FunctionId, bool> loggingChecker;
+        private readonly Func<FunctionId, bool> loggingChecker;
 
         public TraceLogger()
-            : this((Func<FeatureId, FunctionId, bool>)null)
+            : this((Func<FunctionId, bool>)null)
         {
         }
 
@@ -28,60 +28,30 @@ namespace Microsoft.CodeAnalysis.Internal.Log
         {
         }
 
-        public TraceLogger(Func<FeatureId, FunctionId, bool> loggingChecker)
+        public TraceLogger(Func<FunctionId, bool> loggingChecker)
         {
             this.loggingChecker = loggingChecker;
         }
 
-        public bool IsEnabled(FeatureId featureId, FunctionId functionId)
+        public bool IsEnabled(FunctionId functionId)
         {
-            return this.loggingChecker == null || this.loggingChecker(featureId, functionId);
+            return this.loggingChecker == null || this.loggingChecker(functionId);
         }
 
-        /// <summary>
-        /// Trace logger always uses verbose mode.
-        /// </summary>
-        public bool IsVerbose()
+        public void Log(FunctionId functionId, LogMessage logMessage)
         {
-            return true;
+            Trace.WriteLine(string.Format("[{0}] {1}/{2} - {3}", Thread.CurrentThread.ManagedThreadId, functionId.ToString(), logMessage.GetMessage()));
         }
 
-        public void Log(FeatureId featureId, FunctionId functionId, string message)
+        public void LogBlockStart(FunctionId functionId, LogMessage logMessage, int uniquePairId, CancellationToken cancellationToken)
         {
-            Trace.WriteLine(string.Format("[{0}] {1}/{2} - {3}", Thread.CurrentThread.ManagedThreadId, featureId.ToString(), functionId.ToString(), message));
+            Trace.WriteLine(string.Format("[{0}] Start({1}) : {2}/{3} - {4}", Thread.CurrentThread.ManagedThreadId, uniquePairId, functionId.ToString(), logMessage.GetMessage()));
         }
 
-        public IDisposable LogBlock(FeatureId featureId, FunctionId functionId, string message, int uniquePairId, CancellationToken cancellationToken)
+        public void LogBlockEnd(FunctionId functionId, LogMessage logMessage, int uniquePairId, int delta, CancellationToken cancellationToken)
         {
-            return new TraceLogBlock(featureId, functionId, message, uniquePairId, cancellationToken);
-        }
-
-        private class TraceLogBlock : IDisposable
-        {
-            private readonly CancellationToken cancellationToken;
-            private readonly FeatureId featureId;
-            private readonly FunctionId functionId;
-            private readonly int uniquePairId;
-
-            private readonly Stopwatch watch;
-
-            public TraceLogBlock(FeatureId featureId, FunctionId functionId, string message, int uniquePairId, CancellationToken cancellationToken)
-            {
-                this.featureId = featureId;
-                this.functionId = functionId;
-                this.uniquePairId = uniquePairId;
-                this.cancellationToken = cancellationToken;
-
-                this.watch = Stopwatch.StartNew();
-                Trace.WriteLine(string.Format("[{0}] Start({1}) : {2}/{3} - {4}", Thread.CurrentThread.ManagedThreadId, uniquePairId, featureId.ToString(), functionId.ToString(), message));
-            }
-
-            public void Dispose()
-            {
-                var timeSpan = watch.ElapsedMilliseconds;
-                var functionString = functionId.ToString() + (cancellationToken.IsCancellationRequested ? " Canceled" : string.Empty);
-                Trace.WriteLine(string.Format("[{0}] End({1}) : [{2}ms] {3}/{4}", Thread.CurrentThread.ManagedThreadId, uniquePairId, timeSpan, featureId.ToString(), functionString));
-            }
+            var functionString = functionId.ToString() + (cancellationToken.IsCancellationRequested ? " Canceled" : string.Empty);
+            Trace.WriteLine(string.Format("[{0}] End({1}) : [{2}ms] {3}/{4}", Thread.CurrentThread.ManagedThreadId, uniquePairId, delta, functionString));
         }
     }
 }

@@ -85,7 +85,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     compilerInputs.CompilationOptions,
                     compilerInputs.ParseOptions.WithPreprocessorSymbols(AddPredefinedPreprocessorSymbols(
                         compilerInputs.CompilationOptions.OutputKind, compilerInputs.ParseOptions.PreprocessorSymbols)),
-                    Me.GetDocuments(compilerInputs, executedProject),
+                    Me.GetDocuments(compilerInputs.Sources, executedProject),
+                    Me.GetDocuments(compilerInputs.AdditionalFiles, executedProject),
                     Me.GetProjectReferences(executedProject),
                     metadataReferences,
                     analyzerReferences)
@@ -145,14 +146,17 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             End Sub
 
-            Private Function GetDocuments(compilerInputs As VisualBasicCompilerInputs, executedProject As MSB.Execution.ProjectInstance) As IEnumerable(Of DocumentFileInfo)
+            Private Function GetDocuments(sources As IEnumerable(Of Build.Framework.ITaskItem), executedProject As MSB.Execution.ProjectInstance) As IEnumerable(Of DocumentFileInfo)
+                If sources Is Nothing Then
+                    Return ImmutableArray(Of DocumentFileInfo).Empty
+                End If
+
                 Dim projectDirectory = executedProject.Directory
                 If Not projectDirectory.EndsWith(Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) Then
                     projectDirectory += Path.DirectorySeparatorChar
                 End If
 
-                Return compilerInputs.Sources _
-                         .Where(Function(s) Not System.IO.Path.GetFileName(s.ItemSpec).StartsWith("TemporaryGeneratedFile_")) _
+                Return sources.Where(Function(s) Not System.IO.Path.GetFileName(s.ItemSpec).StartsWith("TemporaryGeneratedFile_")) _
                          .Select(Function(s) New DocumentFileInfo(GetDocumentFilePath(s), GetDocumentLogicalPath(s, projectDirectory), IsDocumentLinked(s), IsDocumentGenerated(s))).ToImmutableArray()
             End Function
 
@@ -253,14 +257,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Private Class VisualBasicCompilerInputs
                 Implements MSB.Tasks.Hosting.IVbcHostObject5, MSB.Tasks.Hosting.IVbcHostObjectFreeThreaded
 #If Not MSBUILD12 Then
-                ' TODO : Remove this after the next base drop update (once we get a new IAnalyzerHostObject interface)
-                ' Implements MSB.Tasks.Hosting.IAnalyzerHostObject
+                Implements MSB.Tasks.Hosting.IAnalyzerHostObject
 #End If
                 Private _projectFile As VisualBasicProjectFile
                 Private _initialized As Boolean
                 Private _parseOptions As VisualBasicParseOptions
                 Private _compilationOptions As VisualBasicCompilationOptions
                 Private _sources As IEnumerable(Of MSB.Framework.ITaskItem)
+                Private _additionalFiles As IEnumerable(Of MSB.Framework.ITaskItem)
                 Private _references As IEnumerable(Of MSB.Framework.ITaskItem)
                 Private _analyzerReferences As IEnumerable(Of MSB.Framework.ITaskItem)
                 Private _noStandardLib As Boolean
@@ -277,7 +281,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Dim projectDirectory = Path.GetDirectoryName(projectFile.FilePath)
                     Dim outputDirectory = projectFile.GetOutputDirectory()
                     Me._compilationOptions = New VisualBasicCompilationOptions(OutputKind.ConsoleApplication,
-                        debugInformationKind:=DebugInformationKind.None,
                         xmlReferenceResolver:=New XmlFileResolver(projectDirectory),
                         sourceReferenceResolver:=New SourceFileResolver(ImmutableArray(Of String).Empty, projectDirectory),
                         metadataReferenceResolver:=New MetadataFileReferenceResolver(ImmutableArray(Of String).Empty, projectDirectory),
@@ -323,6 +326,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Public ReadOnly Property Sources As IEnumerable(Of MSB.Framework.ITaskItem)
                     Get
                         Return Me._sources
+                    End Get
+                End Property
+
+                Public ReadOnly Property AdditionalFiles As IEnumerable(Of MSB.Framework.ITaskItem)
+                    Get
+                        Return Me._additionalFiles
                     End Get
                 End Property
 
@@ -410,14 +419,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End Function
 
                 Public Function SetDebugType(emitDebugInformation As Boolean, debugType As String) As Boolean Implements Microsoft.Build.Tasks.Hosting.IVbcHostObject.SetDebugType
-                    If Not String.IsNullOrEmpty(debugType) Then
-                        Dim kind As DebugInformationKind
-                        If [Enum].TryParse(Of DebugInformationKind)(debugType, ignoreCase:=True, result:=kind) Then
-                            Me._compilationOptions = Me._compilationOptions.WithDebugInformationKind(kind)
-                            Return True
-                        End If
-                    End If
-                    Return False
+                    ' ignore, just check for expected values for backwards compat
+                    Return String.Equals(debugType, "none", StringComparison.OrdinalIgnoreCase) OrElse
+                           String.Equals(debugType, "pdbonly", StringComparison.OrdinalIgnoreCase) OrElse
+                           String.Equals(debugType, "full", StringComparison.OrdinalIgnoreCase)
                 End Function
 
                 Public Function SetDefineConstants(defineConstants As String) As Boolean Implements Microsoft.Build.Tasks.Hosting.IVbcHostObject.SetDefineConstants
@@ -514,7 +519,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End Function
 
                 Public Function SetOptimize(optimize As Boolean) As Boolean Implements Microsoft.Build.Tasks.Hosting.IVbcHostObject.SetOptimize
-                    Me._compilationOptions = Me._compilationOptions.WithOptimizations(optimize)
+                    Me._compilationOptions = Me._compilationOptions.WithOptimizationLevel(If(optimize, OptimizationLevel.Release, OptimizationLevel.Debug))
                     Return True
                 End Function
 
@@ -584,11 +589,20 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End Function
 
 #If Not MSBUILD12 Then
-                Public Function SetAnalyzers(analyzerReferences() As MSB.Framework.ITaskItem) As Boolean ' Implements MSB.Tasks.Hosting.IAnalyzerHostObject.SetAnalyzers
+                Public Function SetAnalyzers(analyzerReferences() As MSB.Framework.ITaskItem) As Boolean Implements MSB.Tasks.Hosting.IAnalyzerHostObject.SetAnalyzers
 #Else
                 Public Function SetAnalyzers(analyzerReferences() As MSB.Framework.ITaskItem) As Boolean
 #End If
                     Me._analyzerReferences = If(analyzerReferences, SpecializedCollections.EmptyEnumerable(Of MSB.Framework.ITaskItem)())
+                    Return True
+                End Function
+
+#If Not MSBUILD12 Then
+                Public Function SetAdditionalFiles(additionalFiles() As MSB.Framework.ITaskItem) As Boolean Implements MSB.Tasks.Hosting.IAnalyzerHostObject.SetAdditionalFiles
+#Else
+                Public Function SetAdditionalFiles(additionalFiles() As MSB.Framework.ITaskItem) As Boolean
+#End If
+                    Me._additionalFiles = If(additionalFiles, SpecializedCollections.EmptyEnumerable(Of MSB.Framework.ITaskItem)())
                     Return True
                 End Function
 
@@ -644,7 +658,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End Function
 
 #If Not MSBUILD12 Then
-                Public Function SetRuleSet(ruleSetFile As String) As Boolean ' Implements MSB.Tasks.Hosting.IAnalyzerHostObject.SetRuleSet
+                Public Function SetRuleSet(ruleSetFile As String) As Boolean Implements MSB.Tasks.Hosting.IAnalyzerHostObject.SetRuleSet
 #Else
                 Public Function SetRuleSet(ruleSetFile As String) As Boolean
 #End If

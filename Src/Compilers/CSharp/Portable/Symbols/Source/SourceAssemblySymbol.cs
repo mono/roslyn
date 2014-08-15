@@ -1386,18 +1386,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         internal ImmutableArray<SyntaxList<AttributeListSyntax>> GetAttributeDeclarations()
         {
-            var mergedAttributesBuilder = ArrayBuilder<SyntaxList<AttributeListSyntax>>.GetInstance();
-
-            foreach (var rootNs in DeclaringCompilation.Declarations.AllRootNamespacesUnordered())
-            {
-                if (rootNs.HasAssemblyAttributes)
-                {
-                    var attrList = ((CompilationUnitSyntax)rootNs.Location.SourceTree.GetRoot()).AttributeLists;
-                    mergedAttributesBuilder.Add(attrList);
-                }
-            }
-
-            return mergedAttributesBuilder.ToImmutableAndFree();
+            var attrList =
+                from rootNs in DeclaringCompilation.Declarations.AllRootNamespacesUnordered()
+                where rootNs.HasAssemblyAttributes
+                select rootNs.Location.SourceTree into tree
+                orderby compilation.GetSyntaxTreeOrdinal(tree)
+                select ((CompilationUnitSyntax)tree.GetRoot()).AttributeLists;
+            return attrList.ToImmutableArray();
         }
 
         private void EnsureAttributesAreBound()
@@ -1636,31 +1631,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         {
             base.AddSynthesizedAttributes(compilationState, ref attributes);
 
-            bool containsExtensionMethods = this.ContainsExtensionMethods();
             CSharpCompilationOptions options = this.compilation.Options;
-
-            // Synthesize CompilationRelaxationsAttribute only if all the following requirements are met:
-            // (a) We are not building a netmodule.
-            // (b) There is no applied CompilationRelaxationsAttribute assembly attribute in source.
-            // (c) There is no applied CompilationRelaxationsAttribute assembly attribute for any of the added PE modules.
-
-            // Above requirements also hold for synthesizing RuntimeCompatibilityAttribute attribute.
-
             bool isBuildingNetModule = options.OutputKind.IsNetModule();
-            bool emitCompilationRelaxationsAttribute = !isBuildingNetModule && !this.Modules.Any(m => m.HasAssemblyCompilationRelaxationsAttribute);
-            bool emitRuntimeCompatibilityAttribute = !isBuildingNetModule && !this.Modules.Any(m => m.HasAssemblyRuntimeCompatibilityAttribute);
-
-            // Synthesize DebuggableAttribute only if all the following requirements are met:
-            // (a) We are not building a netmodule.
-            // (b) We are emitting debug information (full or pdbonly).
-            // (c) There is no applied DebuggableAttribute assembly attribute in source.
-
-            // CONSIDER: Native VB compiler and Roslyn VB compiler also have an additional requirement: There is no applied DebuggableAttribute *module* attribute in source.
-            // CONSIDER: Should we check for module DebuggableAttribute?
-
-            bool emitDebuggableAttribute = !isBuildingNetModule &&
-                options.DebugInformationKind.IsValid() && options.DebugInformationKind != DebugInformationKind.None &&
-                !this.HasDebuggableAttribute;
+            bool containsExtensionMethods = this.ContainsExtensionMethods();
 
             if (containsExtensionMethods)
             {
@@ -1670,6 +1643,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                     WellKnownMember.System_Runtime_CompilerServices_ExtensionAttribute__ctor));
             }
 
+            // Synthesize CompilationRelaxationsAttribute only if all the following requirements are met:
+            // (a) We are not building a netmodule.
+            // (b) There is no applied CompilationRelaxationsAttribute assembly attribute in source.
+            // (c) There is no applied CompilationRelaxationsAttribute assembly attribute for any of the added PE modules.
+            // Above requirements also hold for synthesizing RuntimeCompatibilityAttribute attribute.
+
+            bool emitCompilationRelaxationsAttribute = !isBuildingNetModule && !this.Modules.Any(m => m.HasAssemblyCompilationRelaxationsAttribute);
             if (emitCompilationRelaxationsAttribute)
             {
                 // Synthesize attribute: [CompilationRelaxationsAttribute(CompilationRelaxations.NoStringInterning)]
@@ -1689,6 +1669,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                 }
             }
 
+            bool emitRuntimeCompatibilityAttribute = !isBuildingNetModule && !this.Modules.Any(m => m.HasAssemblyRuntimeCompatibilityAttribute);
             if (emitRuntimeCompatibilityAttribute)
             {
                 // Synthesize attribute: [RuntimeCompatibilityAttribute(WrapNonExceptionThrows = true)]
@@ -1708,7 +1689,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                 }
             }
 
-            if (emitDebuggableAttribute)
+            // Synthesize DebuggableAttribute only if all the following requirements are met:
+            // (a) We are not building a netmodule.
+            // (b) We are emitting debug information (full or pdbonly).
+            // (c) There is no applied DebuggableAttribute assembly attribute in source.
+
+            // CONSIDER: Native VB compiler and Roslyn VB compiler also have an additional requirement: There is no applied DebuggableAttribute *module* attribute in source.
+            // CONSIDER: Should we check for module DebuggableAttribute?
+            if (!isBuildingNetModule && !this.HasDebuggableAttribute)
             {
                 AddSynthesizedAttribute(ref attributes, compilation.SynthesizeDebuggableAttribute());
             }
@@ -1718,7 +1706,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                 // If the attribute is applied in source, do not add synthetic one.
                 // If its value is different from the supplied through options, an error should have been reported by now.
 
-                if (!String.IsNullOrEmpty(compilation.Options.CryptoKeyContainer) &&
+                if (!string.IsNullOrEmpty(compilation.Options.CryptoKeyContainer) &&
                     (object)AssemblyKeyContainerAttributeSetting == (object)CommonAssemblyWellKnownAttributeData.StringMissingValue)
                 {
                     var stringType = this.compilation.GetSpecialType(SpecialType.System_String);

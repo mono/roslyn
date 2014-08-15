@@ -36,39 +36,19 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
         using (F()) { }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(
-                source,
-                compOptions: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, debugInformationKind: DebugInformationKind.Full, optimize: false, concurrentBuild: false));
-            var compilation1 = CreateCompilationWithMscorlib(
-                source,
-                compOptions: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, debugInformationKind: DebugInformationKind.Full, optimize: true, concurrentBuild: false));
-            var compilation2 = CreateCompilationWithMscorlib(
-                source,
-                compOptions: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, debugInformationKind: DebugInformationKind.None, optimize: false, concurrentBuild: false));
-            var compilation3 = CreateCompilationWithMscorlib(
-                source,
-                compOptions: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, debugInformationKind: DebugInformationKind.None, optimize: true, concurrentBuild: false));
+            var debug = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+            var release = CreateCompilationWithMscorlib(source, options: TestOptions.ReleaseDll);
 
             CompilationTestData testData;
             ImmutableArray<string> names;
 
             testData = new CompilationTestData();
-            compilation0.EmitToArray(debug: true, testData: testData);
+            debug.EmitToArray(testData: testData);
             names = GetLocalNames(testData.GetMethodData("C.M"));
             AssertEx.Equal(new string[] { "CS$2$0000", "CS$520$0001", "CS$3$0002" }, names);
 
             testData = new CompilationTestData();
-            compilation1.EmitToArray(debug: true, testData: testData);
-            names = GetLocalNames(testData.GetMethodData("C.M"));
-            AssertEx.Equal(new string[] { "CS$2$0000", "CS$520$0001", "CS$3$0002" }, names);
-
-            testData = new CompilationTestData();
-            compilation2.EmitToArray(debug: true, testData: testData);
-            names = GetLocalNames(testData.GetMethodData("C.M"));
-            AssertEx.Equal(new string[] { null, null }, names);
-
-            testData = new CompilationTestData();
-            compilation3.EmitToArray(debug: true, testData: testData);
+            release.EmitToArray(testData: testData);
             names = GetLocalNames(testData.GetMethodData("C.M"));
             AssertEx.Equal(new string[] { null, null }, names);
         }
@@ -99,11 +79,11 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
         }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.DebugDll);
+            var compilation0 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var generation0 = EmitBaseline.CreateInitialBaseline(
@@ -198,11 +178,11 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
         }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full));
-            var compilation1 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full));
+            var compilation0 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var generation0 = EmitBaseline.CreateInitialBaseline(
@@ -294,17 +274,11 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
         }
     }
 }";
-            var compilation0 = CreateCompilation(
-                source,
-                compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full),
-                references: new[] { MscorlibRef_v20 });
-            var compilation1 = CreateCompilation(
-                source,
-                compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full),
-                references: new[] { MscorlibRef_v20 });
+            var compilation0 = CreateCompilation(source, options: TestOptions.DebugDll, references: new[] { MscorlibRef_v20 });
+            var compilation1 = CreateCompilation(source, options: TestOptions.DebugDll, references: new[] { MscorlibRef_v20 });
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var generation0 = EmitBaseline.CreateInitialBaseline(
@@ -363,11 +337,11 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
         }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnoptimizedDll.WithAllowUnsafe(true).WithDebugInformationKind(DebugInformationKind.Full));
-            var compilation1 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnoptimizedDll.WithAllowUnsafe(true).WithDebugInformationKind(DebugInformationKind.Full));
+            var compilation0 = CreateCompilationWithMscorlib(source, options: TestOptions.UnsafeDebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source, options: TestOptions.UnsafeDebugDll);
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var generation0 = EmitBaseline.CreateInitialBaseline(
@@ -481,11 +455,11 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
         }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnoptimizedDll.WithAllowUnsafe(true).WithDebugInformationKind(DebugInformationKind.Full));
-            var compilation1 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnoptimizedDll.WithAllowUnsafe(true).WithDebugInformationKind(DebugInformationKind.Full));
+            var compilation0 = CreateCompilationWithMscorlib(source, options: TestOptions.UnsafeDebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source, options: TestOptions.UnsafeDebugDll);
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var generation0 = EmitBaseline.CreateInitialBaseline(
@@ -656,11 +630,11 @@ class C
         }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full));
-            var compilation1 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full));
+            var compilation0 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var generation0 = EmitBaseline.CreateInitialBaseline(
@@ -844,10 +818,10 @@ class C
         }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.DebugDll);
+            var compilation0 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
 
-            var v0 = CompileAndVerify(compilation0, emitPdb: true);
+            var v0 = CompileAndVerify(compilation0);
 
             v0.VerifyIL("C.M", @"
 {
@@ -925,7 +899,7 @@ class C
 }", sequencePoints: "C.M");
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var generation0 = EmitBaseline.CreateInitialBaseline(
@@ -1034,11 +1008,11 @@ class C
         }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full));
-            var compilation1 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full));
+            var compilation0 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var generation0 = EmitBaseline.CreateInitialBaseline(
@@ -1200,11 +1174,11 @@ class C
             var tooManyCommas = new string(',', 256);
             Assert.True(source.IndexOf(tooManyCommas) > 0);
 
-            var compilation0 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full));
-            var compilation1 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full));
+            var compilation0 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var generation0 = EmitBaseline.CreateInitialBaseline(
@@ -1260,12 +1234,12 @@ class C
         foreach (var c in F2()) { }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source0, compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full));
-            var compilation1 = CreateCompilationWithMscorlib(source1, compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full));
-            var compilation2 = CreateCompilationWithMscorlib(source2, compOptions: TestOptions.UnoptimizedDll.WithDebugInformationKind(DebugInformationKind.Full));
+            var compilation0 = CreateCompilationWithMscorlib(source0, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugDll);
+            var compilation2 = CreateCompilationWithMscorlib(source2, options: TestOptions.DebugDll);
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var generation0 = EmitBaseline.CreateInitialBaseline(
@@ -1389,11 +1363,11 @@ class C
         lock (F4()) { } // replaced
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source0, compOptions: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib(source1, compOptions: TestOptions.DebugDll);
+            var compilation0 = CreateCompilationWithMscorlib(source0, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugDll);
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var generation0 = EmitBaseline.CreateInitialBaseline(
@@ -1527,11 +1501,11 @@ class C
     }
 }";
 
-            var compilation0 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib(source, compOptions: TestOptions.DebugDll);
+            var compilation0 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var generation0 = EmitBaseline.CreateInitialBaseline(
@@ -1676,10 +1650,10 @@ class C
         }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source0, compOptions: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib(source1, compOptions: TestOptions.DebugDll);
+            var compilation0 = CreateCompilationWithMscorlib(source0, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugDll);
 
-            var v0 = CompileAndVerify(compilation0, emitPdb: true);
+            var v0 = CompileAndVerify(compilation0);
 
             // Validate presence of a hidden sequence point @IL_0007 that is required for proper function remapping.
             v0.VerifyIL("C.M", @"
@@ -1712,7 +1686,7 @@ class C
 ", sequencePoints: "C.M");
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var method1 = compilation1.GetMember<MethodSymbol>("C.M");
@@ -1782,10 +1756,10 @@ class C
         }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source0, compOptions: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib(source1, compOptions: TestOptions.DebugDll);
+            var compilation0 = CreateCompilationWithMscorlib(source0, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugDll);
 
-            var v0 = CompileAndVerify(compilation0, emitPdb: true);
+            var v0 = CompileAndVerify(compilation0);
 
             v0.VerifyIL("C.M", @"
 {
@@ -1844,7 +1818,7 @@ class C
 </symbols>");
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var method1 = compilation1.GetMember<MethodSymbol>("C.M");
@@ -1911,10 +1885,10 @@ class C
         }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source0, compOptions: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib(source1, compOptions: TestOptions.DebugDll);
+            var compilation0 = CreateCompilationWithMscorlib(source0, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugDll);
 
-            var v0 = CompileAndVerify(compilation0, emitPdb: true);
+            var v0 = CompileAndVerify(compilation0);
 
             v0.VerifyIL("C.M", @"
 {
@@ -1964,7 +1938,7 @@ class C
 </symbols>");
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var method1 = compilation1.GetMember<MethodSymbol>("C.M");
@@ -2022,10 +1996,10 @@ class C
         }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source0, compOptions: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib(source1, compOptions: TestOptions.DebugDll);
+            var compilation0 = CreateCompilationWithMscorlib(source0, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugDll);
 
-            var v0 = CompileAndVerify(compilation0, emitPdb: true);
+            var v0 = CompileAndVerify(compilation0);
 
             v0.VerifyIL("C.M", @"
 {
@@ -2077,7 +2051,7 @@ class C
 </symbols>");
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var method1 = compilation1.GetMember<MethodSymbol>("C.M");
@@ -2138,10 +2112,10 @@ class C
         while (F());
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source0, compOptions: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib(source1, compOptions: TestOptions.DebugDll);
+            var compilation0 = CreateCompilationWithMscorlib(source0, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugDll);
 
-            var v0 = CompileAndVerify(compilation0, emitPdb: true);
+            var v0 = CompileAndVerify(compilation0);
 
             v0.VerifyIL("C.M", @"
 {
@@ -2190,7 +2164,7 @@ class C
 </symbols>");
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var method1 = compilation1.GetMember<MethodSymbol>("C.M");
@@ -2250,10 +2224,10 @@ class C
         }
     }
 }";
-            var compilation0 = CreateCompilationWithMscorlib(source0, compOptions: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib(source1, compOptions: TestOptions.DebugDll);
+            var compilation0 = CreateCompilationWithMscorlib(source0, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugDll);
 
-            var v0 = CompileAndVerify(compilation0, emitPdb: true);
+            var v0 = CompileAndVerify(compilation0);
 
             // Validate presence of a hidden sequence point @IL_001c that is required for proper function remapping.
             v0.VerifyIL("C.M", @"
@@ -2283,7 +2257,7 @@ class C
 }", sequencePoints: "C.M");
 
             var testData0 = new CompilationTestData();
-            var bytes0 = compilation0.EmitToArray(debug: true, testData: testData0);
+            var bytes0 = compilation0.EmitToArray(testData: testData0);
             var methodData0 = testData0.GetMethodData("C.M");
             var method0 = compilation0.GetMember<MethodSymbol>("C.M");
             var method1 = compilation1.GetMember<MethodSymbol>("C.M");

@@ -19,7 +19,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.PDB
             return CreateCompilationWithMscorlib(
                 "public class C { }",
                 assemblyName: assemblyName,
-                compOptions: TestOptions.Dll);
+                options: TestOptions.DebugDll);
         }
 
         #endregion
@@ -46,7 +46,7 @@ namespace X
     }
 }
 ";
-            string actual = GetPdbXml(text, TestOptions.Dll);
+            string actual = GetPdbXml(text, TestOptions.DebugDll);
             string expected = @"
 <symbols>
   <methods>
@@ -128,7 +128,7 @@ namespace X
     }
 }
 ";
-            string actual = GetPdbXml(text, TestOptions.Dll);
+            string actual = GetPdbXml(text, TestOptions.DebugDll);
             string expected = @"
 <symbols>
   <methods>
@@ -210,7 +210,7 @@ namespace X
     }
 }
 ";
-            string actual = GetPdbXml(text, TestOptions.Dll);
+            string actual = GetPdbXml(text, TestOptions.DebugDll);
             string expected = @"
 <symbols>
   <methods>
@@ -292,7 +292,7 @@ namespace X
     }
 }
 ";
-            string actual = GetPdbXml(text, TestOptions.Dll);
+            string actual = GetPdbXml(text, TestOptions.DebugDll);
             string expected = @"
 <symbols>
   <methods>
@@ -380,23 +380,23 @@ namespace X
 ";
             var compilation = CreateCompilationWithMscorlib(text,
                 assemblyName: GetUniqueName(),
-                compOptions: TestOptions.Dll,
-                references: new [] 
-                { 
-                    new CSharpCompilationReference(dummyCompilation1, ImmutableArray.Create("P")) , 
-                    new CSharpCompilationReference(dummyCompilation2, ImmutableArray.Create("Q")), 
-                    new CSharpCompilationReference(dummyCompilation3, ImmutableArray.Create("R")) 
+                options: TestOptions.DebugDll,
+                references: new[]
+                {
+                    new CSharpCompilationReference(dummyCompilation1, ImmutableArray.Create("P")) ,
+                    new CSharpCompilationReference(dummyCompilation2, ImmutableArray.Create("Q")),
+                    new CSharpCompilationReference(dummyCompilation3, ImmutableArray.Create("R"))
                 });
             compilation.VerifyDiagnostics(
                 // (2,1): info CS8020: Unused extern alias.
                 // extern alias P;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias P;"),
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias P;"),
                 // (8,5): info CS8020: Unused extern alias.
                 //     extern alias Q;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias Q;"),
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias Q;"),
                 // (14,9): info CS8020: Unused extern alias.
                 //         extern alias R;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias R;"));
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias R;"));
 
             //CONSIDER: Dev10 puts the <externinfo>s on A.M
             string actual = GetPdbXml(compilation);
@@ -489,7 +489,7 @@ namespace N
 ";
             var compilation = CreateCompilationWithMscorlib(text,
                 assemblyName: "Test",
-                compOptions: TestOptions.Dll,
+                options: TestOptions.DebugDll,
                 references: new[] { new CSharpCompilationReference(libComp, ImmutableArray.Create("P")) });
             compilation.GetDiagnostics().Where(d => d.Severity > DiagnosticSeverity.Info).Verify();
 
@@ -562,50 +562,50 @@ namespace X
 ";
             var compilation = CreateCompilationWithMscorlib(text,
                 assemblyName: GetUniqueName(),
-                compOptions: TestOptions.Dll,
-                references: new[] 
-                { 
-                    new CSharpCompilationReference(dummyCompilation1, ImmutableArray.Create("P")) , 
-                    new CSharpCompilationReference(dummyCompilation2, ImmutableArray.Create("Q")), 
-                    new CSharpCompilationReference(dummyCompilation3, ImmutableArray.Create("R")) 
+                options: TestOptions.DebugDll,
+                references: new[]
+                {
+                    new CSharpCompilationReference(dummyCompilation1, ImmutableArray.Create("P")) ,
+                    new CSharpCompilationReference(dummyCompilation2, ImmutableArray.Create("Q")),
+                    new CSharpCompilationReference(dummyCompilation3, ImmutableArray.Create("R"))
                 });
             compilation.VerifyDiagnostics(
                 // (3,1): info CS8019: Unnecessary using directive.
                 // using System;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using System;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using System;"),
                 // (4,1): info CS8019: Unnecessary using directive.
                 // using AU1 = System;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AU1 = System;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AU1 = System;"),
                 // (5,1): info CS8019: Unnecessary using directive.
                 // using AT1 = System.Char;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AT1 = System.Char;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AT1 = System.Char;"),
                 // (2,1): info CS8020: Unused extern alias.
                 // extern alias P;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias P;"),
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias P;"),
                 // (12,5): info CS8019: Unnecessary using directive.
                 //     using AU2 = System.IO;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AU2 = System.IO;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AU2 = System.IO;"),
                 // (13,5): info CS8019: Unnecessary using directive.
                 //     using AT2 = System.IO.Directory;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AT2 = System.IO.Directory;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AT2 = System.IO.Directory;"),
                 // (14,5): info CS8019: Unnecessary using directive.
                 //     using System.IO;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using System.IO;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using System.IO;"),
                 // (11,5): info CS8020: Unused extern alias.
                 //     extern alias Q;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias Q;"),
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias Q;"),
                 // (21,9): info CS8019: Unnecessary using directive.
                 //         using AT3 = System.Text.StringBuilder;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AT3 = System.Text.StringBuilder;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AT3 = System.Text.StringBuilder;"),
                 // (22,9): info CS8019: Unnecessary using directive.
                 //         using System.Text;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using System.Text;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using System.Text;"),
                 // (23,9): info CS8019: Unnecessary using directive.
                 //         using AU3 = System.Text;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AU3 = System.Text;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AU3 = System.Text;"),
                 // (20,9): info CS8020: Unused extern alias.
                 //         extern alias R;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias R;"));
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias R;"));
 
             //CONSIDER: Dev10 puts the <externinfo>s on A.M
             string actual = GetPdbXml(compilation);
@@ -698,7 +698,7 @@ namespace X
 namespace N { public class D { } }
 namespace M { public class E { } }
 ";
-            var compilation1 = CreateCompilationWithMscorlib(source1, compOptions: TestOptions.Dll);
+            var compilation1 = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugDll);
 
             var source2 = @"
 extern alias A;
@@ -721,7 +721,7 @@ public class C
 }";
 
             var compilation2 = CreateCompilationWithMscorlib(source2,
-                compOptions: TestOptions.Dll,
+                options: TestOptions.DebugDll,
                 references: new[]
                 {
                     new CSharpCompilationReference(compilation1, ImmutableArray.Create("A", "B"))
@@ -769,7 +769,7 @@ public class C
             var source1 = @"
 namespace N { public class D { } }
 ";
-            var compilation1 = CreateCompilationWithMscorlib(source1, compOptions: TestOptions.Dll);
+            var compilation1 = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugDll);
 
             var source2 = @"
 extern alias A;
@@ -786,7 +786,7 @@ public class C
 }";
 
             var compilation2 = CreateCompilationWithMscorlib(source2,
-                compOptions: TestOptions.Dll,
+                options: TestOptions.DebugDll,
                 references: new[]
                 {
                     new CSharpCompilationReference(compilation1, ImmutableArray.Create("global", "B", "A", "A", "global"))
@@ -869,50 +869,50 @@ namespace X
             var compilation = CreateCompilationWithMscorlib(
                 text1,
                 assemblyName: GetUniqueName(),
-                compOptions: TestOptions.Dll,
-                references: new[] 
-                { 
-                    new CSharpCompilationReference(dummyCompilation1, ImmutableArray.Create("P")), 
-                    new CSharpCompilationReference(dummyCompilation2, ImmutableArray.Create("Q")), 
-                    new CSharpCompilationReference(dummyCompilation3, ImmutableArray.Create("R")), 
+                options: TestOptions.DebugDll,
+                references: new[]
+                {
+                    new CSharpCompilationReference(dummyCompilation1, ImmutableArray.Create("P")),
+                    new CSharpCompilationReference(dummyCompilation2, ImmutableArray.Create("Q")),
+                    new CSharpCompilationReference(dummyCompilation3, ImmutableArray.Create("R")),
                 });
             compilation.VerifyDiagnostics(
                 // (3,1): info CS8019: Unnecessary using directive.
                 // using System;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using System;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using System;"),
                 // (4,1): info CS8019: Unnecessary using directive.
                 // using AU1 = System;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AU1 = System;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AU1 = System;"),
                 // (5,1): info CS8019: Unnecessary using directive.
                 // using AT1 = System.Char;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AT1 = System.Char;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AT1 = System.Char;"),
                 // (2,1): info CS8020: Unused extern alias.
                 // extern alias P;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias P;"),
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias P;"),
                 // (24,5): info CS8019: Unnecessary using directive.
                 //     using AU3 = System.Threading;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AU3 = System.Threading;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AU3 = System.Threading;"),
                 // (25,5): info CS8019: Unnecessary using directive.
                 //     using AT3 = System.Threading.Thread;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AT3 = System.Threading.Thread;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AT3 = System.Threading.Thread;"),
                 // (26,5): info CS8019: Unnecessary using directive.
                 //     using System.Threading;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using System.Threading;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using System.Threading;"),
                 // (23,5): info CS8020: Unused extern alias.
                 //     extern alias R;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias R;"),
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias R;"),
                 // (10,5): info CS8019: Unnecessary using directive.
                 //     using AU2 = System.IO;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AU2 = System.IO;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AU2 = System.IO;"),
                 // (11,5): info CS8019: Unnecessary using directive.
                 //     using AT2 = System.IO.Directory;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AT2 = System.IO.Directory;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AT2 = System.IO.Directory;"),
                 // (12,5): info CS8019: Unnecessary using directive.
                 //     using System.IO;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using System.IO;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using System.IO;"),
                 // (9,5): info CS8020: Unused extern alias.
                 //     extern alias Q;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias Q;"));
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias Q;"));
 
             string actual = GetPdbXml(compilation);
             string expected = @"
@@ -1049,63 +1049,63 @@ namespace X
             var compilation = CreateCompilationWithMscorlib(
                 new string[] { text1, text2 },
                 assemblyName: GetUniqueName(),
-                compOptions: TestOptions.Dll,
-                references: new[] 
-                { 
-                    new CSharpCompilationReference(dummyCompilation1, ImmutableArray.Create("P")), 
-                    new CSharpCompilationReference(dummyCompilation2, ImmutableArray.Create("Q")), 
-                    new CSharpCompilationReference(dummyCompilation3, ImmutableArray.Create("R")), 
-                    new CSharpCompilationReference(dummyCompilation4, ImmutableArray.Create("S")), 
+                options: TestOptions.DebugDll,
+                references: new[]
+                {
+                    new CSharpCompilationReference(dummyCompilation1, ImmutableArray.Create("P")),
+                    new CSharpCompilationReference(dummyCompilation2, ImmutableArray.Create("Q")),
+                    new CSharpCompilationReference(dummyCompilation3, ImmutableArray.Create("R")),
+                    new CSharpCompilationReference(dummyCompilation4, ImmutableArray.Create("S")),
                 });
             compilation.VerifyDiagnostics(
                 // (3,1): info CS8019: Unnecessary using directive.
                 // using System;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using System;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using System;"),
                 // (4,1): info CS8019: Unnecessary using directive.
                 // using AU1 = System;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AU1 = System;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AU1 = System;"),
                 // (5,1): info CS8019: Unnecessary using directive.
                 // using AT1 = System.Char;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AT1 = System.Char;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AT1 = System.Char;"),
                 // (2,1): info CS8020: Unused extern alias.
                 // extern alias P;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias P;"),
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias P;"),
                 // (3,1): info CS8019: Unnecessary using directive.
                 // using System.Text;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using System.Text;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using System.Text;"),
                 // (4,1): info CS8019: Unnecessary using directive.
                 // using AU3 = System.Text;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AU3 = System.Text;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AU3 = System.Text;"),
                 // (5,1): info CS8019: Unnecessary using directive.
                 // using AT3 = System.Text.StringBuilder;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AT3 = System.Text.StringBuilder;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AT3 = System.Text.StringBuilder;"),
                 // (10,5): info CS8019: Unnecessary using directive.
                 //     using AU2 = System.IO;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AU2 = System.IO;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AU2 = System.IO;"),
                 // (2,1): info CS8020: Unused extern alias.
                 // extern alias R;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias R;"),
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias R;"),
                 // (11,5): info CS8019: Unnecessary using directive.
                 //     using AT2 = System.IO.Directory;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AT2 = System.IO.Directory;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AT2 = System.IO.Directory;"),
                 // (12,5): info CS8019: Unnecessary using directive.
                 //     using System.IO;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using System.IO;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using System.IO;"),
                 // (10,5): info CS8019: Unnecessary using directive.
                 //     using AU4 = System.Threading;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AU4 = System.Threading;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AU4 = System.Threading;"),
                 // (9,5): info CS8020: Unused extern alias.
                 //     extern alias Q;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias Q;"),
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias Q;"),
                 // (11,5): info CS8019: Unnecessary using directive.
                 //     using AT4 = System.Threading.Thread;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using AT4 = System.Threading.Thread;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using AT4 = System.Threading.Thread;"),
                 // (12,5): info CS8019: Unnecessary using directive.
                 //     using System.Threading;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using System.Threading;"),
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using System.Threading;"),
                 // (9,5): info CS8020: Unused extern alias.
                 //     extern alias S;
-                Diagnostic(ErrorCode.INF_UnusedExternAlias, "extern alias S;"));
+                Diagnostic(ErrorCode.HDN_UnusedExternAlias, "extern alias S;"));
 
             string actual = GetPdbXml(compilation);
             string expected = @"
@@ -1218,7 +1218,7 @@ namespace X
 }
 ";
 
-            string actual = GetPdbXml(text, TestOptions.Dll);
+            string actual = GetPdbXml(text, TestOptions.DebugDll);
             string expected = @"
 <symbols>
   <methods>
@@ -1268,7 +1268,7 @@ class C
     });
 }
 ";
-            string actual = GetPdbXml(text, TestOptions.Dll);
+            string actual = GetPdbXml(text, TestOptions.DebugDll);
             string expected = @"
 <symbols>
   <methods>
@@ -1338,7 +1338,7 @@ class C
 }
 ";
 
-            string actual = GetPdbXml(text, TestOptions.Dll);
+            string actual = GetPdbXml(text, TestOptions.DebugDll);
             string expected = @"
 <symbols>
   <methods>
@@ -1443,7 +1443,7 @@ class Derived : Base
 }
 ";
 
-            string actual = GetPdbXml(text, TestOptions.Dll);
+            string actual = GetPdbXml(text, TestOptions.DebugDll);
             string expected = @"
 <symbols>
   <methods>
@@ -1503,7 +1503,7 @@ class C : I1, I2
 }
 ";
 
-            string actual = GetPdbXml(text, TestOptions.Dll);
+            string actual = GetPdbXml(text, TestOptions.DebugDll);
             string expected = @"
 <symbols>
   <methods>
@@ -1558,7 +1558,7 @@ public class Test : IDisposable
     public void Dispose() { }
 }
 ";
-            var v = CompileAndVerify(source, options: TestOptions.DebugDll, emitPdb: true);
+            var v = CompileAndVerify(source, options: TestOptions.DebugDll);
 
             v.VerifyIL("Test.Main", @"
 {
@@ -1633,7 +1633,7 @@ public class Test
   </methods>
 </symbols>";
 
-            AssertXmlEqual(expectedXml, GetPdbXml(source, TestOptions.Exe, "Test.Main", references: new[] { libRef }));
+            AssertXmlEqual(expectedXml, GetPdbXml(source, TestOptions.DebugExe, "Test.Main", references: new[] { libRef }));
         }
 
         [Fact]
@@ -1796,7 +1796,7 @@ public class Test : IDisposable
 
     public void Dispose() { }
 
-}", TestOptions.Exe, methodName: "Test.Main");
+}", TestOptions.ReleaseExe, methodName: "Test.Main");
         }
 
         [Fact]
@@ -1817,7 +1817,7 @@ public class Test : IDisposable
 
     public void Dispose() { }
 
-}", TestOptions.Exe, methodName: "Test.Main");
+}", TestOptions.ReleaseExe, methodName: "Test.Main");
         }
 
         [WorkItem(546754, "DevDiv")]
@@ -1836,7 +1836,7 @@ public class Y<T>
 }
 ";
             string compName = GetUniqueName();
-            var comp = CreateCompilationWithMscorlib(source1, assemblyName: compName, compOptions: TestOptions.Dll.WithDebugInformationKind(DebugInformationKind.Full));
+            var comp = CreateCompilationWithMscorlib(source1, assemblyName: compName, options: TestOptions.DebugDll);
 
             var source2 = @"
 using t1 = Y<W[]>;
@@ -1853,7 +1853,7 @@ public class C1
     }
 }
 ";
-            string actual = GetPdbXml(source2, TestOptions.Exe.WithDebugInformationKind(DebugInformationKind.Full), references: new[] { comp.ToMetadataReference() });
+            string actual = GetPdbXml(source2, TestOptions.DebugExe, references: new[] { comp.ToMetadataReference() });
             string expected = string.Format(@"
 <symbols>
   <entryPoint declaringType=""C1"" methodName=""Main"" parameterNames="""" />
@@ -1906,7 +1906,7 @@ namespace foo
     }
 }";
 
-            var compilation = CreateCompilationWithMscorlib(text, compOptions: TestOptions.Exe.WithDebugInformationKind(DebugInformationKind.Full).WithOptimizations(false));
+            var compilation = CreateCompilationWithMscorlib(text, options: TestOptions.DebugExe);
 
             var exebits = new MemoryStream();
             var pdbbits = new MemoryStream();

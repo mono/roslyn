@@ -37,7 +37,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             Dim nodeFactory As New SyntheticBoundNodeFactory(topMethod, currentMethodOrLambda, node.Syntax, compilationState, diagnostics)
             Dim int32 = nodeFactory.SpecialType(SpecialType.System_Int32)
-            currentLineTemporary = New NamedTempLocalSymbol(topMethod, int32, TempKind.OnErrorCurrentLine, DirectCast(nodeFactory.Syntax, StatementSyntax))
+            currentLineTemporary = New SynthesizedLocal(topMethod, int32, SynthesizedLocalKind.OnErrorCurrentLine, DirectCast(nodeFactory.Syntax, StatementSyntax))
 
             Dim body As BoundBlock
 
@@ -141,13 +141,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim int32 = nodeFactory.SpecialType(SpecialType.System_Int32)
             Dim bool = nodeFactory.SpecialType(SpecialType.System_Boolean)
 
-            unstructuredExceptionHandling.ActiveHandlerTemporary = New NamedTempLocalSymbol(topMethod, int32, TempKind.OnErrorActiveHandler, DirectCast(nodeFactory.Syntax, StatementSyntax))
+            unstructuredExceptionHandling.ActiveHandlerTemporary = New SynthesizedLocal(topMethod, int32, SynthesizedLocalKind.OnErrorActiveHandler, DirectCast(nodeFactory.Syntax, StatementSyntax))
             locals.Add(unstructuredExceptionHandling.ActiveHandlerTemporary)
-            unstructuredExceptionHandling.ResumeTargetTemporary = New NamedTempLocalSymbol(topMethod, int32, TempKind.OnErrorResumeTarget, DirectCast(nodeFactory.Syntax, StatementSyntax))
+            unstructuredExceptionHandling.ResumeTargetTemporary = New SynthesizedLocal(topMethod, int32, SynthesizedLocalKind.OnErrorResumeTarget, DirectCast(nodeFactory.Syntax, StatementSyntax))
             locals.Add(unstructuredExceptionHandling.ResumeTargetTemporary)
 
             If node.ResumeWithoutLabelOpt IsNot Nothing Then
-                unstructuredExceptionHandling.CurrentStatementTemporary = New NamedTempLocalSymbol(topMethod, int32, TempKind.OnErrorCurrentStatement, DirectCast(nodeFactory.Syntax, StatementSyntax))
+                unstructuredExceptionHandling.CurrentStatementTemporary = New SynthesizedLocal(topMethod, int32, SynthesizedLocalKind.OnErrorCurrentStatement, DirectCast(nodeFactory.Syntax, StatementSyntax))
                 locals.Add(unstructuredExceptionHandling.CurrentStatementTemporary)
                 unstructuredExceptionHandling.ResumeNextLabel = New GeneratedLabelSymbol("$VB$UnstructuredExceptionHandling_ResumeNext")
                 unstructuredExceptionHandling.ResumeLabel = New GeneratedLabelSymbol("$VB$UnstructuredExceptionHandling_Resume")
@@ -160,7 +160,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             statements.Add(DirectCast(Visit(node.Body), BoundBlock))
 
             ' We reach this statement if there were no exceptions. 
-            statements.Add(nodeFactory.HiddenSequencePoint(Me.GenerateDebugInfo))
+            statements.Add(nodeFactory.HiddenSequencePoint())
 
             If unstructuredExceptionHandling.CurrentStatementTemporary IsNot Nothing Then
                 RegisterUnstructuredExceptionHandlingResumeTarget(node.Syntax, False, statements)
@@ -223,11 +223,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 onErrorSwitchJumps(ActiveHandler_FirstNonReservedOnErrorGotoIndex + i) = unstructuredExceptionHandling.ExceptionHandlers(i)
             Next
 
-            ' When resume is present and debug info is generated:
+            ' When resume is present and we are not optimizing:
             ' Determine if the handler index is less than or equal to -2 (ActiveHandler_FirstOnErrorResumeNextIndex):
             ' If so, replace it with ActiveHandler_ResumeNext and jump to the switch.
             statements.Add(New BoundUnstructuredExceptionOnErrorSwitch(node.Syntax,
-                                                                       If(node.ResumeWithoutLabelOpt IsNot Nothing AndAlso GenerateDebugInfo,
+                                                                       If(node.ResumeWithoutLabelOpt IsNot Nothing AndAlso Me.Compilation.Options.OptimizationLevel = OptimizationLevel.Debug,
                                                                           nodeFactory.Conditional(nodeFactory.Binary(BinaryOperatorKind.GreaterThan,
                                                                                                                      bool,
                                                                                                                      nodeFactory.Local(unstructuredExceptionHandling.ActiveHandlerTemporary, isLValue:=False),
@@ -347,7 +347,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     unstructuredExceptionHandling.ExceptionHandlers.Add(nodeFactory.Goto(node.LabelOpt, setWasCompilerGenerated:=False))
 
                 Case OnErrorStatementKind.ResumeNext
-                    If GenerateDebugInfo Then
+                    If Compilation.Options.OptimizationLevel = OptimizationLevel.Debug Then
                         newErrorHandlerIndex = ActiveHandler_FirstOnErrorResumeNextIndex - unstructuredExceptionHandling.OnErrorResumeNextCount
                     Else
                         newErrorHandlerIndex = ActiveHandler_ResumeNext

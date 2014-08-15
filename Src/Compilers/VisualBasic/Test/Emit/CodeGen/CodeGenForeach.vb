@@ -89,16 +89,16 @@ Class C
     End Sub
 End Class
     </file>
-</compilation>, options:=OptionsExe).VerifyIL("C.Main", <![CDATA[
+</compilation>, options:=TestOptions.ReleaseExe).VerifyIL("C.Main", <![CDATA[
 {
   // Code size       37 (0x25)
   .maxstack  3
   .locals init (Integer() V_0, //VB$ForEachArray
-  Integer V_1) //VB$ForEachArrayIndex
+                Integer V_1) //VB$ForEachArrayIndex
   IL_0000:  ldc.i4.3
   IL_0001:  newarr     "Integer"
   IL_0006:  dup
-  IL_0007:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=12 <PrivateImplementationDetails>.$$method0x6000001-0"
+  IL_0007:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=12 <PrivateImplementationDetails>.$$method0x6000001-E429CCA3F703A39CC5954A6572FEC9086135B34E"
   IL_000c:  call       "Sub System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray(System.Array, System.RuntimeFieldHandle)"
   IL_0011:  stloc.0
   IL_0012:  ldc.i4.0
@@ -198,7 +198,7 @@ Class C
     End Sub
 End Class
     </file>
-</compilation>, options:=OptionsExe).VerifyIL("C.Main", <![CDATA[
+</compilation>, options:=TestOptions.ReleaseExe).VerifyIL("C.Main", <![CDATA[
 {
   // Code size       43 (0x2b)
   .maxstack  4
@@ -248,7 +248,7 @@ Class C
     End Sub
 End Class
     </file>
-</compilation>, options:=OptionsExe).VerifyIL("C.Main", <![CDATA[
+</compilation>, options:=TestOptions.ReleaseExe).VerifyIL("C.Main", <![CDATA[
 {
   // Code size       34 (0x22)
   .maxstack  4
@@ -305,7 +305,7 @@ a _
     End Sub
 End Class
     </file>
-</compilation>, options:=OptionsExe).VerifyIL("C.Main", <![CDATA[
+</compilation>, options:=TestOptions.ReleaseExe).VerifyIL("C.Main", <![CDATA[
 {
   // Code size       30 (0x1e)
   .maxstack  4
@@ -930,42 +930,42 @@ End Class
   .maxstack  3
   .locals init (System.Collections.Generic.IEnumerator(Of String) V_0) //VB$ForEachEnumerator
   .try
-{
-  IL_0000:  ldc.i4.3
-  IL_0001:  newarr     "Integer"
-  IL_0006:  dup
-  IL_0007:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=12 <PrivateImplementationDetails>.$$method0x6000001-0"
-  IL_000c:  call       "Sub System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray(System.Array, System.RuntimeFieldHandle)"
-  IL_0011:  ldsfld     "C._ClosureCache$__2 As System.Func(Of Integer, String)"
-  IL_0016:  brfalse.s  IL_001f
-  IL_0018:  ldsfld     "C._ClosureCache$__2 As System.Func(Of Integer, String)"
-  IL_001d:  br.s       IL_0031
-  IL_001f:  ldnull
-  IL_0020:  ldftn      "Function C._Lambda$__1(Object, Integer) As String"
-  IL_0026:  newobj     "Sub System.Func(Of Integer, String)..ctor(Object, System.IntPtr)"
-  IL_002b:  dup
-  IL_002c:  stsfld     "C._ClosureCache$__2 As System.Func(Of Integer, String)"
-  IL_0031:  call       "Function System.Linq.Enumerable.Select(Of Integer, String)(System.Collections.Generic.IEnumerable(Of Integer), System.Func(Of Integer, String)) As System.Collections.Generic.IEnumerable(Of String)"
-  IL_0036:  callvirt   "Function System.Collections.Generic.IEnumerable(Of String).GetEnumerator() As System.Collections.Generic.IEnumerator(Of String)"
-  IL_003b:  stloc.0
-  IL_003c:  br.s       IL_004e
-  IL_003e:  ldloc.0
-  IL_003f:  callvirt   "Function System.Collections.Generic.IEnumerator(Of String).get_Current() As String"
-  IL_0044:  callvirt   "Function String.ToLower() As String"
-  IL_0049:  call       "Sub System.Console.WriteLine(String)"
-  IL_004e:  ldloc.0
-  IL_004f:  callvirt   "Function System.Collections.IEnumerator.MoveNext() As Boolean"
-  IL_0054:  brtrue.s   IL_003e
-  IL_0056:  leave.s    IL_0062
-}
+  {
+    IL_0000:  ldc.i4.3
+    IL_0001:  newarr     "Integer"
+    IL_0006:  dup
+    IL_0007:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=12 <PrivateImplementationDetails>.$$method0x6000001-E429CCA3F703A39CC5954A6572FEC9086135B34E"
+    IL_000c:  call       "Sub System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray(System.Array, System.RuntimeFieldHandle)"
+    IL_0011:  ldsfld     "C._ClosureCache$__2 As System.Func(Of Integer, String)"
+    IL_0016:  brfalse.s  IL_001f
+    IL_0018:  ldsfld     "C._ClosureCache$__2 As System.Func(Of Integer, String)"
+    IL_001d:  br.s       IL_0031
+    IL_001f:  ldnull
+    IL_0020:  ldftn      "Function C._Lambda$__1(Object, Integer) As String"
+    IL_0026:  newobj     "Sub System.Func(Of Integer, String)..ctor(Object, System.IntPtr)"
+    IL_002b:  dup
+    IL_002c:  stsfld     "C._ClosureCache$__2 As System.Func(Of Integer, String)"
+    IL_0031:  call       "Function System.Linq.Enumerable.Select(Of Integer, String)(System.Collections.Generic.IEnumerable(Of Integer), System.Func(Of Integer, String)) As System.Collections.Generic.IEnumerable(Of String)"
+    IL_0036:  callvirt   "Function System.Collections.Generic.IEnumerable(Of String).GetEnumerator() As System.Collections.Generic.IEnumerator(Of String)"
+    IL_003b:  stloc.0
+    IL_003c:  br.s       IL_004e
+    IL_003e:  ldloc.0
+    IL_003f:  callvirt   "Function System.Collections.Generic.IEnumerator(Of String).get_Current() As String"
+    IL_0044:  callvirt   "Function String.ToLower() As String"
+    IL_0049:  call       "Sub System.Console.WriteLine(String)"
+    IL_004e:  ldloc.0
+    IL_004f:  callvirt   "Function System.Collections.IEnumerator.MoveNext() As Boolean"
+    IL_0054:  brtrue.s   IL_003e
+    IL_0056:  leave.s    IL_0062
+  }
   finally
-{
-  IL_0058:  ldloc.0
-  IL_0059:  brfalse.s  IL_0061
-  IL_005b:  ldloc.0
-  IL_005c:  callvirt   "Sub System.IDisposable.Dispose()"
-  IL_0061:  endfinally
-}
+  {
+    IL_0058:  ldloc.0
+    IL_0059:  brfalse.s  IL_0061
+    IL_005b:  ldloc.0
+    IL_005c:  callvirt   "Sub System.IDisposable.Dispose()"
+    IL_0061:  endfinally
+  }
   IL_0062:  ret
 }
 ]]>)
@@ -1022,7 +1022,7 @@ Public Class Gen(Of T As New)
     End Function
 End Class
     </file>
-</compilation>, options:=OptionsExe).VerifyIL("C.Main", <![CDATA[
+</compilation>, options:=TestOptions.ReleaseExe).VerifyIL("C.Main", <![CDATA[
 {
   // Code size       41 (0x29)
   .maxstack  1
@@ -2290,7 +2290,7 @@ Class C2
     End Sub
 End Class
     </file>
-</compilation>, options:=OptionsExe).VerifyIL("C1(Of S).DoStuff", <![CDATA[
+</compilation>, options:=TestOptions.ReleaseExe).VerifyIL("C1(Of S).DoStuff", <![CDATA[
 {
   // Code size       80 (0x50)
   .maxstack  1
@@ -2363,7 +2363,7 @@ Class C2
     End Sub
 End Class
     </file>
-</compilation>, options:=OptionsExe).VerifyIL("C1(Of S).DoStuff", <![CDATA[
+</compilation>, options:=TestOptions.ReleaseExe).VerifyIL("C1(Of S).DoStuff", <![CDATA[
 {
   // Code size       72 (0x48)
   .maxstack  1
@@ -2513,7 +2513,7 @@ End Class
 
         <Fact>
         Public Sub ForEachQuery()
-            Dim TEMP = CompileAndVerify(
+            CompileAndVerify(
 <compilation>
     <file name="a.vb">      
 Imports System.Linq
@@ -2528,7 +2528,6 @@ End Module
 </file>
 </compilation>,
             additionalRefs:={LinqAssemblyRef},
-            emitPdb:=True,
             expectedOutput:="123")
 
         End Sub
@@ -3045,40 +3044,40 @@ End Class
   // Code size       84 (0x54)
   .maxstack  3
   .locals init (Object V_0, //o
-  System.Collections.IEnumerator V_1) //VB$ForEachEnumerator
+                System.Collections.IEnumerator V_1) //VB$ForEachEnumerator
   IL_0000:  ldc.i4.3
   IL_0001:  newarr     "Integer"
   IL_0006:  dup
-  IL_0007:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=12 <PrivateImplementationDetails>.$$method0x6000001-0"
+  IL_0007:  ldtoken    "<PrivateImplementationDetails>.__StaticArrayInitTypeSize=12 <PrivateImplementationDetails>.$$method0x6000001-E429CCA3F703A39CC5954A6572FEC9086135B34E"
   IL_000c:  call       "Sub System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray(System.Array, System.RuntimeFieldHandle)"
   IL_0011:  stloc.0
   .try
-{
-  IL_0012:  ldloc.0
-  IL_0013:  castclass  "System.Collections.IEnumerable"
-  IL_0018:  callvirt   "Function System.Collections.IEnumerable.GetEnumerator() As System.Collections.IEnumerator"
-  IL_001d:  stloc.1
-  IL_001e:  br.s       IL_0035
-  IL_0020:  ldloc.1
-  IL_0021:  callvirt   "Function System.Collections.IEnumerator.get_Current() As Object"
-  IL_0026:  call       "Function System.Runtime.CompilerServices.RuntimeHelpers.GetObjectValue(Object) As Object"
-  IL_002b:  call       "Function System.Runtime.CompilerServices.RuntimeHelpers.GetObjectValue(Object) As Object"
-  IL_0030:  call       "Sub System.Console.WriteLine(Object)"
-  IL_0035:  ldloc.1
-  IL_0036:  callvirt   "Function System.Collections.IEnumerator.MoveNext() As Boolean"
-  IL_003b:  brtrue.s   IL_0020
-  IL_003d:  leave.s    IL_0053
-}
+  {
+    IL_0012:  ldloc.0
+    IL_0013:  castclass  "System.Collections.IEnumerable"
+    IL_0018:  callvirt   "Function System.Collections.IEnumerable.GetEnumerator() As System.Collections.IEnumerator"
+    IL_001d:  stloc.1
+    IL_001e:  br.s       IL_0035
+    IL_0020:  ldloc.1
+    IL_0021:  callvirt   "Function System.Collections.IEnumerator.get_Current() As Object"
+    IL_0026:  call       "Function System.Runtime.CompilerServices.RuntimeHelpers.GetObjectValue(Object) As Object"
+    IL_002b:  call       "Function System.Runtime.CompilerServices.RuntimeHelpers.GetObjectValue(Object) As Object"
+    IL_0030:  call       "Sub System.Console.WriteLine(Object)"
+    IL_0035:  ldloc.1
+    IL_0036:  callvirt   "Function System.Collections.IEnumerator.MoveNext() As Boolean"
+    IL_003b:  brtrue.s   IL_0020
+    IL_003d:  leave.s    IL_0053
+  }
   finally
-{
-  IL_003f:  ldloc.1
-  IL_0040:  isinst     "System.IDisposable"
-  IL_0045:  brfalse.s  IL_0052
-  IL_0047:  ldloc.1
-  IL_0048:  isinst     "System.IDisposable"
-  IL_004d:  callvirt   "Sub System.IDisposable.Dispose()"
-  IL_0052:  endfinally
-}
+  {
+    IL_003f:  ldloc.1
+    IL_0040:  isinst     "System.IDisposable"
+    IL_0045:  brfalse.s  IL_0052
+    IL_0047:  ldloc.1
+    IL_0048:  isinst     "System.IDisposable"
+    IL_004d:  callvirt   "Sub System.IDisposable.Dispose()"
+    IL_0052:  endfinally
+  }
   IL_0053:  ret
 }
 ]]>).Compilation

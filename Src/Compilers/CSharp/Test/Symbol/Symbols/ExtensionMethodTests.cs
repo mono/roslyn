@@ -50,7 +50,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Symbols
                 parameter = method.Parameters[0];
                 Assert.Equal(parameter.Type.TypeKind, TypeKind.TypeParameter);
             };
-            CompileAndVerify(source, validator: validator, options: TestOptions.DllAlwaysImportInternals);
+            CompileAndVerify(source, validator: validator, options: TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal));
         }
 
         /// <summary>
@@ -219,7 +219,7 @@ static class S
 }";
             var compilation = CreateCompilationWithMscorlib(source);
             var syntaxTree = compilation.SyntaxTrees.Single();
-            var fooSymbol = (MethodSymbol) compilation.GetSemanticModel(syntaxTree).GetSymbolInfo(
+            var fooSymbol = (MethodSymbol)compilation.GetSemanticModel(syntaxTree).GetSymbolInfo(
                 syntaxTree.GetCompilationUnitRoot().DescendantNodes().OfType<MemberAccessExpressionSyntax>().Single()).Symbol;
             Assert.True(fooSymbol.IsExtensionMethod);
             Assert.Equal(MethodKind.ReducedExtension, fooSymbol.MethodKind);
@@ -2397,7 +2397,7 @@ B");
                 additionalRefs: new[] { SystemCoreRef },
                 sourceSymbolValidator: validator(true),
                 symbolValidator: validator(false),
-                options: TestOptions.DllAlwaysImportInternals);
+                options: TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal));
         }
 
         /// <summary>
@@ -2441,7 +2441,7 @@ static class S
     internal static void M2<T>(this IEnumerable<T> t) { }
     internal static void M3<T, U>(this U u, IEnumerable<T> t) { }
 }";
-            var compilation = CreateCompilationWithMscorlib(source, references: new[] { SystemCoreRef }, compOptions: TestOptions.DllAlwaysImportInternals);
+            var compilation = CreateCompilationWithMscorlib(source, references: new[] { SystemCoreRef }, options: TestOptions.ReleaseDll.WithMetadataImportOptions(MetadataImportOptions.Internal));
             Action<ModuleSymbol> validator = module =>
             {
                 var type = module.GlobalNamespace.GetMember<NamedTypeSymbol>("S");
@@ -2476,7 +2476,7 @@ static class S
                     "void U.M3<T, U>(IEnumerable<T> t)",
                     "void S.M3<T, U>(U u, IEnumerable<T> t)");
             };
-            
+
             CompileAndVerify(compilation, emitOptions: EmitOptions.CCI, sourceSymbolValidator: validator, symbolValidator: validator);
         }
 
@@ -2759,7 +2759,7 @@ class Program
         [WorkItem(529866, "DevDiv")]
         [Fact]
         public void InstanceMethodAndInaccessibleExtensionMethod_Diagnostics()
-        {            
+        {
             var source =
 @"class C
 {
@@ -2791,7 +2791,7 @@ static class Extensions
         [WorkItem(545322, "DevDiv")] // Bug relates to defunct LookupOptions.IgnoreAccessibility.
         [Fact]
         public void InstanceMethodAndInaccessibleExtensionMethod_Symbols()
-        {            
+        {
             var source =
 @"class C
 {
@@ -2849,7 +2849,7 @@ static class Extensions
         [WorkItem(541890, "DevDiv")]
         [Fact]
         public void InstanceMethodAndInaccessibleExtensionMethod_CandidateSymbols()
-        {       
+        {
             var source =
 @"class C
 {
@@ -2890,9 +2890,9 @@ static class Extensions
         }
 
         [WorkItem(529596, "DevDiv")]
-        [Fact(Skip="529596")]
+        [Fact(Skip = "529596")]
         public void DelegateFromValueTypeExtensionMethod()
-        {          
+        {
             var source = @"
 public delegate void VoidDelegate();
 
@@ -2921,7 +2921,7 @@ static class C
 
         [Fact]
         public void DelegateFromGenericExtensionMethod()
-        {         
+        {
             var source = @"
 public delegate void VoidDelegate();
 
@@ -3269,7 +3269,7 @@ namespace NB
                 Diagnostic(ErrorCode.ERR_AmbigCall, "F").WithArguments("NA.A.F(object)", "NA.B.F(object)").WithLocation(16, 26),
                 // (1,1): info CS8019: Unnecessary using directive.
                 // using NB;
-                Diagnostic(ErrorCode.INF_UnusedUsingDirective, "using NB;"));
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using NB;"));
         }
 
         [Fact, WorkItem(822125, "DevDiv")]
@@ -3312,7 +3312,7 @@ internal static class Test
     }
 }
 ";
-            var compilation = CreateCompilation(source, new[] { MscorlibRef_v20 }, TestOptions.Dll);
+            var compilation = CreateCompilation(source, new[] { MscorlibRef_v20 }, TestOptions.ReleaseDll);
             CompileAndVerify(compilation);
         }
 

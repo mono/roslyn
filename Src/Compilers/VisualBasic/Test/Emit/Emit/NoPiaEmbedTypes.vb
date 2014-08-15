@@ -734,13 +734,13 @@ BC35000: Requested operation is not available because the runtime library functi
             AssertTheseDiagnostics(verifier, (<errors/>))
             Dim compilation1 = CreateCompilationWithReferences(
                 sources1,
-                options:=Options.UnoptimizedDll,
+                options:=TestOptions.DebugDll,
                 references:={MscorlibRef_v20, New VisualBasicCompilationReference(compilation0, embedInteropTypes:=True)})
             VerifyEmitDiagnostics(compilation1, errors)
             VerifyEmitMetadataOnlyDiagnostics(compilation1)
             compilation1 = CreateCompilationWithReferences(
                 sources1,
-                options:=Options.UnoptimizedDll,
+                options:=TestOptions.DebugDll,
                 references:={MscorlibRef_v20, New MetadataImageReference(compilation0.EmitToArray(), embedInteropTypes:=True)})
             VerifyEmitDiagnostics(compilation1, errors)
             VerifyEmitMetadataOnlyDiagnostics(compilation1)
@@ -1456,38 +1456,45 @@ End Class
                                                        End Sub
             Dim expected_M5 = <![CDATA[
 {
-  // Code size        8 (0x8)
+  // Code size       10 (0xa)
   .maxstack  2
-  IL_0000:  ldarg.1
-  IL_0001:  ldnull
-  IL_0002:  callvirt   "Sub ITest25.add_E1(System.Action)"
-  IL_0007:  ret
+  IL_0000:  nop
+  IL_0001:  ldarg.1
+  IL_0002:  ldnull
+  IL_0003:  callvirt   "Sub ITest25.add_E1(System.Action)"
+  IL_0008:  nop
+  IL_0009:  ret
 }
 ]]>
             Dim expected_M6 = <![CDATA[
 {
-  // Code size        8 (0x8)
+  // Code size       10 (0xa)
   .maxstack  2
-  IL_0000:  ldarg.1
-  IL_0001:  ldnull
-  IL_0002:  callvirt   "Sub ITest26.remove_E2(System.Action)"
-  IL_0007:  ret
+  IL_0000:  nop
+  IL_0001:  ldarg.1
+  IL_0002:  ldnull
+  IL_0003:  callvirt   "Sub ITest26.remove_E2(System.Action)"
+  IL_0008:  nop
+  IL_0009:  ret
 }
 ]]>
             Dim compilation1 = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(
                 sources1,
-                options:=Options.UnoptimizedExe,
+                options:=TestOptions.DebugExe,
                 additionalRefs:={New VisualBasicCompilationReference(compilation0, embedInteropTypes:=True)})
+
             verifier = CompileAndVerify(compilation1, symbolValidator:=validator, emitOptions:=EmitOptions.RefEmitBug)
-            AssertTheseDiagnostics(verifier, (<errors/>))
+            verifier.VerifyDiagnostics()
             verifier.VerifyIL("UsePia4.M5", expected_M5)
             verifier.VerifyIL("UsePia4.M6", expected_M6)
+
             compilation1 = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(
                 sources1,
-                options:=Options.UnoptimizedExe,
+                options:=TestOptions.DebugExe,
                 additionalRefs:={New MetadataImageReference(compilation0.EmitToArray(), embedInteropTypes:=True)})
+
             verifier = CompileAndVerify(compilation1, symbolValidator:=validator, emitOptions:=EmitOptions.RefEmitBug)
-            AssertTheseDiagnostics(verifier, (<errors/>))
+            verifier.VerifyDiagnostics()
             verifier.VerifyIL("UsePia4.M5", expected_M5)
             verifier.VerifyIL("UsePia4.M6", expected_M6)
         End Sub
@@ -1589,13 +1596,13 @@ End Interface
                                                        End Sub
             Dim compilation1 = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(
                 sources1,
-                options:=Options.UnoptimizedDll,
+                options:=TestOptions.DebugDll,
                 additionalRefs:={New VisualBasicCompilationReference(compilation0, embedInteropTypes:=True), SystemCoreRef})
             verifier = CompileAndVerify(compilation1, symbolValidator:=validator, emitOptions:=EmitOptions.RefEmitBug, verify:=False)
             AssertTheseDiagnostics(verifier, (<errors/>))
             compilation1 = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(
                 sources1,
-                options:=Options.UnoptimizedDll,
+                options:=TestOptions.DebugDll,
                 additionalRefs:={New MetadataImageReference(compilation0.EmitToArray(), embedInteropTypes:=True), SystemCoreRef})
             verifier = CompileAndVerify(compilation1, symbolValidator:=validator, emitOptions:=EmitOptions.RefEmitBug, verify:=False)
             AssertTheseDiagnostics(verifier, (<errors/>))
@@ -2003,40 +2010,42 @@ End Class
                                                        End Sub
             Dim expectedAdd = <![CDATA[
 {
-  // Code size       39 (0x27)
+  // Code size       40 (0x28)
   .maxstack  4
-  IL_0000:  ldtoken    "I1"
-  IL_0005:  call       "Function System.Type.GetTypeFromHandle(System.RuntimeTypeHandle) As System.Type"
-  IL_000a:  ldstr      "E"
-  IL_000f:  newobj     "Sub System.Runtime.InteropServices.ComAwareEventInfo..ctor(System.Type, String)"
-  IL_0014:  ldarg.1
-  IL_0015:  ldarg.0
-  IL_0016:  ldftn      "Sub C.M()"
-  IL_001c:  newobj     "Sub D..ctor(Object, System.IntPtr)"
-  IL_0021:  callvirt   "Sub System.Runtime.InteropServices.ComAwareEventInfo.AddEventHandler(Object, System.Delegate)"
-  IL_0026:  ret
+  IL_0000:  nop
+  IL_0001:  ldtoken    "I1"
+  IL_0006:  call       "Function System.Type.GetTypeFromHandle(System.RuntimeTypeHandle) As System.Type"
+  IL_000b:  ldstr      "E"
+  IL_0010:  newobj     "Sub System.Runtime.InteropServices.ComAwareEventInfo..ctor(System.Type, String)"
+  IL_0015:  ldarg.1
+  IL_0016:  ldarg.0
+  IL_0017:  ldftn      "Sub C.M()"
+  IL_001d:  newobj     "Sub D..ctor(Object, System.IntPtr)"
+  IL_0022:  callvirt   "Sub System.Runtime.InteropServices.ComAwareEventInfo.AddEventHandler(Object, System.Delegate)"
+  IL_0027:  ret
 }
 ]]>
             Dim expectedRemove = <![CDATA[
 {
-  // Code size       44 (0x2c)
+  // Code size       45 (0x2d)
   .maxstack  4
-  IL_0000:  ldtoken    "I1"
-  IL_0005:  call       "Function System.Type.GetTypeFromHandle(System.RuntimeTypeHandle) As System.Type"
-  IL_000a:  ldstr      "E"
-  IL_000f:  newobj     "Sub System.Runtime.InteropServices.ComAwareEventInfo..ctor(System.Type, String)"
-  IL_0014:  ldarg.1
-  IL_0015:  box        "T"
-  IL_001a:  ldarg.0
-  IL_001b:  ldftn      "Sub C.M()"
-  IL_0021:  newobj     "Sub D..ctor(Object, System.IntPtr)"
-  IL_0026:  callvirt   "Sub System.Runtime.InteropServices.ComAwareEventInfo.RemoveEventHandler(Object, System.Delegate)"
-  IL_002b:  ret
+  IL_0000:  nop
+  IL_0001:  ldtoken    "I1"
+  IL_0006:  call       "Function System.Type.GetTypeFromHandle(System.RuntimeTypeHandle) As System.Type"
+  IL_000b:  ldstr      "E"
+  IL_0010:  newobj     "Sub System.Runtime.InteropServices.ComAwareEventInfo..ctor(System.Type, String)"
+  IL_0015:  ldarg.1
+  IL_0016:  box        "T"
+  IL_001b:  ldarg.0
+  IL_001c:  ldftn      "Sub C.M()"
+  IL_0022:  newobj     "Sub D..ctor(Object, System.IntPtr)"
+  IL_0027:  callvirt   "Sub System.Runtime.InteropServices.ComAwareEventInfo.RemoveEventHandler(Object, System.Delegate)"
+  IL_002c:  ret
 }
 ]]>
             Dim compilation1 = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(
                 sources1,
-                options:=Options.UnoptimizedDll,
+                options:=TestOptions.DebugDll,
                 additionalRefs:={New VisualBasicCompilationReference(compilation0, embedInteropTypes:=True), SystemCoreRef})
             verifier = CompileAndVerify(compilation1, symbolValidator:=validator, emitOptions:=EmitOptions.RefEmitBug)
             AssertTheseDiagnostics(verifier, (<errors/>))
@@ -2044,7 +2053,7 @@ End Class
             verifier.VerifyIL("C.Remove(Of T)", expectedRemove)
             compilation1 = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(
                 sources1,
-                options:=Options.UnoptimizedDll,
+                options:=TestOptions.DebugDll,
                 additionalRefs:={New MetadataImageReference(compilation0.EmitToArray(), embedInteropTypes:=True), SystemCoreRef})
             verifier = CompileAndVerify(compilation1, symbolValidator:=validator, emitOptions:=EmitOptions.RefEmitBug)
             AssertTheseDiagnostics(verifier, (<errors/>))
@@ -2114,13 +2123,13 @@ End Class
                                                        End Sub
             Dim compilation1 = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(
                 sources1,
-                options:=Options.UnoptimizedDll,
+                options:=TestOptions.DebugDll,
                 additionalRefs:={New VisualBasicCompilationReference(compilation0, embedInteropTypes:=True)})
             verifier = CompileAndVerify(compilation1, symbolValidator:=validator, emitOptions:=EmitOptions.RefEmitBug)
             AssertTheseDiagnostics(verifier, (<errors/>))
             compilation1 = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(
                 sources1,
-                options:=Options.UnoptimizedDll,
+                options:=TestOptions.DebugDll,
                 additionalRefs:={New MetadataImageReference(compilation0.EmitToArray(), embedInteropTypes:=True)})
             verifier = CompileAndVerify(compilation1, symbolValidator:=validator, emitOptions:=EmitOptions.RefEmitBug)
             AssertTheseDiagnostics(verifier, (<errors/>))
@@ -4082,7 +4091,7 @@ End Class
 
             Dim compilation1 = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(
                 sources1,
-                options:=Options.UnoptimizedDll,
+                options:=TestOptions.DebugDll,
                 additionalRefs:={New VisualBasicCompilationReference(compilation0, embedInteropTypes:=True)})
 
             compilation1.AssertTheseDiagnostics(

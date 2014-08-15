@@ -65,8 +65,7 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             MetadataReference[] additionalRefs,
             CompilationOptions options);
 
-        protected abstract CompilationOptions DefaultCompilationOptions { get; }
-        protected abstract CompilationOptions OptionsDll { get; }
+        protected abstract CompilationOptions CompilationOptionsReleaseDll { get; }
 
         internal delegate CompilationVerifier Emitter(
             CommonTestBase test,
@@ -79,7 +78,6 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             Action<PEAssembly, EmitOptions> assemblyValidator,
             Action<IModuleSymbol, EmitOptions> symbolValidator,
             bool collectEmittedAssembly,
-            bool emitPdb,
             bool verify);
 
         private static Emitter[] emitters;
@@ -96,7 +94,6 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             string expectedOutput = null,
             CompilationOptions options = null,
             bool collectEmittedAssembly = true,
-            bool emitPdb = false,
             bool verify = true)
         {
             return CompileAndVerify(
@@ -111,7 +108,6 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
                 expectedOutput: expectedOutput,
                 options: options,
                 collectEmittedAssembly: collectEmittedAssembly,
-                emitPdb: emitPdb,
                 verify: verify);
         }
 
@@ -127,17 +123,11 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             string expectedOutput = null,
             CompilationOptions options = null,
             bool collectEmittedAssembly = true,
-            bool emitPdb = false,
             bool verify = true)
         {
             if (options == null)
             {
-                options = DefaultCompilationOptions.WithOutputKind((expectedOutput != null) ? OutputKind.ConsoleApplication : OutputKind.DynamicallyLinkedLibrary);
-            }
-
-            if (emitPdb)
-            {
-                options = options.WithOptimizations(false);
+                options = CompilationOptionsReleaseDll.WithOutputKind((expectedOutput != null) ? OutputKind.ConsoleApplication : OutputKind.DynamicallyLinkedLibrary);
             }
 
             var compilation = GetCompilationForEmit(sources, additionalRefs, options);
@@ -153,7 +143,6 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
                 expectedSignatures,
                 expectedOutput,
                 collectEmittedAssembly,
-                emitPdb,
                 verify);
         }
 
@@ -168,7 +157,6 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             SignatureDescription[] expectedSignatures = null,
             string expectedOutput = null,
             bool collectEmittedAssembly = true,
-            bool emitPdb = false,
             bool verify = true)
         {
             Assert.NotNull(compilation);
@@ -221,7 +209,6 @@ Example app.config:
                                     assemblyValidator,
                                     symbolValidator,
                                     collectEmittedAssembly,
-                                    emitPdb,
                                     verify);
 
                 if (result == null)
@@ -256,8 +243,7 @@ Example app.config:
             SignatureDescription[] expectedSignatures = null,
             string expectedOutput = null,
             CompilationOptions options = null,
-            bool collectEmittedAssembly = true,
-            bool emitPdb = false)
+            bool collectEmittedAssembly = true)
         {
             return CompileAndVerify(
                 source,
@@ -271,25 +257,12 @@ Example app.config:
                 OSVersion.IsWin8 ? expectedOutput : null,
                 options,
                 collectEmittedAssembly,
-                emitPdb,
                 verify: OSVersion.IsWin8);
         }
 
         /// <summary>
         /// Compiles, but only verifies on a Windows 8 machine.
         /// </summary>
-        /// <param name="compilation"></param>
-        /// <param name="dependencies"></param>
-        /// <param name="emitOptions"></param>
-        /// <param name="sourceSymbolValidator"></param>
-        /// <param name="validator"></param>
-        /// <param name="symbolValidator"></param>
-        /// <param name="expectedSignatures"></param>
-        /// <param name="expectedOutput"></param>
-        /// <param name="collectEmittedAssembly"></param>
-        /// <param name="emitPdb"></param>
-        /// <param name="verify"></param>
-        /// <returns></returns>
         internal CompilationVerifier CompileAndVerifyOnWin8Only(
             Compilation compilation,
             IEnumerable<ModuleData> dependencies = null,
@@ -299,8 +272,7 @@ Example app.config:
             Action<IModuleSymbol> symbolValidator = null,
             SignatureDescription[] expectedSignatures = null,
             string expectedOutput = null,
-            bool collectEmittedAssembly = true,
-            bool emitPdb = false)
+            bool collectEmittedAssembly = true)
         {
             return CompileAndVerify(
                 compilation,
@@ -313,7 +285,6 @@ Example app.config:
             	expectedSignatures,
             	OSVersion.IsWin8 ? expectedOutput : null,
             	collectEmittedAssembly,
-            	emitPdb,
             	verify: OSVersion.IsWin8);
         }
 
@@ -332,7 +303,6 @@ Example app.config:
             string expectedOutput = null,
             CompilationOptions options = null,
             bool collectEmittedAssembly = true,
-            bool emitPdb = false,
             bool verify = true)
         {
             return CompileAndVerify(
@@ -347,7 +317,6 @@ Example app.config:
                 OSVersion.IsWin8 ? expectedOutput : null,
                 options,
                 collectEmittedAssembly,
-                emitPdb,
                 verify: verify && OSVersion.IsWin8);
         }
 
@@ -378,7 +347,7 @@ Example app.config:
 
         internal CompilationVerifier CompileAndVerifyFieldMarshal(string source, Func<string, PEAssembly, EmitOptions, byte[]> getExpectedBlob, bool isField = true, EmitOptions emitOptions = EmitOptions.All)
         {
-            return CompileAndVerify(source, emitOptions: emitOptions, options: OptionsDll, assemblyValidator: (assembly, options) => MarshalAsMetadataValidator(assembly, getExpectedBlob, options, isField));
+            return CompileAndVerify(source, emitOptions: emitOptions, options: CompilationOptionsReleaseDll, assemblyValidator: (assembly, options) => MarshalAsMetadataValidator(assembly, getExpectedBlob, options, isField));
         }
 
         static internal void RunValidators(CompilationVerifier verifier, EmitOptions emitOptions, Action<PEAssembly, EmitOptions> assemblyValidator, Action<IModuleSymbol, EmitOptions> symbolValidator)
@@ -419,7 +388,6 @@ Example app.config:
             Action<PEAssembly, EmitOptions> assemblyValidator,
             Action<IModuleSymbol, EmitOptions> symbolValidator,
             bool collectEmittedAssembly,
-            bool emitPdb,
             bool verify)
         {
             CompilationVerifier verifier = null;
@@ -429,7 +397,7 @@ Example app.config:
             {
                 verifier = new CompilationVerifier(test, compilation, dependencies);
 
-                verifier.Emit(expectedOutput, manifestResources, emitPdb, verify, expectedSignatures);
+                verifier.Emit(expectedOutput, manifestResources, verify, expectedSignatures);
 
                 // We're dual-purposing EmitOptions here.  In this context, it
                 // tells the validator the version of Emit that is calling it. 

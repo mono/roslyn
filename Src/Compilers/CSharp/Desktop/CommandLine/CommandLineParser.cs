@@ -48,8 +48,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 bool checkOverflow = false;
                 bool allowUnsafe = false;
                 bool concurrentBuild = true;
-                bool emitDebugInformation = false;
-                var debugInformationKind = DebugInformationKind.Full;
+                bool emitPdb = false;
                 string pdbPath = null;
                 bool noStdLib = false;
                 string outputDirectory = baseDirectory;
@@ -97,6 +96,29 @@ namespace Microsoft.CodeAnalysis.CSharp
                 CultureInfo preferredUILang = null;
                 string touchedFilesPath = null;
                 var sqmSessionGuid = Guid.Empty;
+
+                // Process ruleset files first so that diagnostic severity settings specified on the command line via
+                // /nowarn and /warnaserror can override diagnostic severity settings specified in the ruleset file.
+                if (!IsInteractive)
+                {
+                    foreach (string arg in flattenedArgs)
+                    {
+                        string name, value;
+                        if (TryParseOption(arg, out name, out value) && (name == "ruleset"))
+                        {
+                            var unquoted = RemoveAllQuotes(value);
+
+                            if (string.IsNullOrEmpty(unquoted))
+                            {
+                                AddDiagnostic(diagnostics, ErrorCode.ERR_SwitchNeedsString, "<text>", name);
+                            }
+                            else
+                            {
+                                generalDiagnosticOption = GetDiagnosticOptionsFromRulesetFile(diagnosticOptions, diagnostics, unquoted, baseDirectory);
+                            }
+                        }
+                    }
+                }
 
                 foreach (string arg in flattenedArgs)
                 {
@@ -405,22 +427,17 @@ namespace Microsoft.CodeAnalysis.CSharp
                                 continue;
 
                             case "debug":
-                                emitDebugInformation = true;
+                                emitPdb = true;
+
+                                // unused, parsed for backward compat only
                                 if (value != null)
                                 {
-                                    if (string.IsNullOrEmpty(value))
+                                    if (value.IsEmpty())
                                     {
                                         AddDiagnostic(diagnostics, ErrorCode.ERR_SwitchNeedsString, MessageID.IDS_Text.Localize(), name);
                                     }
-                                    else if (string.Equals(value, "full", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        debugInformationKind = DebugInformationKind.Full;
-                                    }
-                                    else if (string.Equals(value, "pdbonly", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        debugInformationKind = DebugInformationKind.PdbOnly;
-                                    }
-                                    else
+                                    else if (!string.Equals(value, "full", StringComparison.OrdinalIgnoreCase) && 
+                                             !string.Equals(value, "pdbonly", StringComparison.OrdinalIgnoreCase))
                                     {
                                         AddDiagnostic(diagnostics, ErrorCode.ERR_BadDebugType, value);
                                     }
@@ -432,14 +449,14 @@ namespace Microsoft.CodeAnalysis.CSharp
                                 if (value != null)
                                     break;
 
-                                emitDebugInformation = true;
+                                emitPdb = true;
                                 continue;
 
                             case "debug-":
                                 if (value != null)
                                     break;
 
-                                emitDebugInformation = false;
+                                emitPdb = false;
                                 continue;
 
                             case "o":
@@ -492,7 +509,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                                 }
                                 else
                                 {
-                                    AddWarnings(diagnosticOptions, ReportDiagnostic.Error, ParseWarnings(value, diagnostics));
+                                    AddWarnings(diagnosticOptions, ReportDiagnostic.Error, ParseWarnings(value));
                                 }
                                 continue;
 
@@ -509,7 +526,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                                 }
                                 else
                                 {
-                                    AddWarnings(diagnosticOptions, ReportDiagnostic.Warn, ParseWarnings(value, diagnostics));
+                                    AddWarnings(diagnosticOptions, ReportDiagnostic.Default, ParseWarnings(value));
                                 }
                                 continue;
 
@@ -522,7 +539,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                                 }
 
                                 int newWarningLevel;
-                                if (string.IsNullOrEmpty(value) || 
+                                if (string.IsNullOrEmpty(value) ||
                                     !int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out newWarningLevel))
                                 {
                                     AddDiagnostic(diagnostics, ErrorCode.ERR_SwitchNeedsNumber, name);
@@ -550,7 +567,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                                 }
                                 else
                                 {
-                                    AddWarnings(diagnosticOptions, ReportDiagnostic.Suppress, ParseWarnings(value, diagnostics));
+                                    AddWarnings(diagnosticOptions, ReportDiagnostic.Suppress, ParseWarnings(value));
                                 }
                                 continue;
 
@@ -843,16 +860,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                                 continue;
 
                             case "ruleset":
-                                unquoted = RemoveAllQuotes(value);
-
-                                if (string.IsNullOrEmpty(unquoted))
-                                {
-                                    AddDiagnostic(diagnostics, ErrorCode.ERR_SwitchNeedsString, "<text>", name);
-                                }
-                                else
-                                {
-                                    generalDiagnosticOption = GetDiagnosticOptionsFromRulesetFile(diagnosticOptions, diagnostics, unquoted, baseDirectory);
-                                }
+                                // The ruleset arg has already been processed in a separate pass above.
                                 continue;
 
                             case "additionalfile":
@@ -889,7 +897,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                                 {
                                     additionalOptions.Add(parts[0], parts[1]);
                                 }
-                                
+
                                 continue;
                         }
                     }
@@ -934,14 +942,13 @@ namespace Microsoft.CodeAnalysis.CSharp
                     keyFileSearchPaths.Add(outputDirectory);
                 }
 
-                if (!emitDebugInformation)
+                if (!emitPdb)
                 {
                     if (pdbPath != null)
                     {
                         // Can't give a PDB file name and turn off debug information
                         AddDiagnostic(diagnostics, ErrorCode.ERR_MissingDebugSwitch);
                     }
-                    debugInformationKind = DebugInformationKind.None;
                 }
 
                 string compilationName;
@@ -964,8 +971,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     mainTypeName: mainTypeName,
                     scriptClassName: WellKnownMemberNames.DefaultScriptClassName,
                     usings: usings,
-                    debugInformationKind: debugInformationKind,
-                    optimize: optimize,
+                    optimizationLevel: optimize ? OptimizationLevel.Release : OptimizationLevel.Debug,
                     checkOverflow: checkOverflow,
                     allowUnsafe: allowUnsafe,
                     concurrentBuild: concurrentBuild,
@@ -995,6 +1001,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     CompilationName = compilationName,
                     OutputFileName = outputFileName,
                     PdbPath = pdbPath,
+                    EmitPdb = emitPdb,
                     OutputDirectory = outputDirectory,
                     DocumentationPath = documentationPath,
                     AppConfigPath = appConfigPath,
@@ -1465,21 +1472,26 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        private static IEnumerable<string> ParseWarnings(string value, IList<Diagnostic> diagnostics)
+        private static IEnumerable<string> ParseWarnings(string value)
         {
             value = value.Unquote();
             string[] values = value.Split(new char[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (string id in values)
             {
                 ushort number;
-                if (!ushort.TryParse(id, NumberStyles.Integer, CultureInfo.InvariantCulture, out number) || 
-                    (!ErrorFacts.IsWarning((ErrorCode)number)))
+                if (ushort.TryParse(id, NumberStyles.Integer, CultureInfo.InvariantCulture, out number) &&
+                    ErrorFacts.IsWarning((ErrorCode)number))
                 {
-                    AddDiagnostic(diagnostics, ErrorCode.WRN_BadWarningNumber, id);
+                    // The id refers to a compiler warning.
+                    yield return CSharp.MessageProvider.Instance.GetIdForErrorCode(number);
                 }
                 else
                 {
-                    yield return CSharp.MessageProvider.Instance.GetIdForErrorCode(number);
+                    // Previous versions of the compiler used to report a warning (CS1691)
+                    // whenever an unrecognized warning code was supplied in /nowarn or 
+                    // /warnaserror. We no longer generate a warning in such cases.
+                    // Instead we assume that the unrecognized id refers to a custom diagnostic.
+                    yield return id;
                 }
             }
         }
