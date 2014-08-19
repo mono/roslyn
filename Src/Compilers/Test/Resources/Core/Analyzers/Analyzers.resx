@@ -117,28 +117,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="DirectlyAwaitingTaskDescription" xml:space="preserve">
-    <value>Do not directly await a Task</value>
-  </data>
-  <data name="DirectlyAwaitingTaskMessage" xml:space="preserve">
-    <value>Do not directly await a Task without calling ConfigureAwait</value>
-  </data>
-  <data name="UseEmptyEnumerableDescription" xml:space="preserve">
-    <value>Use SpecializedCollections.EmptyEnumerable&lt;T&gt;()</value>
-  </data>
-  <data name="UseEmptyEnumerableMessage" xml:space="preserve">
-    <value>Use SpecializedCollections.EmptyEnumerable&lt;T&gt;()</value>
-  </data>
-  <data name="UseSingletonEnumerableDescription" xml:space="preserve">
-    <value>Use SpecializedCollections.SingletonEnumerable&lt;T&gt;()</value>
-  </data>
-  <data name="UseSingletonEnumerableMessage" xml:space="preserve">
-    <value>Use SpecializedCollections.SingletonEnumerable&lt;T&gt;()</value>
-  </data>
-  <data name="UseSiteDiagnosticsCheckerDescription" xml:space="preserve">
-    <value>Invoke the correct property to ensure correct use site diagnostics.</value>
-  </data>
-<data name="UseSiteDiagnosticsCheckerMessage" xml:space="preserve">
-    <value>Do not directly invoke the property '{0}', instead use '{0}NoUseSiteDiagnostics'.</value>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="SymbolAnalyzer" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>symbolanalyzer.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>
