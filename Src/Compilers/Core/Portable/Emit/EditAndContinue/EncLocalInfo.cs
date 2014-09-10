@@ -1,10 +1,10 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-using Microsoft.Cci;
-using Microsoft.CodeAnalysis.CodeGen;
-using Roslyn.Utilities;
 using System;
 using System.Diagnostics;
+using Microsoft.Cci;
+using Microsoft.CodeAnalysis.Symbols;
+using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.Emit
 {
@@ -16,7 +16,7 @@ namespace Microsoft.CodeAnalysis.Emit
         public readonly int Offset;
         public readonly ITypeReference Type;
         public readonly LocalSlotConstraints Constraints;
-        public readonly int SynthesizedKind;
+        public readonly CommonSynthesizedLocalKind SynthesizedKind;
         public readonly byte[] Signature;
 
         public EncLocalInfo(byte[] signature)
@@ -31,7 +31,7 @@ namespace Microsoft.CodeAnalysis.Emit
             this.Signature = signature;
         }
 
-        public EncLocalInfo(int offset, ITypeReference type, LocalSlotConstraints constraints, int synthesizedKind, byte[] signature)
+        public EncLocalInfo(int offset, ITypeReference type, LocalSlotConstraints constraints, CommonSynthesizedLocalKind synthesizedKind, byte[] signature)
         {
             Debug.Assert(type != null);
 

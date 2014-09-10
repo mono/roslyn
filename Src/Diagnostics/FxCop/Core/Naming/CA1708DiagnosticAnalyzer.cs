@@ -15,7 +15,6 @@ using Roslyn.Utilities;
 namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Naming
 {
     [DiagnosticAnalyzer]
-    [ExportDiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
     public sealed class CA1708DiagnosticAnalyzer : AbstractNamedTypeAnalyzer, ICompilationAnalyzer
     {
         internal const string RuleId = "CA1708";
@@ -30,6 +29,8 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Naming
                                                                                       FxCopDiagnosticCategory.Naming,
                                                                                       DiagnosticSeverity.Warning,
                                                                                       isEnabledByDefault: true,
+                                                                                      description: FxCopRulesResources.IdentifiersShouldDifferByMoreThanCaseDescription,
+                                                                                      helpLink: "http://msdn.microsoft.com/library/ms182242.aspx",
                                                                                       customTags: DiagnosticCustomTags.Microsoft);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics

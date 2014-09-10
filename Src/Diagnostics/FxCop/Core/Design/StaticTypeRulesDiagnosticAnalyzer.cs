@@ -14,7 +14,6 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
     /// CA1025: Static holder types should be sealed
     /// </summary>
     [DiagnosticAnalyzer]
-    [ExportDiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
     public sealed class StaticTypeRulesDiagnosticAnalyzer : AbstractNamedTypeAnalyzer
     {
         internal const string RuleNameForExportAttribute = "StaticHolderTypeRules";
@@ -26,6 +25,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
                                                                           FxCopDiagnosticCategory.Usage,
                                                                           DiagnosticSeverity.Warning,
                                                                           isEnabledByDefault: true,
+                                                                          helpLink: "http://msdn.microsoft.com/library/ms182168.aspx",
                                                                           customTags: DiagnosticCustomTags.Microsoft);
 
         internal static readonly DiagnosticDescriptor CA1053Rule = new DiagnosticDescriptor(CA1053RuleId,
@@ -34,6 +34,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
                                                                           FxCopDiagnosticCategory.Usage,
                                                                           DiagnosticSeverity.Warning,
                                                                           isEnabledByDefault: true,
+                                                                          helpLink: "http://msdn.microsoft.com/library/ms182169.aspx",
                                                                           customTags: DiagnosticCustomTags.Microsoft);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics

@@ -53,14 +53,14 @@ End Module
                 <entry il_offset="0x6c" start_row="10" start_column="13" end_row="10" end_column="25" file_ref="0"/>
             </sequencepoints>
             <locals>
-                <local name="VB$returnTemp" il_index="0" il_start="0x0" il_end="0x6e" attributes="1"/>
-                <local name="VB$cachedState" il_index="1" il_start="0x0" il_end="0x6e" attributes="1"/>
+                <local name="VB$returnTemp" il_index="0" il_start="0x0" il_end="0x6e" attributes="0"/>
+                <local name="VB$cachedState" il_index="1" il_start="0x0" il_end="0x6e" attributes="0"/>
                 <local name="MoveNext" il_index="2" il_start="0x30" il_end="0x6d" attributes="0"/>
             </locals>
             <scope startOffset="0x0" endOffset="0x6e">
                 <importsforward declaringType="Program" methodName="Main" parameterNames="args"/>
-                <local name="VB$returnTemp" il_index="0" il_start="0x0" il_end="0x6e" attributes="1"/>
-                <local name="VB$cachedState" il_index="1" il_start="0x0" il_end="0x6e" attributes="1"/>
+                <local name="VB$returnTemp" il_index="0" il_start="0x0" il_end="0x6e" attributes="0"/>
+                <local name="VB$cachedState" il_index="1" il_start="0x0" il_end="0x6e" attributes="0"/>
                 <scope startOffset="0x30" endOffset="0x6d">
                     <local name="MoveNext" il_index="2" il_start="0x30" il_end="0x6d" attributes="0"/>
                 </scope>
@@ -142,25 +142,25 @@ End Module
                 <entry il_offset="0x179" start_row="26" start_column="5" end_row="26" end_column="17" file_ref="0"/>
             </sequencepoints>
             <locals>
-                <local name="VB$returnTemp" il_index="0" il_start="0x0" il_end="0x17b" attributes="1"/>
-                <local name="VB$cachedState" il_index="1" il_start="0x0" il_end="0x17b" attributes="1"/>
+                <local name="VB$returnTemp" il_index="0" il_start="0x0" il_end="0x17b" attributes="0"/>
+                <local name="VB$cachedState" il_index="1" il_start="0x0" il_end="0x17b" attributes="0"/>
                 <local name="MoveNext" il_index="2" il_start="0x44" il_end="0x17a" attributes="0"/>
                 <local name="arr" il_index="3" il_start="0x44" il_end="0x17a" attributes="0"/>
-                <local name="$VB$ResumableLocal_x$1" il_index="0" il_start="0x61" il_end="0xc2" attributes="1" reusingslot="True"/>
-                <local name="$VB$ResumableLocal_x$2" il_index="0" il_start="0xed" il_end="0x15c" attributes="1" reusingslot="True"/>
+                <local name="$VB$ResumableLocal_x$1" il_index="0" il_start="0x61" il_end="0xc2" attributes="0" reusingslot="True"/>
+                <local name="$VB$ResumableLocal_x$2" il_index="0" il_start="0xed" il_end="0x15c" attributes="0" reusingslot="True"/>
             </locals>
             <scope startOffset="0x0" endOffset="0x17b">
                 <importsforward declaringType="Module1" methodName="Main" parameterNames=""/>
-                <local name="VB$returnTemp" il_index="0" il_start="0x0" il_end="0x17b" attributes="1"/>
-                <local name="VB$cachedState" il_index="1" il_start="0x0" il_end="0x17b" attributes="1"/>
+                <local name="VB$returnTemp" il_index="0" il_start="0x0" il_end="0x17b" attributes="0"/>
+                <local name="VB$cachedState" il_index="1" il_start="0x0" il_end="0x17b" attributes="0"/>
                 <scope startOffset="0x44" endOffset="0x17a">
                     <local name="MoveNext" il_index="2" il_start="0x44" il_end="0x17a" attributes="0"/>
                     <local name="arr" il_index="3" il_start="0x44" il_end="0x17a" attributes="0"/>
                     <scope startOffset="0x61" endOffset="0xc2">
-                        <local name="$VB$ResumableLocal_x$1" il_index="0" il_start="0x61" il_end="0xc2" attributes="1"/>
+                        <local name="$VB$ResumableLocal_x$1" il_index="0" il_start="0x61" il_end="0xc2" attributes="0"/>
                     </scope>
                     <scope startOffset="0xed" endOffset="0x15c">
-                        <local name="$VB$ResumableLocal_x$2" il_index="0" il_start="0xed" il_end="0x15c" attributes="1"/>
+                        <local name="$VB$ResumableLocal_x$2" il_index="0" il_start="0xed" il_end="0x15c" attributes="0"/>
                     </scope>
                 </scope>
             </scope>
@@ -198,13 +198,13 @@ End Class
                     source,
                     TestOptions.ReleaseDll)
 
-            Dim actual = PDBTests.GetPdbXml(compilation, "C+VB$StateMachine_4_Iterator_Lambda_Hoisted.MoveNext")
+            Dim actual = PDBTests.GetPdbXml(compilation, "C+VB$StateMachine_3_Iterator_Lambda_Hoisted.MoveNext")
 
-            ' Goal: We're looking for the double-mangled name "$VB$ResumableLocal_$VB$Closure_4$1".
+            ' Goal: We're looking for the double-mangled name "$VB$ResumableLocal_$VB$Closure_2$1".
             Dim expected =
 <symbols>
     <methods>
-        <method containingType="C+VB$StateMachine_4_Iterator_Lambda_Hoisted" name="MoveNext" parameterNames="">
+        <method containingType="C+VB$StateMachine_3_Iterator_Lambda_Hoisted" name="MoveNext" parameterNames="">
             <sequencepoints total="9">
                 <entry il_offset="0x0" hidden="true" start_row="16707566" start_column="0" end_row="16707566" end_column="0" file_ref="0"/>
                 <entry il_offset="0x19" hidden="true" start_row="16707566" start_column="0" end_row="16707566" end_column="0" file_ref="0"/>
@@ -217,14 +217,12 @@ End Class
                 <entry il_offset="0x96" start_row="14" start_column="5" end_row="14" end_column="17" file_ref="0"/>
             </sequencepoints>
             <locals>
-                <local name="VB$cachedState" il_index="0" il_start="0x0" il_end="0x98" attributes="1"/>
-                <local name="$VB$ResumableLocal_$VB$Closure_2$1" il_index="0" il_start="0x19" il_end="0x97" attributes="1" reusingslot="True"/>
+                <local name="$VB$ResumableLocal_$VB$Closure_2$1" il_index="0" il_start="0x19" il_end="0x97" attributes="0"/>
             </locals>
             <scope startOffset="0x0" endOffset="0x98">
                 <importsforward declaringType="C" methodName="Iterator_Lambda_Hoisted" parameterNames=""/>
-                <local name="VB$cachedState" il_index="0" il_start="0x0" il_end="0x98" attributes="1"/>
                 <scope startOffset="0x19" endOffset="0x97">
-                    <local name="$VB$ResumableLocal_$VB$Closure_2$1" il_index="0" il_start="0x19" il_end="0x97" attributes="1"/>
+                    <local name="$VB$ResumableLocal_$VB$Closure_2$1" il_index="0" il_start="0x19" il_end="0x97" attributes="0"/>
                 </scope>
             </scope>
         </method>
@@ -259,13 +257,13 @@ End Class
                     source,
                     TestOptions.ReleaseDll)
 
-            Dim actual = PDBTests.GetPdbXml(compilation, "C+VB$StateMachine_4_Iterator_Lambda_NotHoisted.MoveNext")
+            Dim actual = PDBTests.GetPdbXml(compilation, "C+VB$StateMachine_3_Iterator_Lambda_NotHoisted.MoveNext")
 
-            ' Goal: We're looking for the single-mangled name "$VB$Closure_2".
+            ' Goal: We're looking for the single-mangled name "$VB$Closure_1".
             Dim expected =
 <symbols>
     <methods>
-        <method containingType="C+VB$StateMachine_4_Iterator_Lambda_NotHoisted" name="MoveNext" parameterNames="">
+        <method containingType="C+VB$StateMachine_3_Iterator_Lambda_NotHoisted" name="MoveNext" parameterNames="">
             <sequencepoints total="6">
                 <entry il_offset="0x0" hidden="true" start_row="16707566" start_column="0" end_row="16707566" end_column="0" file_ref="0"/>
                 <entry il_offset="0x19" hidden="true" start_row="16707566" start_column="0" end_row="16707566" end_column="0" file_ref="0"/>
@@ -275,14 +273,12 @@ End Class
                 <entry il_offset="0x54" start_row="12" start_column="5" end_row="12" end_column="17" file_ref="0"/>
             </sequencepoints>
             <locals>
-                <local name="VB$cachedState" il_index="0" il_start="0x0" il_end="0x56" attributes="1"/>
-                <local name="$VB$Closure_2" il_index="1" il_start="0x19" il_end="0x55" attributes="1"/>
+                <local name="$VB$Closure_1" il_index="1" il_start="0x19" il_end="0x55" attributes="0"/>
             </locals>
             <scope startOffset="0x0" endOffset="0x56">
                 <importsforward declaringType="C" methodName="Iterator_Lambda_NotHoisted" parameterNames=""/>
-                <local name="VB$cachedState" il_index="0" il_start="0x0" il_end="0x56" attributes="1"/>
                 <scope startOffset="0x19" endOffset="0x55">
-                    <local name="$VB$Closure_2" il_index="1" il_start="0x19" il_end="0x55" attributes="1"/>
+                    <local name="$VB$Closure_1" il_index="1" il_start="0x19" il_end="0x55" attributes="0"/>
                 </scope>
             </scope>
         </method>
@@ -333,16 +329,14 @@ End Class
                 <entry il_offset="0x66" start_row="11" start_column="5" end_row="11" end_column="17" file_ref="0"/>
             </sequencepoints>
             <locals>
-                <local name="VB$cachedState" il_index="0" il_start="0x0" il_end="0x68" attributes="1"/>
-                <local name="$VB$ResumableLocal_x$1" il_index="0" il_start="0x19" il_end="0x67" attributes="1" reusingslot="True"/>
-                <local name="$VB$ResumableLocal_y$2" il_index="0" il_start="0x19" il_end="0x67" attributes="1" reusingslot="True"/>
+                <local name="$VB$ResumableLocal_x$1" il_index="0" il_start="0x19" il_end="0x67" attributes="0"/>
+                <local name="$VB$ResumableLocal_y$2" il_index="0" il_start="0x19" il_end="0x67" attributes="0" reusingslot="True"/>
             </locals>
             <scope startOffset="0x0" endOffset="0x68">
                 <importsforward declaringType="C" methodName="Iterator_NoLambda_Hoisted" parameterNames=""/>
-                <local name="VB$cachedState" il_index="0" il_start="0x0" il_end="0x68" attributes="1"/>
                 <scope startOffset="0x19" endOffset="0x67">
-                    <local name="$VB$ResumableLocal_x$1" il_index="0" il_start="0x19" il_end="0x67" attributes="1"/>
-                    <local name="$VB$ResumableLocal_y$2" il_index="0" il_start="0x19" il_end="0x67" attributes="1"/>
+                    <local name="$VB$ResumableLocal_x$1" il_index="0" il_start="0x19" il_end="0x67" attributes="0"/>
+                    <local name="$VB$ResumableLocal_y$2" il_index="0" il_start="0x19" il_end="0x67" attributes="0"/>
                 </scope>
             </scope>
         </method>
@@ -389,13 +383,11 @@ End Class
                 <entry il_offset="0x3a" start_row="9" start_column="5" end_row="9" end_column="17" file_ref="0"/>
             </sequencepoints>
             <locals>
-                <local name="VB$cachedState" il_index="0" il_start="0x0" il_end="0x3c" attributes="1"/>
                 <local name="x" il_index="1" il_start="0x19" il_end="0x3b" attributes="0"/>
                 <local name="y" il_index="2" il_start="0x19" il_end="0x3b" attributes="0"/>
             </locals>
             <scope startOffset="0x0" endOffset="0x3c">
                 <importsforward declaringType="C" methodName="Iterator_NoLambda_NotHoisted" parameterNames=""/>
-                <local name="VB$cachedState" il_index="0" il_start="0x0" il_end="0x3c" attributes="1"/>
                 <scope startOffset="0x19" endOffset="0x3b">
                     <local name="x" il_index="1" il_start="0x19" il_end="0x3b" attributes="0"/>
                     <local name="y" il_index="2" il_start="0x19" il_end="0x3b" attributes="0"/>
@@ -456,14 +448,14 @@ End Module
                 <entry il_offset="0x67" start_row="16" start_column="5" end_row="16" end_column="17" file_ref="0"/>
             </sequencepoints>
             <locals>
-                <local name="VB$returnTemp" il_index="0" il_start="0x0" il_end="0x69" attributes="1"/>
-                <local name="VB$cachedState" il_index="1" il_start="0x0" il_end="0x69" attributes="1"/>
+                <local name="VB$returnTemp" il_index="0" il_start="0x0" il_end="0x69" attributes="0"/>
+                <local name="VB$cachedState" il_index="1" il_start="0x0" il_end="0x69" attributes="0"/>
                 <local name="MoveNext" il_index="2" il_start="0x30" il_end="0x68" attributes="0"/>
             </locals>
             <scope startOffset="0x0" endOffset="0x69">
                 <importsforward declaringType="Module1" methodName="Main" parameterNames=""/>
-                <local name="VB$returnTemp" il_index="0" il_start="0x0" il_end="0x69" attributes="1"/>
-                <local name="VB$cachedState" il_index="1" il_start="0x0" il_end="0x69" attributes="1"/>
+                <local name="VB$returnTemp" il_index="0" il_start="0x0" il_end="0x69" attributes="0"/>
+                <local name="VB$cachedState" il_index="1" il_start="0x0" il_end="0x69" attributes="0"/>
                 <scope startOffset="0x30" endOffset="0x68">
                     <local name="MoveNext" il_index="2" il_start="0x30" il_end="0x68" attributes="0"/>
                 </scope>

@@ -78,6 +78,18 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.Semantics
                 End Get
             End Property
 
+            Public Overrides ReadOnly Property Description As String
+                Get
+                    Return String.Empty
+                End Get
+            End Property
+
+            Public Overrides ReadOnly Property HelpLink As String
+                Get
+                    Return String.Empty
+                End Get
+            End Property
+
             Public Overrides ReadOnly Property Location As Location
                 Get
                     Return m_location
@@ -475,6 +487,59 @@ End Class
 
             compilation.VerifyDiagnostics()
             compilation.VerifyAnalyzerDiagnostics({analyzer}, Nothing,
+                                           AnalyzerDiagnostic("XX001", <![CDATA[C]]>))
+        End Sub
+
+        Class NamespaceAndTypeNodeAnalyzer
+            Implements ISyntaxNodeAnalyzer(Of SyntaxKind)
+
+            Public Shared desc1 As New DiagnosticDescriptor("XX001", "DummyDescription", "DummyMessage", "DummyCategory", DiagnosticSeverity.Warning, isEnabledByDefault:=True)
+
+            Public ReadOnly Property SupportedDiagnostics As ImmutableArray(Of DiagnosticDescriptor) Implements IDiagnosticAnalyzer.SupportedDiagnostics
+                Get
+                    Return ImmutableArray.Create(desc1)
+                End Get
+            End Property
+
+            Public ReadOnly Property SyntaxKindsOfInterest As ImmutableArray(Of SyntaxKind) Implements ISyntaxNodeAnalyzer(Of SyntaxKind).SyntaxKindsOfInterest
+                Get
+                    Return ImmutableArray.Create(SyntaxKind.NamespaceBlock, SyntaxKind.ClassBlock)
+                End Get
+            End Property
+
+            Public Sub AnalyzeNode(node As SyntaxNode, semanticModel As SemanticModel, addDiagnostic As Action(Of Diagnostic), options As AnalyzerOptions, cancellationToken As CancellationToken) Implements ISyntaxNodeAnalyzer(Of SyntaxKind).AnalyzeNode
+                Dim location As Location = Nothing
+                Select Case node.VisualBasicKind
+                    Case SyntaxKind.NamespaceBlock
+                        location = DirectCast(node, NamespaceBlockSyntax).NamespaceStatement.Name.GetLocation
+                    Case SyntaxKind.ClassBlock
+                        location = DirectCast(node, ClassBlockSyntax).Begin.Identifier.GetLocation
+                End Select
+                addDiagnostic(CodeAnalysis.Diagnostic.Create(desc1, location))
+            End Sub
+        End Class
+
+        <Fact>
+        Sub TestSyntaxAnalyzerInvokedForNamespaceBlockAndClassBlock()
+            Dim analyzer = New NamespaceAndTypeNodeAnalyzer()
+            Dim sources = <compilation>
+                              <file name="c.vb">
+                                  <![CDATA[
+Namespace N
+    Public Class C
+    End Class
+End Namespace
+]]>
+                              </file>
+                          </compilation>
+
+            Dim compilation = CreateCompilationWithMscorlibAndReferences(sources,
+                references:={SystemCoreRef, MsvbRef},
+                options:=TestOptions.ReleaseDll)
+
+            compilation.VerifyDiagnostics()
+            compilation.VerifyAnalyzerDiagnostics({analyzer}, Nothing,
+                                           AnalyzerDiagnostic("XX001", <![CDATA[N]]>),
                                            AnalyzerDiagnostic("XX001", <![CDATA[C]]>))
         End Sub
     End Class

@@ -11,7 +11,6 @@ using Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities;
 namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Interoperability
 {
     [DiagnosticAnalyzer]
-    [ExportDiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
     public sealed class PInvokeDiagnosticAnalyzer : ICompilationNestedAnalyzerFactory
     {
         public const string CA1401 = "CA1401";
@@ -22,6 +21,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Interoperability
                                                                          FxCopDiagnosticCategory.Interoperability,
                                                                          DiagnosticSeverity.Warning,
                                                                          isEnabledByDefault: true,
+                                                                         helpLink: "http://msdn.microsoft.com/library/ms182209.aspx",
                                                                          customTags: DiagnosticCustomTags.Microsoft);
 
         internal static DiagnosticDescriptor RuleCA2101 = new DiagnosticDescriptor(CA2101,
@@ -30,6 +30,8 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Interoperability
                                                                          FxCopDiagnosticCategory.Globalization,
                                                                          DiagnosticSeverity.Warning,
                                                                          isEnabledByDefault: true,
+                                                                         description: FxCopRulesResources.SpecifyMarshalingForPInvokeStringArgumentsDescription,
+                                                                         helpLink: "http://msdn.microsoft.com/library/ms182319.aspx",
                                                                          customTags: DiagnosticCustomTags.Microsoft);
 
         private static readonly ImmutableArray<DiagnosticDescriptor> supportedDiagnostics = ImmutableArray.Create(RuleCA1401, RuleCA2101);

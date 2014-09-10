@@ -316,6 +316,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                  rewritten.Update(spillSequence.ValueOpt,
                                                                   rewritten.FieldSymbol,
                                                                   rewritten.IsLValue,
+                                                                  rewritten.SuppressVirtualCalls,
                                                                   rewritten.ConstantsInProgressOpt,
                                                                   rewritten.Type))
             End Function
@@ -335,6 +336,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return SpillSequenceWithNewValue(spillSequence,
                                                  rewritten.Update(spillSequence.ValueOpt,
                                                                   rewritten.ConversionKind,
+                                                                  rewritten.SuppressVirtualCalls,
                                                                   rewritten.ConstantValueOpt,
                                                                   rewritten.RelaxationLambdaOpt,
                                                                   rewritten.Type))

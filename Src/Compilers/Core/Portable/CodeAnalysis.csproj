@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4090503-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4090503-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
   <ImportGroup Label="Settings">
     <Import Project="..\..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Settings.targets" />
-    <Import Project="..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4070101-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
   </ImportGroup>
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
@@ -15,7 +15,7 @@
     <AssemblyName>Microsoft.CodeAnalysis</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <StyleCopEnabled>false</StyleCopEnabled>
-    <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">..\..\..\</SolutionDir>
+    <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">..\..\..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
     <TargetFrameworkIdentifier>.NETPortable</TargetFrameworkIdentifier>
@@ -23,10 +23,10 @@
   </PropertyGroup>
   <ItemGroup Label="File References">
     <Reference Include="System.Reflection.Metadata">
-      <HintPath>..\..\..\packages\Microsoft.Bcl.Metadata.1.0.12-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
+      <HintPath>..\..\..\..\packages\Microsoft.Bcl.Metadata.1.0.12-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
     </Reference>
     <Reference Include="System.Collections.Immutable">
-      <HintPath>..\..\..\packages\Microsoft.Bcl.Immutable.1.1.20-beta\lib\portable-net45+win8\System.Collections.Immutable.dll</HintPath>
+      <HintPath>..\..\..\..\packages\Microsoft.Bcl.Immutable.1.1.20-beta\lib\portable-net45+win8\System.Collections.Immutable.dll</HintPath>
     </Reference>
   </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
@@ -56,7 +56,6 @@
     <Compile Include="CodeGen\CompilationTestData.cs" />
     <Compile Include="CodeGen\DebugDocumentProvider.cs" />
     <Compile Include="CodeGen\EmitState.cs" />
-    <Compile Include="CodeGen\FullLocalSlotManager.cs" />
     <Compile Include="CodeGen\ILBuilder.cs" />
     <Compile Include="CodeGen\ILBuilderConversions.cs" />
     <Compile Include="CodeGen\ILBuilderEmit.cs" />
@@ -85,6 +84,7 @@
     <Compile Include="CodeGen\SwitchIntegralJumpTableEmitter.SwitchBucket.cs" />
     <Compile Include="CodeGen\SwitchStringJumpTableEmitter.cs" />
     <Compile Include="CodeGen\TokenMap.cs" />
+    <Compile Include="CodeGen\VariableSlotAllocator.cs" />
     <Compile Include="CodeGen\Win32Res.cs" />
     <Compile Include="Collections\ArrayBuilder.ArrayBuilderEnumerator.cs" />
     <Compile Include="Collections\ArrayBuilder.cs" />
@@ -103,6 +103,8 @@
     <Compile Include="Collections\IdentifierCollection.cs" />
     <Compile Include="Collections\ImmutableArrayExtensions.cs" />
     <Compile Include="Collections\ImmutableMemoryStream.cs" />
+    <Compile Include="InternalUtilities\DocumentationCommentId.cs" />
+    <Compile Include="Emit\EditAndContinue\SymbolMatcher.cs" />
     <Compile Include="InternalUtilities\IReadOnlySet.cs" />
     <Compile Include="Collections\KeyedStack.cs" />
     <Compile Include="Collections\OrderPreservingMultiDictionary.cs" />
@@ -202,7 +204,6 @@
     <Compile Include="Emit\EditAndContinue\EmitBaseline.cs" />
     <Compile Include="Emit\EditAndContinue\EmitDifferenceResult.cs" />
     <Compile Include="Emit\EditAndContinue\EncLocalInfo.cs" />
-    <Compile Include="Emit\EditAndContinue\EncLocalSlotManager.cs" />
     <Compile Include="Emit\EditAndContinue\IPEDeltaAssemblyBuilder.cs" />
     <Compile Include="Emit\EditAndContinue\SymbolChange.cs" />
     <Compile Include="Emit\EditAndContinue\SymbolChanges.cs" />
@@ -287,6 +288,7 @@
     <Compile Include="InternalUtilities\XmlUtilities.cs" />
     <Compile Include="MemberDescriptor.cs" />
     <Compile Include="MetadataReader\EmbeddedResource.cs" />
+    <Compile Include="MetadataReader\LocalSlotConstraints.cs" />
     <Compile Include="MetadataReader\MetadataDecoder.cs" />
     <Compile Include="MetadataReader\MetadataHelpers.cs" />
     <Compile Include="MetadataReader\MetadataImportOptions.cs" />
@@ -483,10 +485,12 @@
     <Compile Include="Symbols\NamespaceKind.cs" />
     <Compile Include="Symbols\PlatformInvokeInformation.cs" />
     <Compile Include="Symbols\RefKind.cs" />
+    <Compile Include="CodeGen\SignatureOnlyLocalDefinition.cs" />
     <Compile Include="Symbols\SymbolKind.cs" />
     <Compile Include="Symbols\SymbolKindExtensions.cs" />
     <Compile Include="Symbols\SymbolVisitor.cs" />
     <Compile Include="Symbols\SymbolVisitor`1.cs" />
+    <Compile Include="Symbols\CommonSynthesizedLocalKind.cs" />
     <Compile Include="Symbols\TypedConstant.cs" />
     <Compile Include="Symbols\TypedConstantKind.cs" />
     <Compile Include="Symbols\TypedConstantValue.cs" />
@@ -616,10 +620,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\default.win32manifest" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <ImportGroup Label="Targets">
     <Import Project="..\..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Imports.targets" />
-    <Import Project="..\..\..\packages\StyleCop.MSBuild.4.7.48.2\build\StyleCop.MSBuild.Targets" Condition="Exists('..\..\..\packages\StyleCop.MSBuild.4.7.48.2\build\StyleCop.MSBuild.Targets')" />
+    <Import Project="..\..\..\..\packages\StyleCop.MSBuild.4.7.48.2\build\StyleCop.MSBuild.Targets" Condition="Exists('..\..\..\..\packages\StyleCop.MSBuild.4.7.48.2\build\StyleCop.MSBuild.Targets')" />
     <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
@@ -627,5 +633,6 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
+    <Error Condition="!Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4090503-beta\build\Microsoft.Net.ToolsetCompilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4090503-beta\build\Microsoft.Net.ToolsetCompilers.props'))" />
   </Target>
 </Project>

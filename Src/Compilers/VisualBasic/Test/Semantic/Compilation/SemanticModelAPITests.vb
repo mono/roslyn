@@ -1,19 +1,11 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-Imports System
-Imports System.Collections.Generic
-Imports System.Globalization
-Imports System.Linq
-Imports System.Text
-Imports Microsoft.CodeAnalysis.Collections
-Imports Microsoft.CodeAnalysis.Test.Utilities
 Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
 Imports Roslyn.Test.Utilities
-Imports Xunit
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
 
@@ -508,6 +500,42 @@ End Class]]>
             Assert.NotNull(speculativeSymbolInfo.Symbol)
             Assert.Equal(SymbolKind.Method, speculativeSymbolInfo.Symbol.Kind)
             Assert.Equal("Sub C.Bar(Of T)(x As T)", speculativeSymbolInfo.Symbol.ToTestDisplayString())
+        End Sub
+
+        <WorkItem(1015560)>
+        <Fact(Skip:="1015560")>
+        Public Sub GetSpeculativeSymbolInfoForGenericNameInCref()
+            Dim compilation = CompilationUtils.CreateCompilationWithMscorlib(
+<compilation name="GetSemanticInfo">
+    <file name="a.vb"><![CDATA[Imports System.Collections.Generic
+Module Program
+    ''' <see cref="System.Collections.Generic.List(Of T).Contains(T)"/>
+    Sub Main()
+    End Sub
+End Module]]>
+    </file>
+</compilation>)
+
+            Dim tree = compilation.SyntaxTrees.Single()
+            Dim root = tree.GetCompilationUnitRoot
+            Dim crefSyntax = root.DescendantNodes(descendIntoTrivia:=True).OfType(Of CrefReferenceSyntax).Single()
+            Dim semanticModel = compilation.GetSemanticModel(tree)
+
+            Dim symbolInfo = semanticModel.GetSymbolInfo(crefSyntax.FindNode(New TextSpan(71, 37)))
+            Dim oldSymbol = symbolInfo.Symbol
+            Assert.NotNull(oldSymbol)
+            Assert.Equal(SymbolKind.NamedType, oldSymbol.Kind)
+            Assert.Equal("System.Collections.Generic.List(Of T)", oldSymbol.ToTestDisplayString())
+
+            Dim speculatedName = DirectCast(SyntaxFactory.ParseName("List(Of T)"), GenericNameSyntax)
+            Dim speculativeSymbolInfo = semanticModel.GetSpeculativeSymbolInfo(crefSyntax.SpanStart, speculatedName, SpeculativeBindingOption.BindAsTypeOrNamespace)
+            Dim newSymbol = speculativeSymbolInfo.Symbol
+            Assert.NotNull(newSymbol)
+            Assert.Equal(SymbolKind.NamedType, newSymbol.Kind)
+            Assert.Equal("System.Collections.Generic.List(Of T)", newSymbol.ToTestDisplayString())
+
+            Assert.False(DirectCast(newSymbol, NamedTypeSymbol).TypeArguments.Single.IsErrorType)
+            Assert.True(newSymbol.Equals(oldSymbol))
         End Sub
 #End Region
 
@@ -1774,8 +1802,8 @@ End Class
             Assert.Equal("System.ArgumentException", symbol.Target.ToDisplayString())
         End Sub
 
-        <Fact(Skip:="849360")>
-        Public Sub TestGetSpeculativeSemanticModelForLocalDeclaration_Incomplete()
+        <Fact, WorkItem(849360)>
+        Public Sub TestGetSpeculativeSemanticModelForLocalDeclaration_Incomplete_1()
             Dim compilation = CompilationUtils.CreateCompilationWithMscorlib(
 <compilation name="BindAsExpressionVsBindAsType">
     <file name="a.vb">
@@ -1791,7 +1819,42 @@ Module M
             Dim tree As SyntaxTree = (From t In compilation.SyntaxTrees Where t.FilePath = "a.vb").Single()
             Dim root = tree.GetCompilationUnitRoot()
             Dim moduleBlock = DirectCast(root.Members(0), ModuleBlockSyntax)
-            Dim namespaceBlock = DirectCast(moduleBlock.Members(1), NamespaceBlockSyntax)
+            Dim namespaceBlock = DirectCast(root.Members(1), NamespaceBlockSyntax)
+            Dim typeBlockSyntax = DirectCast(namespaceBlock.Members(0), TypeBlockSyntax)
+            Dim methodBlockSyntax = DirectCast(typeBlockSyntax.Members(0), MethodBlockSyntax)
+            Dim statementSyntax = DirectCast(methodBlockSyntax.Statements(0), LocalDeclarationStatementSyntax)
+            Dim initializer = statementSyntax.DescendantNodes().Single(Function(n) n.ToString() = "Me.foo")
+            Dim position = statementSyntax.SpanStart
+            Dim model = compilation.GetSemanticModel(tree)
+
+            Dim speculatedExpression = DirectCast(SyntaxFactory.ParseExpression("foo"), ExpressionSyntax)
+            Dim speculatedStatement = statementSyntax.ReplaceNode(initializer, speculatedExpression)
+
+            Dim speculativeModel As SemanticModel = Nothing
+            Dim success = model.TryGetSpeculativeSemanticModel(position, speculatedStatement, speculativeModel)
+            Assert.True(success)
+            Assert.NotNull(speculativeModel)
+        End Sub
+
+        <Fact, WorkItem(849360)>
+        Public Sub TestGetSpeculativeSemanticModelForLocalDeclaration_Incomplete_2()
+            Dim compilation = CompilationUtils.CreateCompilationWithMscorlib(
+<compilation name="BindAsExpressionVsBindAsType">
+    <file name="a.vb">
+Module M
+    Class D
+        Sub T()
+        Namespace A
+            Class B
+                Function S()
+                    Dim c = Me.foo
+    </file>
+</compilation>)
+
+            Dim tree As SyntaxTree = (From t In compilation.SyntaxTrees Where t.FilePath = "a.vb").Single()
+            Dim root = tree.GetCompilationUnitRoot()
+            Dim moduleBlock = DirectCast(root.Members(0), ModuleBlockSyntax)
+            Dim namespaceBlock = DirectCast(root.Members(1), NamespaceBlockSyntax)
             Dim typeBlockSyntax = DirectCast(namespaceBlock.Members(0), TypeBlockSyntax)
             Dim methodBlockSyntax = DirectCast(typeBlockSyntax.Members(0), MethodBlockSyntax)
             Dim statementSyntax = DirectCast(methodBlockSyntax.Statements(0), LocalDeclarationStatementSyntax)

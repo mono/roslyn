@@ -5,19 +5,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
-using ProprietaryTestResources = Microsoft.CodeAnalysis.Test.Resources.Proprietary;
+using System.Threading;
 using Microsoft.CodeAnalysis.Test.Utilities;
-using Microsoft.CodeAnalysis.Text;
-
+using Microsoft.Win32;
 using Roslyn.Test.Utilities;
 using Xunit;
-using Microsoft.Win32;
-using System.Runtime.InteropServices;
-using System.Reflection;
-using Microsoft.CodeAnalysis.Diagnostics;
-using System.Collections.Immutable;
-using System.Threading;
+using ProprietaryTestResources = Microsoft.CodeAnalysis.Test.Resources.Proprietary;
 
 namespace Microsoft.CodeAnalysis.BuildTasks.UnitTests
 {
@@ -49,10 +45,12 @@ namespace Microsoft.CodeAnalysis.BuildTasks.UnitTests
             return dict;
         }
 
-        private void KillProcess(string path)
+        private List<Process> GetProcessesByFullPath(string path)
         {
+            var matchingProcesses = new List<Process>();
+
             var processes = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(path));
-            foreach (Process p in processes)
+            foreach (var p in processes)
             {
                 int pathSize = path.Length * 2;
                 var exeNameBuffer = new StringBuilder(pathSize);
@@ -65,8 +63,7 @@ namespace Microsoft.CodeAnalysis.BuildTasks.UnitTests
                     // next process
                     handle = p.Handle;
                 }
-                catch (InvalidOperationException)
-                { }
+                catch (InvalidOperationException) { }
 
                 if (handle != IntPtr.Zero &&
                     QueryFullProcessImageName(handle,
@@ -77,10 +74,28 @@ namespace Microsoft.CodeAnalysis.BuildTasks.UnitTests
                                   path,
                                   StringComparison.OrdinalIgnoreCase))
                 {
+                    matchingProcesses.Add(p);
+                }
+            }
+
+            return matchingProcesses;
+        }
+
+        private void KillProcess(string path)
+        {
+            foreach (var p in GetProcessesByFullPath(path))
+            {
                     p.Kill();
                     p.WaitForExit();
                 }
             }
+
+        private void WaitForProcessExit(string path, TimeSpan interval)
+        {
+            while (GetProcessesByFullPath(path).Any())
+            {
+                Thread.Sleep(interval);
+        }
         }
 
         /// <summary>
@@ -98,14 +113,6 @@ namespace Microsoft.CodeAnalysis.BuildTasks.UnitTests
             int flags,
             StringBuilder exeNameBuffer,
             ref int bufferSize);
-
-        private static string WorkingDirectory
-        {
-            get
-            {
-                return Environment.CurrentDirectory;
-            }
-        }
 
         private static string msbuildExecutable;
         private static string MSBuildExecutable
@@ -142,12 +149,42 @@ namespace Microsoft.CodeAnalysis.BuildTasks.UnitTests
             }
         }
 
-        private static string CompilerServerExecutable = Path.Combine(WorkingDirectory, "VBCSCompiler.exe");
-        private static string BuildTaskDll = Path.Combine(WorkingDirectory, "Roslyn.Compilers.BuildTasks.dll");
-        private static string CSharpCompilerClientExecutable = Path.Combine(WorkingDirectory, "csc2.exe");
-        private static string BasicCompilerClientExecutable = Path.Combine(WorkingDirectory, "vbc2.exe");
-        private static string CSharpCompilerExecutable = Path.Combine(WorkingDirectory, "csc.exe");
-        private static string BasicCompilerExecutable = Path.Combine(WorkingDirectory, "vbc.exe");
+        private static string workingDirectory = Environment.CurrentDirectory;
+        private static string ResolveAssemblyPath(string exeName)
+        {
+            var path = Path.Combine(workingDirectory, exeName);
+            if (File.Exists(path))
+            {
+                return path;
+            }
+            else
+            {
+                path = Path.Combine(MSBuildDirectory, exeName);
+                if (File.Exists(path))
+                {
+                    var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+                    var loadedAssemblyVersion = Assembly.LoadFile(path).GetName().Version;
+                    if (currentAssemblyVersion == loadedAssemblyVersion)
+                    {
+                        return path;
+                    }
+                }
+                return null;
+            }
+        }
+
+        private static string CompilerServerExecutable = ResolveAssemblyPath("VBCSCompiler.exe");
+        private static string BuildTaskDll = ResolveAssemblyPath("Roslyn.Compilers.BuildTasks.dll");
+        private static string CSharpCompilerExecutable = ResolveAssemblyPath("csc.exe");
+        private static string BasicCompilerExecutable = ResolveAssemblyPath("vbc.exe");
+        private static string MicrosoftCodeAnalysisDll = ResolveAssemblyPath("Microsoft.CodeAnalysis.dll");
+        private static string SystemCollectionsImmutableDll = ResolveAssemblyPath("System.Collections.Immutable.dll");
+
+        // The native client executables can't be loaded via Assembly.Load, so we just use the
+        // compiler server resolved path
+        private static string clientExecutableBasePath = Path.GetDirectoryName(CompilerServerExecutable);
+        private static string CSharpCompilerClientExecutable = Path.Combine(clientExecutableBasePath, "csc2.exe");
+        private static string BasicCompilerClientExecutable = Path.Combine(clientExecutableBasePath, "vbc2.exe");
 
         // In order that the compiler server doesn't stay around and prevent future builds, we explicitly
         // kill it after each test.
@@ -208,7 +245,7 @@ namespace Microsoft.CodeAnalysis.BuildTasks.UnitTests
         {
             Dictionary<string, string> files =
                                    new Dictionary<string, string> {
-                                           { "hello.cs",
+                                           { "hello.cs", 
 @"using System;
 using System.Diagnostics;
 class Hello 
@@ -268,7 +305,7 @@ class Hello
         {
             Dictionary<string, string> files =
                                    new Dictionary<string, string> {
-                                           { "hello.cs",
+                                           { "hello.cs", 
 @"using System;
 class Hello 
 {
@@ -286,7 +323,7 @@ class Hello
         {
             Dictionary<string, string> files =
                                    new Dictionary<string, string> {
-                                           { "hello.vb",
+                                           { "hello.vb", 
 @"Imports System.Diagnostics
 
 Module Module1
@@ -306,7 +343,7 @@ End Module"}};
         {
             Dictionary<string, string> files =
                                    new Dictionary<string, string> {
-                                           { "hello.vb",
+                                           { "hello.vb", 
 @"Imports System
 
 Module Module1
@@ -325,7 +362,7 @@ End Module"}};
         {
             Dictionary<string, string> files =
                                    new Dictionary<string, string> {
-                                           { "hello.cs",
+                                           { "hello.cs", 
 @"using System;
 class Hello 
 {
@@ -349,7 +386,7 @@ class Hello
         {
             Dictionary<string, string> files =
                                    new Dictionary<string, string> {
-                                           { "hellovb.vb",
+                                           { "hellovb.vb", 
 @"Imports System
 
 Module Module1
@@ -389,7 +426,7 @@ End Class"}};
         {
             Dictionary<string, string> files =
                                    new Dictionary<string, string> {
-                                           { "hello.cs",
+                                           { "hello.cs", 
 @"using System;
 class Hello 
 {
@@ -450,7 +487,7 @@ class Hello
         {
             Dictionary<string, string> files =
                                    new Dictionary<string, string> {
-                                           { "hellovb.vb",
+                                           { "hellovb.vb", 
 @"Imports System.Diagnostics
 
 Module Module1
@@ -504,7 +541,7 @@ End Module"}};
             // Create DLL "lib.dll"
             Dictionary<string, string> files =
                                    new Dictionary<string, string> {
-                                           { "src1.vb",
+                                           { "src1.vb", 
 @"Imports System
 Public Class Library 
 
@@ -525,7 +562,7 @@ End Class
                 {
                     // Create EXE "hello1.exe"
                     files = new Dictionary<string, string> {
-                                           { "hello1.vb",
+                                           { "hello1.vb", 
 @"Imports System
 Module Module1 
     Public Sub Main()
@@ -546,7 +583,7 @@ End Module
                     {
                         // Create EXE "hello2.exe" referencing same DLL
                         files = new Dictionary<string, string> {
-                                                { "hello2.vb",
+                                                { "hello2.vb", 
 @"Imports System
 Module Module1 
 Public Sub Main()
@@ -566,7 +603,7 @@ End Module
                         // Change DLL "lib.dll" to something new.
                         files =
                                                new Dictionary<string, string> {
-                                           { "src2.vb",
+                                           { "src2.vb", 
 @"Imports System
 Public Class Library 
     Public Shared Function GetString() As String
@@ -587,7 +624,7 @@ End Class
                         {
                             // Create EXE "hello3.exe" referencing new DLL
                             files = new Dictionary<string, string> {
-                                           { "hello3.vb",
+                                           { "hello3.vb", 
 @"Imports System
 Module Module1 
     Public Sub Main()
@@ -627,7 +664,7 @@ End Module
                 // Create DLL "lib.dll"
                 Dictionary<string, string> files =
                                        new Dictionary<string, string> {
-                                           { "src1.cs",
+                                           { "src1.cs", 
 @"using System;
 public class Library 
 {
@@ -644,7 +681,7 @@ public class Library
                 {
                     // Create EXE "hello1.exe"
                     files = new Dictionary<string, string> {
-                                           { "hello1.cs",
+                                           { "hello1.cs", 
 @"using System;
 class Hello 
 {
@@ -666,7 +703,7 @@ class Hello
 
                         // Create EXE "hello2.exe" referencing same DLL
                         files = new Dictionary<string, string> {
-                                               { "hello2.cs",
+                                               { "hello2.cs", 
 @"using System;
 class Hello 
 {
@@ -685,7 +722,7 @@ class Hello
                         // Change DLL "lib.dll" to something new.
                         files =
                                                new Dictionary<string, string> {
-                                           { "src2.cs",
+                                           { "src2.cs", 
 @"using System;
 public class Library 
 {
@@ -705,7 +742,7 @@ public class Library
                         {
                             // Create EXE "hello3.exe" referencing new DLL
                             files = new Dictionary<string, string> {
-                                           { "hello3.cs",
+                                           { "hello3.cs", 
 @"using System;
 class Hello 
 {
@@ -835,7 +872,7 @@ End Module", i));
             // Return a dictionary with name and contents of all the files we want to create for the SimpleMSBuild test.
 
             return new Dictionary<string, string> {
-{ "HelloSolution.sln",
+{ "HelloSolution.sln", 
 @"
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
@@ -896,6 +933,7 @@ EndGlobal
 <Project ToolsVersion=""4.0"" DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <UsingTask TaskName=""Microsoft.CodeAnalysis.BuildTasks.Csc"" AssemblyFile=""" + BuildTaskDll + @""" />
   <PropertyGroup>
+    <CscToolPath>" + clientExecutableBasePath + @"</CscToolPath>
     <Configuration Condition="" '$(Configuration)' == '' "">Debug</Configuration>
     <Platform Condition="" '$(Platform)' == '' "">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
@@ -951,7 +989,7 @@ EndGlobal
     <Folder Include=""Properties\"" />
   </ItemGroup>
   <Import Project=""$(MSBuildToolsPath)\Microsoft.CSharp.targets"" />
-</Project>"},
+</Project>"}, 
 
 { "Program.cs",
 @"using System;
@@ -980,6 +1018,7 @@ namespace HelloProj
 <Project ToolsVersion=""4.0"" DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <UsingTask TaskName=""Microsoft.CodeAnalysis.BuildTasks.Csc"" AssemblyFile=""" + BuildTaskDll + @""" />
   <PropertyGroup>
+    <CscToolPath>" + clientExecutableBasePath + @"</CscToolPath>
     <Configuration Condition="" '$(Configuration)' == '' "">Debug</Configuration>
     <Platform Condition="" '$(Platform)' == '' "">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
@@ -1047,6 +1086,7 @@ namespace HelloLib
 <Project ToolsVersion=""4.0"" DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <UsingTask TaskName=""Microsoft.CodeAnalysis.BuildTasks.Vbc"" AssemblyFile=""" + BuildTaskDll + @""" />
   <PropertyGroup>
+    <VbcToolPath>" + clientExecutableBasePath + @"</VbcToolPath>
     <Configuration Condition="" '$(Configuration)' == '' "">Debug</Configuration>
     <Platform Condition="" '$(Platform)' == '' "">AnyCPU</Platform>
     <ProductVersion>
@@ -1145,7 +1185,7 @@ End Class
             // Return a dictionary with name and contents of all the files we want to create for the SimpleMSBuild test.
 
             return new Dictionary<string, string> {
-{"ConsoleApplication1.sln",
+{"ConsoleApplication1.sln", 
 @"
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
@@ -1179,7 +1219,7 @@ Global
 	EndGlobalSection
 EndGlobal
 "},
-{"ConsoleApplication1.vbproj",
+{"ConsoleApplication1.vbproj", 
 @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <Import Project=""$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"" Condition=""Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"" />
@@ -1238,7 +1278,7 @@ EndGlobal
   -->
 </Project>
 "},
-{"ConsoleApp.vb",
+{"ConsoleApp.vb", 
 @"
 Module ConsoleApp
     Sub Main()
@@ -1248,7 +1288,7 @@ Module ConsoleApp
     End Sub
 End Module
 "},
-{"assem1.csproj",
+{"assem1.csproj", 
 @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <Import Project=""$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"" Condition=""Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"" />
@@ -1292,7 +1332,7 @@ End Module
   -->
 </Project>
 "},
-{"Assem1.cs",
+{"Assem1.cs", 
 @"
 using System;
 using System.Collections.Generic;
@@ -1310,7 +1350,7 @@ public class AssemClass
     }
 }
 "},
-{"Mod1.vbproj",
+{"Mod1.vbproj", 
 @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <Import Project=""$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"" Condition=""Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"" />
@@ -1364,7 +1404,7 @@ public class AssemClass
   -->
 </Project>
 "},
-{"Mod1.vb",
+{"Mod1.vb", 
 @"
 Friend Class ModClass
     Public Shared Name As String = ""ModClass""
@@ -1386,7 +1426,7 @@ End Class
             // Create DLL "lib.dll"
             Dictionary<string, string> files =
                                    new Dictionary<string, string> {
-                                           { "src1.cs",
+                                           { "src1.cs", 
 @"
 public class Library 
 {
@@ -1406,7 +1446,7 @@ public class Library
 
             // Create EXE "hello1.exe"
             files = new Dictionary<string, string> {
-                                           { "hello1.cs",
+                                           { "hello1.cs", 
 @"using System;
 class Hello 
 {
@@ -1432,7 +1472,7 @@ class Hello
             // Create DLL "lib.dll"
             Dictionary<string, string> files =
                                    new Dictionary<string, string> {
-                                           { "src1.vb",
+                                           { "src1.vb", 
 @"Imports System
 Public Class Library 
 
@@ -1454,7 +1494,7 @@ End Class
 
             // Create EXE "hello1.exe"
             files = new Dictionary<string, string> {
-                                           { "hello1.vb",
+                                           { "hello1.vb", 
 @"Imports System
 Module Module1 
     Public Sub Main()
@@ -1596,6 +1636,140 @@ class Program
             Assert.Equal("", result.Output);
             Assert.Equal("", result.Errors);
             Assert.Equal(0, result.ExitCode);
+        }
+
+        private Dictionary<string, string> GetAnalyzerProjectFiles()
+        {
+            return new Dictionary<string, string>()
+            {
+                {
+                    "MyAnalyzer.csproj",
+                    @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Project ToolsVersion=""14.0"" DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+  <UsingTask TaskName=""Microsoft.CodeAnalysis.BuildTasks.Csc"" AssemblyFile=""" + BuildTaskDll + @""" />
+  <PropertyGroup>
+    <Configuration Condition="" '$(Configuration)' == '' "">Debug</Configuration>
+    <Platform Condition="" '$(Platform)' == '' "">AnyCPU</Platform>
+    <ProjectGuid>{6BD0BE3E-D565-42C2-A7DE-B7A2161BDBF8}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MyAnalyzer</RootNamespace>
+    <AssemblyName>MyAnalyzer</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition="" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' "">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include=""Microsoft.CodeAnalysis"">
+      <HintPath>" + MicrosoftCodeAnalysisDll + @"</HintPath>
+    </Reference>
+    <Reference Include=""System"" />
+    <Reference Include=""System.Collections.Immutable"">
+      <HintPath>" + SystemCollectionsImmutableDll + @"</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include=""MyAnalyzer.cs"" />
+  </ItemGroup>
+  <Import Project=""$(MSBuildToolsPath)\Microsoft.CSharp.targets"" />
+</Project>"
+                },
+                {
+                    "MyAnalyzer.cs",
+                    @"using System;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Threading;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
+
+[DiagnosticAnalyzer]
+class MyAnalyzer : ISymbolAnalyzer
+{
+    internal static readonly long loadTime = DateTime.Now.Ticks;
+    internal static readonly DiagnosticDescriptor descriptor = new DiagnosticDescriptor(""MyAnalyzer01"", string.Empty, ""Analyzer loaded at: {0}"", string.Empty, DiagnosticSeverity.Warning, isEnabledByDefault: true);
+
+    public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
+    {
+        get { return ImmutableArray.Create(descriptor); }
+    }
+
+    public ImmutableArray<SymbolKind> SymbolKindsOfInterest
+    {
+        get { return ImmutableArray.Create(SymbolKind.NamedType); }
+    }
+
+    public void AnalyzeSymbol(ISymbol symbol, Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
+    {
+        addDiagnostic(Diagnostic.Create(descriptor, symbol.Locations.First(), loadTime));
+    }
+}"
+                }
+            };
+        }
+
+        [Fact(Timeout = 2 * 60 * 1000)]
+        [Trait(Traits.Environment, Traits.Environments.VSProductInstall)]
+        public void AnalyzerChangesOnDisk()
+        {
+            const string sourceText = @"using System;
+
+class Hello
+{
+    static void Main()
+    {
+        Console.WriteLine(""Hello, world.""); 
+    }
+}";
+
+            var directory = tempDirectory.CreateDirectory("AnalyzerChangesOnDisk");
+
+            // First, build the analyzer assembly
+            string arguments = string.Format(@"/m /nr:false /t:Rebuild /p:UseRoslyn=1 MyAnalyzer.csproj");
+            var result = RunCommandLineCompiler(MSBuildExecutable, arguments, directory, GetAnalyzerProjectFiles());
+
+            directory.CreateFile("hello.cs").WriteAllText(sourceText);
+            var log = directory.CreateFile("Server.log");
+
+            var environmentVars = new Dictionary<string, string>
+            {
+                { "RoslynCommandLineLogFile", log.Path }
+            };
+
+            // Run a build using the analyzer
+            var firstBuildResult = RunCommandLineCompiler(CSharpCompilerClientExecutable, "/nologo hello.cs /a:bin\\Debug\\MyAnalyzer.dll", directory.Path, environmentVars);
+
+            // Change the analyzer to cause it to be reloaded
+            File.SetLastWriteTime(Path.Combine(directory.Path, "bin", "Debug", "MyAnalyzer.dll"), DateTime.Now);
+
+            WaitForProcessExit(CompilerServerExecutable, interval: TimeSpan.FromSeconds(1));
+
+            // Run another build using the analyzer
+            var secondBuildResult = RunCommandLineCompiler(CSharpCompilerClientExecutable, "/nologo hello.cs /a:bin\\Debug\\MyAnalyzer.dll", directory.Path, environmentVars);
+
+            var firstBuildOutput = firstBuildResult.Output;
+            var secondBuildOutput = secondBuildResult.Output;
+
+            var assertMessage = string.Format("Output should be different, but is not.\r\nfirstBuildOutput:\r\n{0}\r\nsecondBuildOutput:\r\n{1}\r\n", firstBuildOutput, secondBuildOutput);
+            // The output message of the analyzer includes a time stamp for when the analyzer was loaded. So if the analyzer was 
+            // reloaded (which is what we want) then the output messages of the first and second builds will be different.
+            Assert.False(firstBuildOutput.Equals(secondBuildOutput), assertMessage);
         }
     }
 }

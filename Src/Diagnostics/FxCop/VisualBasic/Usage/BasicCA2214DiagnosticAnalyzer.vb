@@ -8,8 +8,7 @@ Imports Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.FxCopAnalyzers.Usage
-    <DiagnosticAnalyzer>
-    <ExportDiagnosticAnalyzer(LanguageNames.VisualBasic)>
+    <DiagnosticAnalyzer(LanguageNames.VisualBasic)>
     Public Class BasicCA2214DiagnosticAnalyzer
         Inherits CA2214DiagnosticAnalyzer
 
@@ -43,7 +42,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.FxCopAnalyzers.Usage
                 ' through a delegate or through a lambda.
 
                 Dim invocationExpression = DirectCast(node, InvocationExpressionSyntax)
-                Dim method = TryCast(semanticModel.GetSymbolInfo(invocationExpression.Expression).Symbol, IMethodSymbol)
+                Dim method = TryCast(SemanticModel.GetSymbolInfo(invocationExpression.Expression).Symbol, IMethodSymbol)
                 If method IsNot Nothing AndAlso
                    (method.IsAbstract OrElse method.IsVirtual) AndAlso
                    method.ContainingType.Equals(_containingType) Then

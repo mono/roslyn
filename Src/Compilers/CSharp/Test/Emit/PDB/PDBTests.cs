@@ -316,10 +316,10 @@ class C
         <entry il_offset=""0xd"" start_row=""7"" start_column=""61"" end_row=""7"" end_column=""70"" file_ref=""0"" />
       </sequencepoints>
       <locals>
-        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x1e"" attributes=""1"" />
+        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x1e"" attributes=""0"" />
       </locals>
       <scope startOffset=""0x0"" endOffset=""0x1e"">
-        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x1e"" attributes=""1"" />
+        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x1e"" attributes=""0"" />
       </scope>
     </method>
     <method containingType=""C+&lt;&gt;c__DisplayClass0"" name=""&lt;.cctor&gt;b__5"" parameterNames=""y"">
@@ -1674,11 +1674,11 @@ class Test
         <entry il_offset=""0x25"" start_row=""23"" start_column=""5"" end_row=""23"" end_column=""6"" file_ref=""0"" />
       </sequencepoints>
       <locals>
-        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x27"" attributes=""1"" />
+        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x27"" attributes=""0"" />
         <local name=""f1"" il_index=""1"" il_start=""0x0"" il_end=""0x27"" attributes=""0"" />
       </locals>
       <scope startOffset=""0x0"" endOffset=""0x27"">
-        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x27"" attributes=""1"" />
+        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x27"" attributes=""0"" />
         <local name=""f1"" il_index=""1"" il_start=""0x0"" il_end=""0x27"" attributes=""0"" />
       </scope>
     </method>
@@ -1695,11 +1695,11 @@ class Test
         <entry il_offset=""0x33"" start_row=""21"" start_column=""9"" end_row=""21"" end_column=""10"" file_ref=""0"" />
       </sequencepoints>
       <locals>
-        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x35"" attributes=""1"" />
+        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x35"" attributes=""0"" />
         <local name=""f2"" il_index=""1"" il_start=""0x0"" il_end=""0x35"" attributes=""0"" />
       </locals>
       <scope startOffset=""0x0"" endOffset=""0x35"">
-        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x35"" attributes=""1"" />
+        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x35"" attributes=""0"" />
         <local name=""f2"" il_index=""1"" il_start=""0x0"" il_end=""0x35"" attributes=""0"" />
       </scope>
     </method>
@@ -1752,11 +1752,11 @@ class Test
         <entry il_offset=""0x22"" start_row=""8"" start_column=""5"" end_row=""8"" end_column=""6"" file_ref=""0"" />
       </sequencepoints>
       <locals>
-        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x23"" attributes=""1"" />
+        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x23"" attributes=""0"" />
         <local name=""f1"" il_index=""1"" il_start=""0x0"" il_end=""0x23"" attributes=""0"" />
       </locals>
       <scope startOffset=""0x0"" endOffset=""0x23"">
-        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x23"" attributes=""1"" />
+        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x23"" attributes=""0"" />
         <local name=""f1"" il_index=""1"" il_start=""0x0"" il_end=""0x23"" attributes=""0"" />
       </scope>
     </method>
@@ -1842,11 +1842,11 @@ class Test
         <entry il_offset=""0x25"" start_row=""21"" start_column=""5"" end_row=""21"" end_column=""6"" file_ref=""0"" />
       </sequencepoints>
       <locals>
-        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x27"" attributes=""1"" />
+        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x27"" attributes=""0"" />
         <local name=""f1"" il_index=""1"" il_start=""0x0"" il_end=""0x27"" attributes=""0"" />
       </locals>
       <scope startOffset=""0x0"" endOffset=""0x27"">
-        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x27"" attributes=""1"" />
+        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x27"" attributes=""0"" />
         <local name=""f1"" il_index=""1"" il_start=""0x0"" il_end=""0x27"" attributes=""0"" />
       </scope>
     </method>
@@ -1863,11 +1863,11 @@ class Test
         <entry il_offset=""0x33"" start_row=""19"" start_column=""9"" end_row=""19"" end_column=""10"" file_ref=""0"" />
       </sequencepoints>
       <locals>
-        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x35"" attributes=""1"" />
+        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x35"" attributes=""0"" />
         <local name=""f2"" il_index=""1"" il_start=""0x0"" il_end=""0x35"" attributes=""0"" />
       </locals>
       <scope startOffset=""0x0"" endOffset=""0x35"">
-        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x35"" attributes=""1"" />
+        <local name=""CS$&lt;&gt;8__locals0"" il_index=""0"" il_start=""0x0"" il_end=""0x35"" attributes=""0"" />
         <local name=""f2"" il_index=""1"" il_start=""0x0"" il_end=""0x35"" attributes=""0"" />
       </scope>
     </method>
@@ -2887,14 +2887,14 @@ class C
       <locals>
         <local name=""o"" il_index=""0"" il_start=""0x0"" il_end=""0x45"" attributes=""0"" />
         <local name=""CS$2$0000"" il_index=""1"" il_start=""0xc"" il_end=""0x39"" attributes=""1"" />
-        <local name=""CS$520$0001"" il_index=""2"" il_start=""0xc"" il_end=""0x39"" attributes=""1"" />
+        <local name=""CS$520$0001"" il_index=""2"" il_start=""0xc"" il_end=""0x39"" attributes=""0"" />
       </locals>
       <scope startOffset=""0x0"" endOffset=""0x45"">
         <namespace name=""System"" />
         <local name=""o"" il_index=""0"" il_start=""0x0"" il_end=""0x45"" attributes=""0"" />
         <scope startOffset=""0xc"" endOffset=""0x39"">
           <local name=""CS$2$0000"" il_index=""1"" il_start=""0xc"" il_end=""0x39"" attributes=""1"" />
-          <local name=""CS$520$0001"" il_index=""2"" il_start=""0xc"" il_end=""0x39"" attributes=""1"" />
+          <local name=""CS$520$0001"" il_index=""2"" il_start=""0xc"" il_end=""0x39"" attributes=""0"" />
         </scope>
       </scope>
     </method>
@@ -3071,7 +3071,7 @@ unsafe class C
 }
 ";
             string actual = GetPdbXml(text, TestOptions.UnsafeDebugDll);
-            string expected = @"
+            string expected = @"<?xml version=""1.0"" encoding=""utf-16""?>
 <symbols>
   <methods>
     <method containingType=""C"" name=""Main"" parameterNames="""">
@@ -3083,21 +3083,21 @@ unsafe class C
       <sequencepoints total=""7"">
         <entry il_offset=""0x0"" start_row=""7"" start_column=""5"" end_row=""7"" end_column=""6"" file_ref=""0"" />
         <entry il_offset=""0x7"" start_row=""8"" start_column=""16"" end_row=""8"" end_column=""33"" file_ref=""0"" />
-        <entry il_offset=""0x16"" start_row=""9"" start_column=""9"" end_row=""9"" end_column=""10"" file_ref=""0"" />
-        <entry il_offset=""0x17"" start_row=""10"" start_column=""13"" end_row=""10"" end_column=""35"" file_ref=""0"" />
-        <entry il_offset=""0x1f"" start_row=""11"" start_column=""9"" end_row=""11"" end_column=""10"" file_ref=""0"" />
-        <entry il_offset=""0x20"" hidden=""true"" start_row=""16707566"" start_column=""0"" end_row=""16707566"" end_column=""0"" file_ref=""0"" />
-        <entry il_offset=""0x22"" start_row=""12"" start_column=""5"" end_row=""12"" end_column=""6"" file_ref=""0"" />
+        <entry il_offset=""0x15"" start_row=""9"" start_column=""9"" end_row=""9"" end_column=""10"" file_ref=""0"" />
+        <entry il_offset=""0x16"" start_row=""10"" start_column=""13"" end_row=""10"" end_column=""35"" file_ref=""0"" />
+        <entry il_offset=""0x1e"" start_row=""11"" start_column=""9"" end_row=""11"" end_column=""10"" file_ref=""0"" />
+        <entry il_offset=""0x1f"" hidden=""true"" start_row=""16707566"" start_column=""0"" end_row=""16707566"" end_column=""0"" file_ref=""0"" />
+        <entry il_offset=""0x21"" start_row=""12"" start_column=""5"" end_row=""12"" end_column=""6"" file_ref=""0"" />
       </sequencepoints>
       <locals>
-        <local name=""p"" il_index=""0"" il_start=""0x1"" il_end=""0x22"" attributes=""0"" />
-        <local name=""CS$519$0000"" il_index=""1"" il_start=""0x1"" il_end=""0x22"" attributes=""1"" />
+        <local name=""p"" il_index=""0"" il_start=""0x1"" il_end=""0x21"" attributes=""0"" />
+        <local name=""CS$519$0000"" il_index=""1"" il_start=""0x1"" il_end=""0x21"" attributes=""1"" />
       </locals>
-      <scope startOffset=""0x0"" endOffset=""0x23"">
+      <scope startOffset=""0x0"" endOffset=""0x22"">
         <namespace name=""System"" />
-        <scope startOffset=""0x1"" endOffset=""0x22"">
-          <local name=""p"" il_index=""0"" il_start=""0x1"" il_end=""0x22"" attributes=""0"" />
-          <local name=""CS$519$0000"" il_index=""1"" il_start=""0x1"" il_end=""0x22"" attributes=""1"" />
+        <scope startOffset=""0x1"" endOffset=""0x21"">
+          <local name=""p"" il_index=""0"" il_start=""0x1"" il_end=""0x21"" attributes=""0"" />
+          <local name=""CS$519$0000"" il_index=""1"" il_start=""0x1"" il_end=""0x21"" attributes=""1"" />
         </scope>
       </scope>
     </method>
@@ -3267,7 +3267,7 @@ unsafe class C
 ";
             // NOTE: stop on each declarator.
             string actual = GetPdbXml(text, TestOptions.UnsafeDebugDll);
-            string expected = @"
+            string expected = @"<?xml version=""1.0"" encoding=""utf-16""?>
 <symbols>
   <methods>
     <method containingType=""C"" name=""Main"" parameterNames="""">
@@ -3279,27 +3279,27 @@ unsafe class C
       <sequencepoints total=""9"">
         <entry il_offset=""0x0"" start_row=""7"" start_column=""5"" end_row=""7"" end_column=""6"" file_ref=""0"" />
         <entry il_offset=""0x7"" start_row=""8"" start_column=""16"" end_row=""8"" end_column=""33"" file_ref=""0"" />
-        <entry il_offset=""0x1c"" start_row=""8"" start_column=""35"" end_row=""8"" end_column=""48"" file_ref=""0"" />
-        <entry il_offset=""0x2b"" start_row=""9"" start_column=""9"" end_row=""9"" end_column=""10"" file_ref=""0"" />
-        <entry il_offset=""0x2c"" start_row=""10"" start_column=""13"" end_row=""10"" end_column=""31"" file_ref=""0"" />
-        <entry il_offset=""0x34"" start_row=""11"" start_column=""13"" end_row=""11"" end_column=""31"" file_ref=""0"" />
-        <entry il_offset=""0x3c"" start_row=""12"" start_column=""9"" end_row=""12"" end_column=""10"" file_ref=""0"" />
-        <entry il_offset=""0x3d"" hidden=""true"" start_row=""16707566"" start_column=""0"" end_row=""16707566"" end_column=""0"" file_ref=""0"" />
-        <entry il_offset=""0x41"" start_row=""13"" start_column=""5"" end_row=""13"" end_column=""6"" file_ref=""0"" />
+        <entry il_offset=""0x1b"" start_row=""8"" start_column=""35"" end_row=""8"" end_column=""48"" file_ref=""0"" />
+        <entry il_offset=""0x29"" start_row=""9"" start_column=""9"" end_row=""9"" end_column=""10"" file_ref=""0"" />
+        <entry il_offset=""0x2a"" start_row=""10"" start_column=""13"" end_row=""10"" end_column=""31"" file_ref=""0"" />
+        <entry il_offset=""0x32"" start_row=""11"" start_column=""13"" end_row=""11"" end_column=""31"" file_ref=""0"" />
+        <entry il_offset=""0x3a"" start_row=""12"" start_column=""9"" end_row=""12"" end_column=""10"" file_ref=""0"" />
+        <entry il_offset=""0x3b"" hidden=""true"" start_row=""16707566"" start_column=""0"" end_row=""16707566"" end_column=""0"" file_ref=""0"" />
+        <entry il_offset=""0x3f"" start_row=""13"" start_column=""5"" end_row=""13"" end_column=""6"" file_ref=""0"" />
       </sequencepoints>
       <locals>
-        <local name=""p"" il_index=""0"" il_start=""0x1"" il_end=""0x41"" attributes=""0"" />
-        <local name=""q"" il_index=""1"" il_start=""0x1"" il_end=""0x41"" attributes=""0"" />
-        <local name=""CS$519$0000"" il_index=""2"" il_start=""0x1"" il_end=""0x41"" attributes=""1"" />
-        <local name=""CS$519$0001"" il_index=""3"" il_start=""0x1"" il_end=""0x41"" attributes=""1"" />
+        <local name=""p"" il_index=""0"" il_start=""0x1"" il_end=""0x3f"" attributes=""0"" />
+        <local name=""q"" il_index=""1"" il_start=""0x1"" il_end=""0x3f"" attributes=""0"" />
+        <local name=""CS$519$0000"" il_index=""2"" il_start=""0x1"" il_end=""0x3f"" attributes=""1"" />
+        <local name=""CS$519$0001"" il_index=""3"" il_start=""0x1"" il_end=""0x3f"" attributes=""1"" />
       </locals>
-      <scope startOffset=""0x0"" endOffset=""0x42"">
+      <scope startOffset=""0x0"" endOffset=""0x40"">
         <namespace name=""System"" />
-        <scope startOffset=""0x1"" endOffset=""0x41"">
-          <local name=""p"" il_index=""0"" il_start=""0x1"" il_end=""0x41"" attributes=""0"" />
-          <local name=""q"" il_index=""1"" il_start=""0x1"" il_end=""0x41"" attributes=""0"" />
-          <local name=""CS$519$0000"" il_index=""2"" il_start=""0x1"" il_end=""0x41"" attributes=""1"" />
-          <local name=""CS$519$0001"" il_index=""3"" il_start=""0x1"" il_end=""0x41"" attributes=""1"" />
+        <scope startOffset=""0x1"" endOffset=""0x3f"">
+          <local name=""p"" il_index=""0"" il_start=""0x1"" il_end=""0x3f"" attributes=""0"" />
+          <local name=""q"" il_index=""1"" il_start=""0x1"" il_end=""0x3f"" attributes=""0"" />
+          <local name=""CS$519$0000"" il_index=""2"" il_start=""0x1"" il_end=""0x3f"" attributes=""1"" />
+          <local name=""CS$519$0001"" il_index=""3"" il_start=""0x1"" il_end=""0x3f"" attributes=""1"" />
         </scope>
       </scope>
     </method>
@@ -3416,7 +3416,7 @@ unsafe class C
 }
 ";
             string actual = GetPdbXml(text, TestOptions.UnsafeDebugDll);
-            string expected = @"
+            string expected = @"<?xml version=""1.0"" encoding=""utf-16""?>
 <symbols>
   <methods>
     <method containingType=""C"" name=""Main"" parameterNames="""">
@@ -3431,29 +3431,29 @@ unsafe class C
         <entry il_offset=""0x7"" start_row=""12"" start_column=""16"" end_row=""12"" end_column=""30"" file_ref=""0"" />
         <entry il_offset=""0xe"" start_row=""12"" start_column=""32"" end_row=""12"" end_column=""39"" file_ref=""0"" />
         <entry il_offset=""0x34"" start_row=""12"" start_column=""41"" end_row=""12"" end_column=""52"" file_ref=""0"" />
-        <entry il_offset=""0x45"" start_row=""13"" start_column=""9"" end_row=""13"" end_column=""10"" file_ref=""0"" />
-        <entry il_offset=""0x46"" start_row=""14"" start_column=""13"" end_row=""14"" end_column=""36"" file_ref=""0"" />
-        <entry il_offset=""0x4f"" start_row=""15"" start_column=""13"" end_row=""15"" end_column=""36"" file_ref=""0"" />
-        <entry il_offset=""0x58"" start_row=""16"" start_column=""13"" end_row=""16"" end_column=""36"" file_ref=""0"" />
-        <entry il_offset=""0x60"" start_row=""17"" start_column=""9"" end_row=""17"" end_column=""10"" file_ref=""0"" />
-        <entry il_offset=""0x61"" hidden=""true"" start_row=""16707566"" start_column=""0"" end_row=""16707566"" end_column=""0"" file_ref=""0"" />
-        <entry il_offset=""0x6a"" start_row=""18"" start_column=""5"" end_row=""18"" end_column=""6"" file_ref=""0"" />
+        <entry il_offset=""0x43"" start_row=""13"" start_column=""9"" end_row=""13"" end_column=""10"" file_ref=""0"" />
+        <entry il_offset=""0x44"" start_row=""14"" start_column=""13"" end_row=""14"" end_column=""36"" file_ref=""0"" />
+        <entry il_offset=""0x4d"" start_row=""15"" start_column=""13"" end_row=""15"" end_column=""36"" file_ref=""0"" />
+        <entry il_offset=""0x56"" start_row=""16"" start_column=""13"" end_row=""16"" end_column=""36"" file_ref=""0"" />
+        <entry il_offset=""0x5e"" start_row=""17"" start_column=""9"" end_row=""17"" end_column=""10"" file_ref=""0"" />
+        <entry il_offset=""0x5f"" hidden=""true"" start_row=""16707566"" start_column=""0"" end_row=""16707566"" end_column=""0"" file_ref=""0"" />
+        <entry il_offset=""0x68"" start_row=""18"" start_column=""5"" end_row=""18"" end_column=""6"" file_ref=""0"" />
       </sequencepoints>
       <locals>
-        <local name=""c"" il_index=""0"" il_start=""0x0"" il_end=""0x6b"" attributes=""0"" />
-        <local name=""p"" il_index=""1"" il_start=""0x7"" il_end=""0x6a"" attributes=""0"" />
-        <local name=""q"" il_index=""2"" il_start=""0x7"" il_end=""0x6a"" attributes=""0"" />
-        <local name=""r"" il_index=""3"" il_start=""0x7"" il_end=""0x6a"" attributes=""0"" />
-        <local name=""CS$519$0000"" il_index=""5"" il_start=""0x7"" il_end=""0x6a"" attributes=""1"" />
+        <local name=""c"" il_index=""0"" il_start=""0x0"" il_end=""0x69"" attributes=""0"" />
+        <local name=""p"" il_index=""1"" il_start=""0x7"" il_end=""0x68"" attributes=""0"" />
+        <local name=""q"" il_index=""2"" il_start=""0x7"" il_end=""0x68"" attributes=""0"" />
+        <local name=""r"" il_index=""3"" il_start=""0x7"" il_end=""0x68"" attributes=""0"" />
+        <local name=""CS$519$0000"" il_index=""5"" il_start=""0x7"" il_end=""0x68"" attributes=""1"" />
       </locals>
-      <scope startOffset=""0x0"" endOffset=""0x6b"">
+      <scope startOffset=""0x0"" endOffset=""0x69"">
         <namespace name=""System"" />
-        <local name=""c"" il_index=""0"" il_start=""0x0"" il_end=""0x6b"" attributes=""0"" />
-        <scope startOffset=""0x7"" endOffset=""0x6a"">
-          <local name=""p"" il_index=""1"" il_start=""0x7"" il_end=""0x6a"" attributes=""0"" />
-          <local name=""q"" il_index=""2"" il_start=""0x7"" il_end=""0x6a"" attributes=""0"" />
-          <local name=""r"" il_index=""3"" il_start=""0x7"" il_end=""0x6a"" attributes=""0"" />
-          <local name=""CS$519$0000"" il_index=""5"" il_start=""0x7"" il_end=""0x6a"" attributes=""1"" />
+        <local name=""c"" il_index=""0"" il_start=""0x0"" il_end=""0x69"" attributes=""0"" />
+        <scope startOffset=""0x7"" endOffset=""0x68"">
+          <local name=""p"" il_index=""1"" il_start=""0x7"" il_end=""0x68"" attributes=""0"" />
+          <local name=""q"" il_index=""2"" il_start=""0x7"" il_end=""0x68"" attributes=""0"" />
+          <local name=""r"" il_index=""3"" il_start=""0x7"" il_end=""0x68"" attributes=""0"" />
+          <local name=""CS$519$0000"" il_index=""5"" il_start=""0x7"" il_end=""0x68"" attributes=""1"" />
         </scope>
       </scope>
     </method>

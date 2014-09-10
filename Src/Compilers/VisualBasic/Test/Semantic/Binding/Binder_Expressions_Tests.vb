@@ -80,16 +80,7 @@ expectedOutput:="123")
         <Fact()>
         Public Sub Bug707924a()
             Dim source = My.Resources.Resource.T_1247520
-            Dim result = Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxTree.ParseText(source).ToString()
-            Assert.Equal(source, result)
-        End Sub
-
-        <WorkItem(784211, "DevDiv")>
-        <WorkItem(707924, "DevDiv")>
-        <Fact(Skip:="784211")>
-        Public Sub Bug707924b()
-            Dim source = My.Resources.Resource.T_1556342
-            Dim result = Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxTree.ParseText(source).ToString()
+            Dim result = VisualBasicSyntaxTree.ParseText(source).ToString()
             Assert.Equal(source, result)
         End Sub
 
@@ -1828,7 +1819,7 @@ End Module
   IL_002c:  ldarg.0
   IL_002d:  call       "Function Module1.Test.get_Color() As Module1.Color"
   IL_0032:  stfld      "Module1.Test._Closure$__1.$VB$NonLocal_ As Module1.Color"
-  IL_0037:  ldftn      "Sub Module1.Test._Closure$__1._Lambda$__5()"
+  IL_0037:  ldftn      "Sub Module1.Test._Closure$__1._Lambda$__4()"
   IL_003d:  newobj     "Sub System.Action..ctor(Object, System.IntPtr)"
   IL_0042:  callvirt   "Sub System.Action.Invoke()"
   IL_0047:  ret

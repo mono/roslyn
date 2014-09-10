@@ -1,4 +1,5 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+using System;
 using System.Collections.Immutable;
 
 namespace Microsoft.CodeAnalysis.Diagnostics
@@ -39,7 +40,12 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             get { return true; }
         }
 
-        public override ImmutableArray<IDiagnosticAnalyzer> GetAnalyzers()
+        public override ImmutableArray<IDiagnosticAnalyzer> GetAnalyzersForAllLanguages()
+        {
+            return ImmutableArray<IDiagnosticAnalyzer>.Empty;
+        }
+
+        public override ImmutableArray<IDiagnosticAnalyzer> GetAnalyzers(string language)
         {
             return ImmutableArray<IDiagnosticAnalyzer>.Empty;
         }

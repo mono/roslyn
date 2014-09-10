@@ -752,16 +752,30 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
             return memberAccess.CanReplaceWithReducedName(replacementNode, semanticModel, cancellationToken);
         }
 
+        private static bool InsideCrefReference(ExpressionSyntax expr)
+        {
+            var crefAttribute = expr.FirstAncestorOrSelf<XmlCrefAttributeSyntax>();
+            return crefAttribute != null;
+        }
+
+        private static bool InsideNameOfExpression(ExpressionSyntax expr)
+        {
+            var nameOfExpression = expr.FirstAncestorOrSelf<NameOfExpressionSyntax>();
+            return nameOfExpression != null;
+        }
+
         private static bool PreferPredefinedTypeKeywordInDeclarations(NameSyntax name, OptionSet optionSet)
         {
-            return name.Parent != null && !(name.Parent is MemberAccessExpressionSyntax) &&
-                optionSet.GetOption(SimplificationOptions.PreferIntrinsicPredefinedTypeKeywordInDeclaration, LanguageNames.CSharp);
+            return (name.Parent != null) && !(name.Parent is MemberAccessExpressionSyntax) &&
+                   !InsideCrefReference(name) && !InsideNameOfExpression(name) &&
+                   optionSet.GetOption(SimplificationOptions.PreferIntrinsicPredefinedTypeKeywordInDeclaration, LanguageNames.CSharp);
         }
 
         private static bool PreferPredefinedTypeKeywordInMemberAccess(ExpressionSyntax memberAccess, OptionSet optionSet)
         {
-            return memberAccess.Parent != null && memberAccess.Parent is MemberAccessExpressionSyntax &&
-                optionSet.GetOption(SimplificationOptions.PreferIntrinsicPredefinedTypeKeywordInMemberAccess, LanguageNames.CSharp);
+            return (((memberAccess.Parent != null) && (memberAccess.Parent is MemberAccessExpressionSyntax)) || InsideCrefReference(memberAccess)) &&
+                   !InsideNameOfExpression(memberAccess) &&
+                   optionSet.GetOption(SimplificationOptions.PreferIntrinsicPredefinedTypeKeywordInMemberAccess, LanguageNames.CSharp);
         }
 
         public static bool IsAliasReplaceableExpression(this ExpressionSyntax expression)

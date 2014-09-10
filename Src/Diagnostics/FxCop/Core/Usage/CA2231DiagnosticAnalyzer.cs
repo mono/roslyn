@@ -15,7 +15,6 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Usage
     /// CA2231: Complain if the type implements Equals without overloading the equality operator.
     /// </summary>
     [DiagnosticAnalyzer]
-    [ExportDiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
     public sealed class CA2231DiagnosticAnalyzer : AbstractNamedTypeAnalyzer, ISymbolAnalyzer
     {
         internal const string RuleId = "CA2231";
@@ -25,6 +24,8 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Usage
                                                                          FxCopDiagnosticCategory.Usage,
                                                                          DiagnosticSeverity.Warning,
                                                                          isEnabledByDefault: true,
+                                                                         description: FxCopRulesResources.OverloadOperatorEqualsOnOverridingValueTypeEqualsDescription,
+                                                                         helpLink: "http://msdn.microsoft.com/library/ms182359.aspx",
                                                                          customTags: DiagnosticCustomTags.Microsoft);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics

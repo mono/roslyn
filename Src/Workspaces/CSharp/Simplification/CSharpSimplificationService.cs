@@ -4,12 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp.Utilities;
 using Microsoft.CodeAnalysis.Formatting;
-using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Internal.Log;
 using Microsoft.CodeAnalysis.Simplification;
@@ -35,12 +32,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Simplification
             using (Logger.LogBlock(FunctionId.Simplifier_ExpandNode, cancellationToken))
             {
                 if (node is AttributeSyntax ||
+                    node is AttributeArgumentSyntax ||
                     node is ConstructorInitializerSyntax ||
                     node is ExpressionSyntax ||
                     node is FieldDeclarationSyntax ||
                     node is StatementSyntax ||
                     node is CrefSyntax ||
-                    node is XmlNameAttributeSyntax)
+                    node is XmlNameAttributeSyntax ||
+                    node is TypeConstraintSyntax)
                 {
                     var rewriter = new Expander(semanticModel, expandInsideNode, expandParameter, cancellationToken, annotationForReplacedAliasIdentifier);
                     return rewriter.Visit(node);

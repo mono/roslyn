@@ -4,8 +4,6 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 using System.Collections.Generic;
 
@@ -152,7 +150,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             // such as generating a params array, re-ordering arguments based on argsToParamsOpt map, inserting arguments for optional parameters, etc.
             ImmutableArray<LocalSymbol> temps;
             var argumentRefKindsOpt = default(ImmutableArray<RefKind>);
-            rewrittenArguments = MakeArguments(syntax, rewrittenArguments, addMethod, addMethod, initializer.Expanded, initializer.ArgsToParamsOpt, ref argumentRefKindsOpt, out temps, enableCallerInfoInImplicitInvocation: true);
+            rewrittenArguments = MakeArguments(syntax, rewrittenArguments, addMethod, addMethod, initializer.Expanded, initializer.ArgsToParamsOpt, ref argumentRefKindsOpt, out temps, enableCallerInfo: ThreeState.True);
             Debug.Assert(argumentRefKindsOpt.IsDefault);
 
             if (initializer.InvokedAsExtensionMethod)

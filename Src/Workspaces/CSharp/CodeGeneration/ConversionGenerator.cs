@@ -1,20 +1,15 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CodeGeneration;
-using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CodeGeneration.CodeGenerationHelpers;
+using Microsoft.CodeAnalysis.CSharp.CodeGeneration.CSharpCodeGenerationHelpers;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
-using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
 
 namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
 {
-    internal class ConversionGenerator : AbstractCSharpCodeGenerator
+    internal static class ConversionGenerator
     {
         internal static TypeDeclarationSyntax AddConversionTo(
             TypeDeclarationSyntax destination,
@@ -35,9 +30,8 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
             CodeGenerationOptions options)
         {
             var declaration = GenerateConversionDeclarationWorker(method, destination, options);
-
-            return AddAnnotationsTo(method,
-                ConditionallyAddDocumentationCommentTo(declaration, method, options));
+            return AddCleanupAnnotationsTo(AddAnnotationsTo(method,
+                ConditionallyAddDocumentationCommentTo(declaration, method, options)));
         }
 
         private static ConversionOperatorDeclarationSyntax GenerateConversionDeclarationWorker(

@@ -10,7 +10,6 @@ using Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities;
 namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
 {
     [DiagnosticAnalyzer]
-    [ExportDiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
     public sealed class CA1017DiagnosticAnalyzer : ICompilationAnalyzer
     {
         internal const string RuleId = "CA1017";
@@ -20,6 +19,8 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
                                                                                       FxCopDiagnosticCategory.Design,
                                                                                       DiagnosticSeverity.Warning,
                                                                                       isEnabledByDefault: true,
+                                                                                      description: FxCopRulesResources.MarkAllAssembliesWithComVisibleDescription,
+                                                                                      helpLink: "http://msdn.microsoft.com/library/ms182157.aspx",
                                                                                       customTags: DiagnosticCustomTags.Microsoft);
 
         public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics

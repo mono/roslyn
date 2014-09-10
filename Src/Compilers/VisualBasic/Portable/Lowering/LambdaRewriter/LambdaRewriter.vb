@@ -1,6 +1,7 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports System.Collections.Immutable
+Imports Microsoft.CodeAnalysis.CodeGen
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
 
 Namespace Microsoft.CodeAnalysis.VisualBasic
@@ -64,6 +65,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ' "This" in the context of current method.
         Private currentFrameThis As ParameterSymbol
 
+        ' ID dispenser for field names of frame references.
+        Private synthesizedFieldNameIdDispenser As Integer
+
         ' The symbol (field or local) holding the innermost frame. 
         ' Needed in case inner frame needs to reference outer frame.
         Private innermostFramePointer As Symbol
@@ -103,6 +107,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Me.currentFrameThis = method.MeParameter
+            Me.synthesizedFieldNameIdDispenser = 1
         End Sub
 
         ''' <summary>
@@ -199,7 +204,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     End If
                 End If
 
-                Dim proxy = LambdaCapturedVariable.Create(frame, captured)
+                Dim proxy = LambdaCapturedVariable.Create(frame, captured, synthesizedFieldNameIdDispenser)
                 Proxies.Add(captured, proxy)
                 If CompilationState.ModuleBuilderOpt IsNot Nothing Then
                     frame.m_captured_locals.Add(proxy)
@@ -360,7 +365,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                         Optional origLambda As LambdaSymbol = Nothing) As BoundNode
 
             Dim frameType As NamedTypeSymbol = ConstructFrameType(frame, currentTypeParameters)
-            Dim framePointer = New SynthesizedLocal(Me._topLevelMethod, frameType, SynthesizedLocalKind.LambdaDisplayClass, CompilationState.GenerateTempNumber())
+            Dim framePointer = New SynthesizedLocal(Me._topLevelMethod, frameType, SynthesizedLocalKind.LambdaDisplayClass)
 
             CompilationState.AddSynthesizedMethod(frame.Constructor, MakeFrameCtor(frame, Diagnostics))
             Dim prologue = ArrayBuilder(Of BoundExpression).GetInstance()
@@ -389,7 +394,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Proxies.TryGetValue(innermostFramePointer, oldInnermostFrameProxy)
 
                 If _analysis.needsParentFrame.Contains(node) Then
-                    Dim capturedFrame = LambdaCapturedVariable.Create(frame, innermostFramePointer)
+                    Dim capturedFrame = LambdaCapturedVariable.Create(frame, innermostFramePointer, synthesizedFieldNameIdDispenser)
                     Dim frameParent = capturedFrame.AsMember(frameType)
                     Dim left As BoundExpression = New BoundFieldAccess(syntaxNode,
                                                                        New BoundLocal(syntaxNode, framePointer, frameType),
@@ -725,11 +730,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 rewrittenBody = RewriteBlock(node)
             End If
 
+            Dim slotAllocatorOpt As VariableSlotAllocator = Nothing
+
             ' Rewrite Iterator lambdas
-            Dim iteratorRewritten = IteratorRewriter.Rewrite(rewrittenBody, method, CompilationState, Diagnostics)
+            Dim iteratorRewritten = IteratorRewriter.Rewrite(rewrittenBody, method, slotAllocatorOpt, CompilationState, Diagnostics)
 
             ' Rewrite Async Lambdas
-            rewrittenBody = AsyncRewriter.Rewrite(iteratorRewritten, method, CompilationState, Diagnostics)
+            rewrittenBody = AsyncRewriter.Rewrite(iteratorRewritten, method, slotAllocatorOpt, CompilationState, Diagnostics)
 
             Return rewrittenBody
         End Function
@@ -759,7 +766,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             Dim result As BoundExpression = RewriteLambda(lambda, VisitType(node.Type), (node.ConversionKind And ConversionKind.ConvertedToExpressionTree) <> 0)
             If inExpressionLambda Then
-                result = node.Update(result, node.ConversionKind, node.ConstantValueOpt, node.RelaxationLambdaOpt, node.Type)
+                result = node.Update(result, node.ConversionKind, node.SuppressVirtualCalls, node.ConstantValueOpt, node.RelaxationLambdaOpt, node.Type)
             End If
             Return result
         End Function

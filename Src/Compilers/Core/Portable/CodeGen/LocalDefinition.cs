@@ -2,6 +2,7 @@
 
 using System.Collections.Immutable;
 using System.Diagnostics;
+using Microsoft.CodeAnalysis.Symbols;
 using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.CodeGen
@@ -14,9 +15,9 @@ namespace Microsoft.CodeAnalysis.CodeGen
         // it may be better if local does not have a name as will restrict reuse of locals when we do it.
 
         //Local symbol, currently used by edit and continue and for the location.
-        private readonly object identity;
+        private readonly ILocalSymbol symbolOpt;
 
-        private readonly string name; // null if it is a temp.
+        private readonly string nameOpt; // null if it is a temp.
 
         //data type associated with the local signature slot.
         private readonly Cci.ITypeReference type;
@@ -35,7 +36,10 @@ namespace Microsoft.CodeAnalysis.CodeGen
         private readonly bool isDynamic;
 
         //True if the variable was not declared in source.
-        private readonly bool isCompilerGenerated;
+        private readonly CommonSynthesizedLocalKind synthesizedKind;
+
+        /// <see cref="Cci.ILocalDefinition.PdbAttributes"/>.
+        private readonly uint pdbAttributes;
 
         //Gives the synthesized dynamic attributes of the local definition
         private readonly ImmutableArray<TypedConstant> dynamicTransformFlags;
@@ -43,29 +47,32 @@ namespace Microsoft.CodeAnalysis.CodeGen
         /// <summary>
         /// Creates a new LocalDefinition.
         /// </summary>
-        /// <param name="identity">Local symbol, used by edit and continue only, null otherwise.</param>
-        /// <param name="name">Name associated with the slot.</param>
+        /// <param name="symbolOpt">Local symbol, used by edit and continue only, null otherwise.</param>
+        /// <param name="nameOpt">Name associated with the slot.</param>
         /// <param name="type">Type associated with the slot.</param>
         /// <param name="slot">Slot position in the signature.</param>
         /// <param name="dynamicTransformFlags">Contains the synthesized dynamic attributes of the local</param>
-        /// <param name="isCompilerGenerated">True if the local was not declared in source.</param>
+        /// <param name="synthesizedKind">Synthesized local kind.</param>
+        /// <param name="pdbAttributes">Value to emit in the attributes field in the PDB.</param>
         /// <param name="constraints">Specifies whether slot type should have pinned modifier and whether slot should have byref constraint.</param>
         /// <param name="isDynamic">Specifies if the type is Dynamic.</param>
         public LocalDefinition(
-            object identity,
-            string name,
+            ILocalSymbol symbolOpt,
+            string nameOpt,
             Cci.ITypeReference type,
             int slot,
-            bool isCompilerGenerated,
+            CommonSynthesizedLocalKind synthesizedKind,
+            uint pdbAttributes,
             LocalSlotConstraints constraints,
             bool isDynamic,
             ImmutableArray<TypedConstant> dynamicTransformFlags)
         {
-            this.identity = identity;
-            this.name = name;
+            this.symbolOpt = symbolOpt;
+            this.nameOpt = nameOpt;
             this.type = type;
             this.slot = slot;
-            this.isCompilerGenerated = isCompilerGenerated;
+            this.synthesizedKind = synthesizedKind;
+            this.pdbAttributes = pdbAttributes;
             this.dynamicTransformFlags = dynamicTransformFlags;
             this.constraints = constraints;
             this.isDynamic = isDynamic;
@@ -73,19 +80,19 @@ namespace Microsoft.CodeAnalysis.CodeGen
 
         internal string GetDebuggerDisplay()
         {
-            return string.Format("{0}: {1} ({2})", slot, name ?? "<unnamed>", type);
+            return string.Format("{0}: {1} ({2})", slot, nameOpt ?? "<unnamed>", type);
         }
 
-        public object Identity
+        public ILocalSymbol SymbolOpt
         {
-            get { return this.identity; }
+            get { return this.symbolOpt; }
         }
 
         public Location Location
         {
             get
             {
-                ISymbol symbol = this.identity as ISymbol;
+                ISymbol symbol = this.symbolOpt as ISymbol;
                 if (symbol != null)
                 {
                     ImmutableArray<Location> locations = symbol.Locations;
@@ -143,9 +150,14 @@ namespace Microsoft.CodeAnalysis.CodeGen
             get { return this.isDynamic; }
         }
 
-        public bool IsCompilerGenerated
+        public uint PdbAttributes
         {
-            get { return this.isCompilerGenerated; }
+            get { return this.pdbAttributes; }
+        }
+
+        public CommonSynthesizedLocalKind SynthesizedLocalKind
+        {
+            get { return this.synthesizedKind; }
         }
 
         public ImmutableArray<TypedConstant> DynamicTransformFlags
@@ -160,7 +172,7 @@ namespace Microsoft.CodeAnalysis.CodeGen
 
         public string Name
         {
-            get { return name; }
+            get { return nameOpt; }
         }
 
         public byte[] Signature

@@ -187,7 +187,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                         var prop = (BoundPropertyAccess)originalLHS;
 
-                        // If the property is static or is the receiver is of kind "Base" or "this", then we can just generate prop = prop + value
+                        // If the property is static or if the receiver is of kind "Base" or "this", then we can just generate prop = prop + value
                         if (prop.ReceiverOpt == null || prop.PropertySymbol.IsStatic || !NeedsTemp(prop.ReceiverOpt))
                         {
                             return prop;
@@ -195,29 +195,20 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                         Debug.Assert(prop.ReceiverOpt.Kind != BoundKind.TypeExpression);
 
-                        // Can we ever avoid storing the receiver in a temp? If the receiver is a variable then it 
-                        // might be modified by the computation of the getter, the value, or the operation. 
-                        // The receiver cannot be a null constant or constant of value type. It could be a 
-                        // constant of string type, but there are no mutable properties of a string.
-                        // Similarly, there are no mutable properties of a Type object, so the receiver
-                        // cannot be a typeof(T) expression. The only situation we know of is where we could
-                        // optimize away the temp is if the receiver is a readonly field of reference type,
-                        // we are not in a constructor, and the receiver of the *field*, if any, is also idempotent.
-                        // It doesn't seem worthwhile to pursue an optimization for this exceedingly rare case.
-
                         BoundExpression rewrittenReceiver = VisitExpression(prop.ReceiverOpt);
-                        if (rewrittenReceiver.Type.IsTypeParameter() && rewrittenReceiver.Type.IsReferenceType)
-                        {
-                            var memberContainingType = prop.PropertySymbol.ContainingType;
-
-                            // From the verifier prospective type parameters do not contain fields or methods.
-                            // the instance must be boxed/constrained to access the member even if known to be a reference
-                            // It makes sense to box reference receiver before storing into a temp - no need to box/constrain twice.
-                            rewrittenReceiver = BoxReceiver(rewrittenReceiver, memberContainingType);
-                        }
 
                         BoundAssignmentOperator assignmentToTemp;
-                        var receiverTemp = this.factory.StoreToTemp(rewrittenReceiver, out assignmentToTemp, refKind: rewrittenReceiver.Type.IsReferenceType ? RefKind.None : RefKind.Ref);
+
+                        // SPEC VIOLATION: It is not very clear when receiver of constrained callvirt is dereferenced - when pushed (in lexical order),
+                        // SPEC VIOLATION: or when actual call is executed. The actual behavior seems to be implementation specific in different JITs.
+                        // SPEC VIOLATION: To not depend on that, the right thing to do here is to store the value of the variable 
+                        // SPEC VIOLATION: when variable has reference type (regular temp), and store variable's location when it has a value type. (ref temp)
+                        // SPEC VIOLATION: in a case of unconstrained generic type parameter a runtime test (default(T) == null) would be needed
+                        // SPEC VIOLATION: However, for compatibility with Dev12 we will continue treating all generic type parameters, constrained or not,
+                        // SPEC VIOLATION: as value types.
+                        var variableRepresentsLocation = rewrittenReceiver.Type.IsValueType || rewrittenReceiver.Type.Kind == SymbolKind.TypeParameter;
+
+                        var receiverTemp = this.factory.StoreToTemp(rewrittenReceiver, out assignmentToTemp, refKind: variableRepresentsLocation ? RefKind.Ref : RefKind.None);
                         stores.Add(assignmentToTemp);
                         temps.Add(receiverTemp.LocalSymbol);
 
@@ -255,18 +246,19 @@ namespace Microsoft.CodeAnalysis.CSharp
                         if (NeedsTemp(receiverOpt))
                         {
                             BoundExpression rewrittenReceiver = VisitExpression(receiverOpt);
-                            if (rewrittenReceiver.Type.IsTypeParameter() && rewrittenReceiver.Type.IsReferenceType)
-                            {
-                                var memberContainingType = indexerAccess.Indexer.ContainingType;
-
-                                // From the verifier prospective type parameters do not contain fields or methods.
-                                // the instance must be boxed/constrained to access the member even if known to be a reference
-                                // It makes sense to box reference receiver before storing into a temp - no need to box/constrain twice.
-                                rewrittenReceiver = BoxReceiver(rewrittenReceiver, memberContainingType);
-                            }
 
                             BoundAssignmentOperator assignmentToTemp;
-                            var receiverTemp = this.factory.StoreToTemp(rewrittenReceiver, out assignmentToTemp, refKind: rewrittenReceiver.Type.IsReferenceType ? RefKind.None : RefKind.Ref);
+
+                            // SPEC VIOLATION: It is not very clear when receiver of constrained callvirt is dereferenced - when pushed (in lexical order),
+                            // SPEC VIOLATION: or when actual call is executed. The actual behavior seems to be implementation specific in different JITs.
+                            // SPEC VIOLATION: To not depend on that, the right thing to do here is to store the value of the variable 
+                            // SPEC VIOLATION: when variable has reference type (regular temp), and store variable's location when it has a value type. (ref temp)
+                            // SPEC VIOLATION: in a case of unconstrained generic type parameter a runtime test (default(T) == null) would be needed
+                            // SPEC VIOLATION: However, for compatibility with Dev12 we will continue treating all generic type parameters, constrained or not,
+                            // SPEC VIOLATION: as value types.
+                            var variableRepresentsLocation = rewrittenReceiver.Type.IsValueType || rewrittenReceiver.Type.Kind == SymbolKind.TypeParameter;
+
+                            var receiverTemp = this.factory.StoreToTemp(rewrittenReceiver, out assignmentToTemp, refKind: variableRepresentsLocation ? RefKind.Ref : RefKind.None);
                             transformedReceiver = receiverTemp;
                             stores.Add(assignmentToTemp);
                             temps.Add(receiverTemp.LocalSymbol);

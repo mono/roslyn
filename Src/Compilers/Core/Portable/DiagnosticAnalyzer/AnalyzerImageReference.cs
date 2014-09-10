@@ -30,7 +30,12 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             this.display = display;
         }
 
-        public override ImmutableArray<IDiagnosticAnalyzer> GetAnalyzers()
+        public override ImmutableArray<IDiagnosticAnalyzer> GetAnalyzersForAllLanguages()
+        {
+            return this.analyzers;
+        }
+
+        public override ImmutableArray<IDiagnosticAnalyzer> GetAnalyzers(string language)
         {
             return this.analyzers;
         }

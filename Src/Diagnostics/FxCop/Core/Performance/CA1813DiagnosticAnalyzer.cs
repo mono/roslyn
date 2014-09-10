@@ -13,7 +13,6 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Performance
     /// CA1813: Seal attribute types for improved performance. Sealing attribute types speeds up performance during reflection on custom attributes.
     /// </summary>
     [DiagnosticAnalyzer]
-    [ExportDiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
     public sealed class CA1813DiagnosticAnalyzer : AbstractNamedTypeAnalyzer
     {
         internal const string RuleId = "CA1813";
@@ -23,6 +22,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Performance
                                                                          FxCopDiagnosticCategory.Performance,
                                                                          DiagnosticSeverity.Warning,
                                                                          isEnabledByDefault: true,
+                                                                         helpLink: "http://msdn.microsoft.com/library/ms182267.aspx",
                                                                          customTags: DiagnosticCustomTags.Microsoft);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics

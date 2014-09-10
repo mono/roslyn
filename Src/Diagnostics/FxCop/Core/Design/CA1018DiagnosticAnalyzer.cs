@@ -14,7 +14,6 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
     /// CA1018: Custom attributes should have AttributeUsage attribute defined.
     /// </summary>
     [DiagnosticAnalyzer]
-    [ExportDiagnosticAnalyzer(RuleId, LanguageNames.CSharp, LanguageNames.VisualBasic)]
     public sealed class CA1018DiagnosticAnalyzer : AbstractNamedTypeAnalyzer
     {
         internal const string RuleId = "CA1018";
@@ -24,6 +23,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
                                                                     FxCopDiagnosticCategory.Design,
                                                                     DiagnosticSeverity.Warning,
                                                                     isEnabledByDefault: true,
+                                                                    helpLink: "http://msdn.microsoft.com/library/ms182158.aspx",
                                                                     customTags: DiagnosticCustomTags.Microsoft);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics

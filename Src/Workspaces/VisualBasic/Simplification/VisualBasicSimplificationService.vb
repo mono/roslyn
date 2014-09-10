@@ -3,9 +3,8 @@
 Imports System.Collections.Immutable
 Imports System.Threading
 Imports Microsoft.CodeAnalysis
-Imports Microsoft.CodeAnalysis.Internal.Log
-Imports Microsoft.CodeAnalysis.Host
 Imports Microsoft.CodeAnalysis.Host.Mef
+Imports Microsoft.CodeAnalysis.Internal.Log
 Imports Microsoft.CodeAnalysis.Simplification
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 Imports Microsoft.CodeAnalysis.VisualBasic.Utilities
@@ -34,7 +33,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Simplification
                 If TypeOf node Is ExpressionSyntax OrElse
                     TypeOf node Is StatementSyntax OrElse
                     TypeOf node Is AttributeSyntax OrElse
-                    TypeOf node Is CrefReferenceSyntax Then
+                    TypeOf node Is SimpleArgumentSyntax OrElse
+                    TypeOf node Is CrefReferenceSyntax OrElse
+                    TypeOf node Is TypeConstraintSyntax Then
 
                     Dim rewriter = New Expander(semanticModel, expandInsideNode, cancellationToken, expandParameter, aliasReplacementAnnotation)
                     Return rewriter.Visit(node)

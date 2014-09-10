@@ -1,39 +1,33 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-Imports System.Collections.Generic
 Imports System.Collections.Immutable
-Imports System.Runtime.CompilerServices
-Imports System.Threading
-Imports Microsoft.Cci
-Imports Microsoft.CodeAnalysis
-Imports Microsoft.CodeAnalysis.Collections
-Imports Microsoft.CodeAnalysis.Text
+Imports Microsoft.CodeAnalysis.CodeGen
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
-Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
 Namespace Microsoft.CodeAnalysis.VisualBasic
 
     Partial Friend NotInheritable Class IteratorRewriter
-        Inherits StateMachineRewriter(Of IteratorStateMachineTypeSymbol, FieldSymbol)
+        Inherits StateMachineRewriter(Of IteratorStateMachine, FieldSymbol)
 
         Private ReadOnly elementType As TypeSymbol
         Private ReadOnly isEnumerable As Boolean
-        Private ReadOnly iteratorClass As IteratorStateMachineTypeSymbol
+        Private ReadOnly iteratorClass As IteratorStateMachine
 
         Private currentField As FieldSymbol
         Private initialThreadIdField As FieldSymbol
 
         Public Sub New(body As BoundStatement,
-               method As MethodSymbol,
-               isEnumerable As Boolean,
-               iteratorClass As IteratorStateMachineTypeSymbol,
-               compilationState As TypeCompilationState,
-               diagnostics As DiagnosticBag)
+                       method As MethodSymbol,
+                       isEnumerable As Boolean,
+                       stateMachineType As IteratorStateMachine,
+                       slotAllocatorOpt As VariableSlotAllocator,
+                       compilationState As TypeCompilationState,
+                       diagnostics As DiagnosticBag)
 
-            MyBase.New(body, method, compilationState, diagnostics)
+            MyBase.New(body, method, slotAllocatorOpt, compilationState, diagnostics)
 
             Me.isEnumerable = isEnumerable
-            Me.iteratorClass = iteratorClass
+            Me.iteratorClass = stateMachineType
 
             Dim methodReturnType = method.ReturnType
             If methodReturnType.GetArity = 0 Then
@@ -49,6 +43,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' </summary>
         Friend Overloads Shared Function Rewrite(body As BoundBlock,
                                                  method As MethodSymbol,
+                                                 slotAllocatorOpt As VariableSlotAllocator,
                                                  compilationState As TypeCompilationState,
                                                  diagnostics As DiagnosticBag) As BoundBlock
 
@@ -69,9 +64,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 elementType = DirectCast(methodReturnType, NamedTypeSymbol).TypeArgumentsNoUseSiteDiagnostics(0)
             End If
 
-            Dim iteratorClass = New IteratorStateMachineTypeSymbol(method, compilationState.GenerateTempNumber(), elementType, isEnumerable)
+            Dim stateMachineType = New IteratorStateMachine(method, compilationState.GenerateTempNumber(), elementType, isEnumerable)
 
-            Dim rewriter As New IteratorRewriter(body, method, isEnumerable, iteratorClass, compilationState, diagnostics)
+            Dim rewriter As New IteratorRewriter(body, method, isEnumerable, stateMachineType, slotAllocatorOpt, compilationState, diagnostics)
 
             ' check if we have all the types we need
             If rewriter.EnsureAllSymbolsAndSignature() Then
@@ -336,7 +331,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End Get
         End Property
 
-        Protected Overrides ReadOnly Property StateMachineClass As IteratorStateMachineTypeSymbol
+        Protected Overrides ReadOnly Property StateMachineClass As IteratorStateMachine
             Get
                 Return iteratorClass
             End Get

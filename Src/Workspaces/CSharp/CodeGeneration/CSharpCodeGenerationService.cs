@@ -9,7 +9,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeGeneration;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
-using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.LanguageServices;
@@ -472,12 +471,12 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
                 if (options.BeforeThisLocation != null)
                 {
                     IEnumerable<SyntaxTrivia> strippedTrivia;
-                    var newContainingStatement = containingStatement.GetNodeWithoutLeadingBlankLines(out strippedTrivia);
+                    var newContainingStatement = containingStatement.GetNodeWithoutLeadingBannerAndPreprocessorDirectives(out strippedTrivia);
 
                     newStatements[0] = newStatements[0].WithLeadingTrivia(strippedTrivia);
 
-                    newBlock = block.ReplaceNode(containingStatement, newContainingStatement)
-                                    .WithStatements(block.Statements.InsertRange(index, newStatements));
+                    newBlock = block.ReplaceNode(containingStatement, newContainingStatement);
+                    newBlock = newBlock.WithStatements(newBlock.Statements.InsertRange(index, newStatements));
                 }
                 else
                 {
@@ -603,7 +602,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
         private static SyntaxTokenList UpdateDeclarationAccessibility(SyntaxTokenList modifiersList, Accessibility newAccesibility, CodeGenerationOptions options)
         {
             var newModifierTokens = new List<SyntaxToken>();
-            AbstractCSharpCodeGenerator.AddAccessibilityModifiers(newAccesibility, newModifierTokens, options, Accessibility.NotApplicable);
+            CSharpCodeGenerationHelpers.AddAccessibilityModifiers(newAccesibility, newModifierTokens, options, Accessibility.NotApplicable);
             if (newModifierTokens.Count == 0)
             {
                 return modifiersList;

@@ -3,6 +3,7 @@
 Imports System.Collections.Immutable
 Imports System.Runtime.InteropServices
 Imports Microsoft.Cci
+Imports Microsoft.CodeAnalysis.CodeGen
 Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
@@ -21,11 +22,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     ''' locals as r-values in fields, async rewriter uses a different structure as a proxy
     ''' because it has to capture l-values on stack as well
     ''' </typeparam>
-    ''' <remarks></remarks>
     Partial Friend MustInherit Class StateMachineRewriter(Of TStateMachineState As SynthesizedContainer, TProxy)
 
         Protected ReadOnly Body As BoundStatement
         Protected ReadOnly Method As MethodSymbol
+        Protected ReadOnly SlotAllocatorOpt As VariableSlotAllocator
         Protected ReadOnly CompilationState As TypeCompilationState
         Protected ReadOnly Diagnostics As DiagnosticBag
         Protected ReadOnly F As SyntheticBoundNodeFactory
@@ -39,13 +40,21 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Protected Sub New(body As BoundStatement,
                           method As MethodSymbol,
+                          slotAllocatorOpt As VariableSlotAllocator,
                           compilationState As TypeCompilationState,
                           diagnostics As DiagnosticBag)
 
+            Debug.Assert(body IsNot Nothing)
+            Debug.Assert(method IsNot Nothing)
+            Debug.Assert(compilationState IsNot Nothing)
+            Debug.Assert(diagnostics IsNot Nothing)
+
             Me.Body = body
             Me.Method = method
+            Me.SlotAllocatorOpt = slotAllocatorOpt
             Me.CompilationState = compilationState
             Me.Diagnostics = diagnostics
+
             Me.F = New SyntheticBoundNodeFactory(method, method, method.ContainingType, body.Syntax, compilationState, diagnostics)
         End Sub
 
@@ -302,8 +311,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Protected Function MakeHoistedFieldForLocal(local As LocalSymbol, localType As TypeSymbol) As FieldSymbol
             Dim proxyName As String
-            If StateMachineMethodToClassRewriter.IsSynthetic(local) Then
-                proxyName = GeneratedNames.MakeStateMachineLocalName(Me.nextTempNumber, local.Name)
+
+            If local.SynthesizedLocalKind = SynthesizedLocalKind.LambdaDisplayClass Then
+                ' Special Case: There's logic in the EE to recognize locals that have been captured by a lambda
+                ' and would have been hoisted for the state machine.  Basically, we just hoist the local containing
+                ' the instance of the lambda closure class as if it were user-created, rather than a compiler temp.
+                proxyName = GeneratedNames.MakeStateMachineLocalName(Me.nextLocalNumber, GeneratedNames.MakeLocalName(local.SynthesizedLocalKind, localType, Me.nextLocalNumber))
+                Me.nextLocalNumber += 1
+            ElseIf local.SynthesizedLocalKind <> SynthesizedLocalKind.None Then
+                proxyName = GeneratedNames.MakeStateMachineLocalName(Me.nextTempNumber,
+                 If(local.SynthesizedLocalKind.IsLongLived(), GeneratedNames.MakeLocalName(local.SynthesizedLocalKind, localType, Me.nextTempNumber), Nothing))
                 Me.nextTempNumber += 1
             Else
                 proxyName = GeneratedNames.MakeStateMachineLocalName(Me.nextLocalNumber, local.Name)

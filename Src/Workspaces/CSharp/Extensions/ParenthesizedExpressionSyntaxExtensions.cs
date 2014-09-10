@@ -13,7 +13,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
 
             // Simplest cases:
             //   ((x)) -> (x)
-            if (expression.IsKind(SyntaxKind.ParenthesizedExpression))
+            if (expression.IsKind(SyntaxKind.ParenthesizedExpression) ||
+                parentExpression.IsKind(SyntaxKind.ParenthesizedExpression))
             {
                 return true;
             }
@@ -302,7 +303,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
 
             var lessThanExpression = (BinaryExpressionSyntax)previousExpression;
 
-            return IsSimpleOrDottedName(lessThanExpression.Left)
+            return (IsSimpleOrDottedName(lessThanExpression.Left)
+                    || lessThanExpression.Left.IsKind(SyntaxKind.CastExpression))
                 && IsSimpleOrDottedName(lessThanExpression.Right);
         }
 
@@ -342,7 +344,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
             var greaterThanExpression = (BinaryExpressionSyntax)nextExpression;
 
             return IsSimpleOrDottedName(greaterThanExpression.Left)
-                && greaterThanExpression.Right.IsKind(SyntaxKind.ParenthesizedExpression);
+                && (greaterThanExpression.Right.IsKind(SyntaxKind.ParenthesizedExpression)
+                    || greaterThanExpression.Right.IsKind(SyntaxKind.CastExpression));
         }
 
         private static bool IsSimpleOrDottedName(ExpressionSyntax expression)

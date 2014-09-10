@@ -4101,8 +4101,15 @@ namespace Microsoft.CodeAnalysis.CSharp
             {
                 // If the call was invoked as an extension method, the receiver
                 // should be non-null and all methods should be extension methods.
-                Debug.Assert(call.ReceiverOpt != null);
-                extensionThisType = call.ReceiverOpt.Type;
+                if (call.ReceiverOpt != null)
+                {
+                    extensionThisType = call.ReceiverOpt.Type;
+                }
+                else
+                {
+                    extensionThisType = call.Arguments[0].Type;
+                }
+
                 Debug.Assert((object)extensionThisType != null);
             }
 
@@ -4667,7 +4674,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         var t = (BaseFieldDeclarationSyntax)node;
                         foreach (var decl in t.Declaration.Variables)
                         {
-                            builder.Add(GetDeclarationInfo(node, getSymbol, cancellationToken, decl.Initializer));
+                            builder.Add(GetDeclarationInfo(decl, getSymbol, cancellationToken, decl.Initializer));
                         }
 
                         return;

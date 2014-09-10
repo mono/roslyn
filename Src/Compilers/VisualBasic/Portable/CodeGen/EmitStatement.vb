@@ -8,6 +8,7 @@ Imports System.Linq
 Imports System.Runtime.InteropServices
 Imports Microsoft.CodeAnalysis.CodeGen
 Imports Microsoft.CodeAnalysis.Emit
+Imports Microsoft.CodeAnalysis.Symbols
 Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
@@ -1120,7 +1121,7 @@ OtherExpressions:
                             key,
                             keyHash,
                             compareDelegate,
-                            Addressof SynthesizedStringSwitchHashMethod.ComputeStringHash)
+                            AddressOf SynthesizedStringSwitchHashMethod.ComputeStringHash)
 
             If keyHash IsNot Nothing Then
                 FreeTemp(keyHash)
@@ -1230,7 +1231,6 @@ OtherExpressions:
         End Sub
 
         Private Function DefineLocal(local As LocalSymbol, syntaxNode As VisualBasicSyntaxNode) As LocalDefinition
-            Dim name As String = local.Name
             Dim specType = local.Type.SpecialType
 
             ' We're treating constants of type Decimal and DateTime as local here to not create a new instance for each time
@@ -1244,37 +1244,35 @@ OtherExpressions:
             ' See bug #11047
 
             If local.HasConstantValue Then
-                Dim compileTimeValue As MetadataConstant = _Module.CreateConstant(local.Type, local.ConstantValue, syntaxNode, _diagnostics)
-                Dim localConstantDef = New LocalConstantDefinition(name, If(local.Locations.FirstOrDefault(), Location.None), compileTimeValue)
-
-                ' If there is a name, add it to the scope.
-                If name IsNot Nothing Then
-                    ' Reference in the scope for debugging purpose
-                    _builder.AddLocalConstantToScope(localConstantDef)
-                End If
+                Dim compileTimeValue As MetadataConstant = _module.CreateConstant(local.Type, local.ConstantValue, syntaxNode, _diagnostics)
+                Dim localConstantDef = New LocalConstantDefinition(local.Name, If(local.Locations.FirstOrDefault(), Location.None), compileTimeValue)
+                ' Reference in the scope for debugging purpose
+                _builder.AddLocalConstantToScope(localConstantDef)
                 Return Nothing
 
             ElseIf Me.IsStackLocal(local) Then
                 Return Nothing
 
             Else
-                Dim translatedType = _Module.Translate(local.Type, syntaxNodeOpt:=syntaxNode, diagnostics:=_diagnostics)
+                Dim translatedType = _module.Translate(local.Type, syntaxNodeOpt:=syntaxNode, diagnostics:=_diagnostics)
                 ' Even though we don't need the token immediately, we will need it later when signature for the local is emitted.
                 ' Also, requesting the token has side-effect of registering types used, which is critical for embedded types (NoPia, VBCore, etc).
-                _Module.GetFakeSymbolTokenForIL(translatedType, syntaxNode, _diagnostics)
+                _module.GetFakeSymbolTokenForIL(translatedType, syntaxNode, _diagnostics)
 
-                Dim constraints = If(local.IsByRef, LocalSlotConstraints.ByRef, LocalSlotConstraints.None)
-                Dim isCompilerGeneratedName As Boolean = local.SynthesizedLocalKind <> SynthesizedLocalKind.None
+                Dim constraints = If(local.IsByRef, LocalSlotConstraints.ByRef, LocalSlotConstraints.None) Or
+                    If(local.IsPinned, LocalSlotConstraints.Pinned, LocalSlotConstraints.None)
+                Dim name As String = GetLocalDebugName(local)
                 Debug.Assert(Not local.SynthesizedLocalKind.IsNamed(_optimizations) OrElse Not String.IsNullOrEmpty(name), "compiler generated names must be nonempty")
 
                 Dim localDef = _builder.LocalSlotManager.DeclareLocal(
-                        type:=translatedType,
-                        identity:=local,
-                        name:=name,
-                        isCompilerGenerated:=isCompilerGeneratedName,
-                        constraints:=constraints,
-                        isDynamic:=False,
-                        dynamicTransformFlags:=Nothing)
+                    type:=translatedType,
+                    symbol:=local,
+                    name:=name,
+                    synthesizedKind:=CType(local.SynthesizedLocalKind, CommonSynthesizedLocalKind),
+                    pdbAttributes:=local.SynthesizedLocalKind.PdbAttributes(),
+                    constraints:=constraints,
+                    isDynamic:=False,
+                    dynamicTransformFlags:=Nothing)
 
                 ' If there is a name, add it to the scope.
                 If name IsNot Nothing Then
@@ -1287,11 +1285,28 @@ OtherExpressions:
 
         End Function
 
+        Private Function GetLocalDebugName(local As LocalSymbol) As String
+            If local.Name IsNot Nothing Then
+                Debug.Assert(local.SynthesizedLocalKind = SynthesizedLocalKind.None)
+                Return local.Name
+            End If
+
+            If HasDebugName(local) Then
+                Return GeneratedNames.MakeLocalName(local.SynthesizedLocalKind, local.Type, _uniqueId)
+            End If
+
+            Return Nothing
+        End Function
+
+        Private Function HasDebugName(local As LocalSymbol) As Boolean
+            Return local.Name IsNot Nothing OrElse local.SynthesizedLocalKind.IsNamed(Me._optimizations)
+        End Function
+
         Private Sub FreeLocal(temp As LocalSymbol)
             'TODO: releasing locals with name NYI.
             'NOTE: VB considers named local's extent to be whole method 
             '      so releasing them may just not be possible.
-            If temp.Name Is Nothing AndAlso Not Me.IsStackLocal(temp) Then
+            If Not HasDebugName(temp) AndAlso Not Me.IsStackLocal(temp) Then
                 _builder.LocalSlotManager.FreeLocal(temp)
             End If
         End Sub
@@ -1370,11 +1385,12 @@ OtherExpressions:
                 Debug.Assert(index >= 1)
                 If parsedOk Then
                     Dim fakePdbOnlyLocal = New LocalDefinition(
-                        identity:=Nothing,
-                        name:=field.Name,
+                        symbolOpt:=Nothing,
+                        nameOpt:=field.Name,
                         type:=Nothing,
                         slot:=0,
-                        isCompilerGenerated:=True,
+                        synthesizedKind:=CommonSynthesizedLocalKind.EmitterTemp,
+                        pdbAttributes:=Cci.PdbWriter.DefaultLocalAttributesValue,
                         constraints:=LocalSlotConstraints.None,
                         isDynamic:=False,
                         dynamicTransformFlags:=Nothing)
