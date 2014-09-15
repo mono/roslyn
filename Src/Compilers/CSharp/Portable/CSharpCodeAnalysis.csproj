@@ -18,7 +18,7 @@
     <CSharpSyntaxGeneratorToolPath>$(OutDir)\CSharpSyntaxGenerator.exe</CSharpSyntaxGeneratorToolPath>
     <BoundTreeGeneratorToolPath>$(OutDir)\BoundTreeGenerator.exe</BoundTreeGeneratorToolPath>
     <CSharpErrorFactsGeneratorToolPath>$(OutDir)\CSharpErrorFactsGenerator.exe</CSharpErrorFactsGeneratorToolPath>
-    <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">..\..\..\..\</SolutionDir>
+    <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">..\..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
     <TargetFrameworkIdentifier>.NETPortable</TargetFrameworkIdentifier>
