@@ -141,6 +141,8 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         private static ThreeState TryGetBestResult(ArrayBuilder<MemberResolutionResult<TMember>> allResults, out MemberResolutionResult<TMember> best)
         {
+            best = default (MemberResolutionResult<TMember>);
+
             ThreeState haveBest = ThreeState.False;
 
             foreach (var pair in allResults)

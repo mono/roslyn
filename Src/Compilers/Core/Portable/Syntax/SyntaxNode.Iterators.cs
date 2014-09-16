@@ -193,6 +193,8 @@ namespace Microsoft.CodeAnalysis
 
             public TwoEnumeratorListStack(SyntaxNode startingNode, Func<SyntaxNode, bool> descendIntoChildren)
             {
+                triviaStack = default (TriviaListEnumeratorStack);
+
                 this.nodeStack = new ChildSyntaxListEnumeratorStack(startingNode, descendIntoChildren);
                 if (this.nodeStack.IsNotEmpty)
                 {
@@ -282,6 +284,8 @@ namespace Microsoft.CodeAnalysis
 
             public ThreeEnumeratorListStack(SyntaxNode startingNode, Func<SyntaxNode, bool> descendIntoChildren)
             {
+                triviaStack = default (TriviaListEnumeratorStack);
+
                 this.nodeStack = new ChildSyntaxListEnumeratorStack(startingNode, descendIntoChildren);
                 if (this.nodeStack.IsNotEmpty)
                 {

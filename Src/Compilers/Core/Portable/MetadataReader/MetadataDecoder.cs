@@ -798,10 +798,12 @@ namespace Microsoft.CodeAnalysis
             }
             catch (UnsupportedSignatureContent)
             {
+                localInfo = default (ImmutableArray<LocalInfo>);
                 return false;
             }
             catch (BadImageFormatException)
             {
+                localInfo = default (ImmutableArray<LocalInfo>);
                 return false;
             }
 
