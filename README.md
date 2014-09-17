@@ -21,7 +21,7 @@ Use `xbuild Src/Workspaces/CSharp/CSharpWorkspace.csproj' to build C# workspace
 Manual changes needed
 ======================
 
-After succesfull package restore `Src/packages/Microsoft.Net.ToolsetCompilers.0.7.4070101-beta/build/Microsoft.Net.ToolsetCompilers.props' has to be replaced with
+After succesfull package restore `packages/Microsoft.Net.ToolsetCompilers.0.7.4090503-beta/build/Microsoft.Net.ToolsetCompilers.props' has to be replaced with
 ```xml
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
