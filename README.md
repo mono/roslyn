@@ -3,7 +3,7 @@ Roslyn
  
 Mono compatible copy of Roslyn Source Code
 
-The build requires master mono ac9e90a89d1bf959689c9439e6fbce07452691b5 or newer
+The build requires master mono 9aed010782d9ea3ad18021bafcfedc89d27a1faf or newer
  
 C# compiler
 ============
