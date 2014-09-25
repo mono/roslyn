@@ -105,6 +105,24 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
         End Sub
 
+        Private Shared Function IsDefinedOrImplementedInSourceTree(symbol As Symbol, tree As SyntaxTree, span As TextSpan?) As Boolean
+            If symbol.IsDefinedInSourceTree(tree, span) Then
+                Return True
+            End If
+
+            Dim method = TryCast(symbol, SourceMemberMethodSymbol)
+            If method IsNot Nothing AndAlso
+                method.IsPartialDefinition Then
+
+                Dim implementationPart = method.PartialImplementationPart
+                If implementationPart IsNot Nothing Then
+                    Return implementationPart.IsDefinedInSourceTree(tree, span)
+                End If
+            End If
+
+            Return False
+        End Function
+
         ''' <summary>
         ''' Completes binding and performs analysis of bound trees for the purpose of obtaining diagnostics.
         ''' 
@@ -128,7 +146,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim filter As Predicate(Of Symbol) = Nothing
 
             If tree IsNot Nothing Then
-                filter = Function(sym) sym.IsDefinedInSourceTree(tree, filterSpanWithinTree, cancellationToken)
+                filter = Function(sym) IsDefinedOrImplementedInSourceTree(sym, tree, filterSpanWithinTree)
             End If
 
             Dim compiler = New MethodCompiler(compilation,
@@ -786,19 +804,21 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Dim emittedBody As MethodBody = Nothing
 
                     If Not diagnosticsThisMethod.HasAnyErrors Then
+                        Dim variableSlotAllocatorOpt = _moduleBeingBuiltOpt.TryCreateVariableSlotAllocator(method)
                         Dim rewrittenBody = Rewriter.LowerBodyOrInitializer(
                             method,
                             boundBody,
                             previousSubmissionFields:=Nothing,
                             compilationState:=compilationState,
                             diagnostics:=diagnosticsThisMethod,
+                            variableSlotAllocatorOpt:=variableSlotAllocatorOpt,
                             isBodySynthesized:=True)
 
                         If Not diagnosticsThisMethod.HasAnyErrors Then
                             emittedBody = GenerateMethodBody(_moduleBeingBuiltOpt,
                                                              method,
                                                              rewrittenBody,
-                                                             variableSlotAllocatorOpt:=Nothing,
+                                                             variableSlotAllocatorOpt:=variableSlotAllocatorOpt,
                                                              debugDocumentProvider:=Nothing,
                                                              diagnostics:=diagnosticsThisMethod,
                                                              namespaceScopes:=Nothing)
@@ -835,6 +855,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim method = methodWithBody.Method
 
                 Dim diagnosticsThisMethod As DiagnosticBag = DiagnosticBag.GetInstance()
+                Debug.Assert(_moduleBeingBuiltOpt.TryCreateVariableSlotAllocator(method) Is Nothing)
 
                 Dim emittedBody = GenerateMethodBody(_moduleBeingBuiltOpt,
                                                      method,
@@ -976,7 +997,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             ' Synthesized struct constructors are not emitted.
-            If method.IsParameterlessStructConstructor(requireSynthesized:=True) Then
+            If method.IsDefaultValueTypeConstructor() Then
                 Return False
             End If
 
@@ -1158,6 +1179,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                                    previousSubmissionFields,
                                                                    compilationState,
                                                                    diagsForCurrentMethod,
+                                                                   variableSlotAllocatorOpt:=Nothing,
                                                                    isBodySynthesized:=True)
 
                             compilationState.AddMethodWrapper(accessor, accessor, body)
@@ -1218,7 +1240,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             If method.MethodKind = MethodKind.Constructor OrElse method.MethodKind = MethodKind.SharedConstructor Then
                 ' Turns field initializers into bound assignment statements and top-level script statements into bound statements in the beginning the body. 
                 ' For submission constructor, the body only includes bound initializers and a return statement. The rest is filled in later.
-                body = InitializerRewriter.BuildConstructorBody(compilationState, method, If(method.IsSubmissionConstructor, Nothing, constructorInitializerOpt), processedInitializers, block)
+                body = InitializerRewriter.BuildConstructorBody(
+                    compilationState,
+                    method,
+                    If(method.IsSubmissionConstructor, Nothing, constructorInitializerOpt),
+                    processedInitializers,
+                    block)
             Else
                 body = block
             End If
@@ -1231,8 +1258,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 diagnostics = DiagnosticBag.GetInstance()
             End If
 
-            Dim variableSlotAllocatorOpt As VariableSlotAllocator = Nothing
-
+            Dim variableSlotAllocatorOpt = If(_moduleBeingBuiltOpt Is Nothing, Nothing, _moduleBeingBuiltOpt.TryCreateVariableSlotAllocator(method))
             body = Rewriter.LowerBodyOrInitializer(method,
                                                    body,
                                                    previousSubmissionFields,
@@ -1410,7 +1436,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             '  Instance constructor should return the referenced constructor in 'referencedConstructor'
             If method.MethodKind = MethodKind.Constructor Then
 
-                injectDefaultConstructorCall = True
+                ' class constructors must inject call to the base
+                injectDefaultConstructorCall = Not method.ContainingType.IsValueType
 
                 ' Try find explicitly called constructor, it should be the first statement in the block
                 If body IsNot Nothing AndAlso body.Statements.Length > 0 Then
@@ -1487,6 +1514,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Debug.Assert(constructor.MethodKind = MethodKind.Constructor)
 
             Dim containingType As NamedTypeSymbol = constructor.ContainingType
+            Debug.Assert(Not containingType.IsValueType)
 
             If containingType.IsSubmissionClass Then
                 ' TODO (tomat): report errors if not available
@@ -1496,7 +1524,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             ' If the type is a structure, then invoke the default constructor on the current type.
             ' Otherwise, invoke the default constructor on the base type.
-            Dim defaultConstructorType As NamedTypeSymbol = If(containingType.IsStructureType(), containingType, containingType.BaseTypeNoUseSiteDiagnostics)
+            Dim defaultConstructorType As NamedTypeSymbol = containingType.BaseTypeNoUseSiteDiagnostics
             If defaultConstructorType Is Nothing OrElse defaultConstructorType.IsErrorType Then
                 ' possible if class System.Object in source doesn't have an explicit constructor
                 Return Nothing
@@ -1595,17 +1623,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End If
             End If
 
-            If candidate Is constructor Then
-                ' The container must be a structure.
-                Debug.Assert(containingType.IsValueType)
-
-                ' Never return the constructor itself as the candidate. This can happen for structures
-                ' if the user defines a parameterless constructor. In that case, there isn't
-                ' a synthesized default constructor to call. There is no need to report an error here.
-                ' The error for the parameterless constructor is reported in CreateConstructor in
-                ' SourceMethodSymbol.
-                candidate = Nothing
-            End If
+            Debug.Assert(candidate <> constructor)
 
             ' If the candidate is Obsolete then report diagnostics.
             If candidate IsNot Nothing Then

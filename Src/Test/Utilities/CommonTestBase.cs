@@ -62,7 +62,7 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
         
         protected abstract Compilation GetCompilationForEmit(
             IEnumerable<string> source,
-            MetadataReference[] additionalRefs,
+            IEnumerable<MetadataReference> additionalRefs,
             CompilationOptions options);
 
         protected abstract CompilationOptions CompilationOptionsReleaseDll { get; }
@@ -84,7 +84,7 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
 
         internal CompilationVerifier CompileAndVerify(
             string source,
-            MetadataReference[] additionalRefs = null,
+            IEnumerable<MetadataReference> additionalRefs = null,
             IEnumerable<ModuleData> dependencies = null,
             EmitOptions emitOptions = EmitOptions.All,
             Action<IModuleSymbol, EmitOptions> sourceSymbolValidator = null,
@@ -113,7 +113,7 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
 
         internal CompilationVerifier CompileAndVerify(
             string[] sources,
-            MetadataReference[] additionalRefs = null,
+            IEnumerable<MetadataReference> additionalRefs = null,
             IEnumerable<ModuleData> dependencies = null,
             EmitOptions emitOptions = EmitOptions.All,
             Action<IModuleSymbol, EmitOptions> sourceSymbolValidator = null,
@@ -690,30 +690,12 @@ Example app.config:
                 {
                     scriptingRef = CSharp.CSharpCompilation.Create("Roslyn.Scripting",                                       
                                        new[] { CSharp.CSharpSyntaxTree.ParseText(@"
-                                           using System;
-
-                                           namespace Roslyn.Scripting
+                                           namespace Roslyn.Scripting.Runtime
                                            { 
-                                               public class Session
+                                               public class ScriptExecutionState
                                                {
-                                               }
-                                           }
-
-                                           namespace Microsoft.CSharp.RuntimeHelpers
-                                           {
-                                               using Roslyn.Scripting;
-
-                                               public static class SessionHelpers
-                                               {
-                                                   public static object GetSubmission(Session session, int id)
-                                                   {
-                                                       throw new NotImplementedException();
-                                                   }
-
-                                                   public static object SetSubmission(Session session, int slotIndex, object submission)
-                                                   {
-                                                       throw new NotImplementedException();
-                                                   }
+                                                    public object GetSubmission(int index) { return null; }
+                                                    public object SetSubmission(int index, object submission) { return null; }
                                                }
                                            }")
                                        } ,

@@ -46,13 +46,12 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
 
         // Given a message identifier (e.g., CS0219), severity, warning as error and a culture, 
-        // get the entire prefix (e.g., "error CS0219: Warning as Error:" for C#) used on error messages.
+        // get the entire prefix (e.g., "error CS0219:" for C#) used on error messages.
         public override string GetMessagePrefix(string id, DiagnosticSeverity severity, bool isWarningAsError, CultureInfo culture)
         {
-            return String.Format(culture, "{0} {1}{2}",
+            return String.Format(culture, "{0} {1}",
                 severity == DiagnosticSeverity.Error || isWarningAsError ? "error" : "warning",
-                id,
-                isWarningAsError ? ErrorFacts.GetMessage(MessageID.IDS_WarnAsError, culture) : "");
+                id);
         }
 
         public override int GetWarningLevel(int code)
@@ -71,6 +70,17 @@ namespace Microsoft.CodeAnalysis.CSharp
             return new CSDiagnostic(info, location);
         }
 
+        public override string ConvertSymbolToString(int errorCode, ISymbol symbol)
+        {
+            // show extra info for assembly if possible such as version, publictoken and etc
+            if (symbol.Kind == SymbolKind.Assembly || symbol.Kind == SymbolKind.Namespace)
+            {
+                return symbol.ToString();
+            }
+
+            return SymbolDisplay.ToDisplayString(symbol, SymbolDisplayFormat.CSharpShortErrorMessageFormat);
+        }
+
         public override int ERR_FailedToCreateTempFile { get { return (int)ErrorCode.ERR_CantMakeTempFile; } }
 
 
@@ -87,7 +97,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         public override int WRN_AnalyzerCannotBeCreated { get { return (int)ErrorCode.WRN_AnalyzerCannotBeCreated; } }
         public override int WRN_NoAnalyzerInAssembly { get { return (int)ErrorCode.WRN_NoAnalyzerInAssembly; } }
         public override int WRN_UnableToLoadAnalyzer { get { return (int)ErrorCode.WRN_UnableToLoadAnalyzer; } }
-        public override int INF_UnableToLoadSomeTypesInAnalyzer { get { return (int)ErrorCode.INF_UnableToLoadSomeTypesInAnalyzer; } }        
+        public override int INF_UnableToLoadSomeTypesInAnalyzer { get { return (int)ErrorCode.INF_UnableToLoadSomeTypesInAnalyzer; } }
         public override int ERR_CantReadRulesetFile { get { return (int)ErrorCode.ERR_CantReadRulesetFile; } }
 
         // reference manager:

@@ -89,25 +89,6 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 
-        ///                              Visual C# Compiler Options
-        ///
-        ///                        - OUTPUT FILES -
-        /// /out:&lt;file&gt;                   Specify output file name (default: base name of 
-        ///                               file with main class or first file)
-        /// /target:exe                   Build a console executable (default) (Short 
-        ///                               form: /t:exe)
-        /// /target:winexe                Build a Windows executable (Short form: 
-        ///                               /t:winexe)
-        /// /target:library     [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string CSCHelp {
-            get {
-                return ResourceManager.GetString("CSCHelp", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to element is expected.
         /// </summary>
         internal static string ElementIsExpected {
@@ -8559,29 +8540,11 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to anonymous type.
-        /// </summary>
-        internal static string IDS_AnonymousType {
-            get {
-                return ResourceManager.GetString("IDS_AnonymousType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to collection.
         /// </summary>
         internal static string IDS_Collection {
             get {
                 return ResourceManager.GetString("IDS_Collection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to into.
-        /// </summary>
-        internal static string IDS_ContinuationClause {
-            get {
-                return ResourceManager.GetString("IDS_ContinuationClause", resourceCulture);
             }
         }
         
@@ -8618,6 +8581,25 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string IDS_Covariantly {
             get {
                 return ResourceManager.GetString("IDS_Covariantly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 
+        ///                              Visual C# Compiler Options
+        ///
+        ///                        - OUTPUT FILES -
+        /// /out:&lt;file&gt;                   Specify output file name (default: base name of 
+        ///                               file with main class or first file)
+        /// /target:exe                   Build a console executable (default) (Short 
+        ///                               form: /t:exe)
+        /// /target:winexe                Build a Windows executable (Short form: 
+        ///                               /t:winexe)
+        /// /target:library     [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string IDS_CSCHelp {
+            get {
+                return ResourceManager.GetString("IDS_CSCHelp", resourceCulture);
             }
         }
         
@@ -9018,29 +9000,11 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to from.
-        /// </summary>
-        internal static string IDS_FromClause {
-            get {
-                return ResourceManager.GetString("IDS_FromClause", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to &lt;global namespace&gt;.
         /// </summary>
         internal static string IDS_GlobalNamespace {
             get {
                 return ResourceManager.GetString("IDS_GlobalNamespace", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to group by.
-        /// </summary>
-        internal static string IDS_GroupByClause {
-            get {
-                return ResourceManager.GetString("IDS_GroupByClause", resourceCulture);
             }
         }
         
@@ -9054,29 +9018,11 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to join.
-        /// </summary>
-        internal static string IDS_JoinClause {
-            get {
-                return ResourceManager.GetString("IDS_JoinClause", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to lambda expression.
         /// </summary>
         internal static string IDS_Lambda {
             get {
                 return ResourceManager.GetString("IDS_Lambda", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to let.
-        /// </summary>
-        internal static string IDS_LetClause {
-            get {
-                return ResourceManager.GetString("IDS_LetClause", resourceCulture);
             }
         }
         
@@ -9095,6 +9041,24 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string IDS_LIB_OPTION {
             get {
                 return ResourceManager.GetString("IDS_LIB_OPTION", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Microsoft (R) Visual C# Compiler version {0}.
+        /// </summary>
+        internal static string IDS_LogoLine1 {
+            get {
+                return ResourceManager.GetString("IDS_LogoLine1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Copyright (C) Microsoft Corporation. All rights reserved..
+        /// </summary>
+        internal static string IDS_LogoLine2 {
+            get {
+                return ResourceManager.GetString("IDS_LogoLine2", resourceCulture);
             }
         }
         
@@ -9122,15 +9086,6 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string IDS_NULL {
             get {
                 return ResourceManager.GetString("IDS_NULL", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to orderby.
-        /// </summary>
-        internal static string IDS_OrderByClause {
-            get {
-                return ResourceManager.GetString("IDS_OrderByClause", resourceCulture);
             }
         }
         
@@ -9167,15 +9122,6 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string IDS_RELATEDWARNING {
             get {
                 return ResourceManager.GetString("IDS_RELATEDWARNING", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to select.
-        /// </summary>
-        internal static string IDS_SelectClause {
-            get {
-                return ResourceManager.GetString("IDS_SelectClause", resourceCulture);
             }
         }
         
@@ -9315,24 +9261,6 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to : Warning as Error.
-        /// </summary>
-        internal static string IDS_WarnAsError {
-            get {
-                return ResourceManager.GetString("IDS_WarnAsError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to where.
-        /// </summary>
-        internal static string IDS_WhereClause {
-            get {
-                return ResourceManager.GetString("IDS_WhereClause", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to  Include tag is invalid .
         /// </summary>
         internal static string IDS_XMLBADINCLUDE {
@@ -9428,24 +9356,6 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string LocationMustBeProvided {
             get {
                 return ResourceManager.GetString("LocationMustBeProvided", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Microsoft (R) Visual C# Compiler version {0}.
-        /// </summary>
-        internal static string LogoLine1 {
-            get {
-                return ResourceManager.GetString("LogoLine1", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Copyright (C) Microsoft Corporation. All rights reserved..
-        /// </summary>
-        internal static string LogoLine2 {
-            get {
-                return ResourceManager.GetString("LogoLine2", resourceCulture);
             }
         }
         

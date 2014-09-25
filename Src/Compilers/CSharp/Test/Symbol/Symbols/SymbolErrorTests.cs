@@ -2330,49 +2330,55 @@ interface I<T> { }
         [Fact]
         public void CS0179ERR_ExternHasBody01()
         {
-            var text = @"namespace NS
+            var text = @"
+namespace NS
 {
     public class C
     {
         extern C() { }
-        extern void M() { }
-        extern object P { get { return null; } set { } }
+        extern void M1() { }
+        extern int M2() => 1;
+        extern object P1 { get { return null; } set { } }
+        extern int P2 => 1;
         extern event System.Action E { add { } remove { } }
         extern static public int operator + (C c1, C c2) { return 1; }
+        extern static public int operator - (C c1, C c2) => 1;
     }
 }
 ";
             var comp = CreateCompilationWithMscorlib(text);
 
             comp.VerifyDiagnostics(
-// (5,16): error CS0179: 'NS.C.C()' cannot be extern and declare a body
-//         extern C() { }
-Diagnostic(ErrorCode.ERR_ExternHasBody, "C").WithArguments("NS.C.C()"),
-
-// (6,21): error CS0179: 'NS.C.M()' cannot be extern and declare a body
-//         extern void M() { }
-Diagnostic(ErrorCode.ERR_ExternHasBody, "M").WithArguments("NS.C.M()"),
-
-// (7,27): error CS0179: 'NS.C.P.get' cannot be extern and declare a body
-//         extern object P { get { return null; } set { } }
-Diagnostic(ErrorCode.ERR_ExternHasBody, "get").WithArguments("NS.C.P.get"),
-
-// (7,48): error CS0179: 'NS.C.P.set' cannot be extern and declare a body
-//         extern object P { get { return null; } set { } }
-Diagnostic(ErrorCode.ERR_ExternHasBody, "set").WithArguments("NS.C.P.set"),
-
-// (8,40): error CS0179: 'NS.C.E.add' cannot be extern and declare a body
-//         extern event System.Action E { add { } remove { } }
-Diagnostic(ErrorCode.ERR_ExternHasBody, "add").WithArguments("NS.C.E.add"),
-
-// (8,48): error CS0179: 'NS.C.E.remove' cannot be extern and declare a body
-//         extern event System.Action E { add { } remove { } }
-Diagnostic(ErrorCode.ERR_ExternHasBody, "remove").WithArguments("NS.C.E.remove"),
-
-// (9,29): error CS0179: 'NS.C.operator +(NS.C, NS.C)' cannot be extern and declare a body
-//         extern int operator + (C c1, C c2) { return 1; }
-Diagnostic(ErrorCode.ERR_ExternHasBody, "+").WithArguments("NS.C.operator +(NS.C, NS.C)")
-                );
+                // (6,16): error CS0179: 'C.C()' cannot be extern and declare a body
+                //         extern C() { }
+                Diagnostic(ErrorCode.ERR_ExternHasBody, "C").WithArguments("NS.C.C()").WithLocation(6, 16),
+                // (7,21): error CS0179: 'C.M1()' cannot be extern and declare a body
+                //         extern void M1() { }
+                Diagnostic(ErrorCode.ERR_ExternHasBody, "M1").WithArguments("NS.C.M1()").WithLocation(7, 21),
+                // (8,20): error CS0179: 'C.M2()' cannot be extern and declare a body
+                //         extern int M2() => 1;
+                Diagnostic(ErrorCode.ERR_ExternHasBody, "M2").WithArguments("NS.C.M2()").WithLocation(8, 20),
+                // (9,28): error CS0179: 'C.P1.get' cannot be extern and declare a body
+                //         extern object P1 { get { return null; } set { } }
+                Diagnostic(ErrorCode.ERR_ExternHasBody, "get").WithArguments("NS.C.P1.get").WithLocation(9, 28),
+                // (9,49): error CS0179: 'C.P1.set' cannot be extern and declare a body
+                //         extern object P1 { get { return null; } set { } }
+                Diagnostic(ErrorCode.ERR_ExternHasBody, "set").WithArguments("NS.C.P1.set").WithLocation(9, 49),
+                // (10,26): error CS0179: 'C.P2.get' cannot be extern and declare a body
+                //         extern int P2 => 1;
+                Diagnostic(ErrorCode.ERR_ExternHasBody, "1").WithArguments("NS.C.P2.get").WithLocation(10, 26),
+                // (11,40): error CS0179: 'C.E.add' cannot be extern and declare a body
+                //         extern event System.Action E { add { } remove { } }
+                Diagnostic(ErrorCode.ERR_ExternHasBody, "add").WithArguments("NS.C.E.add").WithLocation(11, 40),
+                // (11,48): error CS0179: 'C.E.remove' cannot be extern and declare a body
+                //         extern event System.Action E { add { } remove { } }
+                Diagnostic(ErrorCode.ERR_ExternHasBody, "remove").WithArguments("NS.C.E.remove").WithLocation(11, 48),
+                // (12,43): error CS0179: 'C.operator +(C, C)' cannot be extern and declare a body
+                //         extern static public int operator + (C c1, C c2) { return 1; }
+                Diagnostic(ErrorCode.ERR_ExternHasBody, "+").WithArguments("NS.C.operator +(NS.C, NS.C)").WithLocation(12, 43),
+                // (13,43): error CS0179: 'C.operator -(C, C)' cannot be extern and declare a body
+                //         extern static public int operator - (C c1, C c2) => 1;
+                Diagnostic(ErrorCode.ERR_ExternHasBody, "-").WithArguments("NS.C.operator -(NS.C, NS.C)").WithLocation(13, 43));
         }
 
         [Fact]
@@ -7921,8 +7927,8 @@ Diagnostic(ErrorCode.ERR_CantChangeReturnTypeOnOverride, "GM").WithArguments("GG
     public class clz : stx { }
 }
 ",
-                "'cly' error CS0509: 'NS.cly': cannot derive from sealed type 'NS.clx'",
-                "'clz' error CS0509: 'NS.clz': cannot derive from sealed type 'NS.stx'");
+                "'cly' error CS0509: 'cly': cannot derive from sealed type 'clx'",
+                "'clz' error CS0509: 'clz': cannot derive from sealed type 'stx'");
         }
 
         [Fact]
@@ -7937,9 +7943,9 @@ namespace N2
     class E : int { }
 }
 ",
-                "'C' error CS0509: 'N2.C': cannot derive from sealed type 'N1.E'",
-                "'D' error CS0509: 'N2.D': cannot derive from sealed type 'int'",
-                "'E' error CS0509: 'N2.E': cannot derive from sealed type 'int'");
+                "'C' error CS0509: 'C': cannot derive from sealed type 'E'",
+                "'D' error CS0509: 'D': cannot derive from sealed type 'int'",
+                "'E' error CS0509: 'E': cannot derive from sealed type 'int'");
         }
 
         [Fact]
@@ -7957,11 +7963,11 @@ namespace N2
     }
 }
 ",
-                "'M1' error CS0513: 'NS.clx.M1()' is abstract but it is contained in non-abstract class 'NS.clx'",
-                "'M2' error CS0513: 'NS.clx.M2()' is abstract but it is contained in non-abstract class 'NS.clx'",
-                "'M3' error CS0513: 'NS.clx.M3(sbyte)' is abstract but it is contained in non-abstract class 'NS.clx'",
-                "'get' error CS0513: 'NS.clx.P.get' is abstract but it is contained in non-abstract class 'NS.clx'",
-                "'set' error CS0513: 'NS.clx.P.set' is abstract but it is contained in non-abstract class 'NS.clx'");
+                "'M1' error CS0513: 'clx.M1()' is abstract but it is contained in non-abstract class 'clx'",
+                "'M2' error CS0513: 'clx.M2()' is abstract but it is contained in non-abstract class 'clx'",
+                "'M3' error CS0513: 'clx.M3(sbyte)' is abstract but it is contained in non-abstract class 'clx'",
+                "'get' error CS0513: 'clx.P.get' is abstract but it is contained in non-abstract class 'clx'",
+                "'set' error CS0513: 'clx.P.set' is abstract but it is contained in non-abstract class 'clx'");
         }
 
         [Fact]
@@ -10887,11 +10893,11 @@ namespace N
     static class G : Array { }
 }
 ",
-                "'C' error CS0644: 'N.C' cannot derive from special class 'System.Enum'",
-                "'D' error CS0644: 'N.D' cannot derive from special class 'System.ValueType'",
-                "'E' error CS0644: 'N.E' cannot derive from special class 'System.Delegate'",
-                "'F' error CS0644: 'N.F' cannot derive from special class 'System.MulticastDelegate'",
-                "'G' error CS0644: 'N.G' cannot derive from special class 'System.Array'");
+                "'C' error CS0644: 'C' cannot derive from special class 'Enum'",
+                "'D' error CS0644: 'D' cannot derive from special class 'ValueType'",
+                "'E' error CS0644: 'E' cannot derive from special class 'Delegate'",
+                "'F' error CS0644: 'F' cannot derive from special class 'MulticastDelegate'",
+                "'G' error CS0644: 'G' cannot derive from special class 'Array'");
         }
 
         [Fact]
@@ -12308,8 +12314,8 @@ static class C
     }
 }
 ",
-                "'Base' error CS0713: Static class 'NS.Derived' cannot derive from type 'NS.Base'. Static classes must derive from object.",
-                "'Base1<string, V>' error CS0713: Static class 'NS.D<V>' cannot derive from type 'NS.Base1<string, V>'. Static classes must derive from object.");
+                "'Base' error CS0713: Static class 'Derived' cannot derive from type 'Base'. Static classes must derive from object.",
+                "'Base1<string, V>' error CS0713: Static class 'D<V>' cannot derive from type 'Base1<string, V>'. Static classes must derive from object.");
         }
 
         [Fact]

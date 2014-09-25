@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Microsoft.Cci;
 using Microsoft.CodeAnalysis.CSharp.Emit;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -335,6 +334,11 @@ namespace Microsoft.CodeAnalysis.CSharp
             return new BoundAssignmentOperator(Syntax, left, right, left.Type, refKind: refKind) { WasCompilerGenerated = true };
         }
 
+        public BoundBlock Block()
+        {
+            return Block(ImmutableArray<BoundStatement>.Empty);
+        }
+
         public BoundBlock Block(ImmutableArray<BoundStatement> statements)
         {
             return Block(ImmutableArray<LocalSymbol>.Empty, statements);
@@ -572,6 +576,21 @@ namespace Microsoft.CodeAnalysis.CSharp
         ////{
         ////    return Call(receiver, (MethodSymbol)Compilation.GetWellKnownTypeMember(method), args);
         ////}
+
+        public BoundCall Call(BoundExpression receiver, MethodSymbol method)
+        {
+            return Call(receiver, method, ImmutableArray<BoundExpression>.Empty);
+        }
+
+        public BoundCall Call(BoundExpression receiver, MethodSymbol method, BoundExpression arg0)
+        {
+            return Call(receiver, method, ImmutableArray.Create(arg0));
+        }
+
+        public BoundCall Call(BoundExpression receiver, MethodSymbol method, BoundExpression arg0, BoundExpression arg1)
+        {
+            return Call(receiver, method, ImmutableArray.Create(arg0, arg1));
+        }
 
         public BoundCall Call(BoundExpression receiver, MethodSymbol method, params BoundExpression[] args)
         {
@@ -832,11 +851,11 @@ namespace Microsoft.CodeAnalysis.CSharp
             return new BoundArrayAccess(Syntax, array, indices, ((ArrayTypeSymbol)array.Type).ElementType);
         }
 
-        public BoundStatement BaseInitialization(params BoundExpression[] args)
+        public BoundStatement BaseInitialization()
         {
             // TODO: add diagnostics for when things fall apart
-            var ctor = CurrentMethod.ThisParameter.Type.BaseTypeNoUseSiteDiagnostics.InstanceConstructors.Single(c => c.ParameterCount == args.Length);
-            return new BoundExpressionStatement(Syntax, Call(Base(), ctor, args)) { WasCompilerGenerated = true };
+            var ctor = CurrentMethod.ThisParameter.Type.BaseTypeNoUseSiteDiagnostics.InstanceConstructors.Single(c => c.ParameterCount == 0);
+            return new BoundExpressionStatement(Syntax, Call(Base(), ctor)) { WasCompilerGenerated = true };
         }
 
         public BoundStatement SequencePoint(CSharpSyntaxNode syntax, BoundStatement statement)

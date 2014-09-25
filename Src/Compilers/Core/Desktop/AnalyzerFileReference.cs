@@ -29,9 +29,9 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         private readonly Func<string, Assembly> getAssembly;
 
         private string lazyDisplayName;
-        private ImmutableArray<IDiagnosticAnalyzer> lazyAllAnalyzers;
-        private ImmutableArray<IDiagnosticAnalyzer> lazyLanguageAgnosticAnalyzers;
-        private ImmutableDictionary<string, ImmutableArray<IDiagnosticAnalyzer>> lazyAnalyzersPerLanguage;
+        private ImmutableArray<DiagnosticAnalyzer> lazyAllAnalyzers;
+        private ImmutableArray<DiagnosticAnalyzer> lazyLanguageAgnosticAnalyzers;
+        private ImmutableDictionary<string, ImmutableArray<DiagnosticAnalyzer>> lazyAnalyzersPerLanguage;
         private Assembly lazyAssembly;
         private static string diagnosticNamespaceName = string.Format("{0}.{1}.{2}", nameof(Microsoft), nameof(CodeAnalysis), nameof(Diagnostics));
         private ImmutableDictionary<string, ImmutableHashSet<string>> lazyAnalyzerTypeNameMap;
@@ -43,7 +43,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         /// (or a dependent <see cref="Assembly"/>) is loaded.
         /// </summary>
         public static event EventHandler<AnalyzerAssemblyLoadEventArgs> AssemblyLoad;
-        
+
         /// <summary>
         /// Maps from one assembly back to the assembly that requested it, if known.
         /// </summary>
@@ -76,13 +76,13 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                 throw new ArgumentException(e.Message, "fullPath");
             }
 
-            this.lazyAllAnalyzers = default(ImmutableArray<IDiagnosticAnalyzer>);
-            this.lazyLanguageAgnosticAnalyzers = default(ImmutableArray<IDiagnosticAnalyzer>);
-            this.lazyAnalyzersPerLanguage = ImmutableDictionary<string, ImmutableArray<IDiagnosticAnalyzer>>.Empty;
+            this.lazyAllAnalyzers = default(ImmutableArray<DiagnosticAnalyzer>);
+            this.lazyLanguageAgnosticAnalyzers = default(ImmutableArray<DiagnosticAnalyzer>);
+            this.lazyAnalyzersPerLanguage = ImmutableDictionary<string, ImmutableArray<DiagnosticAnalyzer>>.Empty;
             this.getAssembly = getAssembly;
         }
 
-        public override ImmutableArray<IDiagnosticAnalyzer> GetAnalyzersForAllLanguages()
+        public override ImmutableArray<DiagnosticAnalyzer> GetAnalyzersForAllLanguages()
         {
             if (lazyAllAnalyzers.IsDefault)
             {
@@ -93,7 +93,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             return lazyAllAnalyzers;
         }
 
-        public override ImmutableArray<IDiagnosticAnalyzer> GetAnalyzers(string language)
+        public override ImmutableArray<DiagnosticAnalyzer> GetAnalyzers(string language)
         {
             if (string.IsNullOrEmpty(language))
             {
@@ -101,10 +101,10 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             }
 
             return ImmutableInterlocked.GetOrAdd(ref this.lazyAnalyzersPerLanguage, language, CreateLanguageSpecificAnalyzers, this);
-            }
+        }
 
-        private static ImmutableArray<IDiagnosticAnalyzer> CreateLanguageSpecificAnalyzers(string language, AnalyzerFileReference @this)
-            {
+        private static ImmutableArray<DiagnosticAnalyzer> CreateLanguageSpecificAnalyzers(string language, AnalyzerFileReference @this)
+        {
             return MetadataCache.GetOrCreateAnalyzersFromFile(@this, language);
         }
 
@@ -146,15 +146,15 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             }
         }
 
-        private ImmutableArray<IDiagnosticAnalyzer> GetLanguageAgnosticAnalyzers(ImmutableDictionary<string, ImmutableHashSet<string>> analyzerTypeNameMap, Assembly analyzerAssembly)
+        private ImmutableArray<DiagnosticAnalyzer> GetLanguageAgnosticAnalyzers(ImmutableDictionary<string, ImmutableHashSet<string>> analyzerTypeNameMap, Assembly analyzerAssembly)
         {
             if (this.lazyLanguageAgnosticAnalyzers.IsDefault)
             {
                 ImmutableHashSet<string> analyzerTypeNames;
-                ImmutableArray<IDiagnosticAnalyzer> analyzers;
+                ImmutableArray<DiagnosticAnalyzer> analyzers;
                 if (!analyzerTypeNameMap.TryGetValue(string.Empty, out analyzerTypeNames))
                 {
-                    analyzers = ImmutableArray<IDiagnosticAnalyzer>.Empty;
+                    analyzers = ImmutableArray<DiagnosticAnalyzer>.Empty;
                 }
                 else
                 {
@@ -168,13 +168,13 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         }
 
         /// <summary>
-        /// Adds the <see cref="ImmutableArray{T}"/> of <see cref="IDiagnosticAnalyzer"/> defined in this assembly reference.
+        /// Adds the <see cref="ImmutableArray{T}"/> of <see cref="DiagnosticAnalyzer"/> defined in this assembly reference.
         /// </summary>
-        internal void AddAnalyzers(ImmutableArray<IDiagnosticAnalyzer>.Builder builder, string languageOpt = null)
+        internal void AddAnalyzers(ImmutableArray<DiagnosticAnalyzer>.Builder builder, string languageOpt = null)
         {
             ImmutableDictionary<string, ImmutableHashSet<string>> analyzerTypeNameMap;
             Assembly analyzerAssembly = null;
-            
+
             try
             {
                 analyzerTypeNameMap = GetAnalyzerTypeNameMap();
@@ -206,7 +206,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             }
 
             var initialCount = builder.Count;
-            
+
             // Add language agnostic analyzers.
             var languageAgnosticAnalyzers = this.GetLanguageAgnosticAnalyzers(analyzerTypeNameMap, analyzerAssembly);
             builder.AddRange(languageAgnosticAnalyzers);
@@ -243,18 +243,18 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             return languageSpecificAnalyzerTypeNames;
         }
 
-        private IEnumerable<IDiagnosticAnalyzer> GetAnalyzersForTypeNames(Assembly analyzerAssembly, IEnumerable<string> analyzerTypeNames)
+        private IEnumerable<DiagnosticAnalyzer> GetAnalyzersForTypeNames(Assembly analyzerAssembly, IEnumerable<string> analyzerTypeNames)
         {
             // Given the type names, get the actual System.Type and try to create an instance of the type through reflection.
             foreach (var typeName in analyzerTypeNames)
             {
-                IDiagnosticAnalyzer analyzer = null;
+                DiagnosticAnalyzer analyzer = null;
                 try
                 {
                     var type = analyzerAssembly.GetType(typeName, throwOnError: true);
-                    if (type.GetTypeInfo().ImplementedInterfaces.Contains(typeof(IDiagnosticAnalyzer)))
+                    if (DerivesFromDiagnosticAnalyzer(type))
                     {
-                        analyzer = (IDiagnosticAnalyzer)Activator.CreateInstance(type);
+                        analyzer = (DiagnosticAnalyzer)Activator.CreateInstance(type);
                     }
                 }
                 catch (Exception e) if (e is TypeLoadException || e is BadImageFormatException || e is FileNotFoundException || e is FileLoadException ||
@@ -301,16 +301,16 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         }
 
         private static IEnumerable<string> GetSupportedLanguages(TypeDefinition typeDef, PEModule peModule)
-                {
-            var supportedLanguages =  from customAttrHandle in typeDef.GetCustomAttributes()
-                                      where IsDiagnosticAnalyzerAttribute(peModule, customAttrHandle)
-                                      let supportedLangauge = GetSupportedLanguage(peModule, customAttrHandle)
-                                      where supportedLangauge != null
-                                      select supportedLangauge;
+        {
+            var supportedLanguages = from customAttrHandle in typeDef.GetCustomAttributes()
+                                     where IsDiagnosticAnalyzerAttribute(peModule, customAttrHandle)
+                                     let supportedLangauge = GetSupportedLanguage(peModule, customAttrHandle)
+                                     where supportedLangauge != null
+                                     select supportedLangauge;
 
             // If the analyzer claims it is language agnostic but also claims it supports some specific language, ignore the specific languages.
             if (supportedLanguages.Contains(string.Empty))
-                    {
+            {
                 return SpecializedCollections.SingletonEnumerable(string.Empty);
             }
             else
@@ -318,36 +318,36 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                 return supportedLanguages;
             }
         }
-                        
-        private static string GetSupportedLanguage(PEModule peModule, CustomAttributeHandle customAttrHandle)
-                            {
-                                // The DiagnosticAnalyzerAttribute has two constructors:
-                                // 1. Paramterless - means that the analyzer is applicable to any language. 
-                                // 2. Single string parameter specifying the language.
-                                // Parse the argument blob to extract these two cases.
-                                BlobReader argsReader = peModule.GetMemoryReaderOrThrow(peModule.GetCustomAttributeValueOrThrow(customAttrHandle));
 
-                                // Single string parameter
-                                if (argsReader.Length > 4)
-                                {
-                                    // check prolog
-                                    if (argsReader.ReadByte() == 1 && argsReader.ReadByte() == 0)
-                                    {
-                                        string languageName;
-                                        if (PEModule.CrackStringInAttributeValue(out languageName, ref argsReader))
-                                        {
+        private static string GetSupportedLanguage(PEModule peModule, CustomAttributeHandle customAttrHandle)
+        {
+            // The DiagnosticAnalyzerAttribute has two constructors:
+            // 1. Paramterless - means that the analyzer is applicable to any language. 
+            // 2. Single string parameter specifying the language.
+            // Parse the argument blob to extract these two cases.
+            BlobReader argsReader = peModule.GetMemoryReaderOrThrow(peModule.GetCustomAttributeValueOrThrow(customAttrHandle));
+
+            // Single string parameter
+            if (argsReader.Length > 4)
+            {
+                // check prolog
+                if (argsReader.ReadByte() == 1 && argsReader.ReadByte() == 0)
+                {
+                    string languageName;
+                    if (PEModule.CrackStringInAttributeValue(out languageName, ref argsReader))
+                    {
                         return languageName;
-                                        }
-                                    }
-                                }
-                                // otherwise the attribute is applicable to all languages.
-                                else
-                                {
+                    }
+                }
+            }
+            // otherwise the attribute is applicable to all languages.
+            else
+            {
                 return string.Empty;
-                            }
+            }
 
             return null;
-            }
+        }
 
         private static bool IsDiagnosticAnalyzerAttribute(PEModule peModule, CustomAttributeHandle customAttrHandle)
         {
@@ -367,8 +367,13 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             else
             {
                 var declaringTypeDef = peModule.MetadataReader.GetTypeDefinition(declaringType);
-                return GetFullyQualifiedTypeName(declaringTypeDef, peModule) +  "+" + peModule.MetadataReader.GetString(typeDef.Name);
+                return GetFullyQualifiedTypeName(declaringTypeDef, peModule) + "+" + peModule.MetadataReader.GetString(typeDef.Name);
             }
+        }
+
+        private static bool DerivesFromDiagnosticAnalyzer(Type type)
+        {
+            return type.IsSubclassOf(typeof(DiagnosticAnalyzer));
         }
 
         public override bool Equals(object obj)

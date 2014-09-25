@@ -545,8 +545,7 @@ namespace System
             {
                 switch (wkt)
                 {
-                    case WellKnownType.Microsoft_CSharp_RuntimeHelpers_Session:
-                    case WellKnownType.Microsoft_CSharp_RuntimeHelpers_SessionHelpers:
+                    case WellKnownType.Roslyn_Scripting_Runtime_ScriptExecutionState:
                         // These types haven't been published yet, so there's no canonical reference we can add.
                         // We own them though, so we can be reasonably confident that they're public and, therefore, validate.
                         continue;
@@ -587,8 +586,8 @@ namespace System
                     case WellKnownMember.Count: 
                         // Not a real value;
                         continue;
-                    case WellKnownMember.Microsoft_CSharp_RuntimeHelpers_SessionHelpers__GetSubmission:
-                    case WellKnownMember.Microsoft_CSharp_RuntimeHelpers_SessionHelpers__SetSubmission:
+                    case WellKnownMember.Roslyn_Scripting_Runtime_ScriptExecutionState__GetSubmission:
+                    case WellKnownMember.Roslyn_Scripting_Runtime_ScriptExecutionState__SetSubmission:
                         // These members haven't been published yet, so there's no canonical reference we can add.
                         // We own them though, so we can be reasonably confident that they're public and, therefore, validate.
                         continue;
@@ -596,6 +595,9 @@ namespace System
                     case WellKnownMember.Microsoft_VisualBasic_Embedded__ctor:
                     case WellKnownMember.Microsoft_VisualBasic_CompilerServices_EmbeddedOperators__CompareStringStringStringBoolean:
                         // C# can't embed VB core.
+                        continue;
+                    case WellKnownMember.System_Array__Empty:
+                        // Not available yet, but will be in upcoming release.
                         continue;
                 }
                 if (wkm == WellKnownMember.Count) continue; // Not a real value.

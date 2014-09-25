@@ -51,6 +51,11 @@ Public MustInherit Class BasicTestBase
         Optional parseOptions As VisualBasicParseOptions = Nothing,
         Optional verify As Boolean = True
     ) As CompilationVerifier
+
+        If parseOptions Is Nothing AndAlso options IsNot Nothing Then
+            parseOptions = options.ParseOptions
+        End If
+
         Return CompileAndVerify(
             source,
             If(expectedOutput IsNot Nothing, expectedOutput.Value.Replace(vbLf, Environment.NewLine), Nothing),
@@ -473,7 +478,7 @@ Public MustInherit Class BasicTestBaseBase
 
     Protected Overrides Function GetCompilationForEmit(
         source As IEnumerable(Of String),
-        additionalRefs() As MetadataReference,
+        additionalRefs As IEnumerable(Of MetadataReference),
         options As CompilationOptions
     ) As Compilation
         Return VisualBasicCompilation.Create(

@@ -131,7 +131,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Simplification
                         if (parameterSymbol.Type != null)
                         {
                             var typeSyntax = parameterSymbol.Type.GenerateTypeSyntax().WithTrailingTrivia(OneWhitespaceSeparator);
-                            var newSimpleLambdaParameter = newSimpleLambda.Parameter.WithType(typeSyntax).WithTrailingTrivia();
+                            var newSimpleLambdaParameter = newSimpleLambda.Parameter.WithType(typeSyntax).WithoutTrailingTrivia();
 
                             var parenthesizedLambda = SyntaxFactory.ParenthesizedLambdaExpression(
                                 newSimpleLambda.AsyncKeyword,
@@ -696,7 +696,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Simplification
                     if (parent.CSharpKind() == SyntaxKind.ObjectInitializerExpression)
                     {
                         return currentNode.CSharpKind() == SyntaxKind.SimpleAssignmentExpression &&
-                            object.Equals(((BinaryExpressionSyntax)currentNode).Left, identifierName);
+                            object.Equals(((AssignmentExpressionSyntax)currentNode).Left, identifierName);
                     }
                     else if (parent is ExpressionSyntax)
                     {

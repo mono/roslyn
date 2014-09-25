@@ -349,6 +349,59 @@ class C
         }
 
         [Fact]
+        public void ModifyProperty()
+        {
+            var source0 =
+@"class C
+{
+    object P { get { return 1; } }
+}";
+            var source1 =
+@"class C
+{
+    object P { get { return 2; } }
+}";
+            var compilation0 = CreateCompilationWithMscorlib(source0, options: TestOptions.DebugDll);
+            var compilation1 = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugDll);
+
+            var bytes0 = compilation0.EmitToArray();
+            using (var md0 = ModuleMetadata.CreateFromImage(bytes0))
+            {
+                var reader0 = md0.MetadataReader;
+                CheckNames(reader0, reader0.GetPropertyDefNames(), "P");
+                CheckNames(reader0, reader0.GetMethodDefNames(), "get_P", ".ctor");
+                var generation0 = EmitBaseline.CreateInitialBaseline(md0, EmptyLocalsProvider);
+
+                var diff1 = compilation1.EmitDifference(
+                    generation0,
+                    ImmutableArray.Create(new SemanticEdit(SemanticEditKind.Update, compilation0.GetMember<MethodSymbol>("C.get_P"), compilation1.GetMember<MethodSymbol>("C.get_P"))));
+                using (var md1 = diff1.GetMetadata())
+                {
+                    var reader1 = md1.Reader;
+                    var readers = new[] { reader0, reader1 };
+                    CheckNames(readers, reader1.GetPropertyDefNames(), "P");
+                    CheckNames(readers, reader1.GetMethodDefNames(), "get_P");
+                    CheckEncLog(reader1,
+                        Row(2, TableIndex.AssemblyRef, EditAndContinueOperation.Default),
+                        Row(7, TableIndex.TypeRef, EditAndContinueOperation.Default),
+                        Row(8, TableIndex.TypeRef, EditAndContinueOperation.Default),
+                        Row(2, TableIndex.StandAloneSig, EditAndContinueOperation.Default),
+                        Row(1, TableIndex.MethodDef, EditAndContinueOperation.Default),
+                        Row(1, TableIndex.Property, EditAndContinueOperation.Default),
+                        Row(2, TableIndex.MethodSemantics, EditAndContinueOperation.Default));
+                    CheckEncMap(reader1,
+                        Handle(7, TableIndex.TypeRef),
+                        Handle(8, TableIndex.TypeRef),
+                        Handle(1, TableIndex.MethodDef),
+                        Handle(2, TableIndex.StandAloneSig),
+                        Handle(1, TableIndex.Property),
+                        Handle(2, TableIndex.MethodSemantics),
+                        Handle(2, TableIndex.AssemblyRef));
+                }
+            }
+        }
+
+        [Fact]
         public void AddProperty()
         {
             var source0 =
@@ -549,7 +602,7 @@ class B
                 CheckNames(reader0, reader0.GetTypeDefNames(), "<Module>", "D", "A", "B");
                 CheckNames(reader0, reader0.GetFieldDefNames(), "E");
                 CheckNames(reader0, reader0.GetEventDefNames(), "E");
-                CheckNames(reader0, reader0.GetMethodDefNames(), ".ctor", "BeginInvoke", "EndInvoke", "Invoke", "add_E", "remove_E", ".ctor", ".ctor");
+                CheckNames(reader0, reader0.GetMethodDefNames(), ".ctor", "Invoke", "BeginInvoke", "EndInvoke", "add_E", "remove_E", ".ctor", ".ctor");
 
                 var generation0 = EmitBaseline.CreateInitialBaseline(md0, EmptyLocalsProvider);
 
@@ -1233,7 +1286,7 @@ delegate void D();
             {
                 var reader0 = md0.MetadataReader;
                 CheckNames(reader0, reader0.GetTypeDefNames(), "<Module>", "A", "B", "C", "D");
-                CheckNames(reader0, reader0.GetMethodDefNames(), ".ctor", ".ctor", "M1", "get_P1", "add_E1", "remove_E1", ".ctor", ".ctor", "BeginInvoke", "EndInvoke", "Invoke");
+                CheckNames(reader0, reader0.GetMethodDefNames(), ".ctor", ".ctor", "M1", "get_P1", "add_E1", "remove_E1", ".ctor", ".ctor", "Invoke", "BeginInvoke", "EndInvoke");
                 CheckAttributes(reader0,
                     new CustomAttributeRow(Handle(1, TableIndex.Field), Handle(2, TableIndex.MethodDef)),
                     new CustomAttributeRow(Handle(1, TableIndex.Property), Handle(1, TableIndex.MethodDef)),
@@ -1465,7 +1518,7 @@ class C
                 CheckNames(reader0, reader0.GetTypeDefNames(), "<Module>", "D", "C");
                 CheckNames(reader0, reader0.GetEventDefNames(), "E");
                 CheckNames(reader0, reader0.GetFieldDefNames(), "F", "E");
-                CheckNames(reader0, reader0.GetMethodDefNames(), ".ctor", "BeginInvoke", "EndInvoke", "Invoke", "get_P", "add_E", "remove_E", "M", ".ctor");
+                CheckNames(reader0, reader0.GetMethodDefNames(), ".ctor", "Invoke", "BeginInvoke", "EndInvoke", "get_P", "add_E", "remove_E", "M", ".ctor");
                 CheckNames(reader0, reader0.GetPropertyDefNames(), "P");
 
                 var method0 = compilation0.GetMember<MethodSymbol>("C.M");

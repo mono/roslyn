@@ -1,16 +1,19 @@
 #pragma once
 
 #include <exception>
+#include <list>
 #include "logging.h"
 #include "protocol.h"
-#include "pipe_utils.h"
 
 CompletedResponse Run(
 	RequestLanguage language,
 	LPCWSTR currentDirectory,
-	LPCWSTR commandLineArgs [],
+	LPCWSTR commandLineArgs[],
 	int argsCount,
-	LPCWSTR libEnvVar,
-	bool &utf8Output);
+	LPCWSTR libEnvVar);
 
 int Run(RequestLanguage);
+
+void ParseAndValidateClientArguments(
+	list<wstring>& arguments,
+	wstring& keepAliveValue);

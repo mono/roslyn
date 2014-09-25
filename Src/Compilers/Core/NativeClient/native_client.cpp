@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include <memory>
 #include <algorithm>
+#include <string>
 #include "logging.h"
 #include "native_client.h"
 #include "pipe_utils.h"
@@ -109,10 +110,11 @@ void OutputWideString(FILE * outputFile, wstring str, bool utf8Output)
 }
 
 // Output the response we got back from the server onto our stdout and stderr.
-void OutputResponse(const CompletedResponse &response, bool utf8Output)
+void OutputResponse(const CompletedResponse &response)
 {
-    OutputWideString(stdout, response.output, utf8Output);
-    OutputWideString(stderr, response.errorOutput, utf8Output);
+	auto utf8output = response.Utf8Output;
+    OutputWideString(stdout, response.Output, utf8output);
+    OutputWideString(stderr, response.ErrorOutput, utf8output);
 }
 
 // Get the expected process path of the server. We assume that the server EXE
@@ -155,24 +157,29 @@ HANDLE ConnectToProcess(DWORD processID, int timeoutMs)
     return NULL;
 }
 
-// Perform the compilation. If the compilation completes, this function
-// never returns, exiting with the exit code of the compilation.
+/// <summary>
+/// Perform the compilation. If the compilation completes, this function
+/// never returns, exiting with the exit code of the compilation.
+/// </summary>
+/// <param name='keepAlive'>
+/// Set to the empty string if no keepAlive should be used
+/// </param>
 bool TryCompile(HANDLE pipeHandle,
                 RequestLanguage language,
                 LPCWSTR currentDirectory,
-                LPCWSTR commandLineArgs[],
-                int argsCount,
+				list<wstring>& commandLineArgs,
                 LPCWSTR libEnvVariable,
-                bool &utf8Output,
+				wstring& keepAlive,
                 CompletedResponse &response)
 {
-    auto request = CreateRequest(language,
-                      currentDirectory,
-                      commandLineArgs,
-                      argsCount,
-                      libEnvVariable);
-
-    utf8Output = request.utf8Output;
+	auto request = Request(language, currentDirectory);
+	request.AddCommandLineArguments(commandLineArgs);
+	if (libEnvVariable != nullptr) {
+		request.AddLibEnvVariable(wstring(libEnvVariable));
+	}
+	if (!keepAlive.empty()) {
+		request.AddKeepAlive(wstring(keepAlive));
+	}
 
     RealPipe wrapper(pipeHandle);
     if (!request.WriteToPipe(wrapper)) 
@@ -276,24 +283,29 @@ DWORD CreateNewServerProcess(LPCWSTR executablePath)
     // If this is not devdiv, no environment variables will be changed
     SetupDevDivEnvironment();
 
-	auto driveLetter = make_unique<wchar_t[]>(_MAX_DRIVE);
-	auto dirWithoutDrive = make_unique<wchar_t[]>(_MAX_DIR);
+    auto driveLetter = make_unique<wchar_t[]>(_MAX_DRIVE);
+    auto dirWithoutDrive = make_unique<wchar_t[]>(_MAX_DIR);
 
-	errno_t err;
-	if ((err = _wsplitpath_s(executablePath,
-						     driveLetter.get(), _MAX_DRIVE,
-						     dirWithoutDrive.get(), _MAX_DIR,
-						     nullptr, 0,
-						     nullptr, 0)))
-	{
-		FailFormatted(L"Couldn't split the process executable path: %d", err);
-	}
+    errno_t err;
+    if ((err = _wsplitpath_s(executablePath,
+                             driveLetter.get(), _MAX_DRIVE,
+                             dirWithoutDrive.get(), _MAX_DIR,
+                             nullptr, 0,
+                             nullptr, 0)))
+    {
+        FailFormatted(L"Couldn't split the process executable path: %d", err);
+    }
 
-	auto dir = wstring(driveLetter.get());
-	dir.append(dirWithoutDrive.get());
-	auto dirCstr = dir.c_str();
-
-	LogFormatted(L"Creating process with directory %ws", dirCstr);
+    auto createPath = make_unique<wchar_t[]>(MAX_PATH);
+    if ((err = _wmakepath_s(createPath.get(),
+                            MAX_PATH,
+                            driveLetter.get(),
+                            dirWithoutDrive.get(),
+                            nullptr,
+                            nullptr)))
+    {
+        FailFormatted(L"Couldn't make the new process path: %d", err);
+    }
 
     success = CreateProcess(executablePath, 
         NULL, // command line,
@@ -302,7 +314,7 @@ DWORD CreateNewServerProcess(LPCWSTR executablePath)
         FALSE, // don't inherit handles
         NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT,
         NULL, // Inherit environment
-        dirCstr, // The process should run in the directory the executable is located
+        createPath.get(), // The process should run in the directory the executable is located
         &startupInfo,
         &processInfo);
 
@@ -427,14 +439,69 @@ HANDLE TryExistingProcesses(LPCWSTR expectedProcessName)
     return NULL;
 }
 
+// N.B. Native client arguments (e.g., /keepalive) are NOT supported in response
+// files.
+// Aside from separation of concerns, this is important because we endeavor to
+// send the exact command line given to the native client to the server, minus
+// any native client-specific arguments. If we were to accept native client
+// arguments in the response file, we would have to edit the response file to
+// remove the argument or mangle the command line given to the server.
+void ParseAndValidateClientArguments(
+	list<wstring>& arguments,
+	wstring& keepAliveValue)
+{
+	auto iter = arguments.cbegin();
+	while (iter != arguments.cend())
+	{
+		auto arg = *iter;
+		if (arg.find(L"/keepalive") == 0)
+		{
+			auto prefixLen = wcslen(L"/keepalive");
+
+			if (arg.length() < prefixLen + 2 ||
+				(arg.at(prefixLen) != L':' && arg.at(prefixLen) != L'='))
+			{
+				throw FatalError(L"Missing argument for '/keepalive' option");
+			}
+
+			auto value = arg.substr(prefixLen + 1);
+			try {
+				auto intValue = stoi(value);
+
+				if (intValue < -1) {
+					throw FatalError(L"Arguments to '/keepalive' option below -1 are invalid");
+				}
+
+				keepAliveValue = value;
+				iter = arguments.erase(iter);
+				continue;
+			}
+			catch (invalid_argument) {
+				throw FatalError(L"Argument to '/keepalive' option is not an integer");
+			}
+			catch (out_of_range) {
+				throw FatalError(L"Argument to '/keepalive' is out of 32-bit integer range");
+			}
+		}
+
+		++iter;
+	}
+
+}
+
 CompletedResponse Run(
     RequestLanguage language,
     LPCWSTR currentDirectory,
-    LPCWSTR * commandLineArgs,
-    int argsCount,
-    LPCWSTR libEnvVar,
-    bool &utf8Output)
+	LPCWSTR rawCommandLineArgs[],
+	int argsCount,
+    LPCWSTR libEnvVar)
 {
+	list<wstring> commandLineArgs(rawCommandLineArgs,
+		rawCommandLineArgs + argsCount);
+	// Throws FatalError if there was a problem parsing a command line argument
+	wstring keepAlive;
+	ParseAndValidateClientArguments(commandLineArgs, keepAlive);
+
     wchar_t expectedProcessPath[MAX_PATH];
 
     InitializeLogging();
@@ -480,9 +547,8 @@ CompletedResponse Run(
                            language,
                            currentDirectory,
                            commandLineArgs,
-                           argsCount,
                            libEnvVar,
-                           utf8Output,
+						   keepAlive,
                            response))
             {
                 return response;
@@ -509,9 +575,8 @@ CompletedResponse Run(
                                    language,
                                    currentDirectory,
                                    commandLineArgs,
-                                   argsCount,
                                    libEnvVar,
-                                   utf8Output,
+                                   keepAlive,
                                    response))
                     {
                         return response;
@@ -545,9 +610,8 @@ CompletedResponse Run(
                            language,
                            currentDirectory,
                            commandLineArgs,
-                           argsCount,
                            libEnvVar,
-                           utf8Output,
+                           keepAlive,
                            response))
             {
                 return response;
@@ -598,7 +662,6 @@ int Run(RequestLanguage language)
         int argsCount;
         auto commandLineArgs = GetCommandLineArgs(argsCount);
         wstring libEnvVariable;
-        bool utf8Output;
 
         // Change stderr, stdout to binary, because the output we get from the server already 
         // has CR and LF in it. If we don't do this, we get CR CR LF at each newline.
@@ -611,11 +674,10 @@ int Run(RequestLanguage language)
             // Don't include the name of the process
             commandLineArgs.get() + 1,
             argsCount - 1,
-            GetEnvVar(L"LIB", libEnvVariable) ? libEnvVariable.c_str() : nullptr,
-            utf8Output);
+            GetEnvVar(L"LIB", libEnvVariable) ? libEnvVariable.c_str() : nullptr);
 
-        OutputResponse(response, utf8Output);
-        return response.exitCode;
+		OutputResponse(response);
+        return response.ExitCode;
     }
     catch (FatalError &e)
     {

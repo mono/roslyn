@@ -73,7 +73,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             BoundAssignmentOperator tempAssignment = null;
             BoundLocal boundTemp = null;
-            if (!eventSymbol.IsStatic && NeedsTemp(rewrittenReceiverOpt, localsMayBeAssigned: false))
+            if (!eventSymbol.IsStatic && IntroducingReadCanBeObservable(rewrittenReceiverOpt))
             {
                 boundTemp = factory.StoreToTemp(rewrittenReceiverOpt, out tempAssignment);
             }
@@ -244,7 +244,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     syntax,
                     receiverOpt: null,
                     method: getOrCreateMethod,
-                    arguments: fieldAccess);
+                    arg0: fieldAccess);
             }
             else
             {

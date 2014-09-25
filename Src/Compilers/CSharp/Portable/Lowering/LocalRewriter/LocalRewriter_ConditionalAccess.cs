@@ -14,7 +14,7 @@ namespace Microsoft.CodeAnalysis.CSharp
     {
         public override BoundNode VisitConditionalAccess(BoundConditionalAccess node)
         {
-            return VisitConditionalAccess(node, used: true);
+            return RewriteConditionalAccess(node, used: true);
         }
 
         // null when currently enclosing conditional access node
@@ -33,7 +33,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         // in simple cases could be left unlowered.
         // IL gen can generate more compact code for unlowered conditional accesses 
         // by utilizing stack dup/pop instructions 
-        internal BoundExpression VisitConditionalAccess(BoundConditionalAccess node, bool used)
+        internal BoundExpression RewriteConditionalAccess(BoundConditionalAccess node, bool used, BoundExpression rewrittenWhenNull = null)
         {
             Debug.Assert(!this.inExpressionLambda);
 
@@ -47,13 +47,29 @@ namespace Microsoft.CodeAnalysis.CSharp
             var isAsync = this.factory.CurrentMethod.IsAsync;
 
             ConditionalAccessLoweringKind loweringKind;
+            // CONSIDER: If we knew that loweredReceiver is not a captured local
+            //       we could pass "false" for localsMayBeAssignedOrCaptured
+            //       otherwise not capturing receiver into a temp
+            //       could introduce additional races into the code if receiver is captured
+            //       into a closure and is modified between null check of the receiver 
+            //       and the actual access.
+            //
+            //       Nullable is special since we are not going to read any part of it twice
+            //       we will read "HasValue" and then, conditionally will read "ValueOrDefault"
+            //       that is no different than just reading both values unconditionally.
+            //       As a result in the case of nullable, not reading captured local through a temp 
+            //       does not introduce any additional races so it is irrelevant whether 
+            //       the local is captured or not.
+            var localsMayBeAssignedOrCaptured = !receiverType.IsNullableType();
+            var needTemp = IntroducingReadCanBeObservable(loweredReceiver, localsMayBeAssignedOrCaptured);
 
-            if (!receiverType.IsValueType && !isAsync && !node.Type.IsDynamic())
+            if (!isAsync && !node.Type.IsDynamic() && rewrittenWhenNull == null &&
+                (receiverType.IsReferenceType || receiverType.IsTypeParameter() && needTemp))
             {
                 // trivial cases can be handled more efficiently in IL gen
                 loweringKind = ConditionalAccessLoweringKind.None;
             }
-            else if(NeedsTemp(loweredReceiver, localsMayBeAssigned: false))
+            else if(needTemp)
             {
                 if (receiverType.IsReferenceType || receiverType.IsNullableType())
                 {
@@ -122,6 +138,11 @@ namespace Microsoft.CodeAnalysis.CSharp
             {
                 Debug.Assert(accessExpressionType == nodeType.GetNullableUnderlyingType());
                 loweredAccessExpression = factory.New((NamedTypeSymbol)nodeType, loweredAccessExpression);
+
+                if (unconditionalAccess != null)
+                {
+                    unconditionalAccess = factory.New((NamedTypeSymbol)nodeType, unconditionalAccess);
+                }
             }
             else
             {
@@ -132,6 +153,8 @@ namespace Microsoft.CodeAnalysis.CSharp
             BoundExpression result;
                      var objectType = compilation.GetSpecialType(SpecialType.System_Object);
 
+            rewrittenWhenNull = rewrittenWhenNull ?? factory.Default(nodeType);
+
             switch (loweringKind)
             {
                 case ConditionalAccessLoweringKind.None:
@@ -141,7 +164,10 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                 case ConditionalAccessLoweringKind.CaptureReceiverByVal:
                     // capture the receiver into a temp
-                    loweredReceiver = factory.AssignmentExpression(factory.Local(temp), loweredReceiver);
+                    loweredReceiver = factory.Sequence(
+                                            factory.AssignmentExpression(factory.Local(temp), loweredReceiver),
+                                            factory.Local(temp));
+
                     goto case ConditionalAccessLoweringKind.NoCapture;
 
                 case ConditionalAccessLoweringKind.NoCapture:
@@ -155,12 +181,11 @@ namespace Microsoft.CodeAnalysis.CSharp
                                 factory.Null(objectType));
 
                         var consequence = loweredAccessExpression;
-                        var alternative = factory.Default(nodeType);
 
                         result = RewriteConditionalOperator(node.Syntax,
                             condition,
                             consequence,
-                            alternative,
+                            rewrittenWhenNull,
                             null,
                             nodeType);
 
@@ -192,7 +217,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                         result = RewriteConditionalOperator(node.Syntax,
                            isNull,
-                           factory.Default(nodeType),
+                           rewrittenWhenNull,
                            loweredAccessExpression,
                            null,
                            nodeType);
@@ -217,7 +242,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                                                     factory.Convert(objectType, loweredReceiver),
                                                     factory.Null(objectType)),
                             loweredAccessExpression,
-                            factory.Default(nodeType),
+                            rewrittenWhenNull,
                             null,
                             nodeType);
 

@@ -296,6 +296,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Recommendations
             var symbol = nameBinding.Symbol as INamespaceOrTypeSymbol;
             if (symbol != null)
             {
+                if (context.IsNameOfContext)
+                {
+                    return context.SemanticModel.LookupSymbols(position: name.SpanStart, container: symbol);
+                }
+
                 IEnumerable<ISymbol> symbols = context.SemanticModel.LookupNamespacesAndTypes(
                     position: name.SpanStart,
                     container: symbol);
@@ -467,7 +472,21 @@ namespace Microsoft.CodeAnalysis.CSharp.Recommendations
             Debug.Assert(!excludeInstance || !excludeStatic);
             Debug.Assert(!excludeInstance || !useBaseReferenceAccessibility);
 
+            // nameof(X.|
+            // Show static and instance members.
+            if (context.IsNameOfContext)
+            {
+                if (symbol != null && !(symbol.MatchesKind(SymbolKind.NamedType) || symbol.MatchesKind(SymbolKind.Namespace)))
+                {
+                    return SpecializedCollections.EmptyEnumerable<ISymbol>();
+                }
+
+                excludeInstance = false;
+                excludeStatic = false;
+            }
+
             var position = originalExpression.SpanStart;
+
             IEnumerable<ISymbol> symbols = useBaseReferenceAccessibility
                 ? context.SemanticModel.LookupBaseMembers(position)
                 : excludeInstance

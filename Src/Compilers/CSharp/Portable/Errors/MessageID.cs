@@ -47,7 +47,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         IDS_MethodGroup = MessageBase + 12513,
         IDS_AnonMethod = MessageBase + 12514,
         IDS_FeatureSwitchOnBool = MessageBase + 12517,
-        IDS_WarnAsError = MessageBase + 12518,
+        //IDS_WarnAsError = MessageBase + 12518,
         IDS_Collection = MessageBase + 12520,
         IDS_FeaturePropertyAccessorMods = MessageBase + 12522,
         IDS_FeatureExternAlias = MessageBase + 12523,
@@ -55,15 +55,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         IDS_FeatureDefault = MessageBase + 12525,
         IDS_FeatureNullable = MessageBase + 12528,
         IDS_Lambda = MessageBase + 12531,
-        //IDS_AnonymousType = MessageBase + 12532,
-        //IDS_LetClause = MessageBase + 12549,
-        //IDS_FromClause = MessageBase + 12550,
-        //IDS_WhereClause = MessageBase + 12551,
-        //IDS_SelectClause = MessageBase + 12552,
-        //IDS_JoinClause = MessageBase + 12553,
-        //IDS_GroupByClause = MessageBase + 12554,
-        //IDS_OrderByClause = MessageBase + 12555,
-        //IDS_ContinuationClause = MessageBase + 12556,
+
         IDS_FeatureImplicitArray = MessageBase + 12557,
         IDS_FeatureImplicitLocal = MessageBase + 12558,
         IDS_FeatureAnonymousTypes = MessageBase + 12559,
@@ -110,6 +102,10 @@ namespace Microsoft.CodeAnalysis.CSharp
         IDS_FeatureNameof = MessageBase + 12695,
         IDS_FeatureDictionaryInitializer = MessageBase + 12696,
         IDS_FeatureStructParameterlessConstructors = MessageBase + 12697,
+
+        IDS_LogoLine1 = MessageBase + 12698,
+        IDS_LogoLine2 = MessageBase + 12699,
+        IDS_CSCHelp = MessageBase + 12700,
     }
 
     // Message IDs may refer to strings that need to be localized.

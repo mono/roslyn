@@ -251,10 +251,10 @@ public class Test
             // ary = new byte[3];
             var v1 = (mainStats[0] as ExpressionStatementSyntax).Expression;
             Assert.Equal(SyntaxKind.SimpleAssignmentExpression, v1.Kind);
-            ConversionTestHelper(model, (v1 as BinaryExpressionSyntax).Right, ConversionKind.Identity, ConversionKind.Identity);
+            ConversionTestHelper(model, (v1 as AssignmentExpressionSyntax).Right, ConversionKind.Identity, ConversionKind.Identity);
             // ary[0] = 0x0F;
             var v2 = (mainStats[1] as ExpressionStatementSyntax).Expression;
-            ConversionTestHelper(model, (v2 as BinaryExpressionSyntax).Right, ConversionKind.ImplicitConstant, ConversionKind.ExplicitNumeric);
+            ConversionTestHelper(model, (v2 as AssignmentExpressionSyntax).Right, ConversionKind.ImplicitConstant, ConversionKind.ExplicitNumeric);
             // ushort ret = ary[0];
             var v3 = (mainStats[2] as LocalDeclarationStatementSyntax).Declaration.Variables;
             ConversionTestHelper(model, v3[0].Initializer.Value, ConversionKind.ImplicitNumeric, ConversionKind.ImplicitNumeric);
@@ -314,17 +314,17 @@ public class Test
             var mainStats = mainMethod.Body.Statements;
             Assert.Equal(5, mainStats.Count);
             // y = (uint) x;
-            var v1 = ((mainStats[1] as ExpressionStatementSyntax).Expression as BinaryExpressionSyntax).Right;
+            var v1 = ((mainStats[1] as ExpressionStatementSyntax).Expression as AssignmentExpressionSyntax).Right;
             ConversionTestHelper(model, (v1 as CastExpressionSyntax).Expression, comp.GetSpecialType(SpecialType.System_UInt32), ConversionKind.ExplicitNumeric);
             // obj01 = x;
             var v2 = (mainStats[2] as ExpressionStatementSyntax).Expression;
-            ConversionTestHelper(model, (v2 as BinaryExpressionSyntax).Right, comp.GetSpecialType(SpecialType.System_Object), ConversionKind.Boxing);
+            ConversionTestHelper(model, (v2 as AssignmentExpressionSyntax).Right, comp.GetSpecialType(SpecialType.System_Object), ConversionKind.Boxing);
             // x = (int)obj01;
-            var v3 = ((mainStats[3] as ExpressionStatementSyntax).Expression as BinaryExpressionSyntax).Right;
+            var v3 = ((mainStats[3] as ExpressionStatementSyntax).Expression as AssignmentExpressionSyntax).Right;
             ConversionTestHelper(model, (v3 as CastExpressionSyntax).Expression, comp.GetSpecialType(SpecialType.System_Int32), ConversionKind.Unboxing);
             // obj02 = (Test)obj01;
             var tsym = comp.SourceModule.GlobalNamespace.GetTypeMembers("Test").FirstOrDefault();
-            var v4 = ((mainStats[4] as ExpressionStatementSyntax).Expression as BinaryExpressionSyntax).Right;
+            var v4 = ((mainStats[4] as ExpressionStatementSyntax).Expression as AssignmentExpressionSyntax).Right;
             ConversionTestHelper(model, (v4 as CastExpressionSyntax).Expression, tsym, ConversionKind.ExplicitReference);
         }
 
@@ -417,13 +417,13 @@ public class Test
             var mainStats = mainMethod.Body.Statements;
             Assert.Equal(5, mainStats.Count);
             // y = x;
-            var v1 = ((mainStats[1] as ExpressionStatementSyntax).Expression as BinaryExpressionSyntax).Right;
+            var v1 = ((mainStats[1] as ExpressionStatementSyntax).Expression as AssignmentExpressionSyntax).Right;
             ConversionTestHelper(model, v1, ConversionKind.ExplicitNumeric, ConversionKind.ExplicitNumeric);
             // x = obj01;
-            var v2 = ((mainStats[3] as ExpressionStatementSyntax).Expression as BinaryExpressionSyntax).Right;
+            var v2 = ((mainStats[3] as ExpressionStatementSyntax).Expression as AssignmentExpressionSyntax).Right;
             ConversionTestHelper(model, v2, ConversionKind.Unboxing, ConversionKind.Unboxing);
             // obj02 = obj01;
-            var v3 = ((mainStats[4] as ExpressionStatementSyntax).Expression as BinaryExpressionSyntax).Right;
+            var v3 = ((mainStats[4] as ExpressionStatementSyntax).Expression as AssignmentExpressionSyntax).Right;
             ConversionTestHelper(model, v3, ConversionKind.ExplicitReference, ConversionKind.ExplicitReference);
             // CC
             var errs = model.GetDiagnostics();
@@ -479,7 +479,7 @@ enum E { zero, one }
             // nullable01 = localVal;
             var v3 = (mainStats[3] as ExpressionStatementSyntax).Expression;
             Assert.Equal(SyntaxKind.SimpleAssignmentExpression, v3.Kind);
-            ConversionTestHelper(model, (v3 as BinaryExpressionSyntax).Right, ConversionKind.ImplicitNullable, ConversionKind.ImplicitNullable);
+            ConversionTestHelper(model, (v3 as AssignmentExpressionSyntax).Right, ConversionKind.ImplicitNullable, ConversionKind.ImplicitNullable);
 
             // E e = 0;
             var v4 = (mainStats[4] as LocalDeclarationStatementSyntax).Declaration.Variables;
@@ -5629,6 +5629,55 @@ class C { }
 
             var conversionC = model.ClassifyConversion(methodGroupSyntax, typeFuncC);
             Assert.Equal(ConversionKind.MethodGroup, conversionC.Kind);
+        }
+
+        [WorkItem(872064, "DevDiv")]
+        [Fact]
+        public void PartialMethodImplementationDiagnostics()
+        {
+            var file1 = @"
+namespace ConsoleApplication1
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+        }
+    }
+
+    partial class MyPartialClass
+    {
+        partial void MyPartialMethod(MyUndefinedMethod m);
+    }
+}
+";
+
+            var file2 = @"
+namespace ConsoleApplication1
+{
+    partial class MyPartialClass
+    {
+        partial void MyPartialMethod(MyUndefinedMethod m)
+        {
+            c = new MyUndefinedMethod(23, true);
+        }
+    }
+}
+";
+
+            var tree1 = Parse(file1);
+            var tree2 = Parse(file2);
+            var comp = CreateCompilationWithMscorlib(new[] { tree1, tree2 });
+            var model = comp.GetSemanticModel(tree2);
+
+            var errs = model.GetDiagnostics();
+            Assert.Equal(3, errs.Count());
+            errs = model.GetSyntaxDiagnostics();
+            Assert.Equal(0, errs.Count());
+            errs = model.GetDeclarationDiagnostics();
+            Assert.Equal(1, errs.Count());
+            errs = model.GetMethodBodyDiagnostics();
+            Assert.Equal(2, errs.Count());
         }
     }
 }

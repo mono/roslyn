@@ -9,6 +9,7 @@ namespace Microsoft.CodeAnalysis
         System_Math__PowDoubleDouble,
 
         System_Array__get_Length,
+        System_Array__Empty,
 
         System_Convert__ToBooleanDecimal,
         System_Convert__ToBooleanInt32,
@@ -164,8 +165,8 @@ namespace Microsoft.CodeAnalysis
         System_Threading_Thread__CurrentThread,
         System_Threading_Thread__ManagedThreadId,
 
-        Microsoft_CSharp_RuntimeHelpers_SessionHelpers__GetSubmission,
-        Microsoft_CSharp_RuntimeHelpers_SessionHelpers__SetSubmission,
+        Roslyn_Scripting_Runtime_ScriptExecutionState__GetSubmission,
+        Roslyn_Scripting_Runtime_ScriptExecutionState__SetSubmission,
 
         Microsoft_CSharp_RuntimeBinder_Binder__BinaryOperation,
         Microsoft_CSharp_RuntimeBinder_Binder__Convert,
@@ -354,6 +355,8 @@ namespace Microsoft.CodeAnalysis
         System_Environment__CurrentManagedThreadId,
 
         System_ComponentModel_EditorBrowsableAttribute__ctor,
+
+        System_Runtime_GCLatencyMode__SustainedLowLatency,
 
         Count
     }

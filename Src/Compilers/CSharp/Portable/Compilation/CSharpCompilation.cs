@@ -159,6 +159,14 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
+        /// <summary>
+        /// The language version that was used to parse the syntax trees of this compilation.
+        /// </summary>
+        public LanguageVersion LanguageVersion
+        {
+            get; private set;
+        }
+
         public override INamedTypeSymbol CreateErrorTypeSymbol(INamespaceOrTypeSymbol container, string name, int arity)
         {
             return new ExtendedErrorTypeSymbol((NamespaceOrTypeSymbol)container, name, arity, null);
@@ -294,6 +302,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 this.globalImports = new Lazy<Imports>(BindGlobalUsings);
                 this.globalNamespaceAlias = new Lazy<AliasSymbol>(CreateGlobalNamespaceAlias);
                 this.anonymousTypeManager = new AnonymousTypeManager(this);
+                this.LanguageVersion = CommonLanguageVersion(syntaxTrees);
 
                 if (isSubmission)
                 {
@@ -323,6 +332,26 @@ namespace Microsoft.CodeAnalysis.CSharp
                 if (EventQueue != null) EventQueue.Enqueue(new CompilationStartedEvent(this));
             }
         }
+
+        private static LanguageVersion CommonLanguageVersion(ImmutableArray<SyntaxTree> syntaxTrees)
+        {
+            LanguageVersion? result = null;
+            foreach (var tree in syntaxTrees)
+            {
+                var version = ((CSharpParseOptions)tree.Options).LanguageVersion;
+                if (result == null)
+                {
+                    result = version;
+                }
+                else if (result != version)
+                {
+                    throw new ArgumentException("inconsistent language versions", nameof(syntaxTrees));
+                }
+            }
+
+            return result ?? CSharpParseOptions.Default.LanguageVersion;
+        }
+
 
         /// <summary>
         /// Create a duplicate of this compilation with different symbol instances.
@@ -1989,6 +2018,25 @@ namespace Microsoft.CodeAnalysis.CSharp
             this.ReportUnusedImports(diagnostics, cancellationToken);
         }
 
+        private static bool IsDefinedOrImplementedInSourceTree(Symbol symbol, SyntaxTree tree, TextSpan? span)
+        {
+            if (symbol.IsDefinedInSourceTree(tree, span))
+            {
+                return true;
+            }
+
+            if (symbol.IsPartialDefinition())
+            {
+                MethodSymbol implementationPart = ((MethodSymbol)symbol).PartialImplementationPart;
+                if ((object)implementationPart != null)
+                {
+                    return implementationPart.IsDefinedInSourceTree(tree, span);
+                }
+            }
+
+            return false;
+        }
+
         private ImmutableArray<Diagnostic> GetDiagnosticsForMethodBodiesInTree(SyntaxTree tree, TextSpan? span, CancellationToken cancellationToken)
         {
             DiagnosticBag diagnostics = DiagnosticBag.GetInstance();
@@ -1999,7 +2047,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 generateDebugInfo: false,
                 hasDeclarationErrors: false,
                 diagnostics: diagnostics,
-                filterOpt: s => s.IsDefinedInSourceTree(tree, span),
+                filterOpt: s => IsDefinedOrImplementedInSourceTree(s, tree, span),
                 cancellationToken: cancellationToken);
 
             DocumentationCommentCompiler.WriteDocumentationCommentXml(this, null, null, diagnostics, cancellationToken, tree, span);
@@ -2894,7 +2942,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             return lazyMakeMemberMissingMap != null && lazyMakeMemberMissingMap.ContainsKey(member);
         }
 
-        internal override AnalyzerDriver AnalyzerForLanguage(ImmutableArray<IDiagnosticAnalyzer> analyzers, AnalyzerOptions options, CancellationToken cancellationToken)
+        internal override AnalyzerDriver AnalyzerForLanguage(ImmutableArray<DiagnosticAnalyzer> analyzers, AnalyzerOptions options, CancellationToken cancellationToken)
         {
             return new AnalyzerDriver<CSharp.SyntaxKind>(analyzers, n => n.CSharpKind(), options, cancellationToken);
         }
@@ -2902,6 +2950,24 @@ namespace Microsoft.CodeAnalysis.CSharp
         internal void SymbolDeclaredEvent(Symbol symbol)
         {
             if (EventQueue != null) EventQueue.Enqueue(new SymbolDeclaredCompilationEvent(this, symbol));
+        }
+
+        /// <summary>
+        /// Determine if enum arrays can be initialized using block initialization.
+        /// </summary>
+        /// <returns>True if it's safe to use block initialization for enum arrays.</returns>
+        /// <remarks>
+        /// In NetFx 4.0, block array initializers do not work on all combinations of {32/64 X Debug/Retail} when array elements are enums.
+        /// This is fixed in 4.5 thus enabling block array initialization for a very common case.
+        /// We look for the presence of <see cref="System.Runtime.GCLatencyMode.SustainedLowLatency"/> which was introduced in .Net 4.5
+        /// </remarks>
+        internal bool EnableEnumArrayBlockInitialization
+        {
+            get
+            {
+                var sustainedLowLatency = GetWellKnownTypeMember(WellKnownMember.System_Runtime_GCLatencyMode__SustainedLowLatency);
+                return sustainedLowLatency != null && sustainedLowLatency.ContainingAssembly == Assembly.CorLibrary;
+            }
         }
     }
 }

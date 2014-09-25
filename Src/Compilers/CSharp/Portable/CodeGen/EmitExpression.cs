@@ -264,8 +264,10 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
 
             // we need a copy if we deal with nonlocal value (to capture the value)
             // or if we have a ref-constrained T (to do box just once)
-            var nullCheckOnCopy = LocalRewriter.NeedsTemp(receiver, localsMayBeAssigned: false) ||
-                                   (receiverType.IsReferenceType && receiverType.TypeKind == TypeKind.TypeParameter) ;
+            // or if we deal with stack local (reads are destructive)
+            var nullCheckOnCopy = LocalRewriter.IntroducingReadCanBeObservable(receiver, localsMayBeAssignedOrCaptured: false) ||
+                                   (receiverType.IsReferenceType && receiverType.TypeKind == TypeKind.TypeParameter) ||
+                                   (receiver.Kind == BoundKind.Local && IsStackLocal(((BoundLocal)receiver).LocalSymbol));
 
             if (nullCheckOnCopy)
             {
@@ -366,6 +368,13 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
 
         private void EmitConditionalReceiver(BoundConditionalReceiver expression, bool used)
         {
+            Debug.Assert(!expression.Type.IsValueType);
+
+            if (!expression.Type.IsReferenceType)
+            {
+                EmitLoadIndirect(expression.Type, expression.Syntax);
+            }
+
             EmitPopIfUnused(used);
         }
 

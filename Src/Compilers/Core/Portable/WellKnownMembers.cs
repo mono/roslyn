@@ -38,6 +38,14 @@ namespace Microsoft.CodeAnalysis
                     0,                                                                                                      // Method Signature
                     (byte)SignatureTypeCode.TypeHandle, (byte)SpecialType.System_Int32,
 
+                // System_Array__Empty
+                (byte)(MemberFlags.Method | MemberFlags.Static),                                                            // Flags
+                (byte)WellKnownType.System_Array,                                                                           // DeclaringTypeId
+                1,                                                                                                          // Arity
+                    0,                                                                                                      // Method Signature
+                    (byte)SignatureTypeCode.SZArray,
+                    (byte)SignatureTypeCode.GenericMethodParameter, 0,
+
                 // System_Convert__ToBooleanDecimal
                 (byte)(MemberFlags.Method | MemberFlags.Static),                                                            // Flags
                 (byte)WellKnownType.System_Convert,                                                                         // DeclaringTypeId
@@ -1096,22 +1104,20 @@ namespace Microsoft.CodeAnalysis
                     0,                                                                                                      // Method Signature
                     (byte)SignatureTypeCode.TypeHandle, (byte)SpecialType.System_Int32,
 
-                // Microsoft_CSharp_RuntimeHelpers_SessionHelpers__GetSubmission
-                (byte)(MemberFlags.Method | MemberFlags.Static),                                                            // Flags
-                (byte)WellKnownType.Microsoft_CSharp_RuntimeHelpers_SessionHelpers,                                         // DeclaringTypeId
+                // Roslyn_Scripting_Runtime_ScriptExecutionState__GetSubmission
+                (byte)(MemberFlags.Method),                                                                                 // Flags
+                (byte)WellKnownType.Roslyn_Scripting_Runtime_ScriptExecutionState,                                                  // DeclaringTypeId
+                0,                                                                                                          // Arity
+                    1,                                                                                                      // Method Signature
+                    (byte)SignatureTypeCode.TypeHandle, (byte)SpecialType.System_Object,
+                    (byte)SignatureTypeCode.TypeHandle, (byte)SpecialType.System_Int32,
+
+                // Roslyn_Scripting_Runtime_ScriptExecutionState__SetSubmission
+                (byte)(MemberFlags.Method),                                                                                 // Flags
+                (byte)WellKnownType.Roslyn_Scripting_Runtime_ScriptExecutionState,                                                  // DeclaringTypeId
                 0,                                                                                                          // Arity
                     2,                                                                                                      // Method Signature
                     (byte)SignatureTypeCode.TypeHandle, (byte)SpecialType.System_Object,
-                    (byte)SignatureTypeCode.TypeHandle, (byte)WellKnownType.Microsoft_CSharp_RuntimeHelpers_Session,
-                    (byte)SignatureTypeCode.TypeHandle, (byte)SpecialType.System_Int32,
-
-                // Microsoft_CSharp_RuntimeHelpers_SessionHelpers__SetSubmission
-                (byte)(MemberFlags.Method | MemberFlags.Static),                                                            // Flags
-                (byte)WellKnownType.Microsoft_CSharp_RuntimeHelpers_SessionHelpers,                                         // DeclaringTypeId
-                0,                                                                                                          // Arity
-                    3,                                                                                                      // Method Signature
-                    (byte)SignatureTypeCode.TypeHandle, (byte)SpecialType.System_Object,
-                    (byte)SignatureTypeCode.TypeHandle, (byte)WellKnownType.Microsoft_CSharp_RuntimeHelpers_Session,
                     (byte)SignatureTypeCode.TypeHandle, (byte)SpecialType.System_Int32,
                     (byte)SignatureTypeCode.TypeHandle, (byte)SpecialType.System_Object,
 
@@ -2527,6 +2533,11 @@ namespace Microsoft.CodeAnalysis
                     (byte)SignatureTypeCode.TypeHandle, (byte)SpecialType.System_Void,
                     (byte)SignatureTypeCode.TypeHandle, (byte)WellKnownType.System_ComponentModel_EditorBrowsableState,
 
+                // System_Runtime_GCLatencyMode__SustainedLowLatency
+                (byte)(MemberFlags.Field | MemberFlags.Static),                                                             // Flags
+                (byte)WellKnownType.System_Runtime_GCLatencyMode,                                                           // DeclaringTypeId
+                0,                                                                                                          // Arity
+                    (byte)SignatureTypeCode.TypeHandle, (byte)WellKnownType.System_Runtime_GCLatencyMode,                   // Field Signature
             };
 
             string[] allNames = new string[(int)WellKnownMember.Count]
@@ -2534,6 +2545,7 @@ namespace Microsoft.CodeAnalysis
                 "Round",                                    // System_Math__RoundDouble
                 "Pow",                                      // System_Math__PowDoubleDouble
                 "get_Length",                               // System_Array__get_Length
+                "Empty",                                    // System_Array__Empty
                 "ToBoolean",                                // System_Convert__ToBooleanDecimal
                 "ToBoolean",                                // System_Convert__ToBooleanInt32
                 "ToBoolean",                                // System_Convert__ToBooleanUInt32
@@ -2824,6 +2836,7 @@ namespace Microsoft.CodeAnalysis
                 "Run",                                      // System_Windows_Forms_Application__RunForm
                 "CurrentManagedThreadId",                   // System_Environment__CurrentManagedThreadId
                 ".ctor",                                    // System_ComponentModel_EditorBrowsableAttribute__ctor
+                "SustainedLowLatency",                      // System_Runtime_GCLatencyMode__SustainedLowLatency
             };
 
             descriptors = MemberDescriptor.InitializeFromStream(new System.IO.MemoryStream(initializationBytes, writable: false), allNames);

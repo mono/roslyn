@@ -16,15 +16,18 @@ namespace Microsoft.CodeAnalysis
     {
         private sealed class LinkedFileDiffMergingSession
         {
+            private readonly bool logSessionInfo;
+
             private Solution oldSolution;
             private Solution newSolution;
             private SolutionChanges solutionChanges;
 
-            public LinkedFileDiffMergingSession(Solution oldSolution, Solution newSolution, SolutionChanges solutionChanges)
+            public LinkedFileDiffMergingSession(Solution oldSolution, Solution newSolution, SolutionChanges solutionChanges, bool logSessionInfo)
             {
                 this.oldSolution = oldSolution;
                 this.newSolution = newSolution;
                 this.solutionChanges = solutionChanges;
+                this.logSessionInfo = logSessionInfo;
             }
 
             internal async Task<Solution> MergeDiffsAsync(CancellationToken cancellationToken)
@@ -284,6 +287,12 @@ namespace Microsoft.CodeAnalysis
 
             private void LogLinkedFileDiffMergingSessionInfo(LinkedFileDiffMergingSessionInfo sessionInfo)
             {
+                // don't report telemetry
+                if (!this.logSessionInfo)
+                {
+                    return;
+                }
+
                 var sessionId = SessionLogMessasge.GetNextId();
 
                 Logger.Log(FunctionId.Workspace_Solution_LinkedFileDiffMergingSession, SessionLogMessasge.Create(sessionId, sessionInfo));
@@ -308,8 +317,6 @@ namespace Microsoft.CodeAnalysis
                 private const string OverlappingDistinctDiffsWithSameSpanAndSubstringRelation = "OverlappingDistinctDiffsWithSameSpanAndSubstringRelation";
                 private const string InsertedMergeConflictComments = "InsertedMergeConflictComments";
                 private const string InsertedMergeConflictCommentsAtAdjustedLocation = "InsertedMergeConflictCommentsAtAdjustedLocation";
-
-                private static int globalId = 0;
 
                 public static KeyValueLogMessage Create(int sessionId, LinkedFileDiffMergingSessionInfo sessionInfo)
                 {
@@ -341,7 +348,7 @@ namespace Microsoft.CodeAnalysis
 
                 public static int GetNextId()
                 {
-                    return Interlocked.Increment(ref globalId);
+                    return LogAggregator.GetNextId();
                 }
             }
 

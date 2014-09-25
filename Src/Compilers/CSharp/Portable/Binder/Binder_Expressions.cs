@@ -93,6 +93,22 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
 
         /// <summary>
+        /// Generates a new <see cref="BoundBadExpression"/> with no known type
+        /// </summary>
+        private BoundBadExpression BadExpression(CSharpSyntaxNode syntax)
+        {
+            return BadExpression(syntax, LookupResultKind.Empty, ImmutableArray<Symbol>.Empty);
+        }
+
+        /// <summary>
+        /// Generates a new <see cref="BoundBadExpression"/> with no known type, and the given bound child.
+        /// </summary>
+        private BoundBadExpression BadExpression(CSharpSyntaxNode syntax, BoundNode childNode)
+        {
+            return BadExpression(syntax, LookupResultKind.Empty, ImmutableArray<Symbol>.Empty, childNode);
+        }
+
+        /// <summary>
         /// Generates a new <see cref="BoundBadExpression"/> with no known type, and the given bound children.
         /// </summary>
         private BoundBadExpression BadExpression(CSharpSyntaxNode syntax, params BoundNode[] childNodes)
@@ -101,11 +117,52 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
 
         /// <summary>
+        /// Generates a new <see cref="BoundBadExpression"/> with no known type, given lookup resultKind.
+        /// </summary>
+        protected BoundBadExpression BadExpression(CSharpSyntaxNode syntax, LookupResultKind lookupResultKind)
+        {
+            return BadExpression(syntax, lookupResultKind, ImmutableArray<Symbol>.Empty);
+        }
+
+        /// <summary>
+        /// Generates a new <see cref="BoundBadExpression"/> with no known type, given lookup resultKind and the given bound child.
+        /// </summary>
+        protected BoundBadExpression BadExpression(CSharpSyntaxNode syntax, LookupResultKind lookupResultKind, BoundNode childNode)
+        {
+            return BadExpression(syntax, lookupResultKind, ImmutableArray<Symbol>.Empty, childNode);
+        }
+
+        /// <summary>
         /// Generates a new <see cref="BoundBadExpression"/> with no known type, given lookup resultKind and the given bound children.
         /// </summary>
         protected BoundBadExpression BadExpression(CSharpSyntaxNode syntax, LookupResultKind lookupResultKind, params BoundNode[] childNodes)
         {
             return BadExpression(syntax, lookupResultKind, ImmutableArray<Symbol>.Empty, childNodes);
+        }
+
+        /// <summary>
+        /// Generates a new <see cref="BoundBadExpression"/> with no known type, given lookupResultKind and given symbols for GetSemanticInfo API.
+        /// </summary>
+        private BoundBadExpression BadExpression(CSharpSyntaxNode syntax, LookupResultKind resultKind, ImmutableArray<Symbol> symbols)
+        {
+            return new BoundBadExpression(syntax,
+                resultKind,
+                symbols,
+                ImmutableArray<BoundNode>.Empty,
+                CreateErrorType());
+        }
+
+        /// <summary>
+        /// Generates a new <see cref="BoundBadExpression"/> with no known type, given lookupResultKind and given symbols for GetSemanticInfo API,
+        /// and the given bound child.
+        /// </summary>
+        private BoundBadExpression BadExpression(CSharpSyntaxNode syntax, LookupResultKind resultKind, ImmutableArray<Symbol> symbols, BoundNode childNode)
+        {
+            return new BoundBadExpression(syntax,
+                resultKind,
+                symbols,
+                ImmutableArray.Create(childNode),
+                CreateErrorType());
         }
 
         /// <summary>
@@ -366,7 +423,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.PointerMemberAccessExpression:
                     return BindMemberAccess((MemberAccessExpressionSyntax)node, invoked, indexed, diagnostics: diagnostics);
                 case SyntaxKind.SimpleAssignmentExpression:
-                    return BindAssignment((BinaryExpressionSyntax)node, diagnostics);
+                    return BindAssignment((AssignmentExpressionSyntax)node, diagnostics);
                 case SyntaxKind.CastExpression:
                     return BindCast((CastExpressionSyntax)node, diagnostics);
                 case SyntaxKind.ElementAccessExpression:
@@ -470,7 +527,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.OrAssignmentExpression:
                 case SyntaxKind.RightShiftAssignmentExpression:
                 case SyntaxKind.SubtractAssignmentExpression:
-                    return BindCompoundAssignment((BinaryExpressionSyntax)node, diagnostics);
+                    return BindCompoundAssignment((AssignmentExpressionSyntax)node, diagnostics);
 
                 case SyntaxKind.AliasQualifiedName:
                 case SyntaxKind.PredefinedType:
@@ -4402,7 +4459,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             if (memberInitializer.Kind == SyntaxKind.SimpleAssignmentExpression)
             {
-                var initializer = (BinaryExpressionSyntax)memberInitializer;
+                var initializer = (AssignmentExpressionSyntax)memberInitializer;
 
                 // Bind member initializer identifier, i.e. left part of assignment
                 BoundExpression boundLeft = null;
@@ -4453,7 +4510,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         // returns BadBoundExpression or BoundObjectInitializerMember
         private BoundExpression BindObjectInitializerMember(
-            BinaryExpressionSyntax namedAssignment,
+            AssignmentExpressionSyntax namedAssignment,
             BoundImplicitReceiver implicitReceiver,
             DiagnosticBag diagnostics)
         {
@@ -4670,7 +4727,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 var memberInitializerSyntax = boundMemberInitializer.Syntax;
 
                 Debug.Assert(memberInitializerSyntax.Kind == SyntaxKind.SimpleAssignmentExpression);
-                var namedAssignment = (BinaryExpressionSyntax)memberInitializerSyntax;
+                var namedAssignment = (AssignmentExpressionSyntax)memberInitializerSyntax;
 
                 var memberNameSyntax = namedAssignment.Left as IdentifierNameSyntax;
                 if (memberNameSyntax != null)

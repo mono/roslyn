@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4090503-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4090503-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
+  <Import Project="..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4092303-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4092303-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
   <ImportGroup Label="Settings">
     <Import Project="..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Settings.targets" />
   </ImportGroup>
@@ -296,6 +296,12 @@
     <Compile Include="CodeCleanup\Providers\PredefinedCodeCleanupProviderNames.cs" />
     <Compile Include="CodeCleanup\Providers\SimpleCodeCleanupProvider.cs" />
     <Compile Include="CodeCleanup\Providers\SimplificationCodeCleanupProvider.cs" />
+    <Compile Include="CodeFixes\BatchSimplificationFixAllProvider.cs" />
+    <Compile Include="CodeFixes\WellKnownFixAllProviders.cs" />
+    <Compile Include="CodeFixes\BatchFixAllProvider.cs" />
+    <Compile Include="CodeFixes\FixAllContext.cs" />
+    <Compile Include="CodeFixes\FixAllScope.cs" />
+    <Compile Include="CodeFixes\FixAllProvider.cs" />
     <Compile Include="CodeGeneration\AbstractCodeGenerationService.cs" />
     <Compile Include="CodeGeneration\AbstractCodeGenerationService_FindDeclaration.cs" />
     <Compile Include="CodeGeneration\AbstractFlagsEnumGenerator.cs" />
@@ -345,11 +351,15 @@
     <Compile Include="CodeGeneration\TypeGenerator.cs" />
     <Compile Include="Log\AggregateLogger.cs" />
     <Compile Include="Log\KeyValueLogMessage.cs" />
+    <Compile Include="Log\LogAggregator.cs" />
     <Compile Include="Log\Logger.LogBlock.cs" />
     <Compile Include="Log\LogMessage.cs" />
+    <Compile Include="Shared\Extensions\ITypeSymbolExtensions.ReplaceTypeParameterBasedOnTypeConstraintVisitor.cs" />
     <Compile Include="Simplification\SimplifyTypeNameCodeAction.cs" />
-    <Compile Include="Simplification\SimplifyTypeNameFixAllCodeAction.cs" />
     <Compile Include="Utilities\WeakEventHandler.cs" />
+    <Compile Include="Versions\Extensions.cs" />
+    <Compile Include="Versions\ISemanticVersionTrackingService.cs" />
+    <Compile Include="Versions\PersistedVersionStampLogger.cs" />
     <Compile Include="Workspace\Host\Caching\AbstractCacheServiceFactory.cs" />
     <Compile Include="Workspace\Host\Caching\CacheOptions.cs" />
     <Compile Include="Workspace\Host\Caching\CostBasedCache.Nested.cs" />
@@ -945,9 +955,7 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Workspace\DocumentationComments\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
@@ -961,6 +969,6 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-    <Error Condition="!Exists('..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4090503-beta\build\Microsoft.Net.ToolsetCompilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4090503-beta\build\Microsoft.Net.ToolsetCompilers.props'))" />
+    <Error Condition="!Exists('..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4092303-beta\build\Microsoft.Net.ToolsetCompilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4092303-beta\build\Microsoft.Net.ToolsetCompilers.props'))" />
   </Target>
 </Project>

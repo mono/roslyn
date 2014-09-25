@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
@@ -26,6 +27,11 @@ namespace AsyncPackage
             return new[] { AsyncLambdaAnalyzer.AsyncLambdaId1 };
         }
 
+        public FixAllProvider GetFixAllProvider()
+        {
+            return null;
+        }
+
         public async Task<IEnumerable<CodeAction>> GetFixesAsync(Document document, TextSpan span, IEnumerable<Diagnostic> diagnostics, CancellationToken cancellationToken)
         {
             var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
@@ -40,7 +46,7 @@ namespace AsyncPackage
                 var variableDeclaration = parent.FirstAncestorOrSelf<VariableDeclarationSyntax>();
 
                 // Return a code action that will invoke the fix.
-                return new[] { CodeAction.Create("Async lambdas should not be stored in void-returning delegates", c => ChangeToFunc(document, variableDeclaration, c)) };
+                return new[] { new AsyncLambdaVariableCodeAction("Async lambdas should not be stored in void-returning delegates", c => ChangeToFunc(document, variableDeclaration, c)) };
             }
 
             return ImmutableArray<CodeAction>.Empty;
@@ -58,6 +64,25 @@ namespace AsyncPackage
 
             // Return document with transformed tree.
             return newDocument;
+        }
+
+        private class AsyncLambdaVariableCodeAction : CodeAction
+        {
+            private Func<CancellationToken, Task<Document>> generateDocument;
+            private string title;
+
+            public AsyncLambdaVariableCodeAction(string title, Func<CancellationToken, Task<Document>> generateDocument)
+            {
+                this.title = title;
+                this.generateDocument = generateDocument;
+            }
+
+            public override string Title { get { return title; } }
+
+            protected override Task<Document> GetChangedDocumentAsync(CancellationToken cancellationToken)
+            {
+                return this.generateDocument(cancellationToken);
+            }
         }
     }
 }

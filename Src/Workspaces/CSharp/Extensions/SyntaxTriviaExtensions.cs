@@ -14,9 +14,20 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
 {
     internal static class SyntaxTriviaExtensions
     {
+        public static bool MatchesKind(this SyntaxTrivia trivia, SyntaxKind kind)
+        {
+            return trivia.CSharpKind() == kind;
+        }
+
+        public static bool MatchesKind(this SyntaxTrivia trivia, SyntaxKind kind1, SyntaxKind kind2)
+        {
+            var triviaKind = trivia.CSharpKind();
+            return triviaKind == kind1 || triviaKind == kind2;
+        }
+
         public static bool MatchesKind(this SyntaxTrivia trivia, params SyntaxKind[] kinds)
         {
-            return kinds.Any(k => k == trivia.CSharpKind());
+            return kinds.Contains(trivia.CSharpKind());
         }
 
         public static bool IsRegularComment(this SyntaxTrivia trivia)
@@ -77,7 +88,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                     commentText = commentText.Substring(2);
                 }
 
-                return commentText.TrimStart();
+                return commentText.TrimStart(null);
             }
             else if (trivia.CSharpKind() == SyntaxKind.MultiLineCommentTrivia)
             {
@@ -106,7 +117,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                     if (trimmedLine.StartsWith("*"))
                     {
                         trimmedLine = trimmedLine.TrimStart('*');
-                        trimmedLine = trimmedLine.TrimStart();
+                        trimmedLine = trimmedLine.TrimStart(null);
                     }
 
                     textBuilder.AppendLine(trimmedLine);

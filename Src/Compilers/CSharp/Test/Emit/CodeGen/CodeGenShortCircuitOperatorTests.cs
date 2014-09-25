@@ -1056,9 +1056,10 @@ public static class C
             var comp = CompileAndVerify(source, additionalRefs: new[] { SystemCoreRef, CSharpRef }, expectedOutput: "NULL#System.Int32[]");
             comp.VerifyIL("C.Test", @"
 {
-  // Code size      353 (0x161)
+  // Code size      355 (0x163)
   .maxstack  14
-  .locals init (object V_0)
+  .locals init (object V_0,
+                object V_1)
   IL_0000:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Action<System.Runtime.CompilerServices.CallSite, System.Type, dynamic>> C.<Test>o__SiteContainer0.<>p__Site4""
   IL_0005:  brtrue.s   IL_0046
   IL_0007:  ldc.i4     0x100
@@ -1089,88 +1090,90 @@ public static class C
   IL_0055:  ldtoken    ""System.Console""
   IL_005a:  call       ""System.Type System.Type.GetTypeFromHandle(System.RuntimeTypeHandle)""
   IL_005f:  ldarg.0
-  IL_0060:  brtrue.s   IL_0068
-  IL_0062:  ldnull
-  IL_0063:  br         IL_0152
-  IL_0068:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site2""
-  IL_006d:  brtrue.s   IL_009f
-  IL_006f:  ldc.i4.0
-  IL_0070:  ldstr      ""ToString""
-  IL_0075:  ldnull
-  IL_0076:  ldtoken    ""C""
-  IL_007b:  call       ""System.Type System.Type.GetTypeFromHandle(System.RuntimeTypeHandle)""
-  IL_0080:  ldc.i4.1
-  IL_0081:  newarr     ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo""
-  IL_0086:  dup
-  IL_0087:  ldc.i4.0
-  IL_0088:  ldc.i4.0
-  IL_0089:  ldnull
-  IL_008a:  call       ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo.Create(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags, string)""
-  IL_008f:  stelem.ref
-  IL_0090:  call       ""System.Runtime.CompilerServices.CallSiteBinder Microsoft.CSharp.RuntimeBinder.Binder.InvokeMember(Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags, string, System.Collections.Generic.IEnumerable<System.Type>, System.Type, System.Collections.Generic.IEnumerable<Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)""
-  IL_0095:  call       ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>>.Create(System.Runtime.CompilerServices.CallSiteBinder)""
-  IL_009a:  stsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site2""
-  IL_009f:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site2""
-  IL_00a4:  ldfld      ""System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic> System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>>.Target""
-  IL_00a9:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site2""
-  IL_00ae:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site1""
-  IL_00b3:  brtrue.s   IL_00e5
-  IL_00b5:  ldc.i4.0
-  IL_00b6:  ldstr      ""ToString""
-  IL_00bb:  ldnull
-  IL_00bc:  ldtoken    ""C""
-  IL_00c1:  call       ""System.Type System.Type.GetTypeFromHandle(System.RuntimeTypeHandle)""
-  IL_00c6:  ldc.i4.1
-  IL_00c7:  newarr     ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo""
-  IL_00cc:  dup
-  IL_00cd:  ldc.i4.0
-  IL_00ce:  ldc.i4.0
-  IL_00cf:  ldnull
-  IL_00d0:  call       ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo.Create(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags, string)""
-  IL_00d5:  stelem.ref
-  IL_00d6:  call       ""System.Runtime.CompilerServices.CallSiteBinder Microsoft.CSharp.RuntimeBinder.Binder.InvokeMember(Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags, string, System.Collections.Generic.IEnumerable<System.Type>, System.Type, System.Collections.Generic.IEnumerable<Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)""
-  IL_00db:  call       ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>>.Create(System.Runtime.CompilerServices.CallSiteBinder)""
-  IL_00e0:  stsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site1""
-  IL_00e5:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site1""
-  IL_00ea:  ldfld      ""System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic> System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>>.Target""
-  IL_00ef:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site1""
-  IL_00f4:  ldarg.0
-  IL_00f5:  callvirt   ""dynamic System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>.Invoke(System.Runtime.CompilerServices.CallSite, dynamic)""
-  IL_00fa:  callvirt   ""dynamic System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>.Invoke(System.Runtime.CompilerServices.CallSite, dynamic)""
-  IL_00ff:  dup
-  IL_0100:  stloc.0
-  IL_0101:  brtrue.s   IL_0106
-  IL_0103:  ldnull
-  IL_0104:  br.s       IL_0152
-  IL_0106:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site3""
-  IL_010b:  brtrue.s   IL_013d
-  IL_010d:  ldc.i4.0
-  IL_010e:  ldstr      ""ToString""
-  IL_0113:  ldnull
-  IL_0114:  ldtoken    ""C""
-  IL_0119:  call       ""System.Type System.Type.GetTypeFromHandle(System.RuntimeTypeHandle)""
-  IL_011e:  ldc.i4.1
-  IL_011f:  newarr     ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo""
-  IL_0124:  dup
-  IL_0125:  ldc.i4.0
-  IL_0126:  ldc.i4.0
-  IL_0127:  ldnull
-  IL_0128:  call       ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo.Create(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags, string)""
-  IL_012d:  stelem.ref
-  IL_012e:  call       ""System.Runtime.CompilerServices.CallSiteBinder Microsoft.CSharp.RuntimeBinder.Binder.InvokeMember(Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags, string, System.Collections.Generic.IEnumerable<System.Type>, System.Type, System.Collections.Generic.IEnumerable<Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)""
-  IL_0133:  call       ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>>.Create(System.Runtime.CompilerServices.CallSiteBinder)""
-  IL_0138:  stsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site3""
-  IL_013d:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site3""
-  IL_0142:  ldfld      ""System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic> System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>>.Target""
-  IL_0147:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site3""
-  IL_014c:  ldloc.0
-  IL_014d:  callvirt   ""dynamic System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>.Invoke(System.Runtime.CompilerServices.CallSite, dynamic)""
-  IL_0152:  dup
-  IL_0153:  brtrue.s   IL_015b
-  IL_0155:  pop
-  IL_0156:  ldstr      ""NULL""
-  IL_015b:  callvirt   ""void System.Action<System.Runtime.CompilerServices.CallSite, System.Type, dynamic>.Invoke(System.Runtime.CompilerServices.CallSite, System.Type, dynamic)""
-  IL_0160:  ret
+  IL_0060:  stloc.0
+  IL_0061:  ldloc.0
+  IL_0062:  brtrue.s   IL_006a
+  IL_0064:  ldnull
+  IL_0065:  br         IL_0154
+  IL_006a:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site2""
+  IL_006f:  brtrue.s   IL_00a1
+  IL_0071:  ldc.i4.0
+  IL_0072:  ldstr      ""ToString""
+  IL_0077:  ldnull
+  IL_0078:  ldtoken    ""C""
+  IL_007d:  call       ""System.Type System.Type.GetTypeFromHandle(System.RuntimeTypeHandle)""
+  IL_0082:  ldc.i4.1
+  IL_0083:  newarr     ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo""
+  IL_0088:  dup
+  IL_0089:  ldc.i4.0
+  IL_008a:  ldc.i4.0
+  IL_008b:  ldnull
+  IL_008c:  call       ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo.Create(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags, string)""
+  IL_0091:  stelem.ref
+  IL_0092:  call       ""System.Runtime.CompilerServices.CallSiteBinder Microsoft.CSharp.RuntimeBinder.Binder.InvokeMember(Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags, string, System.Collections.Generic.IEnumerable<System.Type>, System.Type, System.Collections.Generic.IEnumerable<Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)""
+  IL_0097:  call       ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>>.Create(System.Runtime.CompilerServices.CallSiteBinder)""
+  IL_009c:  stsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site2""
+  IL_00a1:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site2""
+  IL_00a6:  ldfld      ""System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic> System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>>.Target""
+  IL_00ab:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site2""
+  IL_00b0:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site1""
+  IL_00b5:  brtrue.s   IL_00e7
+  IL_00b7:  ldc.i4.0
+  IL_00b8:  ldstr      ""ToString""
+  IL_00bd:  ldnull
+  IL_00be:  ldtoken    ""C""
+  IL_00c3:  call       ""System.Type System.Type.GetTypeFromHandle(System.RuntimeTypeHandle)""
+  IL_00c8:  ldc.i4.1
+  IL_00c9:  newarr     ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo""
+  IL_00ce:  dup
+  IL_00cf:  ldc.i4.0
+  IL_00d0:  ldc.i4.0
+  IL_00d1:  ldnull
+  IL_00d2:  call       ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo.Create(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags, string)""
+  IL_00d7:  stelem.ref
+  IL_00d8:  call       ""System.Runtime.CompilerServices.CallSiteBinder Microsoft.CSharp.RuntimeBinder.Binder.InvokeMember(Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags, string, System.Collections.Generic.IEnumerable<System.Type>, System.Type, System.Collections.Generic.IEnumerable<Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)""
+  IL_00dd:  call       ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>>.Create(System.Runtime.CompilerServices.CallSiteBinder)""
+  IL_00e2:  stsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site1""
+  IL_00e7:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site1""
+  IL_00ec:  ldfld      ""System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic> System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>>.Target""
+  IL_00f1:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site1""
+  IL_00f6:  ldloc.0
+  IL_00f7:  callvirt   ""dynamic System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>.Invoke(System.Runtime.CompilerServices.CallSite, dynamic)""
+  IL_00fc:  callvirt   ""dynamic System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>.Invoke(System.Runtime.CompilerServices.CallSite, dynamic)""
+  IL_0101:  stloc.1
+  IL_0102:  ldloc.1
+  IL_0103:  brtrue.s   IL_0108
+  IL_0105:  ldnull
+  IL_0106:  br.s       IL_0154
+  IL_0108:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site3""
+  IL_010d:  brtrue.s   IL_013f
+  IL_010f:  ldc.i4.0
+  IL_0110:  ldstr      ""ToString""
+  IL_0115:  ldnull
+  IL_0116:  ldtoken    ""C""
+  IL_011b:  call       ""System.Type System.Type.GetTypeFromHandle(System.RuntimeTypeHandle)""
+  IL_0120:  ldc.i4.1
+  IL_0121:  newarr     ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo""
+  IL_0126:  dup
+  IL_0127:  ldc.i4.0
+  IL_0128:  ldc.i4.0
+  IL_0129:  ldnull
+  IL_012a:  call       ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo.Create(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags, string)""
+  IL_012f:  stelem.ref
+  IL_0130:  call       ""System.Runtime.CompilerServices.CallSiteBinder Microsoft.CSharp.RuntimeBinder.Binder.InvokeMember(Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags, string, System.Collections.Generic.IEnumerable<System.Type>, System.Type, System.Collections.Generic.IEnumerable<Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)""
+  IL_0135:  call       ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>>.Create(System.Runtime.CompilerServices.CallSiteBinder)""
+  IL_013a:  stsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site3""
+  IL_013f:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site3""
+  IL_0144:  ldfld      ""System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic> System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>>.Target""
+  IL_0149:  ldsfld     ""System.Runtime.CompilerServices.CallSite<System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>> C.<Test>o__SiteContainer0.<>p__Site3""
+  IL_014e:  ldloc.1
+  IL_014f:  callvirt   ""dynamic System.Func<System.Runtime.CompilerServices.CallSite, dynamic, dynamic>.Invoke(System.Runtime.CompilerServices.CallSite, dynamic)""
+  IL_0154:  dup
+  IL_0155:  brtrue.s   IL_015d
+  IL_0157:  pop
+  IL_0158:  ldstr      ""NULL""
+  IL_015d:  callvirt   ""void System.Action<System.Runtime.CompilerServices.CallSite, System.Type, dynamic>.Invoke(System.Runtime.CompilerServices.CallSite, System.Type, dynamic)""
+  IL_0162:  ret
 }
 ");
         }
@@ -1512,11 +1515,10 @@ public class C
             var comp = CompileAndVerify(source, additionalRefs: new[] { SystemCoreRef, CSharpRef }, expectedOutput: "");
             comp.VerifyIL("C.Main", @"
 {
-  // Code size       83 (0x53)
+  // Code size       81 (0x51)
   .maxstack  2
   .locals init (int? V_0,
-                int V_1,
-                int? V_2)
+                int V_1)
   IL_0000:  ldstr      ""qqq""
   IL_0005:  callvirt   ""string object.ToString()""
   IL_000a:  call       ""int? C1.NullableLength(string)""
@@ -1535,19 +1537,17 @@ public class C
   IL_002b:  ret
   IL_002c:  callvirt   ""string object.ToString()""
   IL_0031:  call       ""int? C1.NullableLength(string)""
-  IL_0036:  dup
-  IL_0037:  stloc.0
-  IL_0038:  stloc.2
-  IL_0039:  ldloca.s   V_2
-  IL_003b:  call       ""bool int?.HasValue.get""
-  IL_0040:  brfalse.s  IL_0052
-  IL_0042:  ldloca.s   V_0
-  IL_0044:  call       ""int int?.GetValueOrDefault()""
-  IL_0049:  stloc.1
-  IL_004a:  ldloca.s   V_1
-  IL_004c:  call       ""string int.ToString()""
-  IL_0051:  pop
-  IL_0052:  ret
+  IL_0036:  stloc.0
+  IL_0037:  ldloca.s   V_0
+  IL_0039:  call       ""bool int?.HasValue.get""
+  IL_003e:  brfalse.s  IL_0050
+  IL_0040:  ldloca.s   V_0
+  IL_0042:  call       ""int int?.GetValueOrDefault()""
+  IL_0047:  stloc.1
+  IL_0048:  ldloca.s   V_1
+  IL_004a:  call       ""string int.ToString()""
+  IL_004f:  pop
+  IL_0050:  ret
 }
 
 ");
@@ -1633,60 +1633,54 @@ public static class C1
 1");
             comp.VerifyIL("C.Main", @"
 {
-  // Code size      118 (0x76)
+  // Code size      114 (0x72)
   .maxstack  2
   .locals init (int? V_0,
-                int? V_1,
-                int V_2)
+                int V_1)
   IL_0000:  ldnull
   IL_0001:  call       ""void System.Console.WriteLine(string)""
   IL_0006:  ldstr      ""qqq""
   IL_000b:  callvirt   ""string object.ToString()""
   IL_0010:  call       ""int? C1.NullableLength(string)""
-  IL_0015:  dup
-  IL_0016:  stloc.0
-  IL_0017:  stloc.1
-  IL_0018:  ldloca.s   V_1
-  IL_001a:  call       ""bool int?.HasValue.get""
-  IL_001f:  brtrue.s   IL_0024
-  IL_0021:  ldnull
-  IL_0022:  br.s       IL_0033
-  IL_0024:  ldloca.s   V_0
-  IL_0026:  call       ""int int?.GetValueOrDefault()""
-  IL_002b:  stloc.2
-  IL_002c:  ldloca.s   V_2
-  IL_002e:  call       ""string int.ToString()""
-  IL_0033:  call       ""void System.Console.WriteLine(string)""
-  IL_0038:  ldc.i4.1
-  IL_0039:  stloc.2
-  IL_003a:  ldloca.s   V_2
-  IL_003c:  call       ""string int.ToString()""
-  IL_0041:  dup
-  IL_0042:  brtrue.s   IL_0048
-  IL_0044:  pop
-  IL_0045:  ldnull
-  IL_0046:  br.s       IL_0070
-  IL_0048:  callvirt   ""string object.ToString()""
-  IL_004d:  call       ""int? C1.NullableLength(string)""
-  IL_0052:  dup
-  IL_0053:  stloc.0
-  IL_0054:  stloc.1
-  IL_0055:  ldloca.s   V_1
-  IL_0057:  call       ""bool int?.HasValue.get""
-  IL_005c:  brtrue.s   IL_0061
-  IL_005e:  ldnull
-  IL_005f:  br.s       IL_0070
-  IL_0061:  ldloca.s   V_0
-  IL_0063:  call       ""int int?.GetValueOrDefault()""
-  IL_0068:  stloc.2
-  IL_0069:  ldloca.s   V_2
-  IL_006b:  call       ""string int.ToString()""
-  IL_0070:  call       ""void System.Console.WriteLine(string)""
-  IL_0075:  ret
+  IL_0015:  stloc.0
+  IL_0016:  ldloca.s   V_0
+  IL_0018:  call       ""bool int?.HasValue.get""
+  IL_001d:  brtrue.s   IL_0022
+  IL_001f:  ldnull
+  IL_0020:  br.s       IL_0031
+  IL_0022:  ldloca.s   V_0
+  IL_0024:  call       ""int int?.GetValueOrDefault()""
+  IL_0029:  stloc.1
+  IL_002a:  ldloca.s   V_1
+  IL_002c:  call       ""string int.ToString()""
+  IL_0031:  call       ""void System.Console.WriteLine(string)""
+  IL_0036:  ldc.i4.1
+  IL_0037:  stloc.1
+  IL_0038:  ldloca.s   V_1
+  IL_003a:  call       ""string int.ToString()""
+  IL_003f:  dup
+  IL_0040:  brtrue.s   IL_0046
+  IL_0042:  pop
+  IL_0043:  ldnull
+  IL_0044:  br.s       IL_006c
+  IL_0046:  callvirt   ""string object.ToString()""
+  IL_004b:  call       ""int? C1.NullableLength(string)""
+  IL_0050:  stloc.0
+  IL_0051:  ldloca.s   V_0
+  IL_0053:  call       ""bool int?.HasValue.get""
+  IL_0058:  brtrue.s   IL_005d
+  IL_005a:  ldnull
+  IL_005b:  br.s       IL_006c
+  IL_005d:  ldloca.s   V_0
+  IL_005f:  call       ""int int?.GetValueOrDefault()""
+  IL_0064:  stloc.1
+  IL_0065:  ldloca.s   V_1
+  IL_0067:  call       ""string int.ToString()""
+  IL_006c:  call       ""void System.Console.WriteLine(string)""
+  IL_0071:  ret
 }
 ");
         }
-
 
         [Fact]
         public void TestConditionalMemberAccessUsed2a()
@@ -3100,6 +3094,1188 @@ True
 False
 True");
 
+        }
+
+
+        [Fact]
+        public void ConditionalExtensionAccessGeneric001()
+        {
+            var source = @"
+using System;
+using System.Collections.Generic;
+
+class Test
+{
+    static void Main()
+    {
+        long? x = 1;
+        Test0(x);
+        return;
+    }
+    static void Test0<T>(T x) 
+    {
+        x?.CheckT();
+    }
+}
+static class Ext
+{
+    public static void CheckT<T>(this T x)
+    {
+        System.Console.WriteLine(typeof(T));
+        return;
+    }
+}
+
+";
+            var comp = CompileAndVerify(source, additionalRefs: new[] { SystemCoreRef, CSharpRef }, expectedOutput: @"System.Nullable`1[System.Int64]");
+            comp.VerifyIL("Test.Test0<T>(T)", @"
+{
+  // Code size       21 (0x15)
+  .maxstack  1
+  IL_0000:  ldarg.0
+  IL_0001:  box        ""T""
+  IL_0006:  brfalse.s  IL_0014
+  IL_0008:  ldarga.s   V_0
+  IL_000a:  ldobj      ""T""
+  IL_000f:  call       ""void Ext.CheckT<T>(T)""
+  IL_0014:  ret
+}
+");
+
+        }
+
+        [Fact]
+        public void ConditionalExtensionAccessGeneric002()
+        {
+            var source = @"
+using System;
+using System.Collections.Generic;
+
+class Test
+{
+    static void Main()
+    {
+        long? x = 1;
+        Test0(ref x);
+        return;
+    }
+    static void Test0<T>(ref T x) 
+    {
+        x?.CheckT();
+    }
+}
+static class Ext
+{
+    public static void CheckT<T>(this T x)
+    {
+        System.Console.WriteLine(typeof(T));
+        return;
+    }
+}
+
+";
+            var comp = CompileAndVerify(source, additionalRefs: new[] { SystemCoreRef, CSharpRef }, expectedOutput: @"System.Nullable`1[System.Int64]");
+            comp.VerifyIL("Test.Test0<T>(ref T)", @"
+{
+  // Code size       46 (0x2e)
+  .maxstack  2
+  .locals init (T V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  ldloca.s   V_0
+  IL_0003:  initobj    ""T""
+  IL_0009:  ldloc.0
+  IL_000a:  box        ""T""
+  IL_000f:  brtrue.s   IL_0023
+  IL_0011:  ldobj      ""T""
+  IL_0016:  stloc.0
+  IL_0017:  ldloca.s   V_0
+  IL_0019:  ldloc.0
+  IL_001a:  box        ""T""
+  IL_001f:  brtrue.s   IL_0023
+  IL_0021:  pop
+  IL_0022:  ret
+  IL_0023:  ldobj      ""T""
+  IL_0028:  call       ""void Ext.CheckT<T>(T)""
+  IL_002d:  ret
+}
+");
+        }
+
+        [Fact]
+        public void ConditionalExtensionAccessGeneric003()
+        {
+            var source = @"
+using System;
+using System.Linq;
+using System.Collections.Generic;
+
+class Test
+{
+    static void Main()
+    {
+        Test0(""qqq"");
+    }
+
+    static void Test0<T>(T x) where T:IEnumerable<char>
+    {
+        x?.Count();
+    }
+
+    static void Test1<T>(ref T x) where T:IEnumerable<char>
+    {
+        x?.Count();
+    }
+}
+
+";
+            var comp = CompileAndVerify(source, additionalRefs: new[] { SystemCoreRef, CSharpRef }, expectedOutput: @"");
+            comp.VerifyIL("Test.Test0<T>(T)", @"
+{
+  // Code size       27 (0x1b)
+  .maxstack  1
+  IL_0000:  ldarg.0
+  IL_0001:  box        ""T""
+  IL_0006:  brfalse.s  IL_001a
+  IL_0008:  ldarga.s   V_0
+  IL_000a:  ldobj      ""T""
+  IL_000f:  box        ""T""
+  IL_0014:  call       ""int System.Linq.Enumerable.Count<char>(System.Collections.Generic.IEnumerable<char>)""
+  IL_0019:  pop
+  IL_001a:  ret
+}
+").VerifyIL("Test.Test1<T>(ref T)", @"
+{
+  // Code size       52 (0x34)
+  .maxstack  2
+  .locals init (T V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  ldloca.s   V_0
+  IL_0003:  initobj    ""T""
+  IL_0009:  ldloc.0
+  IL_000a:  box        ""T""
+  IL_000f:  brtrue.s   IL_0023
+  IL_0011:  ldobj      ""T""
+  IL_0016:  stloc.0
+  IL_0017:  ldloca.s   V_0
+  IL_0019:  ldloc.0
+  IL_001a:  box        ""T""
+  IL_001f:  brtrue.s   IL_0023
+  IL_0021:  pop
+  IL_0022:  ret
+  IL_0023:  ldobj      ""T""
+  IL_0028:  box        ""T""
+  IL_002d:  call       ""int System.Linq.Enumerable.Count<char>(System.Collections.Generic.IEnumerable<char>)""
+  IL_0032:  pop
+  IL_0033:  ret
+}
+");
+
+        }
+
+        [Fact]
+        public void ConditionalExtensionAccessGenericAsync001()
+        {
+            var source = @"
+using System.Threading.Tasks;
+class Test
+{
+    static void Main()
+    {
+
+    }
+    async Task<int?> TestAsync<T>(T[] x) where T : I1
+    {
+        return x[0]?.CallAsync(await PassAsync());
+    }
+    static async Task<int> PassAsync()
+    {
+        await Task.Yield();
+        return 1;
+    }
+}
+interface I1
+{
+    int CallAsync(int x);
+}
+
+
+";
+            var comp = CreateCompilationWithMscorlib45(source, references: new[] { SystemCoreRef, CSharpRef });
+            base.CompileAndVerify(comp);
+        }
+
+        [Fact]
+        public void ConditionalMemberAccessCoalessce001()
+        {
+            var source = @"
+class Program
+{
+    class C1
+    {
+        public int x{get; set;}
+        public int? y{get; set;}
+    }
+
+    static void Main()
+    {
+        var c = new C1();
+        System.Console.WriteLine(Test1(c));
+        System.Console.WriteLine(Test1(null));
+
+        System.Console.WriteLine(Test2(c));
+        System.Console.WriteLine(Test2(null));
+    }
+
+    static int Test1(C1 c)
+    {
+        return c?.x ?? 42;
+    }
+
+    static int Test2(C1 c)
+    {
+        return c?.y ?? 42;
+    }
+}
+";
+            var comp = CompileAndVerify(source, expectedOutput: @"0
+42
+42
+42");
+            comp.VerifyIL("Program.Test1(Program.C1)", @"
+{
+  // Code size       15 (0xf)
+  .maxstack  1
+  .locals init (Program.C1 V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  stloc.0
+  IL_0002:  ldloc.0
+  IL_0003:  brtrue.s   IL_0008
+  IL_0005:  ldc.i4.s   42
+  IL_0007:  ret
+  IL_0008:  ldloc.0
+  IL_0009:  callvirt   ""int Program.C1.x.get""
+  IL_000e:  ret
+}
+").VerifyIL("Program.Test2(Program.C1)", @"
+{
+  // Code size       41 (0x29)
+  .maxstack  1
+  .locals init (int? V_0,
+                int? V_1)
+  IL_0000:  ldarg.0
+  IL_0001:  brtrue.s   IL_000e
+  IL_0003:  ldloca.s   V_1
+  IL_0005:  initobj    ""int?""
+  IL_000b:  ldloc.1
+  IL_000c:  br.s       IL_0014
+  IL_000e:  ldarg.0
+  IL_000f:  call       ""int? Program.C1.y.get""
+  IL_0014:  stloc.0
+  IL_0015:  ldloca.s   V_0
+  IL_0017:  call       ""bool int?.HasValue.get""
+  IL_001c:  brtrue.s   IL_0021
+  IL_001e:  ldc.i4.s   42
+  IL_0020:  ret
+  IL_0021:  ldloca.s   V_0
+  IL_0023:  call       ""int int?.GetValueOrDefault()""
+  IL_0028:  ret
+}
+");
+        }
+
+        [Fact]
+        public void ConditionalMemberAccessCoalessce001r()
+        {
+            var source = @"
+class Program
+{
+    class C1
+    {
+        public int x {get; set;}
+        public int? y {get; set;}
+    }
+
+    static void Main()
+    {
+        var c = new C1();
+        C1 n = null;
+
+        System.Console.WriteLine(Test1(ref c));
+        System.Console.WriteLine(Test1(ref n));
+
+        System.Console.WriteLine(Test2(ref c));
+        System.Console.WriteLine(Test2(ref n));
+    }
+
+    static int Test1(ref C1 c)
+    {
+        return c?.x ?? 42;
+    }
+
+    static int Test2(ref C1 c)
+    {
+        return c?.y ?? 42;
+    }
+}
+";
+            var comp = CompileAndVerify(source, expectedOutput: @"0
+42
+42
+42");
+            comp.VerifyIL("Program.Test1(ref Program.C1)", @"
+{
+  // Code size       16 (0x10)
+  .maxstack  1
+  .locals init (Program.C1 V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  ldind.ref
+  IL_0002:  stloc.0
+  IL_0003:  ldloc.0
+  IL_0004:  brtrue.s   IL_0009
+  IL_0006:  ldc.i4.s   42
+  IL_0008:  ret
+  IL_0009:  ldloc.0
+  IL_000a:  callvirt   ""int Program.C1.x.get""
+  IL_000f:  ret
+}
+").VerifyIL("Program.Test2(ref Program.C1)", @"
+{
+  // Code size       43 (0x2b)
+  .maxstack  2
+  .locals init (int? V_0,
+                int? V_1)
+  IL_0000:  ldarg.0
+  IL_0001:  ldind.ref
+  IL_0002:  dup
+  IL_0003:  brtrue.s   IL_0011
+  IL_0005:  pop
+  IL_0006:  ldloca.s   V_1
+  IL_0008:  initobj    ""int?""
+  IL_000e:  ldloc.1
+  IL_000f:  br.s       IL_0016
+  IL_0011:  call       ""int? Program.C1.y.get""
+  IL_0016:  stloc.0
+  IL_0017:  ldloca.s   V_0
+  IL_0019:  call       ""bool int?.HasValue.get""
+  IL_001e:  brtrue.s   IL_0023
+  IL_0020:  ldc.i4.s   42
+  IL_0022:  ret
+  IL_0023:  ldloca.s   V_0
+  IL_0025:  call       ""int int?.GetValueOrDefault()""
+  IL_002a:  ret
+}
+");
+        }
+
+        [Fact]
+        public void ConditionalMemberAccessCoalessce002()
+        {
+            var source = @"
+class Program
+{
+    struct C1
+    {
+        public int x{get; set;}
+        public int? y{get; set;}
+    }
+
+    static void Main()
+    {
+        var c = new C1();
+        System.Console.WriteLine(Test1(c));
+        System.Console.WriteLine(Test1(null));
+
+        System.Console.WriteLine(Test2(c));
+        System.Console.WriteLine(Test2(null));
+    }
+
+    static int Test1(C1? c)
+    {
+        return c?.x ?? 42;
+    }
+
+    static int Test2(C1? c)
+    {
+        return c?.y ?? 42;
+    }
+}
+";
+            var comp = CompileAndVerify(source, expectedOutput: @"0
+42
+42
+42");
+            comp.VerifyIL("Program.Test1(Program.C1?)", @"
+{
+  // Code size       28 (0x1c)
+  .maxstack  1
+  .locals init (Program.C1 V_0)
+  IL_0000:  ldarga.s   V_0
+  IL_0002:  call       ""bool Program.C1?.HasValue.get""
+  IL_0007:  brtrue.s   IL_000c
+  IL_0009:  ldc.i4.s   42
+  IL_000b:  ret
+  IL_000c:  ldarga.s   V_0
+  IL_000e:  call       ""Program.C1 Program.C1?.GetValueOrDefault()""
+  IL_0013:  stloc.0
+  IL_0014:  ldloca.s   V_0
+  IL_0016:  call       ""int Program.C1.x.get""
+  IL_001b:  ret
+}
+").VerifyIL("Program.Test2(Program.C1?)", @"
+{
+  // Code size       56 (0x38)
+  .maxstack  1
+  .locals init (int? V_0,
+                int? V_1,
+                Program.C1 V_2)
+  IL_0000:  ldarga.s   V_0
+  IL_0002:  call       ""bool Program.C1?.HasValue.get""
+  IL_0007:  brtrue.s   IL_0014
+  IL_0009:  ldloca.s   V_1
+  IL_000b:  initobj    ""int?""
+  IL_0011:  ldloc.1
+  IL_0012:  br.s       IL_0023
+  IL_0014:  ldarga.s   V_0
+  IL_0016:  call       ""Program.C1 Program.C1?.GetValueOrDefault()""
+  IL_001b:  stloc.2
+  IL_001c:  ldloca.s   V_2
+  IL_001e:  call       ""int? Program.C1.y.get""
+  IL_0023:  stloc.0
+  IL_0024:  ldloca.s   V_0
+  IL_0026:  call       ""bool int?.HasValue.get""
+  IL_002b:  brtrue.s   IL_0030
+  IL_002d:  ldc.i4.s   42
+  IL_002f:  ret
+  IL_0030:  ldloca.s   V_0
+  IL_0032:  call       ""int int?.GetValueOrDefault()""
+  IL_0037:  ret
+}
+");
+        }
+
+        [Fact]
+        public void ConditionalMemberAccessCoalessce002r()
+        {
+            var source = @"
+class Program
+{
+    struct C1
+    {
+        public int x{get; set;}
+        public int? y{get; set;}
+    }
+
+    static void Main()
+    {
+        C1? c = new C1();
+        C1? n = null;
+
+        System.Console.WriteLine(Test1(ref c));
+        System.Console.WriteLine(Test1(ref n));
+
+        System.Console.WriteLine(Test2(ref c));
+        System.Console.WriteLine(Test2(ref n));
+    }
+
+    static int Test1(ref C1? c)
+    {
+        return c?.x ?? 42;
+    }
+
+    static int Test2(ref C1? c)
+    {
+        return c?.y ?? 42;
+    }
+}
+";
+            var comp = CompileAndVerify(source, expectedOutput: @"0
+42
+42
+42");
+            comp.VerifyIL("Program.Test1(ref Program.C1?)", @"
+{
+  // Code size       35 (0x23)
+  .maxstack  1
+  .locals init (Program.C1? V_0,
+                Program.C1 V_1)
+  IL_0000:  ldarg.0
+  IL_0001:  ldobj      ""Program.C1?""
+  IL_0006:  stloc.0
+  IL_0007:  ldloca.s   V_0
+  IL_0009:  call       ""bool Program.C1?.HasValue.get""
+  IL_000e:  brtrue.s   IL_0013
+  IL_0010:  ldc.i4.s   42
+  IL_0012:  ret
+  IL_0013:  ldloca.s   V_0
+  IL_0015:  call       ""Program.C1 Program.C1?.GetValueOrDefault()""
+  IL_001a:  stloc.1
+  IL_001b:  ldloca.s   V_1
+  IL_001d:  call       ""int Program.C1.x.get""
+  IL_0022:  ret
+}
+").VerifyIL("Program.Test2(ref Program.C1?)", @"
+{
+  // Code size       63 (0x3f)
+  .maxstack  1
+  .locals init (int? V_0,
+                Program.C1? V_1,
+                int? V_2,
+                Program.C1 V_3)
+  IL_0000:  ldarg.0
+  IL_0001:  ldobj      ""Program.C1?""
+  IL_0006:  stloc.1
+  IL_0007:  ldloca.s   V_1
+  IL_0009:  call       ""bool Program.C1?.HasValue.get""
+  IL_000e:  brtrue.s   IL_001b
+  IL_0010:  ldloca.s   V_2
+  IL_0012:  initobj    ""int?""
+  IL_0018:  ldloc.2
+  IL_0019:  br.s       IL_002a
+  IL_001b:  ldloca.s   V_1
+  IL_001d:  call       ""Program.C1 Program.C1?.GetValueOrDefault()""
+  IL_0022:  stloc.3
+  IL_0023:  ldloca.s   V_3
+  IL_0025:  call       ""int? Program.C1.y.get""
+  IL_002a:  stloc.0
+  IL_002b:  ldloca.s   V_0
+  IL_002d:  call       ""bool int?.HasValue.get""
+  IL_0032:  brtrue.s   IL_0037
+  IL_0034:  ldc.i4.s   42
+  IL_0036:  ret
+  IL_0037:  ldloca.s   V_0
+  IL_0039:  call       ""int int?.GetValueOrDefault()""
+  IL_003e:  ret
+}
+");
+        }
+
+        [Fact]
+        public void ConditionalMemberAccessNullCheck001()
+        {
+            var source = @"
+class Program
+{
+    class C1
+    {
+        public int x{get; set;}
+    }
+
+    static void Main()
+    {
+        var c = new C1();
+        System.Console.WriteLine(Test1(c));
+        System.Console.WriteLine(Test1(null));
+
+        System.Console.WriteLine(Test2(c));
+        System.Console.WriteLine(Test2(null));
+
+        System.Console.WriteLine(Test3(c));
+        System.Console.WriteLine(Test3(null));
+    }
+
+    static bool Test1(C1 c)
+    {
+        return c?.x == null;
+    }
+
+    static bool Test2(C1 c)
+    {
+        return c?.x != null;
+    }
+
+    static bool Test3(C1 c)
+    {
+        return c?.x > null;
+    }
+}
+";
+            var comp = CompileAndVerify(source, expectedOutput: @"False
+True
+True
+False
+False
+False");
+            comp.VerifyIL("Program.Test1(Program.C1)", @"
+{
+  // Code size       16 (0x10)
+  .maxstack  1
+  .locals init (Program.C1 V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  stloc.0
+  IL_0002:  ldloc.0
+  IL_0003:  brtrue.s   IL_0007
+  IL_0005:  ldc.i4.1
+  IL_0006:  ret
+  IL_0007:  ldloc.0
+  IL_0008:  callvirt   ""int Program.C1.x.get""
+  IL_000d:  pop
+  IL_000e:  ldc.i4.0
+  IL_000f:  ret
+}
+").VerifyIL("Program.Test2(Program.C1)", @"
+{
+  // Code size       16 (0x10)
+  .maxstack  1
+  .locals init (Program.C1 V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  stloc.0
+  IL_0002:  ldloc.0
+  IL_0003:  brtrue.s   IL_0007
+  IL_0005:  ldc.i4.0
+  IL_0006:  ret
+  IL_0007:  ldloc.0
+  IL_0008:  callvirt   ""int Program.C1.x.get""
+  IL_000d:  pop
+  IL_000e:  ldc.i4.1
+  IL_000f:  ret
+}
+").VerifyIL("Program.Test3(Program.C1)", @"
+{
+  // Code size       12 (0xc)
+  .maxstack  1
+  IL_0000:  ldarg.0
+  IL_0001:  brfalse.s  IL_000a
+  IL_0003:  ldarg.0
+  IL_0004:  call       ""int Program.C1.x.get""
+  IL_0009:  pop
+  IL_000a:  ldc.i4.0
+  IL_000b:  ret
+}
+");
+        }
+
+        [Fact]
+        public void ConditionalMemberAccessBinary001()
+        {
+            var source = @"
+public enum N
+{
+    zero = 0,
+    one = 1,
+    mone = -1
+}
+
+class Program
+{
+    class C1
+    {
+        public N x{get; set;}
+    }
+
+    static void Main()
+    {
+        var c = new C1();
+        System.Console.WriteLine(Test1(c));
+        System.Console.WriteLine(Test1(null));
+
+        System.Console.WriteLine(Test2(c));
+        System.Console.WriteLine(Test2(null));
+
+        System.Console.WriteLine(Test3(c));
+        System.Console.WriteLine(Test3(null));
+    }
+
+    static bool Test1(C1 c)
+    {
+        return c?.x == N.zero;
+    }
+
+    static bool Test2(C1 c)
+    {
+        return c?.x != N.one;
+    }
+
+    static bool Test3(C1 c)
+    {
+        return c?.x > N.mone;
+    }
+}
+";
+            var comp = CompileAndVerify(source, expectedOutput: @"True
+False
+True
+True
+True
+False");
+            comp.VerifyIL("Program.Test1(Program.C1)", @"
+{
+  // Code size       17 (0x11)
+  .maxstack  2
+  .locals init (Program.C1 V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  stloc.0
+  IL_0002:  ldloc.0
+  IL_0003:  brtrue.s   IL_0007
+  IL_0005:  ldc.i4.0
+  IL_0006:  ret
+  IL_0007:  ldloc.0
+  IL_0008:  callvirt   ""N Program.C1.x.get""
+  IL_000d:  ldc.i4.0
+  IL_000e:  ceq
+  IL_0010:  ret
+}
+").VerifyIL("Program.Test2(Program.C1)", @"
+{
+  // Code size       20 (0x14)
+  .maxstack  2
+  .locals init (Program.C1 V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  stloc.0
+  IL_0002:  ldloc.0
+  IL_0003:  brtrue.s   IL_0007
+  IL_0005:  ldc.i4.1
+  IL_0006:  ret
+  IL_0007:  ldloc.0
+  IL_0008:  callvirt   ""N Program.C1.x.get""
+  IL_000d:  ldc.i4.1
+  IL_000e:  ceq
+  IL_0010:  ldc.i4.0
+  IL_0011:  ceq
+  IL_0013:  ret
+}
+").VerifyIL("Program.Test3(Program.C1)", @"
+{
+  // Code size       17 (0x11)
+  .maxstack  2
+  .locals init (Program.C1 V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  stloc.0
+  IL_0002:  ldloc.0
+  IL_0003:  brtrue.s   IL_0007
+  IL_0005:  ldc.i4.0
+  IL_0006:  ret
+  IL_0007:  ldloc.0
+  IL_0008:  callvirt   ""N Program.C1.x.get""
+  IL_000d:  ldc.i4.m1
+  IL_000e:  cgt
+  IL_0010:  ret
+}
+");
+        }
+
+        [Fact]
+        public void ConditionalMemberAccessBinary002()
+        {
+            var source = @"
+
+static class ext
+{
+    public static Program.C1.S1 y(this Program.C1 self)
+    {
+        return self.x;
+    }
+}
+
+class Program
+{
+    public class C1
+    {
+        public struct S1
+        {
+            public static bool operator <(S1 s1, int s2)
+            {
+                System.Console.WriteLine('<');
+                return true;
+            }
+            public static bool operator >(S1 s1, int s2)
+            {
+                System.Console.WriteLine('>');
+                return false;
+            }
+        }
+
+        public S1 x { get; set; }
+    }
+
+    static void Main()
+    {
+        C1 c = new C1();
+        C1 n = null;
+        System.Console.WriteLine(Test1(c));
+        System.Console.WriteLine(Test1(n));
+
+        System.Console.WriteLine(Test2(ref c));
+        System.Console.WriteLine(Test2(ref n));
+
+        System.Console.WriteLine(Test3(c));
+        System.Console.WriteLine(Test3(n));
+
+        System.Console.WriteLine(Test4(ref c));
+        System.Console.WriteLine(Test4(ref n));
+     }
+
+    static bool Test1(C1 c)
+    {
+        return c?.x > -1;
+    }
+
+    static bool Test2(ref C1 c)
+    {
+        return c?.x < -1;
+    }
+
+    static bool Test3(C1 c)
+    {
+        return c?.y() > -1;
+    }
+
+    static bool Test4(ref C1 c)
+    {
+        return c?.y() < -1;
+    }
+}
+";
+            var comp = CompileAndVerify(source, additionalRefs: new[] { SystemCoreRef, CSharpRef }, expectedOutput: @"   >
+False
+False
+<
+True
+False
+>
+False
+False
+<
+True
+False");
+            comp.VerifyIL("Program.Test1(Program.C1)", @"
+{
+  // Code size       20 (0x14)
+  .maxstack  2
+  .locals init (Program.C1 V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  stloc.0
+  IL_0002:  ldloc.0
+  IL_0003:  brtrue.s   IL_0007
+  IL_0005:  ldc.i4.0
+  IL_0006:  ret
+  IL_0007:  ldloc.0
+  IL_0008:  callvirt   ""Program.C1.S1 Program.C1.x.get""
+  IL_000d:  ldc.i4.m1
+  IL_000e:  call       ""bool Program.C1.S1.op_GreaterThan(Program.C1.S1, int)""
+  IL_0013:  ret
+}
+").VerifyIL("Program.Test2(ref Program.C1)", @"
+{
+  // Code size       21 (0x15)
+  .maxstack  2
+  .locals init (Program.C1 V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  ldind.ref
+  IL_0002:  stloc.0
+  IL_0003:  ldloc.0
+  IL_0004:  brtrue.s   IL_0008
+  IL_0006:  ldc.i4.0
+  IL_0007:  ret
+  IL_0008:  ldloc.0
+  IL_0009:  callvirt   ""Program.C1.S1 Program.C1.x.get""
+  IL_000e:  ldc.i4.m1
+  IL_000f:  call       ""bool Program.C1.S1.op_LessThan(Program.C1.S1, int)""
+  IL_0014:  ret
+}
+").VerifyIL("Program.Test3(Program.C1)", @"
+{
+  // Code size       20 (0x14)
+  .maxstack  2
+  .locals init (Program.C1 V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  stloc.0
+  IL_0002:  ldloc.0
+  IL_0003:  brtrue.s   IL_0007
+  IL_0005:  ldc.i4.0
+  IL_0006:  ret
+  IL_0007:  ldloc.0
+  IL_0008:  call       ""Program.C1.S1 ext.y(Program.C1)""
+  IL_000d:  ldc.i4.m1
+  IL_000e:  call       ""bool Program.C1.S1.op_GreaterThan(Program.C1.S1, int)""
+  IL_0013:  ret
+}
+").VerifyIL("Program.Test4(ref Program.C1)", @"
+{
+  // Code size       21 (0x15)
+  .maxstack  2
+  .locals init (Program.C1 V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  ldind.ref
+  IL_0002:  stloc.0
+  IL_0003:  ldloc.0
+  IL_0004:  brtrue.s   IL_0008
+  IL_0006:  ldc.i4.0
+  IL_0007:  ret
+  IL_0008:  ldloc.0
+  IL_0009:  call       ""Program.C1.S1 ext.y(Program.C1)""
+  IL_000e:  ldc.i4.m1
+  IL_000f:  call       ""bool Program.C1.S1.op_LessThan(Program.C1.S1, int)""
+  IL_0014:  ret
+}
+");
+        }
+
+        [Fact]
+        public void ConditionalMemberAccessOptimizedLocal001()
+        {
+            var source = @"
+using System;
+
+class Program
+{
+    class C1 : System.IDisposable
+    {
+        public bool disposed;
+        public void Dispose()
+        {
+            disposed = true;
+        }
+    }
+
+    static void Main()
+    {
+        Test1();
+        Test2<C1>();
+    }
+
+    static void Test1()
+    {
+        var c = new C1();
+        c?.Dispose();
+    }
+
+    static void Test2<T>() where T : IDisposable, new()
+    {
+        var c = new T();
+        c?.Dispose();
+    }
+}
+";
+            var comp = CompileAndVerify(source, expectedOutput: @"");
+            comp.VerifyIL("Program.Test1()", @"
+{
+  // Code size       16 (0x10)
+  .maxstack  2
+  IL_0000:  newobj     ""Program.C1..ctor()""
+  IL_0005:  dup
+  IL_0006:  brtrue.s   IL_000a
+  IL_0008:  pop
+  IL_0009:  ret
+  IL_000a:  call       ""void Program.C1.Dispose()""
+  IL_000f:  ret
+}
+").VerifyIL("Program.Test2<T>()", @"
+{
+  // Code size       28 (0x1c)
+  .maxstack  1
+  .locals init (T V_0) //c
+  IL_0000:  call       ""T System.Activator.CreateInstance<T>()""
+  IL_0005:  stloc.0
+  IL_0006:  ldloc.0
+  IL_0007:  box        ""T""
+  IL_000c:  brfalse.s  IL_001b
+  IL_000e:  ldloca.s   V_0
+  IL_0010:  constrained. ""T""
+  IL_0016:  callvirt   ""void System.IDisposable.Dispose()""
+  IL_001b:  ret
+}
+");
+        }
+
+        [Fact]
+        public void ConditionalMemberAccessOptimizedLocal002()
+        {
+            var source = @"
+using System;
+
+class Program
+{
+    interface I1
+    {
+        void Foo(I1 arg);
+    }
+
+    class C1 : I1
+    {
+        public void Foo(I1 arg)
+        {
+        }
+    }
+
+    static void Main()
+    {
+        Test1();
+        Test2<C1>();
+    }
+
+    static void Test1()
+    {
+        var c = new C1();
+        c?.Foo(c);
+    }
+
+    static void Test2<T>() where T : I1, new()
+    {
+        var c = new T();
+        c?.Foo(c);
+    }
+}
+";
+            var comp = CompileAndVerify(source, expectedOutput: @"");
+            comp.VerifyIL("Program.Test1()", @"
+{
+  // Code size       17 (0x11)
+  .maxstack  2
+  .locals init (Program.C1 V_0) //c
+  IL_0000:  newobj     ""Program.C1..ctor()""
+  IL_0005:  stloc.0
+  IL_0006:  ldloc.0
+  IL_0007:  brfalse.s  IL_0010
+  IL_0009:  ldloc.0
+  IL_000a:  ldloc.0
+  IL_000b:  call       ""void Program.C1.Foo(Program.I1)""
+  IL_0010:  ret
+}
+").VerifyIL("Program.Test2<T>()", @"
+{
+  // Code size       34 (0x22)
+  .maxstack  2
+  .locals init (T V_0) //c
+  IL_0000:  call       ""T System.Activator.CreateInstance<T>()""
+  IL_0005:  stloc.0
+  IL_0006:  ldloc.0
+  IL_0007:  box        ""T""
+  IL_000c:  brfalse.s  IL_0021
+  IL_000e:  ldloca.s   V_0
+  IL_0010:  ldloc.0
+  IL_0011:  box        ""T""
+  IL_0016:  constrained. ""T""
+  IL_001c:  callvirt   ""void Program.I1.Foo(Program.I1)""
+  IL_0021:  ret
+}
+");
+        }
+
+        [Fact]
+        public void ConditionalMemberAccessRace001()
+        {
+            var source = @"
+using System.Threading;
+using System.Threading.Tasks;
+
+class Program
+{
+    static void Main()
+    {
+        string s = ""hello"";
+
+        System.Action a = () =>
+        {
+            for (int i = 0; i < 1000000; i++)
+            {
+                try
+                {
+                    s = s?.Length.ToString();
+                    s = null;
+                    Thread.Yield();
+                } 
+                catch (System.Exception ex)
+                {
+                    System.Console.WriteLine(ex);
+                }
+                finally
+                {
+                    s = s ?? ""hello"";
+                }
+            }
+        };
+
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+
+        a();
+        System.Console.WriteLine(""Success"");
+    }
+}
+";
+            var comp = CompileAndVerify(source, expectedOutput: @"Success");
+        }
+
+        [Fact]
+        public void ConditionalMemberAccessRace002()
+        {
+            var source = @"
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+class Program
+{
+    static void Main()
+    {
+        string s = ""hello"";
+
+        Test(s);
+    }
+
+    private static void Test<T>(T s) where T : IEnumerable<char>
+    {
+        Action a = () =>
+        {
+            for (int i = 0; i < 1000000; i++)
+            {
+                var temp = s;
+                try
+                {
+                    s?.GetEnumerator();
+                    s = default(T);
+                    Thread.Yield();
+                }
+                catch (System.Exception ex)
+                {
+                    System.Console.WriteLine(ex);
+                }
+                finally
+                {
+                    s = temp;
+                }
+            }
+        };
+
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+        Task.Factory.StartNew(a);
+
+        a();
+
+        System.Console.WriteLine(""Success"");
+    }
+}
+";
+            var comp = CompileAndVerify(source, expectedOutput: @"Success");
         }
 
     }

@@ -1,4 +1,4 @@
-﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports System.Collections.Concurrent
 Imports System.Collections.Immutable
@@ -168,6 +168,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' </summary>
         Private lazyCompilationUnitCompletedTrees As HashSet(Of SyntaxTree)
 
+        ''' <summary>
+        ''' The common language version among the trees of the compilation.
+        ''' </summary>
+        Private m_LanguageVersion As LanguageVersion
+
         Public Overrides ReadOnly Property Language As String
             Get
                 Return LanguageNames.VisualBasic
@@ -189,6 +194,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Public Shadows ReadOnly Property Options As VisualBasicCompilationOptions
             Get
                 Return m_Options
+            End Get
+        End Property
+
+        ''' <summary>
+        ''' The language version that was used to parse the syntax trees of this compilation.
+        ''' </summary>
+        Public ReadOnly Property LanguageVersion As LanguageVersion
+            Get
+                Return m_LanguageVersion
             End Get
         End Property
 
@@ -398,6 +412,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 m_embeddedTrees = embeddedTrees
                 m_declarationTable = declarationTable
                 m_anonymousTypeManager = New AnonymousTypeManager(Me)
+                m_languageVersion = CommonLanguageVersion(syntaxTrees)
 
                 m_scriptClass = New Lazy(Of ImplicitNamedTypeSymbol)(AddressOf BindScriptClass)
 
@@ -423,6 +438,22 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End If
             End Using
         End Sub
+
+        Private Function CommonLanguageVersion(syntaxTrees As ImmutableArray(Of SyntaxTree)) As LanguageVersion
+            ' We don't check m_Options.ParseOptions.LanguageVersion for consistency, because
+            ' it isn't consistent in practice.  In fact sometimes m_Options.ParseOptions is Nothing.
+            Dim result As LanguageVersion? = Nothing
+            For Each tree In syntaxTrees
+                Dim version = CType(tree.Options, VisualBasicParseOptions).LanguageVersion
+                If result Is Nothing Then
+                    result = version
+                ElseIf result <> version Then
+                    Throw New ArgumentException("inconsistent language versions", "syntaxTrees")
+                End If
+            Next
+
+            Return If(result, VisualBasicParseOptions.Default.LanguageVersion)
+        End Function
 
         ''' <summary>
         ''' Create a duplicate of this compilation with different symbol instances
@@ -1195,6 +1226,22 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Public Shadows Function ReplaceReference(oldReference As MetadataReference, newReference As MetadataReference) As VisualBasicCompilation
             Return DirectCast(MyBase.ReplaceReference(oldReference, newReference), VisualBasicCompilation)
         End Function
+
+        ''' <summary>
+        ''' Determine if enum arrays can be initialized using block initialization.
+        ''' </summary>
+        ''' <returns>True if it's safe to use block initialization for enum arrays.</returns>
+        ''' <remarks>
+        ''' In NetFx 4.0, block array initializers do not work on all combinations of {32/64 X Debug/Retail} when array elements are enums.
+        ''' This is fixed in 4.5 thus enabling block array initialization for a very common case.
+        ''' We look for the presence of <see cref="System.Runtime.GCLatencyMode.SustainedLowLatency"/> which was introduced in .Net 4.5
+        ''' </remarks>
+        Friend ReadOnly Property EnableEnumArrayBlockInitialization As Boolean
+            Get
+                Dim sustainedLowLatency = GetWellKnownTypeMember(WellKnownMember.System_Runtime_GCLatencyMode__SustainedLowLatency)
+                Return sustainedLowLatency IsNot Nothing AndAlso sustainedLowLatency.ContainingAssembly = Assembly.CorLibrary
+            End Get
+        End Property
 
 #End Region
 
@@ -1999,16 +2046,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End If
 
                 accumulator.Add(filtered)
-                If filtered.IsWarningAsError AndAlso Not hasWarnAsError Then
+
+                If filtered.IsWarningAsError Then
                     hasWarnAsError = True
-                    accumulator.Add(New VBDiagnostic(New DiagnosticInfo(VisualBasic.MessageProvider.Instance, CInt(ERRID.ERR_WarningTreatedAsError), diagnostic.GetMessage()), CType(diagnostic.Location, Location)))
                 End If
             Next
 
             Return Not (hasError OrElse hasWarnAsError)
         End Function
 
-        Friend Overrides Function AnalyzerForLanguage(analyzers As ImmutableArray(Of IDiagnosticAnalyzer), options As AnalyzerOptions, cancellationToken As CancellationToken) As AnalyzerDriver
+        Friend Overrides Function AnalyzerForLanguage(analyzers As ImmutableArray(Of DiagnosticAnalyzer), options As AnalyzerOptions, cancellationToken As CancellationToken) As AnalyzerDriver
             Dim getKind As Func(Of SyntaxNode, SyntaxKind) = Function(node As SyntaxNode) node.VisualBasicKind
             Return New AnalyzerDriver(Of SyntaxKind)(analyzers, getKind, options, cancellationToken)
         End Function

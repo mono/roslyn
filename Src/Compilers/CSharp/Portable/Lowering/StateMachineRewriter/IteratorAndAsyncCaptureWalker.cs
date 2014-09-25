@@ -27,7 +27,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         private bool seenYieldInCurrentTry = false;
 
-        private IteratorAndAsyncCaptureWalker(CSharpCompilation compilation, MethodSymbol method, BoundNode node, CaptureWalkerEmptyStructTypeCache emptyStructCache, HashSet<Symbol> initiallyAssignedVariables)
+        private IteratorAndAsyncCaptureWalker(CSharpCompilation compilation, MethodSymbol method, BoundNode node, NeverEmptyStructTypeCache emptyStructCache, HashSet<Symbol> initiallyAssignedVariables)
             : base(compilation, 
                   method, 
                   node, 
@@ -39,11 +39,8 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         public static MultiDictionary<Symbol, CSharpSyntaxNode> Analyze(CSharpCompilation compilation, MethodSymbol method, BoundNode node)
         {
-            var emptyStructs = new CaptureWalkerEmptyStructTypeCache();
-            var initiallyAssignedVariables = UnassignedVariablesWalker.Analyze(compilation, method, node, emptyStructs);
-
-            var walker = new IteratorAndAsyncCaptureWalker(compilation, method, node, emptyStructs, initiallyAssignedVariables);
-
+            var initiallyAssignedVariables = UnassignedVariablesWalker.Analyze(compilation, method, node);
+            var walker = new IteratorAndAsyncCaptureWalker(compilation, method, node, new NeverEmptyStructTypeCache(), initiallyAssignedVariables);
             bool badRegion = false;
             walker.Analyze(ref badRegion);
             Debug.Assert(!badRegion);
@@ -106,7 +103,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             // parameters are NOT intitially assigned here - if that is a problem, then
             // the parameters must be captured.
-            MakeSlot(parameter);
+            GetOrCreateSlot(parameter);
         }
 
         protected override void ReportUnassigned(Symbol symbol, CSharpSyntaxNode node)

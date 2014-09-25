@@ -38,7 +38,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     Analyze(compilation, method, block, diagnostics))
                 {
                     // we don't analyze synthesized void methods.
-                    block = AppendImplicitReturn(block, method, (object)sourceMethod != null ? sourceMethod.BlockSyntax : null);
+                    block = AppendImplicitReturn(block, method, ((object)sourceMethod != null) ? sourceMethod.BodySyntax as BlockSyntax : null);
                 }
             }
             else if (Analyze(compilation, method, block, diagnostics))
@@ -108,7 +108,6 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             var result = ControlFlowPass.Analyze(compilation, method, block, diagnostics);
             DataFlowPass.Analyze(compilation, method, block, diagnostics);
-            DisposeCheckerPass.Analyze(compilation, method, block, diagnostics);
             return result;
         }
     }

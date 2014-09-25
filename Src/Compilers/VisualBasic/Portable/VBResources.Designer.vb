@@ -9785,6 +9785,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
+        '''  Looks up a localized string similar to Parameterless instance constructors in structures must be public..
+        '''</summary>
+        Friend ReadOnly Property ERR_StructParameterlessInstanceCtorMustBePublic() As String
+            Get
+                Return ResourceManager.GetString("ERR_StructParameterlessInstanceCtorMustBePublic", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
         '''  Looks up a localized string similar to Methods declared in structures cannot have &apos;Handles&apos; clauses..
         '''</summary>
         Friend ReadOnly Property ERR_StructsCannotHandleEvents() As String
@@ -11299,15 +11308,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
-        '''  Looks up a localized string similar to Warning treated as error : {0}.
-        '''</summary>
-        Friend ReadOnly Property ERR_WarningTreatedAsError() As String
-            Get
-                Return ResourceManager.GetString("ERR_WarningTreatedAsError", resourceCulture)
-            End Get
-        End Property
-        
-        '''<summary>
         '''  Looks up a localized string similar to Event declarations that target WinMD must specify a delegate type.  Add an As clause to the event declaration..
         '''</summary>
         Friend ReadOnly Property ERR_WinRTEventWithoutDelegate() As String
@@ -11479,6 +11479,33 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
+        '''  Looks up a localized string similar to Preprocessor constant &apos;{0}&apos; of type &apos;{1}&apos; is not supported, only primitive types are allowed..
+        '''</summary>
+        Friend ReadOnly Property IDS_InvalidPreprocessorConstantType() As String
+            Get
+                Return ResourceManager.GetString("IDS_InvalidPreprocessorConstantType", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to Microsoft (R) Visual Basic Compiler version {0}.
+        '''</summary>
+        Friend ReadOnly Property IDS_LogoLine1() As String
+            Get
+                Return ResourceManager.GetString("IDS_LogoLine1", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to Copyright (C) Microsoft Corporation. All rights reserved..
+        '''</summary>
+        Friend ReadOnly Property IDS_LogoLine2() As String
+            Get
+                Return ResourceManager.GetString("IDS_LogoLine2", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
         '''  Looks up a localized string similar to Adding embedded assembly reference &apos;{0}&apos;.
         '''</summary>
         Friend ReadOnly Property IDS_MSG_ADDLINKREFERENCE() As String
@@ -11533,6 +11560,24 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
+        '''  Looks up a localized string similar to                   Visual Basic Compiler Options
+        '''
+        '''                                  - OUTPUT FILE -
+        '''/out:&lt;file&gt;                       Specifies the output file name.
+        '''/target:exe                       Create a console application (default). 
+        '''                                  (Short form: /t)
+        '''/target:winexe                    Create a Windows application.
+        '''/target:library                   Create a library assembly.
+        '''/target:module                    Create a module that can be added to an 
+        '''             [rest of string was truncated]&quot;;.
+        '''</summary>
+        Friend ReadOnly Property IDS_VBCHelp() As String
+            Get
+                Return ResourceManager.GetString("IDS_VBCHelp", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
         '''  Looks up a localized string similar to Skipping some types in analyzer assembly {0} due to a ReflectionTypeLoadException : {1}..
         '''</summary>
         Friend ReadOnly Property INF_UnableToLoadSomeTypesInAnalyzer() As String
@@ -11542,38 +11587,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
-        '''  Looks up a localized string similar to Preprocessor constant &apos;{0}&apos; of type &apos;{1}&apos; is not supported, only primitive types are allowed..
-        '''</summary>
-        Friend ReadOnly Property InvalidPreprocessorConstantType() As String
-            Get
-                Return ResourceManager.GetString("InvalidPreprocessorConstantType", resourceCulture)
-            End Get
-        End Property
-        
-        '''<summary>
         '''  Looks up a localized string similar to Location must be provided in order to provide minimal type qualification..
         '''</summary>
         Friend ReadOnly Property LocationMustBeProvided() As String
             Get
                 Return ResourceManager.GetString("LocationMustBeProvided", resourceCulture)
-            End Get
-        End Property
-        
-        '''<summary>
-        '''  Looks up a localized string similar to Microsoft (R) Visual Basic Compiler version {0}.
-        '''</summary>
-        Friend ReadOnly Property LogoLine1() As String
-            Get
-                Return ResourceManager.GetString("LogoLine1", resourceCulture)
-            End Get
-        End Property
-        
-        '''<summary>
-        '''  Looks up a localized string similar to Copyright (C) Microsoft Corporation. All rights reserved..
-        '''</summary>
-        Friend ReadOnly Property LogoLine2() As String
-            Get
-                Return ResourceManager.GetString("LogoLine2", resourceCulture)
             End Get
         End Property
         
@@ -11781,24 +11799,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend ReadOnly Property VariableSyntaxNotWithinSyntaxTree() As String
             Get
                 Return ResourceManager.GetString("VariableSyntaxNotWithinSyntaxTree", resourceCulture)
-            End Get
-        End Property
-        
-        '''<summary>
-        '''  Looks up a localized string similar to                   Visual Basic Compiler Options
-        '''
-        '''                                  - OUTPUT FILE -
-        '''/out:&lt;file&gt;                       Specifies the output file name.
-        '''/target:exe                       Create a console application (default). 
-        '''                                  (Short form: /t)
-        '''/target:winexe                    Create a Windows application.
-        '''/target:library                   Create a library assembly.
-        '''/target:module                    Create a module that can be added to an 
-        '''             [rest of string was truncated]&quot;;.
-        '''</summary>
-        Friend ReadOnly Property VBCHelp() As String
-            Get
-                Return ResourceManager.GetString("VBCHelp", resourceCulture)
             End Get
         End Property
         

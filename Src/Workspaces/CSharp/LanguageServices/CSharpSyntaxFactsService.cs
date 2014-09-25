@@ -46,7 +46,8 @@ namespace Microsoft.CodeAnalysis.CSharp
             return
                 (SyntaxFacts.IsAnyUnaryExpression(kind) &&
                     (token.Parent is PrefixUnaryExpressionSyntax || token.Parent is PostfixUnaryExpressionSyntax)) ||
-                (SyntaxFacts.IsBinaryExpression(kind) && token.Parent is BinaryExpressionSyntax);
+                (SyntaxFacts.IsBinaryExpression(kind) && token.Parent is BinaryExpressionSyntax) ||
+                (SyntaxFacts.IsAssignmentExpressionOperatorToken(kind) && token.Parent is AssignmentExpressionSyntax);
         }
 
         public bool IsKeyword(SyntaxToken token)
@@ -989,6 +990,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 return openBrace.CSharpKind() == SyntaxKind.OpenBraceToken;
             }
 
+            openBrace = default(SyntaxToken);
             return false;
         }
     }

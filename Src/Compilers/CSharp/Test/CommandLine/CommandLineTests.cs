@@ -1677,7 +1677,7 @@ class C
             int exitCode = csc.Run(outWriter);
             Assert.Equal(1, exitCode);
             // Diagnostic thrown as error.
-            Assert.True(outWriter.ToString().Contains("a.cs(2,7): error Warning01: Warning as Error: Throwing a diagnostic for types declared"));
+            Assert.True(outWriter.ToString().Contains("a.cs(2,7): error Warning01: Throwing a diagnostic for types declared"));
 
             // Clean up temp files
             CleanupAllGeneratedFiles(file.Path);
@@ -1714,7 +1714,7 @@ class C
             int exitCode = csc.Run(outWriter);
             Assert.Equal(1, exitCode);
             // Diagnostic thrown as error: command line always overrides ruleset.
-            Assert.Contains("a.cs(2,7): error Warning01: Warning as Error: Throwing a diagnostic for types declared", outWriter.ToString());
+            Assert.Contains("a.cs(2,7): error Warning01: Throwing a diagnostic for types declared", outWriter.ToString());
 
             outWriter = new StringWriter(CultureInfo.InvariantCulture);
             csc = new MockCSharpCompiler(null, dir.Path,
@@ -1725,7 +1725,7 @@ class C
             exitCode = csc.Run(outWriter);
             Assert.Equal(1, exitCode);
             // Diagnostic thrown as error: command line always overrides ruleset.
-            Assert.Contains("a.cs(2,7): error Warning01: Warning as Error: Throwing a diagnostic for types declared", outWriter.ToString());
+            Assert.Contains("a.cs(2,7): error Warning01: Throwing a diagnostic for types declared", outWriter.ToString());
 
             // Clean up temp files
             CleanupAllGeneratedFiles(file.Path);
@@ -4677,7 +4677,7 @@ public class C
             var csc = new MockCSharpCompiler(rsp, baseDirectory, new[] { source });
             int exitCode = csc.Run(outWriter);
             Assert.Equal(1, exitCode);
-            Assert.Contains("error CS0168: Warning as Error: The variable 'x' is declared but never used\r\n", outWriter.ToString());
+            Assert.Contains("error CS0168: The variable 'x' is declared but never used\r\n", outWriter.ToString());
 
             // Checks the case with /noconfig (expect to see warning, instead of error)
             outWriter = new StringWriter(CultureInfo.InvariantCulture);
@@ -5406,7 +5406,7 @@ public class Test
             var outWriter = new StringWriter(CultureInfo.InvariantCulture);
             int exitCode = new MockCSharpCompiler(null, baseDir, new[] { "/nologo", "/warn:3", "/warnaserror", source.ToString() }).Run(outWriter);
             Assert.Equal(1, exitCode);
-            Assert.Equal(fileName + "(12,20): error CS1522: Warning as Error: Empty switch block", outWriter.ToString().Trim());
+            Assert.Equal(fileName + "(12,20): error CS1522: Empty switch block", outWriter.ToString().Trim());
 
             CleanupAllGeneratedFiles(source);
         }
@@ -6843,13 +6843,13 @@ class C
             // TEST: Verify that compiler warning CS0168 as well as custom warning diagnostic Warning01 can be promoted to errors via /warnaserror.
             // Promoting compiler warning CS0168 to an error causes us to no longer report any custom warning diagnostics as errors (Bug 998069).
             output = VerifyOutput(dir, file, additionalFlags: new[] { "/warnaserror" }, expectedWarningCount: 1, expectedErrorCount: 1);
-            Assert.Contains("a.cs(6,13): error CS0168: Warning as Error: The variable 'i' is declared but never used", output);
+            Assert.Contains("a.cs(6,13): error CS0168: The variable 'i' is declared but never used", output);
             Assert.Contains("warning CS8032", output);
 
             // TEST: Verify that compiler warning CS0168 as well as custom warning diagnostic Warning01 can be promoted to errors via /warnaserror+.
             // Promoting compiler warning CS0168 to an error causes us to no longer report any custom warning diagnostics as errors (Bug 998069).
             output = VerifyOutput(dir, file, additionalFlags: new[] { "/warnaserror+" }, expectedWarningCount: 1, expectedErrorCount: 1);
-            Assert.Contains("a.cs(6,13): error CS0168: Warning as Error: The variable 'i' is declared but never used", output);
+            Assert.Contains("a.cs(6,13): error CS0168: The variable 'i' is declared but never used", output);
             Assert.Contains("warning CS8032", output);
 
             // TEST: Verify that /warnaserror- keeps compiler warning CS0168 as well as custom warning diagnostic Warning01 as warnings.
@@ -6860,14 +6860,14 @@ class C
 
             // TEST: Verify that custom warning diagnostic Warning01 can be individually promoted to an error via /warnaserror:.
             output = VerifyOutput(dir, file, additionalFlags: new[] { "/warnaserror:Something,Warning01" }, expectedWarningCount: 2, expectedErrorCount: 1);
-            Assert.Contains("a.cs(2,7): error Warning01: Warning as Error: Throwing a diagnostic for types declared", output);
+            Assert.Contains("a.cs(2,7): error Warning01: Throwing a diagnostic for types declared", output);
             Assert.Contains("a.cs(6,13): warning CS0168: The variable 'i' is declared but never used", output);
             Assert.Contains("warning CS8032", output);
 
             // TEST: Verify that compiler warning CS0168 can be individually promoted to an error via /warnaserror+:.
             // This doesn't work correctly currently - promoting compiler warning CS0168 to an error causes us to no longer report any custom warning diagnostics as errors (Bug 998069).
             output = VerifyOutput(dir, file, additionalFlags: new[] { "/warnaserror+:CS0168" }, expectedWarningCount: 1, expectedErrorCount: 1);
-            Assert.Contains("a.cs(6,13): error CS0168: Warning as Error: The variable 'i' is declared but never used", output);
+            Assert.Contains("a.cs(6,13): error CS0168: The variable 'i' is declared but never used", output);
             Assert.Contains("warning CS8032", output);
 
             // TEST: Verify that diagnostic ids are processed in case-sensitive fashion inside /warnaserror.
@@ -6879,7 +6879,7 @@ class C
             // TEST: Verify that custom warning diagnostic Warning01 as well as compiler warning CS0168 can be promoted to errors via /warnaserror:.
             // This doesn't work currently - promoting CS0168 to an error causes us to no longer report any custom warning diagnostics as errors (Bug 998069).
             output = VerifyOutput(dir, file, additionalFlags: new[] { "/warnaserror:CS0168,Warning01" }, expectedWarningCount: 1, expectedErrorCount: 1);
-            Assert.Contains("a.cs(6,13): error CS0168: Warning as Error: The variable 'i' is declared but never used", output);
+            Assert.Contains("a.cs(6,13): error CS0168: The variable 'i' is declared but never used", output);
             Assert.Contains("warning CS8032", output);
 
             // TEST: Verify that /warn:0 overrides /warnaserror+.
@@ -6940,7 +6940,7 @@ class C
 
             // TEST: Verify that last /warnaserror[+/-] flag on command line wins.
             output = VerifyOutput(dir, file, additionalFlags: new[] { "/warnaserror-", "/warnaserror+" }, expectedWarningCount: 1, expectedErrorCount: 1);
-            Assert.Contains("a.cs(6,13): error CS0168: Warning as Error: The variable 'i' is declared but never used", output);
+            Assert.Contains("a.cs(6,13): error CS0168: The variable 'i' is declared but never used", output);
             Assert.Contains("warning CS8032", output);
 
             // TEST: Verify that last /warnaserror[+/-] flag on command line wins.
@@ -6951,7 +6951,7 @@ class C
 
             // TEST: Verify that last /warnaserror[+/-]: flag on command line wins.
             output = VerifyOutput(dir, file, additionalFlags: new[] { "/warnaserror-:Warning01", "/warnaserror+:Warning01" }, expectedWarningCount: 2, expectedErrorCount: 1);
-            Assert.Contains("a.cs(2,7): error Warning01: Warning as Error: Throwing a diagnostic for types declared", output);
+            Assert.Contains("a.cs(2,7): error Warning01: Throwing a diagnostic for types declared", output);
             Assert.Contains("a.cs(6,13): warning CS0168: The variable 'i' is declared but never used", output);
             Assert.Contains("warning CS8032", output);
 
@@ -6963,7 +6963,7 @@ class C
 
             // TEST: Verify that last one wins between /warnaserror[+/-]: and /warnaserror[+/-].
             output = VerifyOutput(dir, file, additionalFlags: new[] { "/warnaserror-:Warning01,CS0168,58000", "/warnaserror+" }, expectedWarningCount: 1, expectedErrorCount: 1);
-            Assert.Contains("a.cs(6,13): error CS0168: Warning as Error: The variable 'i' is declared but never used", output);
+            Assert.Contains("a.cs(6,13): error CS0168: The variable 'i' is declared but never used", output);
             Assert.Contains("warning CS8032", output);
 
             // TEST: Verify that last one wins between /warnaserror[+/-] and /warnaserror[+/-]:.
@@ -6980,18 +6980,18 @@ class C
 
             // TEST: Verify that last one wins between /warnaserror[+/-] and /warnaserror[+/-]:.
             output = VerifyOutput(dir, file, additionalFlags: new[] { "/warnaserror-", "/warnaserror+:Warning01" }, expectedWarningCount: 2, expectedErrorCount: 1);
-            Assert.Contains("a.cs(2,7): error Warning01: Warning as Error: Throwing a diagnostic for types declared", output);
+            Assert.Contains("a.cs(2,7): error Warning01: Throwing a diagnostic for types declared", output);
             Assert.Contains("a.cs(6,13): warning CS0168: The variable 'i' is declared but never used", output);
             Assert.Contains("warning CS8032", output);
 
             // TEST: Verify that last one wins between /warnaserror[+/-]: and /warnaserror[+/-].
             output = VerifyOutput(dir, file, additionalFlags: new[] { "/warnaserror:Warning01,CS0168,58000", "/warnaserror+" }, expectedWarningCount: 1, expectedErrorCount: 1);
-            Assert.Contains("a.cs(6,13): error CS0168: Warning as Error: The variable 'i' is declared but never used", output);
+            Assert.Contains("a.cs(6,13): error CS0168: The variable 'i' is declared but never used", output);
             Assert.Contains("warning CS8032", output);
 
             // TEST: Verify that last one wins between /warnaserror[+/-] and /warnaserror[+/-]:.
             output = VerifyOutput(dir, file, additionalFlags: new[] { "/warnaserror", "/warnaserror+:Warning01,CS0168,58000" }, expectedWarningCount: 1, expectedErrorCount: 1);
-            Assert.Contains("a.cs(6,13): error CS0168: Warning as Error: The variable 'i' is declared but never used", output);
+            Assert.Contains("a.cs(6,13): error CS0168: The variable 'i' is declared but never used", output);
             Assert.Contains("warning CS8032", output);
 
             // TEST: Verify that last one wins between /warnaserror[+/-]: and /warnaserror[+/-].
@@ -7204,14 +7204,19 @@ public class C
     }
 
     [DiagnosticAnalyzer]
-    abstract class CompilationStartedAnalyzer : ICompilationNestedAnalyzerFactory
+    abstract class CompilationStartedAnalyzer : DiagnosticAnalyzer
     {
-        public abstract ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; }
-        public abstract IDiagnosticAnalyzer CreateAnalyzerWithinCompilation(Compilation compilation, AnalyzerOptions options, CancellationToken cancellationToken);
+        public override abstract ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; }
+        public abstract void CreateAnalyzerWithinCompilation(CompilationStartAnalysisContext context);
+
+        public override void Initialize(AnalysisContext context)
+        {
+            context.RegisterCompilationStartAction(CreateAnalyzerWithinCompilation);
+        }
     }
 
     [DiagnosticAnalyzer]
-    class HiddenDiagnosticAnalyzer : CompilationStartedAnalyzer, ISyntaxNodeAnalyzer<SyntaxKind>
+    class HiddenDiagnosticAnalyzer : CompilationStartedAnalyzer
     {
         internal static readonly DiagnosticDescriptor Hidden01 = new DiagnosticDescriptor("Hidden01", "", "Throwing a diagnostic for #region", "", DiagnosticSeverity.Hidden, isEnabledByDefault: true);
         internal static readonly DiagnosticDescriptor Hidden02 = new DiagnosticDescriptor("Hidden02", "", "Throwing a diagnostic for something else", "", DiagnosticSeverity.Hidden, isEnabledByDefault: true);
@@ -7224,31 +7229,19 @@ public class C
             }
         }
 
-        public ImmutableArray<SyntaxKind> SyntaxKindsOfInterest
+        private void AnalyzeNode(SyntaxNodeAnalysisContext context)
         {
-            get
-            {
-                return ImmutableArray.Create(SyntaxKind.RegionDirectiveTrivia);
-            }
+            context.ReportDiagnostic(Diagnostic.Create(Hidden01, context.Node.GetLocation()));
         }
 
-        public void AnalyzeNode(SyntaxNode node, SemanticModel semanticModel, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
+        public override void CreateAnalyzerWithinCompilation(CompilationStartAnalysisContext context)
         {
-            addDiagnostic(Diagnostic.Create(Hidden01, node.GetLocation()));
-        }
-
-        public override IDiagnosticAnalyzer CreateAnalyzerWithinCompilation(Compilation compilation, AnalyzerOptions options, CancellationToken cancellationToken)
-        {
-            return null;
-        }
-
-        public void OnAnalysisCompleted(Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken)
-        {
+            context.RegisterSyntaxNodeAction(AnalyzeNode, SyntaxKind.RegionDirectiveTrivia);
         }
     }
 
     [DiagnosticAnalyzer]
-    class InfoDiagnosticAnalyzer : CompilationStartedAnalyzer, ISyntaxNodeAnalyzer<SyntaxKind>
+    class InfoDiagnosticAnalyzer : CompilationStartedAnalyzer
     {
         internal static readonly DiagnosticDescriptor Info01 = new DiagnosticDescriptor("Info01", "", "Throwing a diagnostic for #pragma restore", "", DiagnosticSeverity.Info, isEnabledByDefault: true);
 
@@ -7260,44 +7253,24 @@ public class C
             }
         }
 
-        public ImmutableArray<SyntaxKind> SyntaxKindsOfInterest
+        private void AnalyzeNode(SyntaxNodeAnalysisContext context)
         {
-            get
+            if ((context.Node as PragmaWarningDirectiveTriviaSyntax).DisableOrRestoreKeyword.IsKind(SyntaxKind.RestoreKeyword))
             {
-                return ImmutableArray.Create(SyntaxKind.PragmaWarningDirectiveTrivia);
+                context.ReportDiagnostic(Diagnostic.Create(Info01, context.Node.GetLocation()));
             }
         }
 
-        public void AnalyzeNode(SyntaxNode node, SemanticModel semanticModel, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
+        public override void CreateAnalyzerWithinCompilation(CompilationStartAnalysisContext context)
         {
-            if ((node as PragmaWarningDirectiveTriviaSyntax).DisableOrRestoreKeyword.IsKind(SyntaxKind.RestoreKeyword))
-            {
-                addDiagnostic(Diagnostic.Create(Info01, node.GetLocation()));
-            }
-        }
-
-        public override IDiagnosticAnalyzer CreateAnalyzerWithinCompilation(Compilation compilation, AnalyzerOptions options, CancellationToken cancellationToken)
-        {
-            return null;
-        }
-
-        public void OnAnalysisCompleted(Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken)
-        {
+            context.RegisterSyntaxNodeAction(AnalyzeNode, SyntaxKind.PragmaWarningDirectiveTrivia);
         }
     }
 
     [DiagnosticAnalyzer]
-    class WarningDiagnosticAnalyzer : CompilationStartedAnalyzer, ISymbolAnalyzer
+    class WarningDiagnosticAnalyzer : CompilationStartedAnalyzer
     {
         internal static readonly DiagnosticDescriptor Warning01 = new DiagnosticDescriptor("Warning01", "", "Throwing a diagnostic for types declared", "", DiagnosticSeverity.Warning, isEnabledByDefault: true);
-
-        public ImmutableArray<SymbolKind> SymbolKindsOfInterest
-        {
-            get
-            {
-                return ImmutableArray.Create(SymbolKind.NamedType);
-            }
-        }
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
         {
@@ -7307,23 +7280,19 @@ public class C
             }
         }
 
-        public override IDiagnosticAnalyzer CreateAnalyzerWithinCompilation(Compilation compilation, AnalyzerOptions options, CancellationToken cancellationToken)
+        public override void CreateAnalyzerWithinCompilation(CompilationStartAnalysisContext context)
         {
-            return null;
-        }
-
-        public void OnAnalysisCompleted(Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken)
-        {
-        }
-
-        public void AnalyzeSymbol(ISymbol symbol, Compilation compilation, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
-        {
-            addDiagnostic(Diagnostic.Create(Warning01, symbol.Locations.First()));
+            context.RegisterSymbolAction(
+                (symbolContext) =>
+                {
+                    symbolContext.ReportDiagnostic(Diagnostic.Create(Warning01, symbolContext.Symbol.Locations.First()));
+                },
+                SymbolKind.NamedType);
         }
     }
 
     [DiagnosticAnalyzer]
-    class ErrorDiagnosticAnalyzer : CompilationStartedAnalyzer, ISyntaxNodeAnalyzer<SyntaxKind>
+    class ErrorDiagnosticAnalyzer : CompilationStartedAnalyzer
     {
         internal static readonly DiagnosticDescriptor Error01 = new DiagnosticDescriptor("Error01", "", "Throwing a diagnostic for #pragma disable", "", DiagnosticSeverity.Error, isEnabledByDefault: true);
         internal static readonly DiagnosticDescriptor Error02 = new DiagnosticDescriptor("Error02", "", "Throwing a diagnostic for something else", "", DiagnosticSeverity.Error, isEnabledByDefault: true);
@@ -7336,29 +7305,19 @@ public class C
             }
         }
 
-        public ImmutableArray<SyntaxKind> SyntaxKindsOfInterest
+        public override void CreateAnalyzerWithinCompilation(CompilationStartAnalysisContext context)
         {
-            get
-            {
-                return ImmutableArray.Create(SyntaxKind.PragmaWarningDirectiveTrivia);
-            }
+            context.RegisterSyntaxNodeAction(
+                (nodeContext) =>
+                {
+                    if ((nodeContext.Node as PragmaWarningDirectiveTriviaSyntax).DisableOrRestoreKeyword.IsKind(SyntaxKind.DisableKeyword))
+                    {
+                        nodeContext.ReportDiagnostic(Diagnostic.Create(Error01, nodeContext.Node.GetLocation()));
+                    }
+                },
+                SyntaxKind.PragmaWarningDirectiveTrivia
+                );
         }
 
-        public void AnalyzeNode(SyntaxNode node, SemanticModel semanticModel, Action<Diagnostic> addDiagnostic, AnalyzerOptions options, CancellationToken cancellationToken)
-        {
-            if ((node as PragmaWarningDirectiveTriviaSyntax).DisableOrRestoreKeyword.IsKind(SyntaxKind.DisableKeyword))
-            {
-                addDiagnostic(Diagnostic.Create(Error01, node.GetLocation()));
-            }
-        }
-
-        public override IDiagnosticAnalyzer CreateAnalyzerWithinCompilation(Compilation compilation, AnalyzerOptions options, CancellationToken cancellationToken)
-        {
-            return null;
-        }
-
-        public void OnAnalysisCompleted(Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken)
-        {
-        }
     }
 }

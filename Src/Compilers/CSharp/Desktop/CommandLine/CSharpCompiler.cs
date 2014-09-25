@@ -279,8 +279,8 @@ namespace Microsoft.CodeAnalysis.CSharp
         protected override void PrintLogo(TextWriter consoleOutput)
         {
             Assembly thisAssembly = GetType().Assembly;
-            consoleOutput.WriteLine(CSharpResources.LogoLine1, FileVersionInfo.GetVersionInfo(thisAssembly.Location).FileVersion);
-            consoleOutput.WriteLine(CSharpResources.LogoLine2);
+            consoleOutput.WriteLine(ErrorFacts.GetMessage(MessageID.IDS_LogoLine1, Culture), FileVersionInfo.GetVersionInfo(thisAssembly.Location).FileVersion);
+            consoleOutput.WriteLine(ErrorFacts.GetMessage(MessageID.IDS_LogoLine2, Culture));
             consoleOutput.WriteLine();
         }
 
@@ -290,7 +290,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <param name="consoleOutput"></param>
         protected override void PrintHelp(TextWriter consoleOutput)
         {
-            consoleOutput.WriteLine(CSharpResources.CSCHelp);
+            consoleOutput.WriteLine(ErrorFacts.GetMessage(MessageID.IDS_CSCHelp, Culture));
         }
 
         protected override bool TryGetCompilerDiagnosticCode(string diagnosticId, out uint code)
@@ -298,7 +298,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             return CommonCompiler.TryGetCompilerDiagnosticCode(diagnosticId, "CS", out code);
         }
 
-        protected override ImmutableArray<IDiagnosticAnalyzer> ResolveAnalyzersFromArguments(List<DiagnosticInfo> diagnostics, CommonMessageProvider messageProvider, TouchedFileLogger touchedFiles)
+        protected override ImmutableArray<DiagnosticAnalyzer> ResolveAnalyzersFromArguments(List<DiagnosticInfo> diagnostics, CommonMessageProvider messageProvider, TouchedFileLogger touchedFiles)
         {
             return Arguments.ResolveAnalyzersFromArguments(LanguageNames.CSharp, diagnostics, messageProvider, touchedFiles);
         }

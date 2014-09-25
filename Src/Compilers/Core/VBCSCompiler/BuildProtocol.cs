@@ -281,7 +281,6 @@ namespace Microsoft.CodeAnalysis.CompilerServer
 
         protected abstract void AddResponseBody(BinaryWriter writer);
 
-
         /// <summary>
         /// May throw exceptions if there are pipe problems.
         /// </summary>
@@ -338,12 +337,17 @@ namespace Microsoft.CodeAnalysis.CompilerServer
     internal class CompletedBuildResponse : BuildResponse
     {
         public readonly int ReturnCode;
+        public readonly bool Utf8Output;
         public readonly string Output;
         public readonly string ErrorOutput;
 
-        public CompletedBuildResponse(int returnCode, string output, string errorOutput)
+        public CompletedBuildResponse(int returnCode,
+                                      bool utf8output,
+                                      string output,
+                                      string errorOutput)
         {
             this.ReturnCode = returnCode;
+            this.Utf8Output = utf8output;
             this.Output = output;
             this.ErrorOutput = errorOutput;
         }
@@ -353,15 +357,17 @@ namespace Microsoft.CodeAnalysis.CompilerServer
         public static CompletedBuildResponse Create(BinaryReader reader)
         {
             var returnCode = reader.ReadInt32();
+            var utf8Output = reader.ReadBoolean();
             var output = BuildProtocolConstants.ReadLengthPrefixedString(reader);
             var errorOutput = BuildProtocolConstants.ReadLengthPrefixedString(reader);
 
-            return new CompletedBuildResponse(returnCode, output, errorOutput);
+            return new CompletedBuildResponse(returnCode, utf8Output, output, errorOutput);
         }
 
         protected override void AddResponseBody(BinaryWriter writer)
         {
             writer.Write(this.ReturnCode);
+            writer.Write(this.Utf8Output);
             BuildProtocolConstants.WriteLengthPrefixedString(writer, this.Output);
             BuildProtocolConstants.WriteLengthPrefixedString(writer, this.ErrorOutput);
         }
@@ -406,19 +412,21 @@ namespace Microsoft.CodeAnalysis.CompilerServer
         // that won't occur accidentally for debugging.
         public enum RequestLanguage
         {
-            RequestId_CSharpCompile = 0x44532521,
-            RequestId_VisualBasicCompile = 0x44532522,
+            CSharpCompile = 0x44532521,
+            VisualBasicCompile = 0x44532522,
         }
 
         // Arugments for CSharp and VB Compiler
         public enum ArgumentId
         {
             // The current directory of the client
-            ArgumentId_CurrentDirectory = 0x51147221,
+            CurrentDirectory = 0x51147221,
             // A comment line argument. The argument index indicates which one (0 .. N)
-            ArgumentId_CommandLineArgument = 0x51147222,
+            CommandLineArgument,
             // The "LIB" environment variable of the client
-            ArgumentId_LibEnvVariable = 0x51147223,
+            LibEnvVariable,
+            // Request a longer keep alive time for the server
+            KeepAlive
         }
 
         /// <summary>

@@ -957,8 +957,8 @@ End Class
                     generation0,
                     ImmutableArray.Create(New SemanticEdit(SemanticEditKind.Update, method0, method1, GetLocalMap(method1, method0), preserveLocalVariables:=True)))
                 diff1.EmitResult.Diagnostics.AssertTheseDiagnostics(<errors><![CDATA[
+BC37230: Cannot continue since the edit includes a reference to an embedded type: 'IA'.
 BC37230: Cannot continue since the edit includes a reference to an embedded type: 'IB'.
-BC37230: Cannot continue since the edit includes a reference to an embedded type: 'N.IA'.
      ]]></errors>)
                 diff1.VerifyIL("C(Of T).M", <![CDATA[
 {
@@ -4072,14 +4072,14 @@ End Module
 
         Private Shared Sub CheckNames(readers As MetadataReader(), [handles] As StringHandle(), ParamArray expectedNames As String())
             Dim actualNames = readers.GetStrings([handles])
-            AssertEx.Equal(actualNames, expectedNames)
+            AssertEx.Equal(expectedNames, actualNames)
         End Sub
 
         Private Shared Sub CheckNamesSorted(readers As MetadataReader(), [handles] As StringHandle(), ParamArray expectedNames As String())
             Dim actualNames = readers.GetStrings([handles])
             Array.Sort(actualNames)
             Array.Sort(expectedNames)
-            AssertEx.Equal(actualNames, expectedNames)
+            AssertEx.Equal(expectedNames, actualNames)
         End Sub
 
         Private Shared Function EncLogRowToString(row As EditAndContinueLogEntry) As String
