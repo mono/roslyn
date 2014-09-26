@@ -3,14 +3,14 @@ Roslyn
  
 Mono compatible copy of Roslyn Source Code
 
-The build requires master mono 9aed010782d9ea3ad18021bafcfedc89d27a1faf or newer
+The build requires master mono c5cf618a14711a2144b8a017ad0b61693253bd9c or newer
  
 C# compiler
 ============
 
 The compiler can be build using xbuild as `xbuild Src/Compilers/CSharp/csc/csc.csproj'
  
-Roslyn compiler is called rcsc.exe and when built with make it can be found in top level Binaries folder
+Roslyn compiler is called csc.exe and when built with make it can be found in top level Binaries folder
 
 Workspaces
 ===========
