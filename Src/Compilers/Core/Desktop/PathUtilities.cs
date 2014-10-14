@@ -9,8 +9,7 @@ namespace Roslyn.Utilities
 {
     internal static class PathUtilities
     {
-        private static readonly string DirectorySeparatorStr = Path.DirectorySeparatorChar.ToString();
-        internal static readonly char DirectorySeparatorChar = Path.DirectorySeparatorChar;
+        internal static readonly char DirectorySeparatorChar = '\\';
         internal const char AltDirectorySeparatorChar = '/';
         internal const char VolumeSeparatorChar = ':';
 
@@ -145,7 +144,7 @@ namespace Roslyn.Utilities
         /// </summary>
         private static bool IsDriveRootedAbsolutePath(string path)
         {
-            return (path.Length >= 3 && path[1] == VolumeSeparatorChar && IsDirectorySeparator(path[2])) || (path[0] == '/' && DirectorySeparatorChar == '/');
+            return (path.Length >= 3 && path[1] == VolumeSeparatorChar && IsDirectorySeparator(path[2])) || (path[0] == '/' /* && DirectorySeparatorChar == '/'*/);
         }
 
         /// <summary>
@@ -295,7 +294,7 @@ namespace Roslyn.Utilities
             char c = root[root.Length - 1];
             if (!IsDirectorySeparator(c) && c != VolumeSeparatorChar)
             {
-                return root + DirectorySeparatorStr + relativePath;
+                return Path.Combine(root, relativePath);
             }
 
             return root + relativePath;
