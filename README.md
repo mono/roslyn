@@ -14,7 +14,7 @@ There are a few steps to getting the C# compiler to build on Mono:
 ## Manual changes needed
 
 After succesfull package restore
-`packages/Microsoft.Net.ToolsetCompilers.0.7.4090503-beta/build/Microsoft.Net.ToolsetCompilers.props`
+`packages/Microsoft.Net.ToolsetCompilers.0.7.4100302-beta/build/Microsoft.Net.ToolsetCompilers.props`
 has to be replaced with
 
 ```xml
@@ -49,4 +49,4 @@ the top level `Binaries/Debug` directory.
 Workspaces
 ===========
 
-Use `xbuild Src/Workspaces/CSharp/CSharpWorkspace.csproj` to build the C# workspace.
+Use `xbuild Src/Workspaces/CSharp/Portable/CSharpWorkspace.csproj` to build the C# workspace.
