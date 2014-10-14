@@ -2,6 +2,7 @@
 
 Imports System.Collections.Immutable
 Imports System.Runtime.InteropServices
+Imports Microsoft.CodeAnalysis.CodeGen
 Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
@@ -40,7 +41,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' </summary>
         ''' <param name="node">The AddressOf expression node.</param>
         ''' <param name="diagnostics">The diagnostics.</param><returns></returns>
-        Private Function BindAddressOfExpression(node As VisualBasicSyntaxNode, diagnostics As DiagnosticBag) As BoundExpression
+        Private Function BindAddressOfExpression(node As VBSyntaxNode, diagnostics As DiagnosticBag) As BoundExpression
 
             Dim addressOfSyntax = DirectCast(node, UnaryExpressionSyntax)
             Dim boundOperand = BindExpression(addressOfSyntax.Operand, isInvocationOrAddressOf:=True, diagnostics:=diagnostics, isOperandOfConditionalBranch:=False, eventContext:=False)
@@ -81,7 +82,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Private Function BindDelegateCreationExpression(
             delegateType As TypeSymbol,
             argumentListOpt As ArgumentListSyntax,
-            node As VisualBasicSyntaxNode,
+            node As VBSyntaxNode,
             diagnostics As DiagnosticBag
         ) As BoundExpression
 
@@ -100,9 +101,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 ' a delegate creation expression does not care if what the name of a named argument
                 ' was. Just take whatever was passed.
                 If argumentSyntax.Kind = SyntaxKind.SimpleArgument Then
-                    expressionSyntax = DirectCast(argumentSyntax, SimpleArgumentSyntax).Expression
-                ElseIf argumentSyntax.Kind = SyntaxKind.NamedArgument Then
-                    expressionSyntax = DirectCast(argumentSyntax, NamedArgumentSyntax).Expression
+                    expressionSyntax = argumentSyntax.GetExpression()
                 End If
                 ' omitted argument will leave expressionSyntax as nothing which means no binding, which is fine.
 
@@ -166,9 +165,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim argumentSyntax = argumentListOpt.Arguments(argumentIndex)
 
                 If argumentSyntax.Kind = SyntaxKind.SimpleArgument Then
-                    expressionSyntax = DirectCast(argumentSyntax, SimpleArgumentSyntax).Expression
-                ElseIf argumentSyntax.Kind = SyntaxKind.NamedArgument Then
-                    expressionSyntax = DirectCast(argumentSyntax, NamedArgumentSyntax).Expression
+                    expressionSyntax = argumentSyntax.GetExpression()
                 End If
 
                 If expressionSyntax IsNot Nothing Then
@@ -295,7 +292,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     fromMethod.ContainingType.IsNullableType AndAlso
                     Not fromMethod.IsOverrides Then
 
-                    Dim addressOfSyntax As VisualBasicSyntaxNode = addressOfExpression.Syntax
+                    Dim addressOfSyntax As VBSyntaxNode = addressOfExpression.Syntax
                     Dim addressOfExpressionSyntax = DirectCast(addressOfExpression.Syntax, UnaryExpressionSyntax)
                     If (addressOfExpressionSyntax IsNot Nothing) Then
                         addressOfSyntax = addressOfExpressionSyntax.Operand
@@ -332,7 +329,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Friend Function ReportDelegateInvokeUseSiteError(
             diagBag As DiagnosticBag,
-            syntax As VisualBasicSyntaxNode,
+            syntax As VBSyntaxNode,
             delegateType As TypeSymbol,
             invoke As MethodSymbol
         ) As Boolean
@@ -450,7 +447,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     syntaxTree = addressOfExpression.Binder.SyntaxTree
                     For Each parameter In toMethodParameters
                         Dim parameterType = parameter.Type
-                        Dim tempParamSymbol = New SynthesizedLocal(toMethod, parameterType, SynthesizedLocalKind.None)
+                        Dim tempParamSymbol = New SynthesizedLocal(toMethod, parameterType, SynthesizedLocalKind.LoweringTemp)
                         ' TODO: Switch to using BoundValuePlaceholder, but we need it to be able to appear
                         ' as an LValue in case of a ByRef parameter.
                         Dim tempBoundParameter As BoundExpression = New BoundLocal(addressOfSyntax,
@@ -711,7 +708,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Private Sub ReportDelegateBindingMismatchStrictOff(
-            syntax As VisualBasicSyntaxNode,
+            syntax As VBSyntaxNode,
             delegateType As NamedTypeSymbol,
             targetMethodSymbol As MethodSymbol,
             diagnostics As DiagnosticBag
@@ -735,7 +732,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Sub
 
         Private Sub ReportDelegateBindingIncompatible(
-            syntax As VisualBasicSyntaxNode,
+            syntax As VBSyntaxNode,
             delegateType As NamedTypeSymbol,
             targetMethodSymbol As MethodSymbol,
             diagnostics As DiagnosticBag
@@ -1053,8 +1050,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Private Function BuildDelegateRelaxationLambda(
-            syntaxNode As VisualBasicSyntaxNode,
-            methodGroupSyntax As VisualBasicSyntaxNode,
+            syntaxNode As VBSyntaxNode,
+            methodGroupSyntax As VBSyntaxNode,
             receiver As BoundExpression,
             targetMethod As MethodSymbol,
             typeArgumentsOpt As BoundTypeArguments,
@@ -1127,7 +1124,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' <param name="delegateRelaxation">Delegate relaxation to store withing the new BoundLambda node.</param>
         ''' <param name="diagnostics"></param>
         Private Function BuildDelegateRelaxationLambda(
-            syntaxNode As VisualBasicSyntaxNode,
+            syntaxNode As VBSyntaxNode,
             delegateInvoke As MethodSymbol,
             methodGroup As BoundMethodGroup,
             delegateRelaxation As ConversionKind,

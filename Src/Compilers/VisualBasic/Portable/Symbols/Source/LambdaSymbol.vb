@@ -46,7 +46,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' </summary>
         Friend Shared ReadOnly ErrorRecoveryInferenceError As TypeSymbol = New ErrorTypeSymbol()
 
-        Private ReadOnly m_SyntaxNode As VisualBasicSyntaxNode
+        Private ReadOnly m_SyntaxNode As VBSyntaxNode
         Private ReadOnly m_UnboundLambdaOpt As UnboundLambda
         Private ReadOnly m_Parameters As ImmutableArray(Of ParameterSymbol)
 
@@ -63,7 +63,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         Private m_lazyAnonymousDelegateSymbol As NamedTypeSymbol = ErrorTypeSymbol.UnknownResultType
 
         Public Sub New(
-            syntaxNode As VisualBasicSyntaxNode,
+            syntaxNode As VBSyntaxNode,
             unboundLambdaOpt As UnboundLambda,
             parameters As ImmutableArray(Of BoundLambdaParameterSymbol),
             returnType As TypeSymbol,
@@ -154,7 +154,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         Friend Overrides ReadOnly Property CallingConvention As Microsoft.Cci.CallingConvention
             Get
-                Return Microsoft.Cci.CallingConvention.Default
+                Return Cci.CallingConvention.Default
             End Get
         End Property
 
@@ -307,13 +307,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         Public Overrides ReadOnly Property Locations As ImmutableArray(Of Location)
             Get
-                Return ImmutableArray.Create(Of Location)(m_SyntaxNode.GetLocation())
+                Return ImmutableArray.Create(m_SyntaxNode.GetLocation())
             End Get
         End Property
 
         Public Overrides ReadOnly Property DeclaringSyntaxReferences As ImmutableArray(Of SyntaxReference)
             Get
-                Return ImmutableArray.Create(Of SyntaxReference)(m_SyntaxNode.GetReference())
+                Return ImmutableArray.Create(m_SyntaxNode.GetReference())
             End Get
         End Property
 
@@ -353,7 +353,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend Overrides ReadOnly Property Syntax As VisualBasicSyntaxNode
+        Friend Overrides ReadOnly Property Syntax As VBSyntaxNode
             Get
                 Return m_SyntaxNode
             End Get
@@ -405,11 +405,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
     End Class
 
-    Friend Class QueryLambdaSymbol
+    Friend NotInheritable Class QueryLambdaSymbol
         Inherits SynthesizedLambdaSymbol
 
         Public Sub New(
-            syntaxNode As VisualBasicSyntaxNode,
+            syntaxNode As VBSyntaxNode,
             parameters As ImmutableArray(Of BoundLambdaParameterSymbol),
             binder As Binder
         )

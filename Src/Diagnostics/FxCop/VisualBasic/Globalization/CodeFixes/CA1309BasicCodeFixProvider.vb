@@ -1,5 +1,6 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+Imports System.Composition
 Imports System.Threading
 Imports Microsoft.CodeAnalysis
 Imports Microsoft.CodeAnalysis.CodeFixes
@@ -11,28 +12,30 @@ Imports Microsoft.CodeAnalysis.VisualBasic
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.FxCopAnalyzers.Globalization
-    <ExportCodeFixProvider(CA1309DiagnosticAnalyzer.RuleId, LanguageNames.VisualBasic)>
+    <ExportCodeFixProvider(CA1309DiagnosticAnalyzer.RuleId, LanguageNames.VisualBasic), [Shared]>
     Public Class CA1309BasicCodeFixProvider
         Inherits CA1309CodeFixProviderBase
 
         Friend Overrides Function GetUpdatedDocumentAsync(document As Document, model As SemanticModel, root As SyntaxNode, nodeToFix As SyntaxNode, diagnosticId As String, cancellationToken As CancellationToken) As Task(Of Document)
             ' if nothing can be fixed, return the unchanged node
             Dim newRoot = root
-            Dim kind = nodeToFix.VisualBasicKind()
+            Dim kind = nodeToFix.VBKind()
             Dim syntaxFactoryService = document.GetLanguageService(Of SyntaxGenerator)
             Select Case kind
                 Case SyntaxKind.SimpleArgument
-                    ' StringComparison.CurrentCulture => StringComparison.Ordinal
-                    ' StringComparison.CurrentCultureIgnoreCase => StringComparison.OrdinalIgnoreCase
-                    Dim argument = CType(nodeToFix, SimpleArgumentSyntax)
-                    Dim memberAccess = TryCast(argument.Expression, MemberAccessExpressionSyntax)
-                    If memberAccess IsNot Nothing Then
-                        ' preserve the "IgnoreCase" suffix if present
-                        Dim isIgnoreCase = memberAccess.Name.GetText().ToString().EndsWith(CA1309DiagnosticAnalyzer.IgnoreCaseText)
-                        Dim newOrdinalText = If(isIgnoreCase, CA1309DiagnosticAnalyzer.OrdinalIgnoreCaseText, CA1309DiagnosticAnalyzer.OrdinalText)
-                        Dim newIdentifier = syntaxFactoryService.IdentifierName(newOrdinalText)
-                        Dim newMemberAccess = memberAccess.WithName(CType(newIdentifier, SimpleNameSyntax)).WithAdditionalAnnotations(Formatter.Annotation)
-                        newRoot = root.ReplaceNode(memberAccess, newMemberAccess)
+                    If Not CType(nodeToFix, SimpleArgumentSyntax).IsNamed Then
+                        ' StringComparison.CurrentCulture => StringComparison.Ordinal
+                        ' StringComparison.CurrentCultureIgnoreCase => StringComparison.OrdinalIgnoreCase
+                        Dim argument = CType(nodeToFix, SimpleArgumentSyntax)
+                        Dim memberAccess = TryCast(argument.Expression, MemberAccessExpressionSyntax)
+                        If memberAccess IsNot Nothing Then
+                            ' preserve the "IgnoreCase" suffix if present
+                            Dim isIgnoreCase = memberAccess.Name.GetText().ToString().EndsWith(CA1309DiagnosticAnalyzer.IgnoreCaseText)
+                            Dim newOrdinalText = If(isIgnoreCase, CA1309DiagnosticAnalyzer.OrdinalIgnoreCaseText, CA1309DiagnosticAnalyzer.OrdinalText)
+                            Dim newIdentifier = syntaxFactoryService.IdentifierName(newOrdinalText)
+                            Dim newMemberAccess = memberAccess.WithName(CType(newIdentifier, SimpleNameSyntax)).WithAdditionalAnnotations(Formatter.Annotation)
+                            newRoot = root.ReplaceNode(memberAccess, newMemberAccess)
+                        End If
                     End If
                 Case SyntaxKind.IdentifierName
                     ' String.Equals(a, b) => String.Equals(a, b, StringComparison.Ordinal)

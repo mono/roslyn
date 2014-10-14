@@ -109,7 +109,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 locals = ImmutableArray.Create(Of LocalSymbol)(tempLockObjectLocal, boundLockTakenLocal.LocalSymbol)
                 statements.Add(tempLockTakenAssignment)
                 tryStatements = ImmutableArray.Create(Of BoundStatement)(boundMonitorEnterCallStatement,
-                                                                            DirectCast(Visit(node.Body), BoundBlock))
+                                                      DirectCast(Visit(node.Body), BoundBlock))
             Else
                 locals = ImmutableArray.Create(tempLockObjectLocal)
                 statements.Add(boundMonitorEnterCallStatement)
@@ -155,7 +155,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Private Function GenerateMonitorEnter(
-            syntaxNode As VisualBasicSyntaxNode,
+            syntaxNode As VBSyntaxNode,
             boundLockObject As BoundExpression,
             <Out> ByRef boundLockTakenLocal As BoundLocal,
             <Out> ByRef boundLockTakenInitialization As BoundStatement
@@ -218,7 +218,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Private Function GenerateMonitorExit(
-            syntaxNode As VisualBasicSyntaxNode,
+            syntaxNode As VBSyntaxNode,
             boundLockObject As BoundExpression,
             boundLockTakenLocal As BoundLocal
         ) As BoundStatement

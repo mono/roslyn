@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.UnitTests;
 using Microsoft.CodeAnalysis.Emit;
@@ -53,12 +54,12 @@ class C
             var c1 = CreateCompilation(src1, references);
             var c2 = CreateCompilation(src2, references);
             var md1 = AssemblyMetadata.CreateFromStream(c1.EmitToStream());
-            var baseline = EmitBaseline.CreateInitialBaseline(md1.GetModules()[0], handle => ImmutableArray.Create<string>());
-
+            var baseline = EmitBaseline.CreateInitialBaseline(md1.GetModules()[0], handle => default(EditAndContinueMethodDebugInformation));
+            
             var mdStream = new MemoryStream();
             var ilStream = new MemoryStream();
             var pdbStream = new MemoryStream();
-            var updatedMethodTokens = new List<uint>();
+            var updatedMethods = new List<MethodHandle>();
 
             c2.EmitDifference(baseline, new[]
             {
@@ -66,7 +67,7 @@ class C
                     SemanticEditKind.Update,
                     c1.GlobalNamespace.GetMember<NamedTypeSymbol>("C").GetMember("Main"),
                     c2.GlobalNamespace.GetMember<NamedTypeSymbol>("C").GetMember("Main"))
-            }, mdStream, ilStream, pdbStream, updatedMethodTokens);
+            }, mdStream, ilStream, pdbStream, updatedMethods);
 
             var actualIL = ilStream.ToArray().GetMethodIL();
             var expectedIL = @"
@@ -122,12 +123,12 @@ class C
 
             var c1 = CreateCompilation(src1, new[] { MscorlibRef });
             var c2 = CreateCompilation(src2, new[] { MscorlibRef });
-            var baseline = EmitBaseline.CreateInitialBaseline(md1.GetModules()[0], handle => ImmutableArray.Create<string>());
+            var baseline = EmitBaseline.CreateInitialBaseline(md1.GetModules()[0], handle => default(EditAndContinueMethodDebugInformation));
 
             var mdStream = new MemoryStream();
             var ilStream = new MemoryStream();
             var pdbStream = new MemoryStream();
-            var updatedMethodTokens = new List<uint>();
+            var updatedMethods = new List<MethodHandle>();
 
             c2.EmitDifference(baseline, new[]
             {
@@ -135,7 +136,7 @@ class C
                     SemanticEditKind.Update,
                     c1.GlobalNamespace.GetMember<NamedTypeSymbol>("C").GetMember("Main"),
                     c2.GlobalNamespace.GetMember<NamedTypeSymbol>("C").GetMember("Main"))
-            }, mdStream, ilStream, pdbStream, updatedMethodTokens);
+            }, mdStream, ilStream, pdbStream, updatedMethods);
 
             var actualIL = ilStream.ToArray().GetMethodIL();
 

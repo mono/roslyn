@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Roslyn.Test.Utilities;
 using Xunit;
@@ -287,7 +288,7 @@ class C
     public static void Main() {}
 }
 ");
-            var verifier = CompileAndVerify(compilation, emitOptions: EmitOptions.RefEmitUnsupported_640494);
+            var verifier = CompileAndVerify(compilation, emitOptions: TestEmitters.RefEmitUnsupported_640494);
             verifier.VerifyIL("XAttribute..ctor(int)", @"{
   // Code size        7 (0x7)
   .maxstack  1
@@ -1422,7 +1423,7 @@ namespace AttributeTest
             // Verify attributes from source and then load metadata to see attributes are written correctly.
             var compVerifier = CompileAndVerify(
                 source,
-                emitOptions: EmitOptions.CCI,
+                emitOptions: TestEmitters.CCI,
                 sourceSymbolValidator: attributeValidator,
                 symbolValidator: attributeValidator,
                 expectedOutput: "True\r\n",
@@ -1555,7 +1556,7 @@ namespace AttributeTest
             };
 
             // Verify attributes from source and then load metadata to see attributes are written correctly.
-            CompileAndVerify(compilation, emitOptions: EmitOptions.RefEmitUnsupported_640494, sourceSymbolValidator: attributeValidator, symbolValidator: null);
+            CompileAndVerify(compilation, emitOptions: TestEmitters.RefEmitUnsupported_640494, sourceSymbolValidator: attributeValidator, symbolValidator: null);
         }
 
         [WorkItem(541058, "DevDiv")]
@@ -1826,7 +1827,7 @@ namespace AttributeTest
             };
 
             // Verify attributes from source and then load metadata to see attributes are written correctly.
-            CompileAndVerify(compilation, emitOptions: EmitOptions.RefEmitUnsupported_640494, sourceSymbolValidator: attributeValidator, symbolValidator: null);
+            CompileAndVerify(compilation, emitOptions: TestEmitters.RefEmitUnsupported_640494, sourceSymbolValidator: attributeValidator, symbolValidator: null);
         }
 
         [WorkItem(541709, "DevDiv")]
@@ -1976,7 +1977,7 @@ namespace AttributeTest
             };
 
             // Verify attributes from source and then load metadata to see attributes are written correctly.
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitUnsupported_640494, sourceSymbolValidator: attributeValidator, symbolValidator: null);
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitUnsupported_640494, sourceSymbolValidator: attributeValidator, symbolValidator: null);
         }
 
         [Fact]
@@ -2347,7 +2348,7 @@ public class A : Attribute
     }
 }
 ";
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitUnsupported_646007, expectedOutput: "int");
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitUnsupported_646007, expectedOutput: "int");
         }
 
         [WorkItem(541876, "DevDiv")]
@@ -2499,7 +2500,7 @@ class Program
         {
             var metadataStream1 = CSharpCompilation.Create("bar.dll",
                 references: new[] { MscorlibRef },
-                syntaxTrees: new[] { Parse("public enum Bar { Baz }") }).EmitToStream(metadataOnly: true);
+                syntaxTrees: new[] { Parse("public enum Bar { Baz }") }).EmitToStream(options: new EmitOptions(metadataOnly: true));
 
             var ref1 = MetadataReference.CreateFromStream(metadataStream1);
 
@@ -2508,7 +2509,7 @@ class Program
                     SyntaxFactory.ParseSyntaxTree(
                         "public class Ca : System.Attribute { public Ca(object o) { } } " +
                         "[Ca(Bar.Baz)]" +
-                        "public class Foo { }") }).EmitToStream(metadataOnly: true);
+                        "public class Foo { }") }).EmitToStream(options: new EmitOptions(metadataOnly: true));
 
             var ref2 = MetadataReference.CreateFromStream(metadataStream2);
 
@@ -3171,7 +3172,7 @@ class C
         Console.WriteLine(message == UnicodeReplacementCharacter + UnicodeReplacementCharacter);
     }
 }";
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitBug, expectedOutput: "True");
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitBug, expectedOutput: "True");
         }
 
         [WorkItem(546621, "DevDiv")]
@@ -3293,7 +3294,7 @@ public class C
                                         UnicodeReplacementCharacter + UnicodeReplacementCharacter + UnicodeReplacementCharacter + UnicodeReplacementCharacter);
             };
 
-            CompileAndVerify(source, emitOptions: EmitOptions.CCI, sourceSymbolValidator: validator(true), symbolValidator: validator(false));
+            CompileAndVerify(source, emitOptions: TestEmitters.CCI, sourceSymbolValidator: validator(true), symbolValidator: validator(false));
         }
 
         [Fact]
@@ -5717,7 +5718,7 @@ public class C<T>
     public enum E { V }
 }";
 
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitUnsupported_646014, expectedOutput: "");
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitUnsupported_646014, expectedOutput: "");
         }
 
         [WorkItem(544512, "DevDiv")]
@@ -5998,7 +5999,7 @@ class X: Attribute
 {
 }
 ";
-            CompileAndVerify(source5, emitOptions: EmitOptions.CCI, additionalRefs: new[] { comp1, comp2 });
+            CompileAndVerify(source5, emitOptions: TestEmitters.CCI, additionalRefs: new[] { comp1, comp2 });
 
             // Multiple from PE, multiple from Source
             var source6 = @"
@@ -6610,7 +6611,7 @@ namespace Microsoft.Yeti
 ";
 
             // TODO: refemit prints numeric values for the enum elements.
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitBug, expectedOutput: @"
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitBug, expectedOutput: @"
  - 5 -
  - 100 -
  - 100000 -

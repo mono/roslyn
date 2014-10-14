@@ -26,7 +26,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             End Get
         End Property
 
-        Friend Overrides Function CreateBlockSyntax(endStmt As StatementSyntax) As VisualBasicSyntaxNode
+        Friend Overrides Function CreateBlockSyntax(endStmt As StatementSyntax) As VBSyntaxNode
 
             Dim beginBlockStmt As PropertyStatementSyntax = Nothing
             Dim endBlockStmt As EndBlockStatementSyntax = DirectCast(endStmt, EndBlockStatementSyntax)
@@ -45,18 +45,18 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return SyntaxFactory.PropertyBlock(beginBlockStmt, accessors, endBlockStmt)
         End Function
 
-        Friend Overrides Function ProcessSyntax(node As VisualBasicSyntaxNode) As BlockContext
+        Friend Overrides Function ProcessSyntax(node As VBSyntaxNode) As BlockContext
 
             Select Case node.Kind
                 Case SyntaxKind.GetAccessorStatement
-                    Return New MethodBlockContext(SyntaxKind.PropertyGetBlock, DirectCast(node, StatementSyntax), Me)
+                    Return New MethodBlockContext(SyntaxKind.GetAccessorBlock, DirectCast(node, StatementSyntax), Me)
 
                 Case SyntaxKind.SetAccessorStatement
                     ' Checks for duplicate GET/SET are deferred to declared per Dev10 code
-                    Return New MethodBlockContext(SyntaxKind.PropertySetBlock, DirectCast(node, StatementSyntax), Me)
+                    Return New MethodBlockContext(SyntaxKind.SetAccessorBlock, DirectCast(node, StatementSyntax), Me)
 
-                Case SyntaxKind.PropertyGetBlock,
-                    SyntaxKind.PropertySetBlock
+                Case SyntaxKind.GetAccessorBlock,
+                    SyntaxKind.SetAccessorBlock
                     ' Handle any block created by this context
                     Add(node)
 
@@ -80,7 +80,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return Me
         End Function
 
-        Friend Overrides Function TryLinkSyntax(node As VisualBasicSyntaxNode, ByRef newContext As BlockContext) As LinkResult
+        Friend Overrides Function TryLinkSyntax(node As VBSyntaxNode, ByRef newContext As BlockContext) As LinkResult
             newContext = Nothing
 
             If KindEndsBlock(node.Kind) Then
@@ -94,8 +94,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     SyntaxKind.SetAccessorStatement
                     Return UseSyntax(node, newContext)
 
-                Case SyntaxKind.PropertyGetBlock,
-                    SyntaxKind.PropertySetBlock
+                Case SyntaxKind.GetAccessorBlock,
+                    SyntaxKind.SetAccessorBlock
                     Return UseSyntax(node, newContext, DirectCast(node, AccessorBlockSyntax).End.IsMissing)
 
                 Case Else

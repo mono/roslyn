@@ -86,17 +86,17 @@ namespace Microsoft.CodeAnalysis
         /// Resolves metadata references stored in command line arguments and reports errors for those that can't be resolved.
         /// </summary>
         internal List<MetadataReference> ResolveMetadataReferences(
-            MetadataReferenceResolver externalReferenceResolver,
-            MetadataReferenceProvider metadataProvider,
+            MetadataFileReferenceResolver externalReferenceResolver,
+            MetadataFileReferenceProvider metadataProvider,
             List<DiagnosticInfo> diagnostics,
             AssemblyIdentityComparer assemblyIdentityComparer,
             TouchedFileLogger touchedFiles,
-            out MetadataReferenceResolver referenceDirectiveResolver)
+            out MetadataFileReferenceResolver referenceDirectiveResolver)
         {
             using (Logger.LogBlock(FunctionId.Common_CommandLineCompiler_ResolveMetadataReferences))
             {
                 List<MetadataReference> resolved = new List<MetadataReference>();
-                Arguments.ResolveMetadataReferences(externalReferenceResolver, metadataProvider, diagnostics, this.MessageProvider, resolved);
+                Arguments.ResolveMetadataReferences(new AssemblyReferenceResolver(externalReferenceResolver, metadataProvider), diagnostics, this.MessageProvider, resolved);
 
                 if (Arguments.IsInteractive)
                 {
@@ -205,7 +205,7 @@ namespace Microsoft.CodeAnalysis
 
                 consoleOutput.WriteLine(DiagnosticFormatter.Format(diag, this.Culture));
 
-                if (diag.Severity == DiagnosticSeverity.Error || diag.IsWarningAsError)
+                if (diag.Severity == DiagnosticSeverity.Error)
                 {
                     hasErrors = true;
                 }
@@ -230,7 +230,7 @@ namespace Microsoft.CodeAnalysis
                     }
 
                     PrintError(diagnostic, consoleOutput);
-                    if (diagnostic.Severity == DiagnosticSeverity.Error || diagnostic.IsWarningAsError)
+                    if (diagnostic.Severity == DiagnosticSeverity.Error)
                     {
                         hasErrors = true;
                     }
@@ -287,7 +287,7 @@ namespace Microsoft.CodeAnalysis
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            var analyzerOptions = new AnalyzerOptions(Arguments.AdditionalStreams, Arguments.AdditionalOptions);
+            var analyzerOptions = new AnalyzerOptions(Arguments.AdditionalStreams, Arguments.AdditionalOptions, Culture);
 
             AnalyzerDriver analyzerDriver = null;
             if (!analyzers.IsDefaultOrEmpty)
@@ -393,7 +393,11 @@ namespace Microsoft.CodeAnalysis
                         finalPdbFilePath = Arguments.PdbPath ?? Path.ChangeExtension(finalOutputPath, ".pdb");
 
                         // NOTE: Unlike the PDB path, the XML doc path is not embedded in the assembly, so we don't need to pass it to emit.
-                        emitResult = compilation.Emit(output, outputName, finalPdbFilePath, pdb, xml, win32Res, Arguments.ManifestResources, cancellationToken);
+                        var emitOptions = Arguments.EmitOptions.
+                            WithOutputNameOverride(outputName).
+                            WithPdbFilePath(finalPdbFilePath);
+
+                        emitResult = compilation.Emit(output, pdb, xml, win32Res, Arguments.ManifestResources, emitOptions, cancellationToken);
                     }
                 }
 
@@ -521,14 +525,7 @@ namespace Microsoft.CodeAnalysis
                                     break;
 
                                 case DiagnosticSeverity.Warning:
-                                    if (diagnostic.IsWarningAsError)
-                                    {
-                                        sqm.AddItemToStream(sqmSession, SqmServiceProvider.DATAID_SQM_ROSLYN_ERRORNUMBERS, (uint)diagnostic.Code);
-                                    }
-                                    else
-                                    {
-                                        sqm.AddItemToStream(sqmSession, SqmServiceProvider.DATAID_SQM_ROSLYN_WARNINGNUMBERS, (uint)diagnostic.Code);
-                                    }
+                                    sqm.AddItemToStream(sqmSession, SqmServiceProvider.DATAID_SQM_ROSLYN_WARNINGNUMBERS, (uint)diagnostic.Code);
                                     break;
 
                                 case DiagnosticSeverity.Hidden:

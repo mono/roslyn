@@ -567,7 +567,7 @@ End Class
             Dim typeBlock = DirectCast(root.Members(1), TypeBlockSyntax)
             Dim methodBlock = DirectCast(typeBlock.Members(0), MethodBlockSyntax)
             Dim originalStatement = DirectCast(methodBlock.Statements(0), ExecutableStatementSyntax)
-            Dim originalExpression = originalStatement.DescendantNodes().Where(Function(syntax) syntax.VisualBasicKind = SyntaxKind.ObjectCreationExpression).FirstOrDefault()
+            Dim originalExpression = originalStatement.DescendantNodes().Where(Function(syntax) syntax.VBKind = SyntaxKind.ObjectCreationExpression).FirstOrDefault()
 
             Dim speculatedExpression = SyntaxFactory.ParseExpression("DirectCast(3, Integer)")
             Dim speculatedStatement = originalStatement.ReplaceNode(originalExpression, speculatedExpression)
@@ -632,7 +632,7 @@ End Class
             TestGetSpeculativeSemanticModelInFieldOrPropertyInitializer(compilation)
         End Sub
 
-        Private Sub TestGetSpeculativeSemanticModelInFieldOrPropertyInitializer(compilation As VisualBasicCompilation)
+        Private Sub TestGetSpeculativeSemanticModelInFieldOrPropertyInitializer(compilation As VBCompilation)
             Dim tree As SyntaxTree = (From t In compilation.SyntaxTrees Where t.FilePath = "a.vb").Single()
             Dim semanticModel = compilation.GetSemanticModel(tree)
             Dim position1 = CompilationUtils.FindPositionFromText(tree, "= 1")
@@ -684,7 +684,7 @@ End Class
             TestGetSpeculativeSemanticModelInEnumMemberDeclOrDefaultParameterValue(compilation)
         End Sub
 
-        Private Sub TestGetSpeculativeSemanticModelInEnumMemberDeclOrDefaultParameterValue(compilation As VisualBasicCompilation)
+        Private Sub TestGetSpeculativeSemanticModelInEnumMemberDeclOrDefaultParameterValue(compilation As VBCompilation)
             Dim tree As SyntaxTree = (From t In compilation.SyntaxTrees Where t.FilePath = "a.vb").Single()
             Dim semanticModel = compilation.GetSemanticModel(tree)
             Dim position1 = CompilationUtils.FindPositionFromText(tree, "= 1")
@@ -742,7 +742,7 @@ End If]]>.Value), ExecutableStatementSyntax)
 
             Dim ifStatement = DirectCast(speculatedStatement, MultiLineIfBlockSyntax)
 
-            Dim declStatement = DirectCast(ifStatement.IfPart.Statements(0), LocalDeclarationStatementSyntax)
+            Dim declStatement = DirectCast(ifStatement.Statements(0), LocalDeclarationStatementSyntax)
             Dim varDecl = declStatement.Declarators(0).Names(0)
             Dim local = speculativeModel.GetDeclaredSymbol(varDecl)
             Assert.NotNull(local)
@@ -754,14 +754,14 @@ End If]]>.Value), ExecutableStatementSyntax)
             Assert.NotNull(typeInfo.Type)
             Assert.Equal("System.Int32", typeInfo.Type.ToTestDisplayString())
 
-            Dim call1 = DirectCast(ifStatement.IfPart.Statements(1), ExpressionStatementSyntax)
+            Dim call1 = DirectCast(ifStatement.Statements(1), ExpressionStatementSyntax)
             Dim arg = DirectCast(DirectCast(call1.Expression, InvocationExpressionSyntax).ArgumentList.Arguments(0), SimpleArgumentSyntax).Expression
             Dim argSymbolInfo = speculativeModel.GetSymbolInfo(arg)
             Assert.NotNull(argSymbolInfo.Symbol)
             Assert.Equal("z", argSymbolInfo.Symbol.Name)
             Assert.Equal(SymbolKind.Local, argSymbolInfo.Symbol.Kind)
 
-            Dim call2 = DirectCast(ifStatement.IfPart.Statements(2), ExpressionStatementSyntax)
+            Dim call2 = DirectCast(ifStatement.Statements(2), ExpressionStatementSyntax)
             arg = DirectCast(DirectCast(call2.Expression, InvocationExpressionSyntax).ArgumentList.Arguments(0), SimpleArgumentSyntax).Expression
             argSymbolInfo = speculativeModel.GetSymbolInfo(arg)
             Assert.NotNull(argSymbolInfo.Symbol)
@@ -1300,7 +1300,7 @@ End If]]>.Value), ExecutableStatementSyntax)
 
             Dim ifStatement = DirectCast(speculatedStatement, MultiLineIfBlockSyntax)
 
-            Dim speculatedMethod = methodBlock.WithStatements(ifStatement.IfPart.Statements)
+            Dim speculatedMethod = methodBlock.WithStatements(ifStatement.Statements)
 
             Dim speculativeModel As SemanticModel = Nothing
             Dim success = semanticModel.TryGetSpeculativeSemanticModelForMethodBody(position1, speculatedMethod, speculativeModel)
@@ -1370,7 +1370,7 @@ End If]]>.Value), ExecutableStatementSyntax)
 
             Dim ifStatement = DirectCast(speculatedStatement, MultiLineIfBlockSyntax)
 
-            Dim speculatedMethod = methodBlock.WithStatements(ifStatement.IfPart.Statements)
+            Dim speculatedMethod = methodBlock.WithStatements(ifStatement.Statements)
 
             Dim speculativeModel As SemanticModel = Nothing
             Dim success = semanticModel.TryGetSpeculativeSemanticModelForMethodBody(position1, speculatedMethod, speculativeModel)
@@ -1419,7 +1419,7 @@ End If]]>.Value), ExecutableStatementSyntax)
 
             Dim ifStatement = DirectCast(speculatedStatement, MultiLineIfBlockSyntax)
 
-            Dim speculatedMethod = methodBlock.WithStatements(ifStatement.IfPart.Statements)
+            Dim speculatedMethod = methodBlock.WithStatements(ifStatement.Statements)
 
             Dim speculativeModel As SemanticModel = Nothing
             Dim success = semanticModel.TryGetSpeculativeSemanticModelForMethodBody(position1, speculatedMethod, speculativeModel)
@@ -1634,7 +1634,7 @@ Imports System.Runtime
             Dim tree As SyntaxTree = (From t In compilation.SyntaxTrees Where t.FilePath = "a.vb").Single()
             Dim root = tree.GetCompilationUnitRoot()
             Dim importsStatement = root.Imports(0)
-            Dim importsClause = DirectCast(importsStatement.ImportsClauses(0), MembersImportsClauseSyntax)
+            Dim importsClause = DirectCast(importsStatement.ImportsClauses(0), SimpleImportsClauseSyntax)
             Dim model = compilation.GetSemanticModel(tree)
 
             Dim speculatedTypeExpression = SyntaxFactory.ParseName("System.Collections")
@@ -1654,7 +1654,7 @@ Imports A = System.Exception
             Dim tree As SyntaxTree = (From t In compilation.SyntaxTrees Where t.FilePath = "a.vb").Single()
             Dim root = tree.GetCompilationUnitRoot()
             Dim importsStatement = root.Imports(0)
-            Dim importsClause = DirectCast(importsStatement.ImportsClauses(0), AliasImportsClauseSyntax)
+            Dim importsClause = DirectCast(importsStatement.ImportsClauses(0), SimpleImportsClauseSyntax)
             Dim model = compilation.GetSemanticModel(tree)
 
             Dim speculatedTypeExpression = SyntaxFactory.ParseName("System.ArgumentException")
@@ -3723,7 +3723,7 @@ End Class
     ]]></file>
 </compilation>
 
-            Dim comp = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(source, parseOptions:=New VisualBasicParseOptions(documentationMode:=DocumentationMode.Diagnose))
+            Dim comp = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(source, parseOptions:=New VBParseOptions(documentationMode:=DocumentationMode.Diagnose))
             comp.AssertTheseDiagnostics(<expected><![CDATA[
 BC42306: XML comment tag 'param' is not permitted on a 'variable' language element.
     ''' <param name='X'/>
@@ -3765,7 +3765,7 @@ BC42306: XML comment tag 'param' is not permitted on a 'variable' language eleme
             Dim tree As SyntaxTree = (From t In compilation.SyntaxTrees Where t.FilePath = "sam.vb").Single()
             Dim semanticModel = compilation.GetSemanticModel(tree)
 
-            Dim nodes = From n In tree.GetCompilationUnitRoot().DescendantNodes() Where n.VisualBasicKind = SyntaxKind.IdentifierName Select CType(n, IdentifierNameSyntax)
+            Dim nodes = From n In tree.GetCompilationUnitRoot().DescendantNodes() Where n.VBKind = SyntaxKind.IdentifierName Select CType(n, IdentifierNameSyntax)
             Dim enode = nodes.First(Function(n) n.ToString() = "e")
             Dim symbol = semanticModel.GetSymbolInfo(enode).Symbol
             Assert.NotNull(symbol)

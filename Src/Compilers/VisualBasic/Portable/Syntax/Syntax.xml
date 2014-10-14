@@ -66,7 +66,7 @@ Unify Enum declarations with other block type declarations.
 
 <!-- TODO: Add in "BadExpression",  etc. -->
 
-<define-parse-tree namespace="Microsoft.CodeAnalysis.VisualBasic" visitor="VisualBasicSyntaxVisitor" rewrite-visitor="VisualBasicSyntaxRewriter" factory-class="SyntaxFactory" contextual-factory-class="ContextAwareSyntaxFactory" xmlns="http://schemas.microsoft.com/VisualStudio/Roslyn/Compiler" >
+<define-parse-tree namespace="Microsoft.CodeAnalysis.VisualBasic" visitor="VBSyntaxVisitor" rewrite-visitor="VBSyntaxRewriter" factory-class="SyntaxFactory" contextual-factory-class="ContextAwareSyntaxFactory" xmlns="http://schemas.microsoft.com/VisualStudio/Roslyn/Compiler" >
   <definitions>
 
     <!--
@@ -77,13 +77,13 @@ Unify Enum declarations with other block type declarations.
     </node-structure>
     -->
     
-    <node-structure name="VisualBasicSyntaxNode" abstract="true" partial="true" predefined="true" root="true">      
+    <node-structure name="VBSyntaxNode" abstract="true" partial="true" predefined="true" root="true">      
       <description>The base class for all nodes in the VB syntax tree.</description>
       <lm-equiv name="SyntaxNode"></lm-equiv>
       <native-equiv name="ParseTreeNode"></native-equiv>
     </node-structure>
     
-    <!--<node-structure name="SyntaxNode" parent="VisualBasicSyntaxNode" abstract="true" partial="true">
+    <!--<node-structure name="SyntaxNode" parent="VBSyntaxNode" abstract="true" partial="true">
       <description>The base class for all nodes in the VB syntax tree except tokens and trivia.</description>
      </node-structure>-->
 
@@ -94,7 +94,7 @@ Unify Enum declarations with other block type declarations.
     <!--****************
       -  Statement
       ******************-->
-    <node-structure name="StatementSyntax" parent="VisualBasicSyntaxNode" abstract="true">
+    <node-structure name="StatementSyntax" parent="VBSyntaxNode" abstract="true">
       <description>
         The base class for all nodes that represent statements. This includes
         both declaration statements, such as class declarations as well as executable statements.
@@ -294,7 +294,7 @@ Unify Enum declarations with other block type declarations.
     <!--****************
       -  Program
       ******************-->
-    <node-structure name="CompilationUnitSyntax" partial="true" parent="VisualBasicSyntaxNode">
+    <node-structure name="CompilationUnitSyntax" partial="true" parent="VBSyntaxNode">
       <description>Represents an entire source file of VB code.</description>
       <lm-equiv name="ProgramNode"></lm-equiv>
       <native-equiv name="FileBlockStatement"></native-equiv>
@@ -444,7 +444,7 @@ Unify Enum declarations with other block type declarations.
       </child>
     </node-structure>
 
-    <node-structure name="ImportsClauseSyntax" parent="VisualBasicSyntaxNode" abstract="true">
+    <node-structure name="ImportsClauseSyntax" parent="VBSyntaxNode" abstract="true">
       <description>The base class for the possible clauses of an Imports statement. </description>
       <lm-equiv name="ImportNode"></lm-equiv>
       <native-equiv name="ImportDirective"></native-equiv>
@@ -453,58 +453,44 @@ Unify Enum declarations with other block type declarations.
     </node-structure>
 
     <!--********************
-      -  AliasImportsNode
+      -  SimpleImportsClause
       **********************-->
-    <node-structure name="AliasImportsClauseSyntax" parent="ImportsClauseSyntax">
-      <description>Represents the clause of an Imports statement that defines an alias for a namespace or type.</description>
-      <lm-equiv name="ImportAliasNode"></lm-equiv>
-      <native-equiv name="AliasImportDirective"></native-equiv>
-      <spec-section>6.3.1</spec-section>
-      <grammar>AliasImportsClause</grammar>
-
-      <node-kind name="AliasImportsClause">
-        <lm-equiv name="ImportAlias" />
-        <native-equiv name="Modes.Alias" />
-      </node-kind>
-
-      <child name="Alias" kind="IdentifierToken">
-        <description>The identifier that the alias is being defined for.</description>
-        <lm-equiv name="Alias"></lm-equiv>
-        <native-equiv name="Alias"></native-equiv>
-      </child>
-
-      <child name="EqualsToken" kind="EqualsToken">
-        <description>The equals sign token.</description>
-        <lm-equiv name="Equal"></lm-equiv>
-        <native-equiv name="Equals"></native-equiv>
-      </child>
-
-      <child name="Name" kind="@NameSyntax">
-        <!-- TODO: Is this the right node type -->
-        <description>The namespace or type the alias refers to.</description>
-        <lm-equiv name="Name"></lm-equiv>
-        <native-equiv name="ImportedName"></native-equiv>
-      </child>
-    </node-structure>
-
-    <!--********************
-      -  MembersImportsClause
-      **********************-->
-    <node-structure name="MembersImportsClauseSyntax" parent="ImportsClauseSyntax">
-      <description>Represents the clause of an Imports statement that imports all members of a namespace.</description>
+    <node-structure name="SimpleImportsClauseSyntax" parent="ImportsClauseSyntax">
+      <description>Represents the clause of an Imports statement that imports all members of a type or namespace or aliases a type or namespace.</description>
       <lm-equiv name="ImportNameNode"></lm-equiv>
       <native-equiv name="NamespaceImportDirective"></native-equiv>
 
-      <node-kind name="MembersImportsClause">
+      <node-kind name="SimpleImportsClause">
         <lm-equiv name="ImportName" />
         <native-equiv name="Modes.XmlNamespace" />
         <!-- REVIEW: This looks wrong. -->
       </node-kind>
 
+      <child name="Alias" kind="ImportAliasClause" optional="true">
+        <description>An optional alias for the namespace or type being imported.</description>
+      </child>
+
       <child name="Name" kind="@NameSyntax">
         <description>The namespace or type being imported.</description>
         <lm-equiv name="Name"></lm-equiv>
         <native-equiv name="ImportedName"></native-equiv>
+      </child>
+    </node-structure>
+  
+    <!--********************
+      -  ImportAliasClauseSyntax
+      **********************-->
+    <node-structure name="ImportAliasClauseSyntax" parent="VBSyntaxNode">
+      <description>Represents an alias identifier followed by an "=" token in an Imports clause.</description>
+
+      <node-kind name="ImportAliasClause" />
+
+      <child name="Identifier" kind="IdentifierToken">
+        <description>The identifier being introduced.</description>
+      </child>
+
+      <child name="EqualsToken" kind="EqualsToken">
+        <description>The "=" token.</description>
       </child>
     </node-structure>
 
@@ -973,7 +959,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  TypeParameters
       **********************-->
-    <node-structure name="TypeParameterListSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="TypeParameterListSyntax" parent="VBSyntaxNode">
       <description>Represents the type parameter list in a declaration.</description>
       <lm-equiv name="GenericParameterList"></lm-equiv>
 
@@ -1007,7 +993,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  TypeParameter
       **********************-->
-    <node-structure name="TypeParameterSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="TypeParameterSyntax" parent="VBSyntaxNode">
       <description>Represents a type parameter on a generic type declaration.</description>
       <lm-equiv name="GenericParameterNode"></lm-equiv>
       <native-equiv name="GenericParameter"></native-equiv>
@@ -1044,7 +1030,7 @@ Unify Enum declarations with other block type declarations.
     -  TypeParameterConstraintClauseSyntax
     ***********************************-->
 
-    <node-structure name="TypeParameterConstraintClauseSyntax" parent="VisualBasicSyntaxNode" abstract="true">
+    <node-structure name="TypeParameterConstraintClauseSyntax" parent="VBSyntaxNode" abstract="true">
       <description>An abstract node class that is the parent of classes that describe type parameter constraint clauses.</description>
     </node-structure>
 
@@ -1111,7 +1097,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  Constraint
       **********************-->
-    <node-structure name="ConstraintSyntax" parent="VisualBasicSyntaxNode" abstract="true">
+    <node-structure name="ConstraintSyntax" parent="VBSyntaxNode" abstract="true">
       <description>An abstract node class that is the parent of classes that describe type parameter constraints.</description>
       <lm-equiv name="ConstraintNode"></lm-equiv>
       <native-equiv name="Constraint"></native-equiv>
@@ -1223,11 +1209,11 @@ Unify Enum declarations with other block type declarations.
         <kind name="FunctionStatement" node-kind="FunctionBlock"/>
         <kind name="SubNewStatement" node-kind="ConstructorBlock"/>
         <kind name="OperatorStatement" node-kind="OperatorBlock"/>
-        <kind name="GetAccessorStatement" node-kind="PropertyGetBlock"/>
-        <kind name="SetAccessorStatement" node-kind="PropertySetBlock"/>
-        <kind name="AddHandlerAccessorStatement" node-kind="AddHandlerBlock"/>
-        <kind name="RemoveHandlerAccessorStatement" node-kind="RemoveHandlerBlock"/>
-        <kind name="RaiseEventAccessorStatement" node-kind="RaiseEventBlock"/>
+        <kind name="GetAccessorStatement" node-kind="GetAccessorBlock"/>
+        <kind name="SetAccessorStatement" node-kind="SetAccessorBlock"/>
+        <kind name="AddHandlerAccessorStatement" node-kind="AddHandlerAccessorBlock"/>
+        <kind name="RemoveHandlerAccessorStatement" node-kind="RemoveHandlerAccessorBlock"/>
+        <kind name="RaiseEventAccessorStatement" node-kind="RaiseEventAccessorBlock"/>
       </child>
 
       <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
@@ -1248,11 +1234,11 @@ Unify Enum declarations with other block type declarations.
         <kind name="EndFunctionStatement" node-kind="FunctionBlock"/>
         <kind name="EndSubStatement" node-kind="ConstructorBlock"/>
         <kind name="EndOperatorStatement" node-kind="OperatorBlock"/>
-        <kind name="EndGetStatement" node-kind="PropertyGetBlock"/>
-        <kind name="EndSetStatement" node-kind="PropertySetBlock"/>
-        <kind name="EndAddHandlerStatement" node-kind="AddHandlerBlock"/>
-        <kind name="EndRemoveHandlerStatement" node-kind="RemoveHandlerBlock"/>
-        <kind name="EndRaiseEventStatement" node-kind="RaiseEventBlock"/>
+        <kind name="EndGetStatement" node-kind="GetAccessorBlock"/>
+        <kind name="EndSetStatement" node-kind="SetAccessorBlock"/>
+        <kind name="EndAddHandlerStatement" node-kind="AddHandlerAccessorBlock"/>
+        <kind name="EndRemoveHandlerStatement" node-kind="RemoveHandlerAccessorBlock"/>
+        <kind name="EndRaiseEventStatement" node-kind="RaiseEventAccessorBlock"/>
       </child>
     </node-structure>
 
@@ -1316,27 +1302,27 @@ Unify Enum declarations with other block type declarations.
         property accessors and custom event accessors.
       </description>
 
-      <node-kind name="PropertyGetBlock">
+      <node-kind name="GetAccessorBlock">
         <lm-equiv name="Method" />
         <native-equiv name="Statement.Opcodes.PropertyGetBody" />
       </node-kind>
 
-      <node-kind name="PropertySetBlock">
+      <node-kind name="SetAccessorBlock">
         <lm-equiv name="Method" />
         <native-equiv name="Statement.Opcodes.PropertySetBody" />
       </node-kind>
 
-      <node-kind name="AddHandlerBlock">
+      <node-kind name="AddHandlerAccessorBlock">
         <lm-equiv name="Method" />
         <native-equiv name="Statement.Opcodes.AddHandlerBody" />
       </node-kind>
 
-      <node-kind name="RemoveHandlerBlock">
+      <node-kind name="RemoveHandlerAccessorBlock">
         <lm-equiv name="Method" />
         <native-equiv name="Statement.Opcodes.RemoveHandlerBody" />
       </node-kind>
 
-      <node-kind name="RaiseEventBlock">
+      <node-kind name="RaiseEventAccessorBlock">
         <lm-equiv name="Method" />
         <native-equiv name="Statement.Opcodes.RaiseEventBody" />
       </node-kind>
@@ -1365,7 +1351,7 @@ Unify Enum declarations with other block type declarations.
         <native-equiv name=""></native-equiv>
       </child>
 
-      <child name="Accessors" list="true"  kind="PropertyGetBlock|PropertySetBlock">
+      <child name="Accessors" list="true"  kind="GetAccessorBlock|SetAccessorBlock">
         <description>
           The accessor blocks contained in the property, between the Property and
           the End Property statements.
@@ -1406,7 +1392,7 @@ Unify Enum declarations with other block type declarations.
         <native-equiv name=""></native-equiv>
       </child>
 
-      <child name="Accessors" list="true"  kind="AddHandlerBlock|RemoveHandlerBlock|RaiseEventBlock">
+      <child name="Accessors" list="true"  kind="AddHandlerAccessorBlock|RemoveHandlerAccessorBlock|RaiseEventAccessorBlock">
         <description>
           The accessor blocks contained in the custom event declaration, between the Event statement and
           the End Event statement.
@@ -1486,7 +1472,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  ParameterListSyntax
       **********************-->
-    <node-structure name="ParameterListSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="ParameterListSyntax" parent="VBSyntaxNode">
       <description>Represents the parameter list in a method declaration.</description>
 
       <node-kind name="ParameterList" />
@@ -1847,7 +1833,7 @@ Unify Enum declarations with other block type declarations.
       **********************-->
     <!-- REVIEW: share this with the Implements statement that is inside a class? Its is structurally similar, 
     but used for different things. -->
-    <node-structure name="ImplementsClauseSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="ImplementsClauseSyntax" parent="VBSyntaxNode">
       <description>
         Represents the "Implements ..." clause on a type member, which describes which interface
         members this member implements.
@@ -1877,7 +1863,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
     -  HandlesClause
     **********************-->
-    <node-structure name="HandlesClauseSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="HandlesClauseSyntax" parent="VBSyntaxNode">
       <description>
         Represents the "Handles ..." clause on a method declaration that describes which events
         this method handles.
@@ -1974,7 +1960,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  HandlesClauseItem: 
       **********************-->
-    <node-structure name="HandlesClauseItemSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="HandlesClauseItemSyntax" parent="VBSyntaxNode">
       <description>Represents a single handled event in a "Handles ..." clause.</description>
 
       <node-kind name="HandlesClauseItem" />
@@ -2074,7 +2060,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  VariableDeclarator
       **********************-->
-    <node-structure name="VariableDeclaratorSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="VariableDeclaratorSyntax" parent="VBSyntaxNode">
       <description>
         Represents the part of a variable or constant declaration statement that associated one or more variable
         names with a type.
@@ -2119,7 +2105,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  AsClauseNode
       **********************-->
-    <node-structure name="AsClauseSyntax" parent="VisualBasicSyntaxNode" abstract="true">
+    <node-structure name="AsClauseSyntax" parent="VBSyntaxNode" abstract="true">
       <description>
         Abstract node class that represents the different kinds of "As {type-name}" clauses in a declaration: simple
         "As" clauses and "As New" clauses. The type has optional attributes associated with it, although attributes are not permitted in all possible places
@@ -2187,7 +2173,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  ObjectCreationInitializerNode
       **********************-->
-    <node-structure name="ObjectCreationInitializerSyntax" parent="VisualBasicSyntaxNode" abstract="true">
+    <node-structure name="ObjectCreationInitializerSyntax" parent="VBSyntaxNode" abstract="true">
       <description>An abstract node class that represents a "With" or "From" clause used to initializer an new object.</description>
     </node-structure>
 
@@ -2259,7 +2245,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  FieldInitializer
       **********************-->
-    <node-structure name="FieldInitializerSyntax" abstract="true" parent="VisualBasicSyntaxNode">
+    <node-structure name="FieldInitializerSyntax" abstract="true" parent="VBSyntaxNode">
       <description>Abstract class that represent a single field initializer used in a "With {...}" field initializer list.</description>
       <lm-equiv name="InitializerNode"></lm-equiv>
       <native-equiv name="Initializer"></native-equiv>
@@ -2344,7 +2330,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  InitializerNode
       **********************-->
-    <node-structure name="EqualsValueSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="EqualsValueSyntax" parent="VBSyntaxNode">
       <description>
         Represents an "= initializer" clause in a declaration for a variable, pararameter or automatic property.
       </description>
@@ -2375,7 +2361,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  ParameterNode
       **********************-->
-    <node-structure name="ParameterSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="ParameterSyntax" parent="VBSyntaxNode">
       <description>Represent a parameter to a method, property, constructor, etc.</description>
       <lm-equiv name="ParameterNode"></lm-equiv>
       <lm-equiv name="ParameterWithValueNode"></lm-equiv>
@@ -2425,7 +2411,7 @@ Unify Enum declarations with other block type declarations.
       -  ModifiedIdentifier
       **********************-->
     <!-- REVIEW: Need better name. What does spec call it? -->
-    <node-structure name="ModifiedIdentifierSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="ModifiedIdentifierSyntax" parent="VBSyntaxNode">
       <description>
         Represents an identifier with optional "?" or "()" or "(,,,)" modifiers, as used in parameter declarations and
         variable declarations.
@@ -2463,7 +2449,7 @@ Unify Enum declarations with other block type declarations.
       </child>
     </node-structure>
 
-    <node-structure name="ArrayRankSpecifierSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="ArrayRankSpecifierSyntax" parent="VBSyntaxNode">
       <description>Represents a modifier that describes an array type, without bounds, such as "()" or "(,)".</description>
 
       <node-kind name="ArrayRankSpecifier" />
@@ -2496,7 +2482,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  AttributeListNode
       **********************-->
-    <node-structure name="AttributeListSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="AttributeListSyntax" parent="VBSyntaxNode">
 
       <description>Represents a group of attributes within "&lt;" and "&gt;" brackets.</description>
 
@@ -2529,7 +2515,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  Attribute
       **********************-->
-    <node-structure name="AttributeSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="AttributeSyntax" parent="VBSyntaxNode">
       <description>Represents a single attribute declaration within an attribute list.</description>
 
       <lm-equiv name="AttributeNode"></lm-equiv>
@@ -2560,7 +2546,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  AttributeTargetSyntax
       **********************-->
-    <node-structure name="AttributeTargetSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="AttributeTargetSyntax" parent="VBSyntaxNode">
       <description>Represents a single attribute declaration within an attribute list.</description>
 
       <node-kind name="AttributeTarget">
@@ -3066,187 +3052,115 @@ Unify Enum declarations with other block type declarations.
         <lm-equiv name="Value"></lm-equiv>
         <native-equiv name="Operand"></native-equiv>
       </child>
-    </node-structure>
-
+    </node-structure>      
 
     <!--****************
       -  SingleLineIfStatement
       ******************-->
     <node-structure name="SingleLineIfStatementSyntax" parent="ExecutableStatementSyntax">
       <description>
-        Represents a  line If-Then-Else statement.
+        Represents a single-line "If ... Then ... Else ..." statement.
       </description>
       <spec-section>10.8.1</spec-section>
       <grammar>IfStatement</grammar>
 
-      <node-kind name="SingleLineIfStatement"></node-kind>
+      <node-kind name="SingleLineIfStatement" />
 
-      <child name="IfPart" kind="SingleLineIfPart">
-        <description>The If part of the statement.</description>
+      <child name="IfKeyword" kind="IfKeyword">
+        <description>The "If" keyword.</description>
+        <lm-equiv name="IfKeyword" />
+        <native-equiv name="" />
       </child>
 
-      <child name="ElsePart" optional="true" kind="SingleLineElsePart">
-        <description>The Else part of the statement. If there is no Else part, Nothing is returned.</description>
+      <child name="Condition" kind="@ExpressionSyntax">
+        <description>The condition expression to be evaluated.</description>
+        <lm-equiv name="Condition" />
+        <native-equiv name="Operand" />
       </child>
 
-    </node-structure>
-
-    <!--****************
-      -  SingleLineIfPart
-      ******************-->
-    <node-structure name="SingleLineIfPartSyntax" parent="VisualBasicSyntaxNode">
-      <description>
-        Represents part of a single line If statement, consisting of a beginning if-statement, followed
-        by a body of statement controlled by that beginning statement. The Kind property returns if this is an SingleLineIf.
-      </description>
-      <lm-equiv name="IfNode">An IfStatementPart (with Kind=IfPart) exactly corresponds to an IfNode -- the If statement and its following body.</lm-equiv>
-      <lm-equiv name="ElseIfNode">An IfStatementPart (with Kind=ElseIfPart) exactly corresponds to an ElseIfNode -- the ElseIf statement and its following body.</lm-equiv>
-      <native-equiv name="IfStatement">An IfStatementPart (with Kind=IfPart) exactly corresponds to an IfStatement -- the If statement and its following body.</native-equiv>
-      <native-equiv name="ElseIfStatement">An IfStatementPart (with Kind=ElseIfPart) exactly corresponds to an ElseIfStatement -- the ElseIf statement and its following body.</native-equiv>
-      <spec-section>10.8.1</spec-section>
-      <grammar>IfStatement</grammar>
-      <grammar>ElseIfStatement</grammar>
-
-      <node-kind name="SingleLineIfPart">
-        <lm-equiv name="If" />
-        <native-equiv name="Statement.Opcodes.BlockIf" />
-        <native-equiv name="Statement.Opcodes.LineIf" />
-      </node-kind>
-
-      <child name="Begin" kind="IfStatement">
-        <description>The statement that introduces this part of the If...Then...Else...End If. This must be an IfStatement.</description>
+      <child name="ThenKeyword" kind="ThenKeyword">
+        <description>The "Then" keyword.</description>
+        <lm-equiv name="ThenKeyword" />
+        <native-equiv name="Then" />
       </child>
 
       <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
-        <description>The statements controlled by this If or Else If. This might be an empty list.</description>
-        <lm-equiv name="BlockNode.Contents"></lm-equiv>
-        <native-equiv name="BlockStatement.Children"></native-equiv>
+        <description>A list of statements to be executed if the condition expression evaluates as true. Multiple statements must be separated by colons.</description>
+        <lm-equiv name="BlockNode.Contents" />
+        <native-equiv name="BlockStatement.Children" />
+      </child>    
+
+      <child name="ElseClause" optional="true" kind="SingleLineElseClause">
+        <description>An "Else" clause to be executed if the condition expression evalues as false.</description>
       </child>
+
     </node-structure>
 
     <!--****************
-      -  SingleLineElsePart
+      -  SingleLineElseClause
       ******************-->
-    <node-structure name="SingleLineElsePartSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="SingleLineElseClauseSyntax" parent="VBSyntaxNode">
       <description>
-        Represents the Else part of an If statement, consisting of a Else statement, followed
-        by a body of statement controlled by that Else.
+        Represents the "Else ..." clause of a single-line "If" statement.
       </description>
-      <lm-equiv name="ElseNode">An ElsePart exactly corresponds to an ElseNode -- the Else statement and its following body.</lm-equiv>
-      <native-equiv name="ElseStatement">An ElsePart exactly corresponds to an ElseStatement -- the Else statement and its following body.</native-equiv>
+      <lm-equiv name="ElseNode">A SingleLineElseClause exactly corresponds to an ElseNode -- the Else statement and its following body.</lm-equiv>
+      <native-equiv name="ElseStatement">A SingleLineElseClause exactly corresponds to an ElseStatement -- the Else statement and its following body.</native-equiv>
       <spec-section>10.8.1</spec-section>
       <grammar>ElseStatement</grammar>
 
-      <node-kind name="SingleLineElsePart">
+      <node-kind name="SingleLineElseClause">
         <lm-equiv name="Else" />
         <native-equiv name="Statement.Opcodes.LineElse" />
       </node-kind>
 
-      <child name="Begin" kind="ElseStatement">
-        <description>The Else statement that introduces this part.</description>
+      <child name="ElseKeyword" kind="ElseKeyword">
+        <description>The "Else" keyword.</description>
+        <lm-equiv name="ElseKeyword" />
+        <native-equiv name="Else" />
       </child>
 
       <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
-        <description>The statements controlled by the Else.This might be an empty list.</description>
+        <description>A list of statements to be executed. Multiple statements must be separated by colons.</description>
         <lm-equiv name="BlockNode.Contents"></lm-equiv>
         <native-equiv name="BlockStatement.Children"></native-equiv>
       </child>
-    </node-structure>
 
+    </node-structure>
 
     <!--****************
       -  MultiLineIfBlock
       ******************-->
     <node-structure name="MultiLineIfBlockSyntax" parent="ExecutableStatementSyntax">
       <description>
-        Represents a block If...Then...Else...EndIf Statement. The Kind property can be used
-        to determine if it is a block or line If.
+        Represents a multi-line "If ... Then ... ElseIf ... Then ... Else ... End If" block.
       </description>
       <spec-section>10.8.1</spec-section>
       <grammar>IfStatement</grammar>
+      <lm-equiv name="IfNode">A MultiLineIfBlock corresponds to an IfNode -- the If statement and its following body.</lm-equiv>
+      <native-equiv name="IfStatement">A MultiLineIfBlock corresponds to an IfStatement -- the If statement and its following body.</native-equiv>
 
-      <node-kind name="MultiLineIfBlock"></node-kind>
+      <node-kind name="MultiLineIfBlock" />
 
-      <child name="IfPart" kind="IfPart">
-        <description>The If part of the statement.</description>
-      </child>
-
-      <child name="ElseIfParts" optional="true" list="true" kind="ElseIfPart">
-        <description>A list of the "ElseIf" parts of the statement. If there are no ElseIf parts, then an empty list is returned.</description>
-      </child>
-
-      <child name="ElsePart" optional="true" kind="ElsePart">
-        <description>The Else part of the statement. If there is no Else part, Nothing is returned.</description>
-      </child>
-
-      <child name="End" kind="EndIfStatement">
-        <description>If this is a block if, returns the "End If" statement.</description>
-      </child>
-    </node-structure>
-
-    <!--****************
-      -  IfPart
-      ******************-->
-    <node-structure name="IfPartSyntax" parent="VisualBasicSyntaxNode">
-      <description>
-        Represents part of an If statement, consisting of a beginning statement (If or ElseIf), followed
-        by a body of statement controlled by that beginning statement. The Kind property returns if this is an If or ElseIf.
-      </description>
-      <lm-equiv name="IfNode">An IfStatementPart (with Kind=IfPart) exactly corresponds to an IfNode -- the If statement and its following body.</lm-equiv>
-      <lm-equiv name="ElseIfNode">An IfStatementPart (with Kind=ElseIfPart) exactly corresponds to an ElseIfNode -- the ElseIf statement and its following body.</lm-equiv>
-      <native-equiv name="IfStatement">An IfStatementPart (with Kind=IfPart) exactly corresponds to an IfStatement -- the If statement and its following body.</native-equiv>
-      <native-equiv name="ElseIfStatement">An IfStatementPart (with Kind=ElseIfPart) exactly corresponds to an ElseIfStatement -- the ElseIf statement and its following body.</native-equiv>
-      <spec-section>10.8.1</spec-section>
-      <grammar>IfStatement</grammar>
-      <grammar>ElseIfStatement</grammar>
-
-      <node-kind name="IfPart">
-        <lm-equiv name="If" />
-        <native-equiv name="Statement.Opcodes.BlockIf" />
-        <native-equiv name="Statement.Opcodes.LineIf" />
-      </node-kind>
-      <node-kind name="ElseIfPart">
-        <lm-equiv name="ElseIf" />
-        <native-equiv name="Statement.Opcodes.ElseIf" />
-      </node-kind>
-
-      <child name="Begin" kind="IfStatement|ElseIfStatement">
-        <description>The statement that introduces this part of the If...Then...Else...End If. This must be an IfStatement.</description>
+      <child name="IfStatement" kind="IfStatement">
+        <description>The "If" statement that begins the "If" block.</description>
       </child>
 
       <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
-        <description>The statements controlled by this If or Else If. This might be an empty list.</description>
+        <description>A list of statements to be executed if the condition expression evaluates as true.</description>
         <lm-equiv name="BlockNode.Contents"></lm-equiv>
         <native-equiv name="BlockStatement.Children"></native-equiv>
-      </child>
-    </node-structure>
+      </child>                  
 
-    <!--****************
-      -  ElsePart
-      ******************-->
-    <node-structure name="ElsePartSyntax" parent="VisualBasicSyntaxNode">
-      <description>
-        Represents the Else part of an If statement, consisting of a Else statement, followed
-        by a body of statement controlled by that Else.
-      </description>
-      <lm-equiv name="ElseNode">An ElsePart exactly corresponds to an ElseNode -- the Else statement and its following body.</lm-equiv>
-      <native-equiv name="ElseStatement">An ElsePart exactly corresponds to an ElseStatement -- the Else statement and its following body.</native-equiv>
-      <spec-section>10.8.1</spec-section>
-      <grammar>ElseStatement</grammar>
-
-      <node-kind name="ElsePart">
-        <lm-equiv name="Else" />
-        <native-equiv name="Statement.Opcodes.BlockElse" />
-      </node-kind>
-
-      <child name="Begin" kind="ElseStatement">
-        <description>The Else statement that introduces this part.</description>
+      <child name="ElseIfBlocks" optional="true" list="true" kind="ElseIfBlock">
+        <description>A list of "ElseIf" blocks to be evaluated, in order, if the condition expression of the "If" statement evaluates as false.</description>
       </child>
 
-      <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
-        <description>The statements controlled by the Else. This might be an empty list.</description>
-        <lm-equiv name="BlockNode.Contents"></lm-equiv>
-        <native-equiv name="BlockStatement.Children"></native-equiv>
+      <child name="ElseBlock" optional="true" kind="ElseBlock">
+        <description>An "Else" block to be executed if the condition expression of the "If" statement and all "ElseIf" blocks evaluate as false.</description>
+      </child>
+
+      <child name="EndIfStatement" kind="EndIfStatement">
+        <description>Then "End If" statement.</description>
       </child>
     </node-structure>
 
@@ -3255,16 +3169,12 @@ Unify Enum declarations with other block type declarations.
       ******************-->
     <node-structure name="IfStatementSyntax" parent="StatementSyntax">
       <description>
-        Represents the If part or ElseIf part of a If...End If block (or line If). This statement is always the Begin of a IfPart.
-        The Kind can be examined to determine if this is an If or an ElseIf statement.
+        Represents the "If ... Then" statement that begins a multi-line "If" block.
       </description>
       <lm-equiv name="IfNode">An IfStatement represents just the header statement, not the body of the If.</lm-equiv>
-      <lm-equiv name="ElseIfNode">An IfStatement represents just the header statement, not the body of the ElseIf.</lm-equiv>
       <native-equiv name="IfStatement">An IfStatement represents just the header statement, not the body of the If.</native-equiv>
-      <native-equiv name="ElseIfStatement">An IfStatement represents just the header statement, not the body of the ElseIf.</native-equiv>
       <spec-section>10.8.1</spec-section>
       <grammar>IfStatement</grammar>
-      <grammar>ElseIfStatement</grammar>
 
       <node-kind name="IfStatement">
         <lm-equiv name="If" />
@@ -3272,26 +3182,14 @@ Unify Enum declarations with other block type declarations.
         <native-equiv name="Statement.Opcodes.LineIf" />
       </node-kind>
 
-      <node-kind name="ElseIfStatement">
-        <lm-equiv name="ElseIf" />
-        <native-equiv name="Statement.Opcodes.ElseIf" />
-      </node-kind>
-
-      <child name="ElseKeyword" optional="true" kind="ElseKeyword">
-        <description>
-          If this ElseIf was written as "Else If", contains the "Else" keyword. Otherwise returns
-          Nothing.
-        </description>
-      </child>
-
-      <child name="IfOrElseIfKeyword" kind="IfKeyword|ElseIfKeyword">
-        <description>The "If" or "ElseIf" keyword.</description>
+      <child name="IfKeyword" kind="IfKeyword">
+        <description>The "If" keyword.</description>
         <lm-equiv name="IfKeyword"></lm-equiv>
         <native-equiv name=""></native-equiv>
       </child>
 
       <child name="Condition" kind="@ExpressionSyntax">
-        <description>The boolean expression that is being tested.</description>
+        <description>The condition expression to be evaluated.</description>
         <lm-equiv name="Condition"></lm-equiv>
         <native-equiv name="Operand"></native-equiv>
       </child>
@@ -3304,11 +3202,98 @@ Unify Enum declarations with other block type declarations.
     </node-structure>
 
     <!--****************
+      -  ElseIfBlock
+      ******************-->
+    <node-structure name="ElseIfBlockSyntax" parent="VBSyntaxNode">
+      <description>
+        Represents an "ElseIf ... Then ..." block.
+      </description>
+      <lm-equiv name="ElseIfNode">ElseIfBlock exactly corresponds to an ElseIfNode -- the ElseIf statement and its following body.</lm-equiv>
+      <native-equiv name="ElseIfStatement">ElseIfBlock exactly corresponds to an ElseIfStatement -- the ElseIf statement and its following body.</native-equiv>
+      <spec-section>10.8.1</spec-section>
+      <grammar>ElseIfStatement</grammar>
+
+      <node-kind name="ElseIfBlock">
+        <lm-equiv name="ElseIf" />
+        <native-equiv name="Statement.Opcodes.ElseIf" />
+      </node-kind>
+
+      <child name="ElseIfStatement" kind="ElseIfStatement">
+        <description>The "ElseIf ... Then" statement the begins the "ElseIf" block.</description>
+      </child>
+
+      <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
+        <description>A list of statements to be executed if the condition expression of the "ElseIf" statement evaluates as true.</description>
+        <lm-equiv name="BlockNode.Contents"></lm-equiv>
+        <native-equiv name="BlockStatement.Children"></native-equiv>
+      </child>
+    </node-structure>
+
+    <!--****************
+      -  ElseIfStatement
+      ******************-->
+    <node-structure name="ElseIfStatementSyntax" parent="StatementSyntax">
+      <description>
+        Represents the "ElseIf ... Then" statement that begins an "ElseIf" block.
+      </description>
+      <lm-equiv name="ElseIfNode">An IfStatement represents just the header statement, not the body of the ElseIf.</lm-equiv>
+      <native-equiv name="ElseIfStatement">An IfStatement represents just the header statement, not the body of the ElseIf.</native-equiv>
+      <spec-section>10.8.1</spec-section>
+      <grammar>ElseIfStatement</grammar>
+
+      <node-kind name="ElseIfStatement" />
+
+      <child name="ElseIfKeyword" kind="ElseIfKeyword">
+        <description>The "ElseIf" keyword.</description>
+      </child>
+
+      <child name="Condition" kind="@ExpressionSyntax">
+        <description>The condition expression to be evaluated.</description>
+        <lm-equiv name="Condition"></lm-equiv>
+        <native-equiv name="Operand"></native-equiv>
+      </child>
+
+      <child name="ThenKeyword" optional="true" kind="ThenKeyword">
+        <description>The "Then" keyword.</description>
+        <lm-equiv name="ThenKeyword"></lm-equiv>
+        <native-equiv name="Then"></native-equiv>
+      </child>
+    </node-structure>
+
+    <!--****************
+      -  ElseBlock
+      ******************-->
+    <node-structure name="ElseBlockSyntax" parent="VBSyntaxNode">
+      <description>
+        Represents an "Else ..." block.
+      </description>
+      <lm-equiv name="ElseNode">An ElseBlock exactly corresponds to an ElseNode -- the Else statement and its following body.</lm-equiv>
+      <native-equiv name="ElseStatement">An ElseBlock exactly corresponds to an ElseStatement -- the Else statement and its following body.</native-equiv>
+      <spec-section>10.8.1</spec-section>
+      <grammar>ElseStatement</grammar>
+
+      <node-kind name="ElseBlock">
+        <lm-equiv name="Else" />
+        <native-equiv name="Statement.Opcodes.BlockElse" />
+      </node-kind>
+
+      <child name="ElseStatement" kind="ElseStatement">
+        <description>The "Else" statement that begins the "Else" block.</description>
+      </child>
+
+      <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
+        <description>A list of statements to be executed.</description>
+        <lm-equiv name="BlockNode.Contents"></lm-equiv>
+        <native-equiv name="BlockStatement.Children"></native-equiv>
+      </child>
+    </node-structure>
+
+    <!--****************
       -  Else
       ******************-->
     <node-structure name="ElseStatementSyntax" parent="StatementSyntax">
       <description>
-        Represents the Else part of a If...End If block (or line If). This statement is always the Begin of a ElsePart.
+        Represents the "Else" statement that begins an "Else" block.
       </description>
       <lm-equiv name="ElseNode">An ElseStatement represents just the header statement, not the body of the Else.</lm-equiv>
       <native-equiv name="ElseStatement">An ElseStatement represents just the header statement, not the body of the Else.</native-equiv>
@@ -3322,7 +3307,7 @@ Unify Enum declarations with other block type declarations.
       </node-kind>
 
       <child name="ElseKeyword" kind="ElseKeyword">
-        <description>The "Else" keyword</description>
+        <description>The "Else" keyword.</description>
         <lm-equiv name="ElseKeyword"></lm-equiv>
         <native-equiv name=""></native-equiv>
       </child>
@@ -3332,119 +3317,36 @@ Unify Enum declarations with other block type declarations.
       -  TryBlock
       ******************-->
     <node-structure name="TryBlockSyntax" parent="ExecutableStatementSyntax">
-      <description>Represents an entire Try...Catch...Finally...End Try statement. </description>
+      <description>
+        Represents a "Try ... Catch ... Finally ... End Try" block.
+      </description>
+      <lm-equiv name="TryNode">A TryBlock corresponds to an TryNode -- the Try statement and its following body.</lm-equiv>
+      <native-equiv name="ExecutableBlockStatement">A TryBlock corresponds to a Try statement and its following body.</native-equiv>
       <spec-section>10.10.1</spec-section>
       <grammar>TryStatement</grammar>
-
+          
       <node-kind name="TryBlock" />
 
-      <child name="TryPart" kind="TryPart">
-        <description>The Try part of the statement.</description>
+      <child name="TryStatement" kind="TryStatement">
+        <description>The "Try" statement that begins the "Try" block. </description>
       </child>
 
-      <child name="CatchParts" optional="true" list="true" kind="CatchPart">
-        <description>A list of the Catch parts of the statement. If there are no Catch parts, then an empty list is returned.</description>
+      <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
+        <description>A list of statements to be executed.</description>
+        <lm-equiv name="BlockNode.Contents"></lm-equiv>
+        <native-equiv name="BlockStatement.Children"></native-equiv>
       </child>
 
-      <child name="FinallyPart" optional="true" kind="FinallyPart">
-        <description>The Finally part of the statement, if present.</description>
+      <child name="CatchBlocks" optional="true" list="true" kind="CatchBlock">
+        <description>A list of "Catch" blocks which may be executed if an exception is thrown while executing the statements in the "Try" block.</description>
       </child>
 
-      <child name="End" kind="EndTryStatement">
+      <child name="FinallyBlock" optional="true" kind="FinallyBlock">
+        <description>A "Finally" block to be executed before execution leaves the "Try" block.</description>
+      </child>
+
+      <child name="EndTryStatement" kind="EndTryStatement">
         <description>The "End Try" statement.</description>
-      </child>
-    </node-structure>
-
-    <!--****************
-      -  TryPart
-      ******************-->
-    <node-structure name="TryPartSyntax" parent="VisualBasicSyntaxNode">
-      <description>
-        Represents part of an Try...Catch...Finally...End Try statement, consisting of a beginning statement (Try, Catch or Finally), followed
-        by a body of statements controlled by that beginning statement. The Kind property returns which kind of part this is.
-      </description>
-      <lm-equiv name="TryNode">An TryPart exactly corresponds to an TryNode -- the Try statement and its following body.</lm-equiv>
-      <native-equiv name="ExecutableBlockStatement">An TryPart corresponds to a Try statement and its following body.</native-equiv>
-      <spec-section>10.10.1</spec-section>
-      <grammar>TryStatement&gt;</grammar>
-
-      <node-kind name="TryPart">
-        <lm-equiv name="Try" />
-        <native-equiv name="Statement.Opcodes.Try" />
-      </node-kind>
-
-      <child name="Begin" kind="TryStatement">
-        <description>The TryStatement that introduces this part of the Try...Catch...Finally...End Try. </description>
-      </child>
-
-      <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
-        <description>The statements inside the Try part of the Try...Catch...Finally...End Try. This might be an empty list.</description>
-        <lm-equiv name="BlockNode.Contents"></lm-equiv>
-        <native-equiv name="BlockStatement.Children"></native-equiv>
-      </child>
-
-    </node-structure>
-
-    <!--****************
-      -  CatchPart
-      ******************-->
-    <node-structure name="CatchPartSyntax" parent="VisualBasicSyntaxNode">
-      <description>
-        Represents a Catch part of an Try...Catch...Finally...End Try statement, consisting of a Catch statement, followed
-        by a body of statements controlled by that Catch statement. The Kind property returns which kind of part this is.
-      </description>
-      <lm-equiv name="CatchNode">An CatchPart exactly corresponds to an CatchNode -- the Catch statement and its following body.</lm-equiv>
-      <native-equiv name="CatchStatement">An CatchPart exactly corresponds to an ElseIfStatement -- the ElseIf statement and its following body.</native-equiv>
-      <spec-section>10.10.1</spec-section>
-      <grammar>TryStatement&gt;</grammar>
-
-      <node-kind name="CatchPart">
-        <lm-equiv name="Catch" />
-        <native-equiv name="Statement.Opcodes.Catch" />
-      </node-kind>
-
-      <child name="Begin" kind="CatchStatement">
-        <description>
-          The CatchStatement that introduces this part.
-        </description>
-      </child>
-
-      <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
-        <description>The statements controlled by the Catch statement. This might be an empty list.</description>
-        <lm-equiv name="BlockNode.Contents"></lm-equiv>
-        <native-equiv name="BlockStatement.Children"></native-equiv>
-      </child>
-
-    </node-structure>
-
-    <!--****************
-      -  FinallyPart
-      ******************-->
-    <node-structure name="FinallyPartSyntax" parent="VisualBasicSyntaxNode">
-      <description>
-        Represents the Finally part of an Try...Catch...Finally...End Try statement, consisting of a Finally statement, followed
-        by a body of statements controlled by the Finally.
-      </description>
-      <lm-equiv name="FinallyNode">An FinallyPart exactly corresponds to an FinallyNode -- the Finally statement and its following body.</lm-equiv>
-      <native-equiv name="FinallyStatement">An FinallyPart (with Kind=FinallyPart) exactly corresponds to an ElseStatement -- the Finally statement and its following body.</native-equiv>
-      <spec-section>10.10.1</spec-section>
-      <grammar>TryStatement&gt;</grammar>
-
-      <node-kind name="FinallyPart">
-        <lm-equiv name="Finally" />
-        <native-equiv name="Statement.Opcodes.Finally" />
-      </node-kind>
-
-      <child name="Begin" kind="FinallyStatement">
-        <description>
-          The FinallyStatement that introduces the Finally part of a Try.
-        </description>
-      </child>
-
-      <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
-        <description>The statements inside the Finally part of the Try...Catch...Finally...End Try. This might be an empty list.</description>
-        <lm-equiv name="BlockNode.Contents"></lm-equiv>
-        <native-equiv name="BlockStatement.Children"></native-equiv>
       </child>
     </node-structure>
 
@@ -3453,7 +3355,7 @@ Unify Enum declarations with other block type declarations.
       ******************-->
     <node-structure name="TryStatementSyntax" parent="StatementSyntax">
       <description>
-        Represents the Try part part of a Try...Catch...Finally...End Try. This statement is always the Begin of a TryPart.
+        Represents the "Try" statement that begins a "Try" block.
       </description>
       <lm-equiv name="TryNode"></lm-equiv>
       <native-equiv name="ExecutableBlockStatement"></native-equiv>
@@ -3466,10 +3368,41 @@ Unify Enum declarations with other block type declarations.
       </node-kind>
 
       <child name="TryKeyword" kind="TryKeyword">
-        <description>The "Try" keyword</description>
+        <description>The "Try" keyword.</description>
         <lm-equiv name="TryKeyword"></lm-equiv>
         <native-equiv name=""></native-equiv>
       </child>
+    </node-structure>
+
+    <!--****************
+      -  CatchBlock
+      ******************-->
+    <node-structure name="CatchBlockSyntax" parent="VBSyntaxNode">
+      <description>
+        Represents a "Catch ..." block.
+      </description>
+      <lm-equiv name="CatchNode">A CatchBlock exactly corresponds to an CatchNode -- the Catch statement and its following body.</lm-equiv>
+      <native-equiv name="CatchStatement">A CatchBlock exactly corresponds to an ElseIfStatement -- the ElseIf statement and its following body.</native-equiv>
+      <spec-section>10.10.1</spec-section>
+      <grammar>TryStatement&gt;</grammar>
+
+      <node-kind name="CatchBlock">
+        <lm-equiv name="Catch" />
+        <native-equiv name="Statement.Opcodes.Catch" />
+      </node-kind>
+
+      <child name="CatchStatement" kind="CatchStatement">
+        <description>
+          The "Catch" statement that begins the "Catch" block.
+        </description>
+      </child>
+
+      <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
+        <description>A list of statements to be executed if an exception is caught by the "Catch" block.</description>
+        <lm-equiv name="BlockNode.Contents"></lm-equiv>
+        <native-equiv name="BlockStatement.Children"></native-equiv>
+      </child>
+
     </node-structure>
 
     <!--****************
@@ -3477,7 +3410,7 @@ Unify Enum declarations with other block type declarations.
       ******************-->
     <node-structure name="CatchStatementSyntax" parent="StatementSyntax">
       <description>
-        Represents the Catch part part of a Try...Catch...Finally...End Try. This statement is always the Begin of a CatchPart.
+        Represents the "Catch ... When ..." statement that begins a "Catch" block.
       </description>
       <lm-equiv name="CatchNode"></lm-equiv>
       <native-equiv name="CatchStatement"></native-equiv>
@@ -3496,20 +3429,20 @@ Unify Enum declarations with other block type declarations.
       </child>
 
       <child name="IdentifierName" optional="true" kind="IdentifierName">
-        <description>The identifier representing the exception that was caught, if present.</description>
+        <description>An identifier declaring a new variable or naming an existing variable to store the exception caught by the "Catch" statement.</description>
         <lm-equiv name="Name"></lm-equiv>
         <native-equiv name="Name"></native-equiv>
       </child>
 
       <child name="AsClause" optional="true" kind="SimpleAsClause">
-        <description>The As clause that defines the type of exception being caught.</description>
+        <description>A simple "As" clause specifying the type of exception to catch.</description>
         <lm-equiv name="AsKeyword"></lm-equiv>
         <lm-equiv name="ExceptionType"></lm-equiv>
         <native-equiv name="Type"></native-equiv>
       </child>
 
       <child name="WhenClause" optional="true" kind="CatchFilterClause">
-        <description>The "When" clause, if present.</description>
+        <description>A "When" clause to filter exceptions before catching.</description>
       </child>
 
     </node-structure>
@@ -3517,24 +3450,53 @@ Unify Enum declarations with other block type declarations.
     <!--*********************
       -  CatchFilterClauseSyntax
       ***********************-->
-    <node-structure name="CatchFilterClauseSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="CatchFilterClauseSyntax" parent="VBSyntaxNode">
       <description>
-        Represents the When/Filter clause of a Catch statement
+        Represents the "When ..." clause of a "Catch" statement.
       </description>
 
-      <node-kind name="CatchFilterClause">
-      </node-kind>
+      <node-kind name="CatchFilterClause" />
 
       <child name="WhenKeyword" kind="WhenKeyword">
-        <description>The "When" keyword</description>
+        <description>The "When" keyword.</description>
         <lm-equiv name="WhenKeyword"></lm-equiv>
         <native-equiv name="When"></native-equiv>
       </child>
 
       <child name="Filter" kind="@ExpressionSyntax">
-        <description>The filter expression</description>
+        <description>The filter expression to be evaluated.</description>
         <lm-equiv name="Filter"></lm-equiv>
         <native-equiv name="WhenClause"></native-equiv>
+      </child>
+    </node-structure>
+
+    <!--****************
+      -  FinallyBlock
+      ******************-->
+    <node-structure name="FinallyBlockSyntax" parent="VBSyntaxNode">
+      <description>
+        Represents a "Finally ..." block of a "Try" block.
+      </description>
+      <lm-equiv name="FinallyNode">A FinallyBlock exactly corresponds to an FinallyNode -- the Finally statement and its following body.</lm-equiv>
+      <native-equiv name="FinallyStatement">A FinallyBlock exactly corresponds to an FinallyStatement -- the Finally statement and its following body.</native-equiv>
+      <spec-section>10.10.1</spec-section>
+      <grammar>TryStatement&gt;</grammar>
+
+      <node-kind name="FinallyBlock">
+        <lm-equiv name="Finally" />
+        <native-equiv name="Statement.Opcodes.Finally" />
+      </node-kind>
+
+      <child name="FinallyStatement" kind="FinallyStatement">
+        <description>
+          The "Finally" statement that begins the "Finally" block.
+        </description>
+      </child>
+
+      <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
+        <description>A list of statements to be executed.</description>
+        <lm-equiv name="BlockNode.Contents"></lm-equiv>
+        <native-equiv name="BlockStatement.Children"></native-equiv>
       </child>
     </node-structure>
 
@@ -3543,7 +3505,7 @@ Unify Enum declarations with other block type declarations.
       ******************-->
     <node-structure name="FinallyStatementSyntax" parent="StatementSyntax">
       <description>
-        Represents the Finally part part of a Try...Catch...Finally...End Try. This statement is always the Begin of a FinallyPart.
+        Represents the "Finally" statement that begins a "Finally" block.
       </description>
       <lm-equiv name="FinallyNode"></lm-equiv>
       <native-equiv name="FinallyStatement"></native-equiv>
@@ -3589,7 +3551,6 @@ Unify Enum declarations with other block type declarations.
         <native-equiv name="Operand"></native-equiv>
       </child>
     </node-structure>
-
 
     <!--****************
       -  OnErrorGoto
@@ -3809,7 +3770,7 @@ Unify Enum declarations with other block type declarations.
     <!--****************
       -  CaseBlock
       ******************-->
-    <node-structure name="CaseBlockSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="CaseBlockSyntax" parent="VBSyntaxNode">
       <description>Represents a case statement and its subsequent block.</description>
       <lm-equiv name="CaseBranchNode"></lm-equiv>
       <native-equiv name="CaseStatement"></native-equiv>
@@ -3882,7 +3843,7 @@ Unify Enum declarations with other block type declarations.
     <!--****************
       -  CaseClause
       ******************-->
-    <node-structure name="CaseClauseSyntax" abstract="true" parent="VisualBasicSyntaxNode">
+    <node-structure name="CaseClauseSyntax" abstract="true" parent="VBSyntaxNode">
       <description>Represents a single clause in a case statement. An abstract node that is the parent of different kinds of Case clauses.</description>
       <spec-section>10.8.2</spec-section>
       <grammar>CaseClause</grammar>
@@ -4054,36 +4015,50 @@ Unify Enum declarations with other block type declarations.
       ******************-->
     <node-structure name="DoLoopBlockSyntax" parent="ExecutableStatementSyntax">
       <description>
-        Represents a Do-Loop block. The Kind
-        property can be used to determine if this is a top-test, bottom-test
-        or infinite loop.
+        Represents a Do-Loop block. The Kind property can be used to determine 
+        if this is a Do While, Do Until, Do Loop While, Do Loop Until, or infinite Do Loop.
       </description>
 
       <lm-equiv name="BlockNode"></lm-equiv>
       <native-equiv name="BlockStatement"></native-equiv>
       <native-equiv name="HiddenBlockStatement">TODO: Describe how these map!</native-equiv>
 
-      <node-kind name="DoLoopTopTestBlock">
-        <lm-equiv name="DoLoop" />
-        <native-equiv name="DoWhileTopTest" />
-        <native-equiv name="DoUnitTopTest" />
-      </node-kind>
-
-      <node-kind name="DoLoopBottomTestBlock">
-        <lm-equiv name="DoLoop" />
-        <native-equiv name="DoWhileBottomTest" />
-        <native-equiv name="DoUntilBottomTest" />
-      </node-kind>
-
-      <node-kind name="DoLoopForeverBlock">
+      <node-kind name="SimpleDoLoopBlock">
         <lm-equiv name="DoLoop" />
         <native-equiv name="DoForever" />
       </node-kind>
 
-      <child name="DoStatement" kind="DoStatement">
-        <description>The Do statement that begins the block. </description>
-        <lm-equiv name=""></lm-equiv>
-        <native-equiv name=""></native-equiv>
+      <node-kind name="DoWhileLoopBlock">
+        <lm-equiv name="DoLoop" />
+        <native-equiv name="DoWhileTopTest" />
+      </node-kind>
+
+      <node-kind name="DoUntilLoopBlock">
+        <lm-equiv name="DoLoop" />
+        <native-equiv name="DoUnitTopTest" />
+      </node-kind>
+
+      <node-kind name="DoLoopWhileBlock">
+        <lm-equiv name="DoLoop" />
+        <native-equiv name="DoWhileBottomTest" />
+      </node-kind>
+
+      <node-kind name="DoLoopUntilBlock">
+        <lm-equiv name="DoLoop" />
+        <native-equiv name="DoUntilBottomTest" />
+      </node-kind>
+
+      <child name="DoStatement">
+        <description>The Do statement that begins the block.</description>
+        <lm-equiv name="DoLoopNode.Operator" />
+        <lm-equiv name="EndLoopNode.Operator" />
+        <native-equiv name="TopTestDoStatement.WhileOrUntil" />
+        <native-equiv name="BottomTestDoStatement.WhileOrUntil" />
+        <kind name="SimpleDoStatement" node-kind="SimpleDoLoopBlock" />
+        <kind name="DoWhileStatement" node-kind="DoWhileLoopBlock" />
+        <kind name="DoUntilStatement" node-kind="DoUntilLoopBlock" />
+        <kind name="SimpleDoStatement" node-kind="DoLoopWhileBlock" />
+        <kind name="SimpleDoStatement" node-kind="DoLoopUntilBlock" />
       </child>
 
       <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
@@ -4092,12 +4067,15 @@ Unify Enum declarations with other block type declarations.
         <native-equiv name="BlockStatement.Children"></native-equiv>
       </child>
 
-      <child name="LoopStatement" kind="LoopStatement">
-        <description>
-          The Loop statement that ends the block.
-        </description>
-        <lm-equiv name="EndBlock"></lm-equiv>
-        <native-equiv name="TerminatingConstruct"></native-equiv>
+      <child name="LoopStatement">
+        <description>The Loop statement that ends the block.</description>
+        <lm-equiv name="EndLoopNode.Operator" />
+        <native-equiv name="BottomTestDoStatement.WhileOrUntil" />
+        <kind name="SimpleLoopStatement" node-kind="SimpleDoLoopBlock" />
+        <kind name="SimpleLoopStatement" node-kind="DoWhileLoopBlock" />
+        <kind name="SimpleLoopStatement" node-kind="DoUntilLoopBlock" />
+        <kind name="LoopWhileStatement" node-kind="DoLoopWhileBlock" />
+        <kind name="LoopUntilStatement" node-kind="DoLoopUntilBlock" />
       </child>
     </node-structure>
 
@@ -4106,32 +4084,21 @@ Unify Enum declarations with other block type declarations.
       ******************-->
     <node-structure name="DoStatementSyntax" parent="StatementSyntax">
       <description>
-        The Do statement that begins a Do-Loop block. This statement always occurs as the Begin
-        of a DoLoopBlock.
+        The Do statement that begins a Do-Loop block.
       </description>
-      <lm-equiv name="DoLoopNode"></lm-equiv>
-      <native-equiv name="ExpressionBlockStatement">
-        The "Do" statement which contained both the do statement and the
-        contained statements become a BlockStatement which contains a Do statement, Body and Loop statement.
-      </native-equiv>
 
-      <node-kind name="DoStatement">
-        <lm-equiv name="DoLoop" />
-        <native-equiv name="DoWhileTopTest" />
-        <native-equiv name="DoUnitTopTest" />
-        <native-equiv name="DoWhileBottomTest" />
-        <native-equiv name="DoUntilBottomTest" />
-        <native-equiv name="DoForever" />
-      </node-kind>
+      <node-kind name="SimpleDoStatement" />
+      <node-kind name="DoWhileStatement" />
+      <node-kind name="DoUntilStatement" />
 
       <child name="DoKeyword" kind="DoKeyword">
         <description>The "Do" keyword.</description>
-        <lm-equiv name="DoKeyword"></lm-equiv>
-        <native-equiv name=""></native-equiv>
       </child>
 
-      <child name="WhileUntilClause" optional="true" kind="WhileClause|UntilClause">
-        <description>The "While expression" or "Until expression" part of the Do statement, if present.</description>
+      <child name="WhileOrUntilClause" optional="true" kind="WhileClause|UntilClause">
+        <description>The "While expression" or "Until expression" clause of the Do statement, if present.</description>
+        <kind name="WhileClause" node-kind="DoWhileStatement" />
+        <kind name="UntilClause" node-kind="DoUntilStatement" />
       </child>
     </node-structure>
 
@@ -4140,34 +4107,28 @@ Unify Enum declarations with other block type declarations.
       ******************-->
     <node-structure name="LoopStatementSyntax" parent="StatementSyntax">
       <description>
-        The Loop statement that ends a Do-Loop block. This statement always occurs as the End
-        of a DoLoopBlock.
+        The Loop statement that begins a Do-Loop block.
       </description>
-      <lm-equiv name="EndLoopNode"></lm-equiv>
-      <native-equiv name="BottomTestLoopStatement"></native-equiv>
 
-      <node-kind name="LoopStatement">
-        <lm-equiv name="EndLoop" />
-        <native-equiv name="Statement.Opcodes.EndLoopWhile" />
-        <native-equiv name="Statement.Opcodes.EndLoopUntil" />
-        <native-equiv name="Statement.Opcodes.EndLoop" />
-      </node-kind>
+      <node-kind name="SimpleLoopStatement" />
+      <node-kind name="LoopWhileStatement" />
+      <node-kind name="LoopUntilStatement" />
 
       <child name="LoopKeyword" kind="LoopKeyword">
         <description>The "Loop" keyword.</description>
-        <lm-equiv name="LoopKeyword"></lm-equiv>
-        <native-equiv name="WhileOrUntil"></native-equiv>
       </child>
 
-      <child name="WhileUntilClause" optional="true" kind="WhileClause|UntilClause">
-        <description>The "While expression" or "Until expression" part of the Loop statement, if present.</description>
+      <child name="WhileOrUntilClause" optional="true" kind="WhileClause|UntilClause">
+        <description>The "While expression" or "Until expression" clause of the Loop statement, if present.</description>
+        <kind name="WhileClause" node-kind="LoopWhileStatement" />
+        <kind name="UntilClause" node-kind="LoopUntilStatement" />
       </child>
     </node-structure>
 
     <!--****************
-      -  WhileUntilClause
+      -  WhileOrUntilClause
       ******************-->
-    <node-structure name="WhileUntilClauseSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="WhileOrUntilClauseSyntax" parent="VBSyntaxNode">
       <description>
         Represents a "While expression" or "Until expression" in a Do or Loop statement. The Kind
         of the clause can be "WhileClause" or "UntilClause" to indicate which kind of clause.
@@ -4192,8 +4153,6 @@ Unify Enum declarations with other block type declarations.
         <native-equiv name="ExpressionStatement.Operand"></native-equiv>
       </child>
     </node-structure>
-
-
 
     <!--****************
       -  WhileStatement
@@ -4225,11 +4184,33 @@ Unify Enum declarations with other block type declarations.
     </node-structure>
 
     <!--****************
+      -  ForOrForEachBlock
+      ******************-->
+    <node-structure name="ForOrForEachBlockSyntax" abstract="true" parent="ExecutableStatementSyntax">
+      <description>Represents a For or For Each block.</description>
+    
+      <child name="Statements" optional="true" list="true" kind="@StatementSyntax" order="20">
+        <description>The statements contained in the For or For Each loop. This might be an empty list.</description>
+        <lm-equiv name="BlockNode.Contents"></lm-equiv>
+        <native-equiv name="BlockStatement.Children"></native-equiv>
+      </child>
+
+      <child name="NextStatement" optional="true" kind="NextStatement" order="30">
+        <description>
+          The Next statement that ends the block. If two For or For Each statements are ended by a single Next statement,
+          the inner For will not have a Next statement.
+        </description>
+        <lm-equiv name="EndBlock"></lm-equiv>
+        <native-equiv name="TerminatingConstruct"></native-equiv>
+      </child>
+    </node-structure>
+
+    <!--****************
       -  ForBlock
       ******************-->
-    <node-structure name="ForBlockSyntax" parent="ExecutableStatementSyntax">
+    <node-structure name="ForBlockSyntax" parent="ForOrForEachBlockSyntax">
       <description>
-        Represents a For or For Each block, including the introducting statement,
+        Represents a For block, including the introducting statement,
         the body and the "Next" (which can be omitted if a containing For has a Next with
         multiple variables).
       </description>
@@ -4243,38 +4224,67 @@ Unify Enum declarations with other block type declarations.
         <native-equiv name="Statements.Opcodes.ForFromTo" />
       </node-kind>
 
+      <child name="ForStatement" kind="ForStatement" order="10">
+        <description>The For statement that begins the block. </description>
+        <lm-equiv name=""></lm-equiv>
+        <native-equiv name=""></native-equiv>
+      </child>
+
+    </node-structure>
+    
+    <!--****************
+      -  ForEachBlock
+      ******************-->
+    <node-structure name="ForEachBlockSyntax" parent="ForOrForEachBlockSyntax">
+      <description>
+        Represents a For Each block, including the introducting statement,
+        the body and the "Next" (which can be omitted if a containing For has a Next with
+        multiple variables).
+      </description>
+
+      <lm-equiv name="BlockNode"></lm-equiv>
+      <native-equiv name="BlockStatement"></native-equiv>
+      <native-equiv name="HiddenBlockStatement">TODO: Describe how these map!</native-equiv>
+
       <node-kind name="ForEachBlock">
         <lm-equiv name="ForEach" />
         <native-equiv name="Statements.Opcodes.ForEachIn" />
       </node-kind>
 
-      <child name="Begin" kind="ForStatement|ForEachStatement">
-        <description>The For or For Each statement that begins the block. </description>
+      <child name="ForEachStatement" kind="ForEachStatement" order="10">
+        <description>The For Each statement that begins the block. </description>
         <lm-equiv name=""></lm-equiv>
         <native-equiv name=""></native-equiv>
       </child>
+    </node-structure>
+  
+    <!--****************
+      -  ForOrForEachStatement
+      ******************-->
+    <node-structure name="ForOrForEachStatementSyntax" abstract="true" parent="StatementSyntax">
+      <description>Represents a For or For Each statement.</description>
 
-      <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
-        <description>The statements contained in the For or For Each loop. This might be an empty list.</description>
-        <lm-equiv name="BlockNode.Contents"></lm-equiv>
-        <native-equiv name="BlockStatement.Children"></native-equiv>
+      <child name="ForKeyword" kind="ForKeyword" order="10">
+        <description>The "For" keyword.</description>
+        <lm-equiv name="ForKeyword"></lm-equiv>
+        <native-equiv name="ForStatement.ControlVariable"></native-equiv>
       </child>
 
-      <child name="NextStatement" optional="true" kind="NextStatement">
+      <child name="ControlVariable" kind="@ExpressionSyntax|VariableDeclarator" order="30">
         <description>
-          The Next statement that ends the block. If two For statements are ended by a single Next statement,
-          the inner For will not have an EndStatement.
+          If the For or For Each statement is of a form that does not declare a new loop control variable, this is the
+          expression that denotes the loop control variable. If this loop is of a form that does declare a new control variable,
+          this is a VariableDeclarator that has the variable being declared.
         </description>
-        <lm-equiv name="EndBlock"></lm-equiv>
-        <native-equiv name="TerminatingConstruct"></native-equiv>
+        <lm-equiv name="Variable"></lm-equiv>
+        <native-equiv name="ForStatement.ControlVariable"></native-equiv>
       </child>
     </node-structure>
 
-
     <!--****************
-      -  For
+      -  ForStatement
       ******************-->
-    <node-structure name="ForStatementSyntax" parent="StatementSyntax">
+    <node-structure name="ForStatementSyntax" parent="ForOrForEachStatementSyntax">
       <description>
         The For statement that begins a For-Next block. This statement always occurs as the Begin
         of a ForBlock. Most of the time, the End
@@ -4290,48 +4300,32 @@ Unify Enum declarations with other block type declarations.
         <lm-equiv name="For" />
         <native-equiv name="Statement.Opcodes.ForFromTo" />
       </node-kind>
-
-      <child name="ForKeyword" kind="ForKeyword">
-        <description>The "For" keyword.</description>
-        <lm-equiv name="ForKeyword"></lm-equiv>
-        <native-equiv name="ForStatement.ControlVariable"></native-equiv>
-      </child>
-
-      <child name="ControlVariable" kind="@ExpressionSyntax|VariableDeclarator">
-        <description>
-          If the For or For Each statement is of a form that does not declare a new loop control variable, this is the
-          expression that denotes the loop control variable. If this loop is of a form that does declare a new control variable,
-          this is a VariableDeclarator that has the variable being declared.
-        </description>
-        <lm-equiv name="Variable"></lm-equiv>
-        <native-equiv name="ForStatement.ControlVariable"></native-equiv>
-      </child>
-
-      <child name="EqualsToken" kind="EqualsToken">
+      
+      <child name="EqualsToken" kind="EqualsToken" order="40">
         <description>The "=" token.</description>
         <lm-equiv name="Equal"></lm-equiv>
         <native-equiv name="Equals"></native-equiv>
       </child>
 
-      <child name="FromValue" kind="@ExpressionSyntax">
+      <child name="FromValue" kind="@ExpressionSyntax" order="50">
         <description>The expression denoting the initial value of the iteration.</description>
         <lm-equiv name="From"></lm-equiv>
         <native-equiv name="InitialValue"></native-equiv>
       </child>
 
-      <child name="ToKeyword" kind="ToKeyword">
+      <child name="ToKeyword" kind="ToKeyword" order="60">
         <description>The "To" keyword.</description>
         <lm-equiv name="ToKeyword"></lm-equiv>
         <native-equiv name="To"></native-equiv>
       </child>
 
-      <child name="ToValue" kind="@ExpressionSyntax">
+      <child name="ToValue" kind="@ExpressionSyntax" order="70">
         <description>The expression denoting the final value of the iteration.</description>
         <lm-equiv name="To"></lm-equiv>
         <native-equiv name="FinalValue"></native-equiv>
       </child>
 
-      <child name="StepClause" optional="true" kind="ForStepClause">
+      <child name="StepClause" optional="true" kind="ForStepClause" order="80">
         <description>The optional Step clause.</description>
       </child>
 
@@ -4340,7 +4334,7 @@ Unify Enum declarations with other block type declarations.
     <!--******************
       -  ForStepClauseSyntax
       *******************-->
-    <node-structure name="ForStepClauseSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="ForStepClauseSyntax" parent="VBSyntaxNode">
       <description>
         The Step clause in a For Statement.
       </description>
@@ -4365,7 +4359,7 @@ Unify Enum declarations with other block type declarations.
     <!--****************
       -  ForEach
       ******************-->
-    <node-structure name="ForEachStatementSyntax" parent="StatementSyntax">
+    <node-structure name="ForEachStatementSyntax" parent="ForOrForEachStatementSyntax">
       <description>
         The For Each statement that begins a For Each-Next block. This statement always occurs as the Begin
         of a ForBlock,
@@ -4382,42 +4376,25 @@ Unify Enum declarations with other block type declarations.
         <native-equiv name="Statements.Opcodes.ForEachIn" />
       </node-kind>
 
-      <child name="ForKeyword" kind="ForKeyword">
-        <description>The "For" keyword.</description>
-        <lm-equiv name="ForKeyword"></lm-equiv>
-        <native-equiv name="ForStatement.ControlVariable"></native-equiv>
-      </child>
-
       <!-- Ensure For i and For each i are ordered correctly -->
-      <child name="EachKeyword" kind="EachKeyword">
+      <child name="EachKeyword" kind="EachKeyword" order="20">
         <description>The "Each" keyword.</description>
         <lm-equiv name="EachKeyword"></lm-equiv>
         <native-equiv name="Each"></native-equiv>
       </child>
 
-      <child name="ControlVariable" kind="@ExpressionSyntax|VariableDeclarator">
-        <description>
-          If the For or For Each statement is of a form that does not declare a new loop control variable, this is the
-          expression that denotes the loop control variable. If this loop is of a form that does declare a new control variable,
-          this is a VariableDeclarator that has the variable being declared.
-        </description>
-        <lm-equiv name="Variable"></lm-equiv>
-        <native-equiv name="ForStatement.ControlVariable"></native-equiv>
-      </child>
-
-      <child name="InKeyword" kind="InKeyword">
+      <child name="InKeyword" kind="InKeyword" order="40">
         <description>The "In" keyword.</description>
         <lm-equiv name="InKeyword"></lm-equiv>
         <native-equiv name="In"></native-equiv>
       </child>
 
-      <child name="Expression" kind="@ExpressionSyntax">
+      <child name="Expression" kind="@ExpressionSyntax" order="50">
         <description>The expression denoting the collection to iterate over.</description>
         <lm-equiv name="Collection"></lm-equiv>
         <native-equiv name="Collection"></native-equiv>
       </child>
     </node-structure>
-
 
     <!--****************
       -  Next
@@ -4832,7 +4809,7 @@ Unify Enum declarations with other block type declarations.
     <!--****************
       -  RedimClause
       ******************-->
-    <node-structure name="RedimClauseSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="RedimClauseSyntax" parent="VBSyntaxNode">
       <description>Represents a ReDim statement clause.</description>
       <grammar>RedimClause</grammar>
 
@@ -4883,7 +4860,7 @@ Unify Enum declarations with other block type declarations.
     <!--****************
       -  ExpressionNode
       ******************-->
-    <node-structure name="ExpressionSyntax" parent="VisualBasicSyntaxNode" abstract="true">
+    <node-structure name="ExpressionSyntax" parent="VBSyntaxNode" abstract="true">
       <description>An abstract base class for all node classes that define expressions.</description>
       <lm-equiv name="ExpressionNode"></lm-equiv>
       <native-equiv name="Expression"></native-equiv>
@@ -6030,7 +6007,7 @@ Unify Enum declarations with other block type declarations.
     <!--****************
       -  ArgumentListNode
       ******************-->
-    <node-structure name="ArgumentListSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="ArgumentListSyntax" parent="VBSyntaxNode">
       <description>Represents a parenthesized argument list.</description>
       <native-equiv name="ParenthesizedArgumentList"></native-equiv>
 
@@ -6061,7 +6038,7 @@ Unify Enum declarations with other block type declarations.
     <!--****************
       -  ArgumentNode
       ******************-->
-    <node-structure name="ArgumentSyntax" parent="VisualBasicSyntaxNode" abstract="true">
+    <node-structure name="ArgumentSyntax" parent="VBSyntaxNode" abstract="true">
       <description>Base class for the possible kinds of arguments that can appear in an argument list.</description>
       <lm-equiv name="ArgumentNode"></lm-equiv>
       <native-equiv name="Argument"></native-equiv>
@@ -6090,16 +6067,19 @@ Unify Enum declarations with other block type declarations.
 
 
     <!--********************
-      -  SimpleArgumentNode
+      -  SimpleArgumentSyntax
       **********************-->
-    <!-- Better name: ExpressionArgument? -->
     <node-structure name="SimpleArgumentSyntax" parent="ArgumentSyntax">
-      <description>Represents a simple argument that is just an expression.</description>
+      <description>Represents an argument that is just an optional argument name and an expression.</description>
 
       <node-kind name="SimpleArgument">
         <lm-equiv name="Argument" />
       </node-kind>
 
+      <child name="NameColonEquals" kind="NameColonEquals" optional="true">
+        <description>The optional name and ":=" prefix of a named argument.</description>
+      </child>
+      
       <child name="Expression" kind="@ExpressionSyntax">
         <description>The expression that is the argument.</description>
         <lm-equiv name="Value"></lm-equiv>
@@ -6109,33 +6089,19 @@ Unify Enum declarations with other block type declarations.
     </node-structure>
 
     <!--********************
-      -  NamedArgumentNode
+      -  NameColonEqualsSyntax
       **********************-->
-    <node-structure name="NamedArgumentSyntax" parent="ArgumentSyntax">
-      <description>Represents a named argument, such as "Value:=7".</description>
-      <lm-equiv name="ArgumentNode"></lm-equiv>
-      <native-equiv name="Argument"></native-equiv>
+    <node-structure name="NameColonEqualsSyntax" parent="VBSyntaxNode">
+      <description>Represents an identifier name followed by a ":=" token in a named argument.</description>
 
-      <node-kind name="NamedArgument">
-        <lm-equiv name="Argument" />
-      </node-kind>
+      <node-kind name="NameColonEquals" />
 
-      <child name="IdentifierName" kind="IdentifierName">
+      <child name="Name" kind="IdentifierName">
         <description>The name used to identify the named argument.</description>
-        <lm-equiv name="Name"></lm-equiv>
-        <native-equiv name="Name"></native-equiv>
       </child>
 
       <child name="ColonEqualsToken" kind="ColonEqualsToken">
         <description>The ":=" token.</description>
-        <lm-equiv name="ColonEqual"></lm-equiv>
-        <native-equiv name="ColonEquals"></native-equiv>
-      </child>
-
-      <child name="Expression" kind="@ExpressionSyntax">
-        <description>The expression that is the named argument.</description>
-        <lm-equiv name="Value"></lm-equiv>
-        <native-equiv name="Value"></native-equiv>
       </child>
     </node-structure>
 
@@ -6208,7 +6174,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       - QueryClauseSyntax
       **********************-->
-    <node-structure name="QueryClauseSyntax" abstract="true" parent="VisualBasicSyntaxNode">
+    <node-structure name="QueryClauseSyntax" abstract="true" parent="VBSyntaxNode">
       <description>
         This is a base class for all query operators.
       </description>
@@ -6222,7 +6188,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  CollectionRangeVariable
       **********************-->
-    <node-structure name="CollectionRangeVariableSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="CollectionRangeVariableSyntax" parent="VBSyntaxNode">
       <description>Describes a single variable of the form "x [As Type] In expression" for use in query expressions.</description>
       <lm-equiv name="FromItemNode">When used in a From</lm-equiv>
       <lm-equiv name="LinqSourceNode">When used in a Join</lm-equiv>
@@ -6266,7 +6232,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  ExpressionRangeVariable
       **********************-->
-    <node-structure name="ExpressionRangeVariableSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="ExpressionRangeVariableSyntax" parent="VBSyntaxNode">
       <description>Describes a single variable of the form "[x [As Type] =] expression" for use in query expressions.</description>
       <lm-equiv name="InitializerNode"></lm-equiv>
       <lm-equiv name="FromItemNode">When used in a Let.</lm-equiv>
@@ -6301,7 +6267,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  AggregationRangeVariable
       **********************-->
-    <node-structure name="AggregationRangeVariableSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="AggregationRangeVariableSyntax" parent="VBSyntaxNode">
       <description>
         Describes a single variable of the form "[x [As Type] =] aggregation-function" for use in the Into clause
         of Aggregate or Group By or Group Join query operators.
@@ -6340,7 +6306,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  VariableNameEquals
       **********************-->
-    <node-structure name="VariableNameEqualsSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="VariableNameEqualsSyntax" parent="VBSyntaxNode">
       <description>
         Represents the name and optional type of an expression range variable.
       </description>
@@ -6774,7 +6740,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  JoinCondition
       **********************-->
-    <node-structure name="JoinConditionSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="JoinConditionSyntax" parent="VBSyntaxNode">
       <description>
         Represents the "expression Equals expression" condition in a Join.
       </description>
@@ -6882,7 +6848,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  OrderExpression
       **********************-->
-    <node-structure name="OrderingSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="OrderingSyntax" parent="VBSyntaxNode">
       <description>An expression to order by, plus an optional ordering. The Kind indicates whether to order in ascending or descending order.</description>
       <lm-equiv name="OrderByItemNode"></lm-equiv>
       <native-equiv name="OrderByItem"></native-equiv>
@@ -6971,7 +6937,7 @@ Unify Enum declarations with other block type declarations.
 
     </node-structure>
 
-    <node-structure name="XmlDeclarationSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="XmlDeclarationSyntax" parent="VBSyntaxNode">
       <description>
         Represents the XML declaration prologue in an XML literal expression.
       </description>
@@ -7008,7 +6974,7 @@ Unify Enum declarations with other block type declarations.
           <child name="GreaterThanToken" kind="GreaterThanToken"></child>
       </node-structure>
 
-       <node-structure name="XmlExternalIDSyntax" parent="VisualBasicSyntaxNode" abstract="true">
+       <node-structure name="XmlExternalIDSyntax" parent="VBSyntaxNode" abstract="true">
       </node-structure>
 
       <node-structure name="XmlSystemIDSyntax" parent="XmlExternalIDSyntax">
@@ -7028,7 +6994,7 @@ Unify Enum declarations with other block type declarations.
           <child name="SystemLiteral" kind="@XmlStringSyntax"></child>
       </node-structure>
 
-      <node-structure name="XmlInternalSubsetSyntax" parent="VisualBasicSyntaxNode">
+      <node-structure name="XmlInternalSubsetSyntax" parent="VBSyntaxNode">
           <node-kind name="XmlInternalSubset">
           </node-kind>
 
@@ -7039,7 +7005,7 @@ Unify Enum declarations with other block type declarations.
       
       -->
 
-    <node-structure name="XmlDeclarationOptionSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="XmlDeclarationOptionSyntax" parent="VBSyntaxNode">
       <description>Represents an XML document prologue option - version, encoding, standalone or whitespace in an XML literal expression.</description>
 
       <node-kind name="XmlDeclarationOption" />
@@ -7181,7 +7147,7 @@ Unify Enum declarations with other block type declarations.
       <child name="GreaterThanToken" kind="GreaterThanToken"></child>
     </node-structure>
 
-    <node-structure name="XmlPrefixSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="XmlPrefixSyntax" parent="VBSyntaxNode">
       <description>Represents an XML namespace prefix of the form 'prefix:' as in xml:ns="".</description>
 
       <node-kind name="XmlPrefix" />
@@ -7486,7 +7452,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  GenericArguments
       **********************-->
-    <node-structure name="TypeArgumentListSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="TypeArgumentListSyntax" parent="VBSyntaxNode">
       <description>Represents a parenthesized list of generic type arguments.</description>
       <lm-equiv name=""></lm-equiv>
       <native-equiv name=""></native-equiv>
@@ -7519,7 +7485,7 @@ Unify Enum declarations with other block type declarations.
     <!-- **  CREF reference syntax                                                                       ** -->
     <!-- ************************************************************************************************** -->
 
-    <node-structure name="CrefReferenceSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="CrefReferenceSyntax" parent="VBSyntaxNode">
       <description>
         Syntax node class that represents a value of 'cref' attribute
         inside documentation comment trivia.
@@ -7544,7 +7510,7 @@ Unify Enum declarations with other block type declarations.
       <child name="AsClause" optional="true" kind="SimpleAsClause"/>
     </node-structure>
 
-    <node-structure name="CrefSignatureSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="CrefSignatureSyntax" parent="VBSyntaxNode">
       <description>
         Represents a parenthesized list of argument types for a signature inside CrefReferenceSyntax syntax.
       </description>
@@ -7556,7 +7522,7 @@ Unify Enum declarations with other block type declarations.
       <child name="CloseParenToken" kind="CloseParenToken"/>
     </node-structure>
 
-    <node-structure name="CrefSignaturePartSyntax" parent="VisualBasicSyntaxNode">
+    <node-structure name="CrefSignaturePartSyntax" parent="VBSyntaxNode">
       <node-kind name="CrefSignaturePart" />
 
       <child name="Modifier" optional="true" kind="ByValKeyword|ByRefKeyword"/>
@@ -7610,7 +7576,7 @@ Unify Enum declarations with other block type declarations.
       -  AwaitExpression
       ******************-->
     <node-structure name="AwaitExpressionSyntax" parent="ExpressionSyntax">
-      <description>Represent a Await expression.</description>
+      <description>Represents an Await expression.</description>
       <lm-equiv name="AwaitExpressionNode"></lm-equiv>
       <native-equiv name="AwaitExpression"></native-equiv>
 
@@ -7638,7 +7604,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  Token
       **********************-->
-    <node-structure name="SyntaxToken" token-root="true" abstract="true" parent="VisualBasicSyntaxNode">
+    <node-structure name="SyntaxToken" token-root="true" abstract="true" parent="VBSyntaxNode">
       <description>
         Represents a single syntactic token in a VB program. A token is a
         keyword, punctuator, literal, identifier or XML token. The type of keyword or
@@ -8677,7 +8643,7 @@ Unify Enum declarations with other block type declarations.
         <lm-equiv name="XmlEndEmbeddedToken" />
         <native-equiv name="" />
       </node-kind>
-      <node-kind name="BeginCDataToken" token-text="&lt;[CDATA[">
+      <node-kind name="BeginCDataToken" token-text="&lt;![CDATA[">
         <lm-equiv name="XmlBeginCDataToken" />
         <native-equiv name="" />
       </node-kind>
@@ -9001,7 +8967,7 @@ Unify Enum declarations with other block type declarations.
     <!-- **  STRUCTURED TRIVIA                                                                          ** -->
     <!-- ************************************************************************************************** -->
 
-    <node-structure name="StructuredTriviaSyntax" abstract="true" parent="VisualBasicSyntaxNode">
+    <node-structure name="StructuredTriviaSyntax" abstract="true" parent="VBSyntaxNode">
       <description>Abstract class that represent structured trivia.</description>
     </node-structure>
 
@@ -9104,7 +9070,7 @@ Unify Enum declarations with other block type declarations.
     <!--********************
       -  Trivia
       **********************-->
-    <node-structure name="SyntaxTrivia" trivia-root="true" parent="VisualBasicSyntaxNode" syntax-facts-internal="true">
+    <node-structure name="SyntaxTrivia" trivia-root="true" parent="VBSyntaxNode" syntax-facts-internal="true">
       <description>
         Trivia nodes represents parts of the program text that are
         not parts of the syntactic grammar, such as spaces, newlines, comments, preprocessors directives,

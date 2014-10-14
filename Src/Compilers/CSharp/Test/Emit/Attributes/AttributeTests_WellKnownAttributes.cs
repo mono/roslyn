@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -128,7 +127,7 @@ class C
             };
 
             // Verify attributes from source and then load metadata to see attributes are written correctly.
-            CompileAndVerify(source, emitOptions: EmitOptions.CCI, sourceSymbolValidator: attributeValidator, symbolValidator: null);
+            CompileAndVerify(source, emitOptions: TestEmitters.CCI, sourceSymbolValidator: attributeValidator, symbolValidator: null);
         }
 
         [Fact]
@@ -254,7 +253,7 @@ class C
             };
 
             // Verify attributes from source and then load metadata to see attributes are written correctly.
-            CompileAndVerify(source, emitOptions: EmitOptions.CCI, sourceSymbolValidator: attributeValidator, symbolValidator: null);
+            CompileAndVerify(source, emitOptions: TestEmitters.CCI, sourceSymbolValidator: attributeValidator, symbolValidator: null);
         }
 
         [Fact]
@@ -415,7 +414,7 @@ class C
             #endregion
 
             // Verify attributes from source and then load metadata to see attributes are written correctly.
-            CompileAndVerify(text, additionalRefs: new[] { SystemRef }, emitOptions: EmitOptions.CCI, sourceSymbolValidator: attributeValidator);
+            CompileAndVerify(text, additionalRefs: new[] { SystemRef }, emitOptions: TestEmitters.CCI, sourceSymbolValidator: attributeValidator);
         }
 
         [Fact]
@@ -466,7 +465,7 @@ public class CCC
             CompileAndVerify(
                 text,
                 additionalRefs: new[] { SystemRef },
-                emitOptions: EmitOptions.CCI,
+                emitOptions: TestEmitters.CCI,
                 expectedOutput: @"
 (Byte)0, (Byte)128, (UInt32)4294967295, (UInt32)4294967295, (UInt32)4294967295, True
 (Byte)0, (Byte)0, (UInt32)4294967295, (UInt32)4294967295, (UInt32)4294967295, True
@@ -510,9 +509,9 @@ public class C
     }
 }";
 
-            Action<IModuleSymbol, EmitOptions> verifier = (module, options) =>
+            Action<IModuleSymbol, TestEmitters> verifier = (module, options) =>
             {
-                var isRefEmit = options == EmitOptions.RefEmit;
+                var isRefEmit = options == TestEmitters.RefEmit;
                 var c = (NamedTypeSymbol)((ModuleSymbol)module).GlobalNamespace.GetMember("C");
                 var m = (MethodSymbol)c.GetMember("M");
                 var ps = m.GetParameters();
@@ -937,7 +936,7 @@ class C
         Foo();
     }
 }";
-            CompileAndVerify(source, additionalRefs: new[] { SystemRef }, emitOptions: EmitOptions.RefEmitBug, expectedOutput: @"5");
+            CompileAndVerify(source, additionalRefs: new[] { SystemRef }, emitOptions: TestEmitters.RefEmitBug, expectedOutput: @"5");
         }
 
         [Fact]
@@ -1004,7 +1003,7 @@ public class C
 	}
 }
 ");
-            CompileAndVerify(compilation, emitOptions: EmitOptions.RefEmitUnsupported_640494);
+            CompileAndVerify(compilation, emitOptions: TestEmitters.RefEmitUnsupported_640494);
         }
 
         [Fact, WorkItem(546785, "DevDiv")]
@@ -1059,7 +1058,7 @@ partial class C
                 partialValidator(sourceMethod);
             };
 
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitBug, additionalRefs: new[] { SystemRef }, sourceSymbolValidator: sourceValidator);
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitBug, additionalRefs: new[] { SystemRef }, sourceSymbolValidator: sourceValidator);
         }
 
         [WorkItem(544303, "DevDiv")]
@@ -1277,7 +1276,7 @@ class C
     }
 }
 ";
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitBug, additionalRefs: new[] { MscorlibRef, SystemRef }, options: TestOptions.ReleaseExe, expectedOutput: "");
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitBug, additionalRefs: new[] { MscorlibRef, SystemRef }, options: TestOptions.ReleaseExe, expectedOutput: "");
         }
 
         [Fact, WorkItem(546624, "DevDiv")]
@@ -1497,9 +1496,9 @@ class C
                 Diagnostic(ErrorCode.ERR_SecurityAttributeMissingAction, "MyPermission6"));
         }
 
-        [Fact(Skip = "Bug 1036356")]
+        [Fact]
         [WorkItem(1036356, "DevDiv")]
-        public void EnumDefaultParameterValue()
+        public void EnumAsDefaultParameterValue()
         {
             const string source = @"
 using System;
@@ -1517,7 +1516,10 @@ class Program
     }
 }";
             var comp = CreateCompilationWithMscorlib(source, references: new[] { SystemRef });
-            comp.Emit(Stream.Null);
+            comp.VerifyEmitDiagnostics(
+                // (13,9): error CS0029: Cannot implicitly convert type 'int' to 'Enum'
+                //         Foo();
+                Diagnostic(ErrorCode.ERR_NoImplicitConv, "Foo()").WithArguments("int", "System.Enum").WithLocation(13, 9));
         }
 
         #endregion
@@ -1610,7 +1612,7 @@ public class MyClass
     }
 }";
 
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitBug, expectedOutput: @"Has DecimalConstantAttribute
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitBug, expectedOutput: @"Has DecimalConstantAttribute
 No DecimalConstantAttribute");
         }
 
@@ -2588,7 +2590,7 @@ abstract class C
                 }
             };
 
-            CompileAndVerify(source, assemblyValidator: (assembly, emitOptions) => validator(assembly, emitOptions == EmitOptions.RefEmit));
+            CompileAndVerify(source, assemblyValidator: (assembly, emitOptions) => validator(assembly, emitOptions == TestEmitters.RefEmit));
         }
 
         [Fact]
@@ -2838,7 +2840,7 @@ class C
     [MethodImpl(MethodImplOptions.PreserveSig)]
     public static void f1() { }
 }";
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitUnsupported_646021);
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitUnsupported_646021);
         }
 
         [Fact]
@@ -2909,7 +2911,7 @@ abstract class C
 }
 ";
             // Ref.Emit doesn't implement custom attributes yet
-            CompileAndVerify(source, emitOptions: EmitOptions.CCI, assemblyValidator: (assembly, _) =>
+            CompileAndVerify(source, emitOptions: TestEmitters.CCI, assemblyValidator: (assembly, _) =>
             {
                 var metadataReader = assembly.GetMetadataReader();
 
@@ -2941,7 +2943,7 @@ abstract class C
 }
 ";
             // Ref.Emit doesn't implement custom attributes yet
-            CompileAndVerify(source, emitOptions: EmitOptions.CCI, assemblyValidator: (assembly, _) =>
+            CompileAndVerify(source, emitOptions: TestEmitters.CCI, assemblyValidator: (assembly, _) =>
             {
                 var metadataReader = assembly.GetMetadataReader();
 
@@ -3033,7 +3035,7 @@ interface I { }
 delegate void D();
 ";
             // Ref.Emit doesn't implement custom attributes yet
-            CompileAndVerify(source, emitOptions: EmitOptions.CCI, assemblyValidator: (assembly, _) =>
+            CompileAndVerify(source, emitOptions: TestEmitters.CCI, assemblyValidator: (assembly, _) =>
             {
                 var metadataReader = assembly.GetMetadataReader();
 
@@ -3196,7 +3198,7 @@ public class MainClass
             // Dev10 Runtime Exception:
             // Unhandled Exception: System.TypeLoadException: Could not load type 'A' from assembly 'XXX' because the method 'Foo' has no implementation (no RVA).
 
-            Assert.Throws(typeof(PeVerifyException), () => CompileAndVerify(source, options: TestOptions.ReleaseDll, emitOptions: EmitOptions.CCI, sourceSymbolValidator: sourceValidator, symbolValidator: metadataValidator));
+            Assert.Throws(typeof(PeVerifyException), () => CompileAndVerify(source, options: TestOptions.ReleaseDll, emitOptions: TestEmitters.CCI, sourceSymbolValidator: sourceValidator, symbolValidator: metadataValidator));
         }
 
         [Fact, WorkItem(544507, "DevDiv")]
@@ -3283,7 +3285,7 @@ public class MainClass
 0";
 
             // Verify attributes from source and then load metadata to see attributes are written correctly.
-            CompileAndVerify(source, emitOptions: EmitOptions.CCI, sourceSymbolValidator: attributeValidator(true), symbolValidator: attributeValidator(false), expectedOutput: expectedOutput);
+            CompileAndVerify(source, emitOptions: TestEmitters.CCI, sourceSymbolValidator: attributeValidator(true), symbolValidator: attributeValidator(false), expectedOutput: expectedOutput);
         }
 
         [Fact]
@@ -3343,9 +3345,9 @@ public class MainClass
             // Verify attributes from source and then load metadata to see attributes are written correctly.
 
             // Using metadata reference to test RetargetingNamedTypeSymbol CoClass type
-            CompileAndVerify(source2, additionalRefs: new[] { compDll.ToMetadataReference() }, emitOptions: EmitOptions.CCI, expectedOutput: expectedOutput);
+            CompileAndVerify(source2, additionalRefs: new[] { compDll.ToMetadataReference() }, emitOptions: TestEmitters.CCI, expectedOutput: expectedOutput);
             // Using assembly file reference to test PENamedTypeSymbol symbol CoClass type
-            CompileAndVerify(source2, additionalRefs: new[] { compDll.EmitToImageReference() }, emitOptions: EmitOptions.CCI, expectedOutput: expectedOutput);
+            CompileAndVerify(source2, additionalRefs: new[] { compDll.EmitToImageReference() }, emitOptions: TestEmitters.CCI, expectedOutput: expectedOutput);
         }
 
         [Fact]
@@ -3412,7 +3414,7 @@ public class MainClass
             string expectedOutput = @"string";
 
             // Verify attributes from source and then load metadata to see attributes are written correctly.
-            CompileAndVerify(source, emitOptions: EmitOptions.CCI, sourceSymbolValidator: attributeValidator(true), symbolValidator: attributeValidator(false), expectedOutput: expectedOutput);
+            CompileAndVerify(source, emitOptions: TestEmitters.CCI, sourceSymbolValidator: attributeValidator(true), symbolValidator: attributeValidator(false), expectedOutput: expectedOutput);
         }
 
         [Fact]
@@ -3451,9 +3453,9 @@ public class MainClass
             // Verify attributes from source and then load metadata to see attributes are written correctly.
 
             // Using metadata reference to test RetargetingNamedTypeSymbol CoClass type
-            CompileAndVerify(source2, additionalRefs: new[] { compDll.ToMetadataReference() }, emitOptions: EmitOptions.CCI, expectedOutput: expectedOutput);
+            CompileAndVerify(source2, additionalRefs: new[] { compDll.ToMetadataReference() }, emitOptions: TestEmitters.CCI, expectedOutput: expectedOutput);
             // Using assembly file reference to test PENamedTypeSymbol symbol CoClass type
-            CompileAndVerify(source2, additionalRefs: new[] { compDll.EmitToImageReference() }, emitOptions: EmitOptions.CCI, expectedOutput: expectedOutput);
+            CompileAndVerify(source2, additionalRefs: new[] { compDll.EmitToImageReference() }, emitOptions: TestEmitters.CCI, expectedOutput: expectedOutput);
         }
 
         [Fact]
@@ -3838,7 +3840,7 @@ public class MainClass
         return 0;
     }
 }";
-            CompileAndVerify(source, emitOptions: EmitOptions.CCI);
+            CompileAndVerify(source, emitOptions: TestEmitters.CCI);
         }
 
         [Fact]
@@ -4417,7 +4419,7 @@ namespace AttributeTest
             // Verify attributes from source and then load metadata to see attributes are written correctly.
             var comp = CompileAndVerify(
                 compilation,
-                emitOptions: EmitOptions.CCI,
+                emitOptions: TestEmitters.CCI,
                 sourceSymbolValidator: attributeValidator,
                 symbolValidator: null,
                 expectedSignatures: new[]
@@ -4517,7 +4519,7 @@ namespace System
             };
 
             // Verify attributes from source and then load metadata to see attributes are written correctly.
-            CompileAndVerify(source, sourceSymbolValidator: attributeValidator, symbolValidator: attributeValidator, emitOptions: EmitOptions.CCI);
+            CompileAndVerify(source, sourceSymbolValidator: attributeValidator, symbolValidator: attributeValidator, emitOptions: TestEmitters.CCI);
         }
 
         [WorkItem(546102, "DevDiv")]
@@ -5000,7 +5002,7 @@ class A
             // Dev10 Runtime Exception:
             // Unhandled Exception: System.TypeLoadException: Windows Runtime types can only be declared in Windows Runtime assemblies.
 
-            var verifier = CompileAndVerify(source, emitOptions: EmitOptions.CCI, sourceSymbolValidator: sourceValidator, symbolValidator: metadataValidator, verify: false);
+            var verifier = CompileAndVerify(source, emitOptions: TestEmitters.CCI, sourceSymbolValidator: sourceValidator, symbolValidator: metadataValidator, verify: false);
             verifier.EmitAndVerify("Type load failed.");
         }
 
@@ -5058,7 +5060,7 @@ class A
                 Assert.True(method.RequiresSecurityObject, "Metadata flag RequiresSecurityObject is not set");
             };
 
-            CompileAndVerify(source, emitOptions: EmitOptions.CCI, sourceSymbolValidator: sourceValidator, symbolValidator: metadataValidator, expectedOutput: "");
+            CompileAndVerify(source, emitOptions: TestEmitters.CCI, sourceSymbolValidator: sourceValidator, symbolValidator: metadataValidator, expectedOutput: "");
         }
 
         #endregion

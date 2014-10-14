@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -15,7 +16,7 @@ using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Usage
 {
-    [ExportCodeFixProvider("CA2229 CodeFix provider", LanguageNames.CSharp)]
+    [ExportCodeFixProvider("CA2229 CodeFix provider", LanguageNames.CSharp), Shared]
     public sealed class CA2229CodeFixProvider : CodeFixProviderBase
     {
         public sealed override ImmutableArray<string> GetFixableDiagnosticIds()
@@ -46,7 +47,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Usage
 
                 var ctorSymbol = CodeGenerationSymbolFactory.CreateConstructorSymbol(null,
                                                                                      typeSymbol.IsSealed ? Accessibility.Private : Accessibility.Protected,
-                                                                                     new SymbolModifiers(),
+                                                                                     new DeclarationModifiers(),
                                                                                      typeSymbol.Name,
                                                                                      parameters,
                                                                                      throwStatement);

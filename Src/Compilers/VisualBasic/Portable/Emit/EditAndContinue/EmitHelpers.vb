@@ -2,7 +2,9 @@
 
 Imports System.Collections.Immutable
 Imports System.IO
+Imports System.Reflection.Metadata
 Imports System.Threading
+Imports Microsoft.CodeAnalysis
 Imports Microsoft.CodeAnalysis.CodeGen
 Imports Microsoft.CodeAnalysis.Emit
 
@@ -11,13 +13,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
     Module EmitHelpers
 
         Friend Function EmitDifference(
-            compilation As VisualBasicCompilation,
+            compilation As VBCompilation,
             baseline As EmitBaseline,
             edits As IEnumerable(Of SemanticEdit),
             metadataStream As Stream,
             ilStream As Stream,
             pdbStream As Stream,
-            updatedMethodTokens As ICollection(Of UInteger),
+            updatedMethods As ICollection(Of MethodHandle),
             testData As CompilationTestData,
             cancellationToken As CancellationToken) As EmitDifferenceResult
 
@@ -31,13 +33,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
 
             Dim pdbName = FileNameUtilities.ChangeExtension(compilation.SourceModule.Name, "pdb")
             Dim diagnostics = DiagnosticBag.GetInstance()
+
+            Dim emitOpts = EmitOptions.Default
             Dim runtimeMDVersion = compilation.GetRuntimeMetadataVersion()
-            Dim serializationProperties = compilation.ConstructModuleSerializationProperties(runtimeMDVersion, moduleVersionId)
+            Dim serializationProperties = compilation.ConstructModuleSerializationProperties(emitOpts, runtimeMDVersion, moduleVersionId)
             Dim manifestResources = SpecializedCollections.EmptyEnumerable(Of ResourceDescription)()
 
             Dim moduleBeingBuilt = New PEDeltaAssemblyBuilder(
                     compilation.SourceAssembly,
-                    outputName:=Nothing,
+                    emitOptions:=emitOpts,
                     outputKind:=compilation.Options.OutputKind,
                     serializationProperties:=serializationProperties,
                     manifestResources:=manifestResources,
@@ -56,7 +60,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             Dim changes = moduleBeingBuilt.Changes
 
             If compilation.Compile(moduleBeingBuilt,
-                                   outputName:=Nothing,
                                    win32Resources:=Nothing,
                                    xmlDocStream:=Nothing,
                                    cancellationToken:=cancellationToken,
@@ -86,7 +89,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
 
                         Dim metadataSizes As Cci.MetadataSizes = Nothing
                         writer.WriteMetadataAndIL(metadataStream, ilStream, metadataSizes)
-                        writer.GetMethodTokens(updatedMethodTokens)
+                        writer.GetMethodTokens(updatedMethods)
 
                         Return New EmitDifferenceResult(
                             success:=True,
@@ -105,7 +108,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
         End Function
 
         Friend Function MapToCompilation(
-            compilation As VisualBasicCompilation,
+            compilation As VBCompilation,
             moduleBeingBuilt As PEDeltaAssemblyBuilder) As EmitBaseline
 
             Dim previousGeneration = moduleBeingBuilt.PreviousGeneration
@@ -120,7 +123,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
 
             Dim map = New VisualBasicSymbolMatcher(
                 moduleBeingBuilt.GetAnonymousTypeMap(),
-                (DirectCast(previousGeneration.Compilation, VisualBasicCompilation)).SourceAssembly,
+                (DirectCast(previousGeneration.Compilation, VBCompilation)).SourceAssembly,
                 New EmitContext(DirectCast(previousGeneration.PEModuleBuilder, PEModuleBuilder), Nothing, New DiagnosticBag()),
                 compilation.SourceAssembly,
                 New EmitContext(DirectCast(moduleBeingBuilt, Cci.IModule), Nothing, New DiagnosticBag()))
@@ -168,7 +171,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
                 guidStreamLengthAdded:=previousGeneration.GuidStreamLengthAdded,
                 anonymousTypeMap:=anonymousTypeMap,
                 localsForMethodsAddedOrChanged:=locals,
-                localNames:=previousGeneration.LocalNames)
+                debugInformationProvider:=previousGeneration.DebugInformationProvider)
         End Function
 
         Private Function MapDefinitions(Of K As Cci.IDefinition, V)(
@@ -199,7 +202,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             Else
                 Dim type = map.MapReference(localInfo.Type)
                 Debug.Assert(type IsNot Nothing)
-                Return New EncLocalInfo(localInfo.Offset, type, localInfo.Constraints, localInfo.SynthesizedKind, localInfo.Signature)
+                Return New EncLocalInfo(localInfo.Id, type, localInfo.Constraints, localInfo.Kind, localInfo.Signature)
             End If
         End Function
 

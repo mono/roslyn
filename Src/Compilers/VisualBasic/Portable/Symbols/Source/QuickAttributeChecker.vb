@@ -55,15 +55,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' and would be unlikely to matter. This entire class is probabilistic anyone and is only used for quick
         ''' checks.
         ''' </summary>
-        Public Sub AddAlias(aliasSyntax As AliasImportsClauseSyntax)
+        Public Sub AddAlias(aliasSyntax As SimpleImportsClauseSyntax)
             Debug.Assert(Not _sealed)
+            Debug.Assert(aliasSyntax.Alias IsNot Nothing)
 
             Dim finalName = GetFinalName(aliasSyntax.Name)
 
             If finalName IsNot Nothing Then
                 Dim current As QuickAttributes = QuickAttributes.None
                 If _nameToAttributeMap.TryGetValue(finalName, current) Then
-                    AddName(aliasSyntax.Alias.ValueText, current)
+                    AddName(aliasSyntax.Alias.Identifier.ValueText, current)
                 End If
             End If
         End Sub
@@ -106,7 +107,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         ' Return the last name in a TypeSyntax, or Nothing if there isn't one.
         Private Function GetFinalName(typeSyntax As TypeSyntax) As String
-            Dim node As VisualBasicSyntaxNode = typeSyntax
+            Dim node As VBSyntaxNode = typeSyntax
             Do
                 Select Case node.Kind
                     Case SyntaxKind.IdentifierName

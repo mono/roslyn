@@ -93,13 +93,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 '  if there is a temp local assign a value to it
                 ternaryConditionalExpression =
                     New BoundAssignmentOperator(rewrittenTestExpression.Syntax,
-                                                Left:=New BoundLocal(rewrittenTestExpression.Syntax,
+                                                left:=New BoundLocal(rewrittenTestExpression.Syntax,
                                                                      tempVariableSymbol,
                                                                      isLValue:=True,
                                                                      type:=rewrittenTestExpressionType),
-                                                Right:=rewrittenTestExpression,
+                                                right:=rewrittenTestExpression,
                                                 suppressObjectClone:=True,
-                                                Type:=rewrittenTestExpressionType)
+                                                type:=rewrittenTestExpressionType)
             End If
 
             ' NOTE: newTestExpression is not actually a boolean expression, but it is of a reference 
@@ -111,7 +111,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                           whenTrue:=rewrittenConvertedTestExpression,
                                                           whenFalse:=VisitExpressionNode(node.ElseExpression),
                                                           constantValueOpt:=node.ConstantValueOpt,
-                                                          Type:=node.Type))
+                                                          type:=node.Type))
 
             If tempVariableSymbol Is Nothing Then
                 Return result
@@ -210,23 +210,32 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             ' == rewrite operands and check for trivial cases
             Dim rewrittenLeft = Me.VisitExpressionNode(node.TestExpression)
             If HasValue(rewrittenLeft) Then
-                If node.ConvertedTestExpression Is Nothing Then
-                    Return NullableValueOrDefault(rewrittenLeft)
-                Else
-                    If rewrittenLeft.Type.IsSameTypeIgnoringCustomModifiers(node.ConvertedTestExpression.Type) Then
-                        ' Optimization
-                        Return rewrittenLeft
-                    End If
-
-                    Return VisitExpressionNode(node.ConvertedTestExpression,
-                                               node.TestExpressionPlaceholder,
-                                               NullableValueOrDefault(rewrittenLeft))
-                End If
+                Return MakeResultFromNonNullLeft(rewrittenLeft, node.ConvertedTestExpression, node.TestExpressionPlaceholder)
             End If
 
             Dim rewrittenRight = Me.VisitExpressionNode(node.ElseExpression)
             If HasNoValue(rewrittenLeft) Then
                 Return rewrittenRight
+            End If
+
+            If rewrittenLeft.Kind = BoundKind.LoweredConditionalAccess Then
+                Dim conditional = DirectCast(rewrittenLeft, BoundLoweredConditionalAccess)
+
+                If HasNoValue(conditional.WhenNullOpt) Then
+                    If HasValue(conditional.WhenNotNull) Then
+                        Return conditional.Update(conditional.ReceiverOrCondition,
+                                              conditional.CaptureReceiver,
+                                              conditional.PlaceholderId,
+                                              MakeResultFromNonNullLeft(conditional.WhenNotNull, node.ConvertedTestExpression, node.TestExpressionPlaceholder),
+                                              rewrittenRight,
+                                              node.Type)
+
+                    Else
+                        Debug.Assert(Not HasNoValue(conditional.WhenNotNull)) ' Not optimizing for this case
+
+                        ' CONSIDER: We could do inlining when rewrittenRight.IsConstant
+                    End If
+                End If
             End If
 
             '=== Rewrite binary conditional expression using ternary conditional expression
@@ -268,6 +277,21 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Return result
+        End Function
+
+        Private Function MakeResultFromNonNullLeft(rewrittenLeft As BoundExpression, convertedTestExpression As BoundExpression, testExpressionPlaceholder As BoundRValuePlaceholder) As BoundExpression
+            If convertedTestExpression Is Nothing Then
+                Return NullableValueOrDefault(rewrittenLeft)
+            Else
+                If rewrittenLeft.Type.IsSameTypeIgnoringCustomModifiers(convertedTestExpression.Type) Then
+                    ' Optimization
+                    Return rewrittenLeft
+                End If
+
+                Return VisitExpressionNode(convertedTestExpression,
+                                           testExpressionPlaceholder,
+                                           NullableValueOrDefault(rewrittenLeft))
+            End If
         End Function
 
         Private Function VisitExpressionNode(node As BoundExpression,

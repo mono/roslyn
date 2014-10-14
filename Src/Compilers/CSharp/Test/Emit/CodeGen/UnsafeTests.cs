@@ -1488,7 +1488,7 @@ unsafe class C
   // Code size       34 (0x22)
   .maxstack  2
   .locals init (char* V_0, //p
-                pinned string V_1) //CS$519$0000
+                pinned string V_1)
  -IL_0000:  nop
   IL_0001:  ldstr      ""hello""
   IL_0006:  stloc.1
@@ -1546,9 +1546,9 @@ unsafe class C
   .maxstack  2
   .locals init (string V_0, //s
                 char* V_1, //p
-                pinned string V_2, //CS$519$0000
+                pinned string V_2,
                 char* V_3, //p
-                pinned string V_4) //CS$519$0001
+                pinned string V_4)
  -IL_0000:  nop
  -IL_0001:  ldstr      ""hello""
   IL_0006:  stloc.0
@@ -1991,7 +1991,7 @@ unsafe class C
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       27 (0x1b)
@@ -2052,7 +2052,7 @@ unsafe class C
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       29 (0x1d)
@@ -2114,7 +2114,7 @@ unsafe class C
 }
 ";
             // Cleanup not in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       26 (0x1a)
@@ -2168,7 +2168,7 @@ unsafe class C
 }
 ";
             // Cleanup not in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       28 (0x1c)
@@ -2226,7 +2226,7 @@ unsafe class C
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       30 (0x1e)
@@ -2292,7 +2292,7 @@ unsafe class C
 }
 ";
             // Neither inner nor outer has finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       45 (0x2d)
@@ -2352,7 +2352,7 @@ unsafe class C
 }
 ";
             // Inner and outer both have finally blocks.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       50 (0x32)
@@ -2428,7 +2428,7 @@ unsafe class C
 }
 ";
             // Outer has finally, inner does not.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       48 (0x30)
@@ -2512,7 +2512,7 @@ unsafe class C
             //   1) nothing blows up with triple-nesting, and
             //   2) none of the fixed statements has a try-finally.
             // CONSIDER: Shorter test that performs the same checks.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size      187 (0xbb)
@@ -2642,7 +2642,7 @@ unsafe class C
 ";
             // CONSIDER: This is sort of silly since the using is optimized away.
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       26 (0x1a)
@@ -2693,7 +2693,7 @@ unsafe class C
 }
 ";
             // Cleanup not in finally (matches dev11, but not clear why).
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       47 (0x2f)
@@ -2758,7 +2758,7 @@ unsafe class C
 ";
             // Cleanup in finally.
             // CONSIDER: dev11 is smarter and skips the try-finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       46 (0x2e)
@@ -2842,7 +2842,7 @@ class Enumerator : System.IDisposable
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       62 (0x3e)
@@ -2922,7 +2922,7 @@ unsafe class C
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.<Test>b__0", @"
 {
   // Code size       27 (0x1b)
@@ -2986,7 +2986,7 @@ unsafe class C
 }
 ";
             // Cleanup not in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.<Test>b__0", @"
 {
   // Code size       23 (0x17)
@@ -3031,7 +3031,7 @@ unsafe class C
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.<Test>b__0", @"
 {
   // Code size       26 (0x1a)
@@ -3085,7 +3085,7 @@ unsafe class C
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.<.ctor>b__0", @"
 {
   // Code size       27 (0x1b)
@@ -3142,7 +3142,7 @@ unsafe class C
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.<.ctor>b__0", @"
 {
   // Code size       26 (0x1a)
@@ -3194,7 +3194,7 @@ unsafe class C
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       27 (0x1b)
@@ -3248,7 +3248,7 @@ unsafe class C
 ";
             // Cleanup in finally.
             // CONSIDER: dev11 doesn't have a finally here, but that seems incorrect.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       26 (0x1a)
@@ -3301,7 +3301,7 @@ unsafe class C
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       27 (0x1b)
@@ -3355,7 +3355,7 @@ unsafe class C
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       26 (0x1a)
@@ -3405,7 +3405,7 @@ unsafe class C
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       26 (0x1a)
@@ -3455,7 +3455,7 @@ unsafe class C
 }
 ";
             // Cleanup in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       26 (0x1a)
@@ -3504,7 +3504,7 @@ unsafe class C
 }
 ";
             // Cleanup not in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       22 (0x16)
@@ -3544,7 +3544,7 @@ unsafe class C
 }
 ";
             // Cleanup not in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       21 (0x15)
@@ -3585,7 +3585,7 @@ unsafe class C
 }
 ";
             // Cleanup not in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       36 (0x24)
@@ -3643,7 +3643,7 @@ unsafe class C
             //      branches out or not.  We should be conservative and assume that
             //      it does.
             // Cleanup not in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       23 (0x17)
@@ -3707,7 +3707,7 @@ unsafe class C
 }
 ";
             // Cleanup not in finally.
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size      103 (0x67)
@@ -3774,7 +3774,7 @@ unsafe class C
         }
     }
 }";
-            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.All).
+            CompileAndVerify(text, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.All).
                 VerifyIL("C.Test", @"
 {
   // Code size       23 (0x17)
@@ -4458,7 +4458,7 @@ unsafe class C
                 pinned System.IntPtr& V_2, //q
                 void* V_3, //r
                 char[] V_4,
-                pinned string V_5) //CS$519$0000
+                pinned string V_5)
  -IL_0000:  nop
  -IL_0001:  nop
  -IL_0002:  newobj     ""C..ctor()""
@@ -4524,7 +4524,7 @@ unsafe class C
 ";
             var expectedOutput = @"970104";
             CompileAndVerify(string.Format(template, "unchecked"), options: TestOptions.UnsafeDebugExe, expectedOutput: expectedOutput).VerifyIL("C.Main", expectedIL, sequencePoints: "C.Main");
-            CompileAndVerify(string.Format(template, "checked"), options: TestOptions.UnsafeDebugExe, expectedOutput: expectedOutput).VerifyIL("C.Main", expectedIL, sequencePoints: "C.Main");
+            CompileAndVerify(string.Format(template, "checked  "), options: TestOptions.UnsafeDebugExe, expectedOutput: expectedOutput).VerifyIL("C.Main", expectedIL, sequencePoints: "C.Main");
         }
 
         [Fact]
@@ -8229,12 +8229,12 @@ class A : Attribute
     }}
 }}
 ";
-            CompileAndVerify(string.Format(template, "int"), options: TestOptions.UnsafeReleaseExe, emitOptions: EmitOptions.RefEmitBug, expectedOutput: @"True");
-            CompileAndVerify(string.Format(template, "int*"), options: TestOptions.UnsafeReleaseExe, emitOptions: EmitOptions.RefEmitBug, expectedOutput: @"True");
-            CompileAndVerify(string.Format(template, "int**"), options: TestOptions.UnsafeReleaseExe, emitOptions: EmitOptions.RefEmitBug, expectedOutput: @"True");
-            CompileAndVerify(string.Format(template, "int[]"), options: TestOptions.UnsafeReleaseExe, emitOptions: EmitOptions.RefEmitBug, expectedOutput: @"True");
-            CompileAndVerify(string.Format(template, "int[][]"), options: TestOptions.UnsafeReleaseExe, emitOptions: EmitOptions.RefEmitBug, expectedOutput: @"True");
-            CompileAndVerify(string.Format(template, "int*[]"), options: TestOptions.UnsafeReleaseExe, emitOptions: EmitOptions.RefEmitBug, expectedOutput: @"True");
+            CompileAndVerify(string.Format(template, "int"), options: TestOptions.UnsafeReleaseExe, emitOptions: TestEmitters.RefEmitBug, expectedOutput: @"True");
+            CompileAndVerify(string.Format(template, "int*"), options: TestOptions.UnsafeReleaseExe, emitOptions: TestEmitters.RefEmitBug, expectedOutput: @"True");
+            CompileAndVerify(string.Format(template, "int**"), options: TestOptions.UnsafeReleaseExe, emitOptions: TestEmitters.RefEmitBug, expectedOutput: @"True");
+            CompileAndVerify(string.Format(template, "int[]"), options: TestOptions.UnsafeReleaseExe, emitOptions: TestEmitters.RefEmitBug, expectedOutput: @"True");
+            CompileAndVerify(string.Format(template, "int[][]"), options: TestOptions.UnsafeReleaseExe, emitOptions: TestEmitters.RefEmitBug, expectedOutput: @"True");
+            CompileAndVerify(string.Format(template, "int*[]"), options: TestOptions.UnsafeReleaseExe, emitOptions: TestEmitters.RefEmitBug, expectedOutput: @"True");
         }
 
         #endregion Functional tests
@@ -9054,52 +9054,52 @@ public unsafe class C
 {
   // Code size       63 (0x3f)
   .maxstack  2
-  .locals init (bool V_0, //CS$4$0000
-           byte[] V_1,
-           byte[] V_2, //bytes
-           pinned byte& V_3, //pBytes
-           byte[] V_4)
- -IL_0000:  nop       
- -IL_0001:  ldarg.0   
-  IL_0002:  ldc.i4.0  
-  IL_0003:  ceq       
-  IL_0005:  stloc.0   
- ~IL_0006:  ldloc.0   
+  .locals init (bool V_0,
+                byte[] V_1,
+                byte[] V_2, //bytes
+                pinned byte& V_3, //pBytes
+                byte[] V_4)
+ -IL_0000:  nop
+ -IL_0001:  ldarg.0
+  IL_0002:  ldc.i4.0
+  IL_0003:  ceq
+  IL_0005:  stloc.0
+ ~IL_0006:  ldloc.0
   IL_0007:  brfalse.s  IL_0012
- -IL_0009:  nop       
+ -IL_0009:  nop
  -IL_000a:  ldsfld     ""byte[] C._emptyArray""
-  IL_000f:  stloc.1   
+  IL_000f:  stloc.1
   IL_0010:  br.s       IL_003d
- -IL_0012:  nop       
- -IL_0013:  ldarg.0   
+ -IL_0012:  nop
+ -IL_0013:  ldarg.0
   IL_0014:  newarr     ""byte""
-  IL_0019:  stloc.2   
- -IL_001a:  ldloc.2   
-  IL_001b:  dup       
+  IL_0019:  stloc.2
+ -IL_001a:  ldloc.2
+  IL_001b:  dup
   IL_001c:  stloc.s    V_4
   IL_001e:  brfalse.s  IL_0026
   IL_0020:  ldloc.s    V_4
-  IL_0022:  ldlen     
-  IL_0023:  conv.i4   
+  IL_0022:  ldlen
+  IL_0023:  conv.i4
   IL_0024:  brtrue.s   IL_002b
-  IL_0026:  ldc.i4.0  
-  IL_0027:  conv.u    
-  IL_0028:  stloc.3   
+  IL_0026:  ldc.i4.0
+  IL_0027:  conv.u
+  IL_0028:  stloc.3
   IL_0029:  br.s       IL_0034
   IL_002b:  ldloc.s    V_4
-  IL_002d:  ldc.i4.0  
+  IL_002d:  ldc.i4.0
   IL_002e:  ldelema    ""byte""
-  IL_0033:  stloc.3   
- -IL_0034:  nop       
- -IL_0035:  nop       
- ~IL_0036:  ldc.i4.0  
-  IL_0037:  conv.u    
-  IL_0038:  stloc.3   
- -IL_0039:  ldloc.2   
-  IL_003a:  stloc.1   
+  IL_0033:  stloc.3
+ -IL_0034:  nop
+ -IL_0035:  nop
+ ~IL_0036:  ldc.i4.0
+  IL_0037:  conv.u
+  IL_0038:  stloc.3
+ -IL_0039:  ldloc.2
+  IL_003a:  stloc.1
   IL_003b:  br.s       IL_003d
- -IL_003d:  ldloc.1   
-  IL_003e:  ret       
+ -IL_003d:  ldloc.1
+  IL_003e:  ret
 }
 ", sequencePoints: "C.ToManagedByteArray");
         }

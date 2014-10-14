@@ -9,6 +9,7 @@ using System.Text;
 using Microsoft.CodeAnalysis.CodeGen;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Roslyn.Test.Utilities;
 using Xunit;
@@ -59,7 +60,7 @@ public struct EventDescriptor
                 }
             };
 
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitBug, symbolValidator: attributeValidator(false), sourceSymbolValidator: attributeValidator(true));
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitBug, symbolValidator: attributeValidator(false), sourceSymbolValidator: attributeValidator(true));
         }
 
         [Fact, WorkItem(544956, "DevDiv")]
@@ -72,7 +73,7 @@ class Foo
     [System.Security.SuppressUnmanagedCodeSecurityAttribute]
     public static void Main() {}
 }";
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitBug);
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitBug);
         }
 
         [WorkItem(544929, "DevDiv")]
@@ -271,7 +272,7 @@ class MyCodeAccessSecurityAttribute : CodeAccessSecurityAttribute
     public static void Main() {}
 }
 ";
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitBug);
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitBug);
         }
 
         [WorkItem(544918, "DevDiv")]
@@ -416,7 +417,7 @@ class Test
     public static void Main() {}
 }
 ";
-            CompileAndVerify(source, emitOptions: EmitOptions.RefEmitBug);
+            CompileAndVerify(source, emitOptions: TestEmitters.RefEmitBug);
         }
 
         [WorkItem(544918, "DevDiv")]
@@ -630,8 +631,8 @@ namespace System
     }
 }
 ";
-            var comp = CreateCompilation(source, null, TestOptions.ReleaseDll.WithRuntimeMetadataVersion("v4.0.31019"));
-            CompileAndVerify(comp, verify: false, emitOptions: EmitOptions.RefEmitBug).VerifyDiagnostics();
+            var comp = CreateCompilation(source);
+            comp.EmitToArray(options: new EmitOptions(runtimeMetadataVersion: "v4.0.31019"), expectedWarnings: new DiagnosticDescription[0]);
         }
 
         #endregion
@@ -1360,7 +1361,7 @@ namespace N
                 }
             };
 
-            CompileAndVerify(source, options: TestOptions.UnsafeReleaseDll, emitOptions: EmitOptions.RefEmitBug, symbolValidator: attributeValidator(false), sourceSymbolValidator: attributeValidator(true));
+            CompileAndVerify(source, options: TestOptions.UnsafeReleaseDll, emitOptions: TestEmitters.RefEmitBug, symbolValidator: attributeValidator(false), sourceSymbolValidator: attributeValidator(true));
         }
 
         [WorkItem(545084, "DevDiv"), WorkItem(529492, "DevDiv")]

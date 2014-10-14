@@ -395,7 +395,7 @@ End Class
                     </file>
                 </compilation>
 
-            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=EmitOptions.RefEmitBug)
+            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=TestEmitters.RefEmitBug)
         End Sub
 
         <Fact>
@@ -2712,7 +2712,7 @@ Interface IE
             CheckDefaultMemberAttribute(compilation, type, "P", synthesized:=False)
         End Sub
 
-        Private Sub CheckDefaultMemberAttribute(compilation As VisualBasicCompilation, type As NamedTypeSymbol, name As String, synthesized As Boolean)
+        Private Sub CheckDefaultMemberAttribute(compilation As VBCompilation, type As NamedTypeSymbol, name As String, synthesized As Boolean)
             Dim attributes = type.GetAttributes()
             Dim synthesizedAttributes = type.GetSynthesizedAttributes()
             Dim attribute As VisualBasicAttributeData
@@ -4846,7 +4846,7 @@ Class B
     End Sub
 End Class
 ]]></file></compilation>
-            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=EmitOptions.RefEmitBug)
+            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=TestEmitters.RefEmitBug)
         End Sub
 
         <WorkItem(528038, "DevDiv")>
@@ -4986,7 +4986,7 @@ Class B
     End Sub
 End Class
 ]]></file></compilation>
-            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=EmitOptions.RefEmitBug)
+            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=TestEmitters.RefEmitBug)
         End Sub
 
         <WorkItem(527660, "DevDiv")>
@@ -5025,7 +5025,7 @@ Class B
     End Sub
 End Class
 ]]></file></compilation>
-            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=EmitOptions.RefEmitBug)
+            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=TestEmitters.RefEmitBug)
         End Sub
 
         <Fact>
@@ -5043,7 +5043,7 @@ Class B
     End Sub
 End Class
 ]]></file></compilation>
-            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=EmitOptions.RefEmitBug)
+            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=TestEmitters.RefEmitBug)
         End Sub
 
         <WorkItem(527656, "DevDiv")>
@@ -5080,7 +5080,7 @@ Class B
     End Sub
 End Class
 ]]></file></compilation>
-            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=EmitOptions.RefEmitBug)
+            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=TestEmitters.RefEmitBug)
         End Sub
 
         <Fact>
@@ -5098,7 +5098,7 @@ Class B
     End Sub
 End Class
 ]]></file></compilation>
-            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=EmitOptions.RefEmitBug)
+            CompileWithCustomILSource(vbSource, ilSource, emitOptions:=TestEmitters.RefEmitBug)
         End Sub
 
         ''' <summary>
@@ -8115,7 +8115,7 @@ End Class
 
         Private Shared Sub CheckPropertyAccessibility([property] As PropertySymbol, propertyAccessibility As Accessibility, getterAccessibility As Accessibility, setterAccessibility As Accessibility)
             Dim type = [property].Type
-            Assert.NotEqual(type.PrimitiveTypeCode, Microsoft.Cci.PrimitiveTypeCode.Void)
+            Assert.NotEqual(type.PrimitiveTypeCode, Cci.PrimitiveTypeCode.Void)
             Assert.Equal(propertyAccessibility, [property].DeclaredAccessibility)
             CheckPropertyAccessorAccessibility([property], propertyAccessibility, [property].GetMethod, getterAccessibility)
             CheckPropertyAccessorAccessibility([property], propertyAccessibility, [property].SetMethod, setterAccessibility)
@@ -8195,8 +8195,8 @@ End Class
             Assert.Equal(interfacePropertyGetter, classPropertyGetter.ExplicitInterfaceImplementations.Single())
             Assert.Equal(interfacePropertySetter, classPropertySetter.ExplicitInterfaceImplementations.Single())
 
-            Dim typeDef = DirectCast([class], Microsoft.Cci.ITypeDefinition)
-            Dim [module] = New PEAssemblyBuilder(DirectCast([class].ContainingAssembly, SourceAssemblySymbol), Nothing, OutputKind.DynamicallyLinkedLibrary, GetDefaultModulePropertiesForSerialization(), SpecializedCollections.EmptyEnumerable(Of ResourceDescription)())
+            Dim typeDef = DirectCast([class], Cci.ITypeDefinition)
+            Dim [module] = New PEAssemblyBuilder(DirectCast([class].ContainingAssembly, SourceAssemblySymbol), EmitOptions.Default, OutputKind.DynamicallyLinkedLibrary, GetDefaultModulePropertiesForSerialization(), SpecializedCollections.EmptyEnumerable(Of ResourceDescription)())
 
             Dim context = New EmitContext([module], Nothing, New DiagnosticBag())
             Dim explicitOverrides = typeDef.GetExplicitImplementationOverrides(context)
@@ -8232,7 +8232,7 @@ End Class
             End If
         End Sub
 
-        Private Function CompileWithCustomPropertiesAssembly(source As XElement, Optional options As VisualBasicCompilationOptions = Nothing) As VisualBasicCompilation
+        Private Function CompileWithCustomPropertiesAssembly(source As XElement, Optional options As VBCompilationOptions = Nothing) As VBCompilation
             Return CreateCompilationWithMscorlibAndReferences(source, {PropertiesDll}, options)
         End Function
 

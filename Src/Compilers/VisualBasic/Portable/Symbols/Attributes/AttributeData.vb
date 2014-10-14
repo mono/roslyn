@@ -86,8 +86,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         Friend Overloads Shared Function IsTargetEarlyAttribute(attributeType As NamedTypeSymbol, attributeSyntax As AttributeSyntax, description As AttributeDescription) As Boolean
             Debug.Assert(Not attributeType.IsErrorType())
 
-            Dim argumentCount As Integer = If((attributeSyntax.ArgumentList IsNot Nothing),
-                                              attributeSyntax.ArgumentList.Arguments.Where(Function(arg) arg.Kind = SyntaxKind.SimpleArgument).Count,
+            Dim argumentCount As Integer = If(attributeSyntax.ArgumentList IsNot Nothing,
+                                              attributeSyntax.ArgumentList.Arguments.Where(Function(arg) arg.Kind = SyntaxKind.SimpleArgument AndAlso Not arg.IsNamed).Count,
                                               0)
             Return AttributeData.IsTargetEarlyAttribute(attributeType, argumentCount, description)
         End Function
@@ -172,7 +172,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
 #Region "Attribute Decoding"
 
-        Friend Function IsSecurityAttribute(comp As VisualBasicCompilation) As Boolean
+        Friend Function IsSecurityAttribute(comp As VBCompilation) As Boolean
             ' CLI spec (Partition II Metadata), section 21.11 "DeclSecurity : 0x0E" states:
             ' SPEC:    If the attribute’s type is derived (directly or indirectly) from System.Security.Permissions.SecurityAttribute then
             ' SPEC:    it is a security custom attribute and requires special treatment.
@@ -184,7 +184,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Return m_lazyIsSecurityAttribute.Value
         End Function
 
-        Friend Sub DecodeSecurityAttribute(Of T As {WellKnownAttributeData, ISecurityAttributeTarget, New})(targetSymbol As Symbol, compilation As VisualBasicCompilation, ByRef arguments As DecodeWellKnownAttributeArguments(Of AttributeSyntax, VisualBasicAttributeData, AttributeLocation))
+        Friend Sub DecodeSecurityAttribute(Of T As {WellKnownAttributeData, ISecurityAttributeTarget, New})(targetSymbol As Symbol, compilation As VBCompilation, ByRef arguments As DecodeWellKnownAttributeArguments(Of AttributeSyntax, VisualBasicAttributeData, AttributeLocation))
             Dim hasErrors As Boolean = False
             Dim action As Cci.SecurityAction = Me.DecodeSecurityAttributeAction(targetSymbol, compilation, arguments.AttributeSyntaxOpt, hasErrors, arguments.Diagnostics)
             If Not hasErrors Then
@@ -203,7 +203,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         Private Function DecodeSecurityAttributeAction(
             targetSymbol As Symbol,
-            compilation As VisualBasicCompilation,
+            compilation As VBCompilation,
             nodeOpt As AttributeSyntax,
             ByRef hasErrors As Boolean,
             diagnostics As DiagnosticBag
@@ -348,7 +348,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' See <see cref="Microsoft.CodeAnalysis.CodeGen.PermissionSetAttributeWithFileReference"/> for remaining fixup steps.
         ''' </remarks>
         ''' <returns>String containing the resolved file path if PermissionSetAttribute needs fixup during codegen, null otherwise.</returns>
-        Friend Function DecodePermissionSetAttribute(compilation As VisualBasicCompilation, ByRef arguments As DecodeWellKnownAttributeArguments(Of AttributeSyntax, VisualBasicAttributeData, AttributeLocation)) As String
+        Friend Function DecodePermissionSetAttribute(compilation As VBCompilation, ByRef arguments As DecodeWellKnownAttributeArguments(Of AttributeSyntax, VisualBasicAttributeData, AttributeLocation)) As String
             Dim resolvedFilePath As String = Nothing
             Dim namedArgs = Me.CommonNamedArguments
 
@@ -398,7 +398,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 Dim [property] = DirectCast(members(0), PropertySymbol)
                 If [property].Type IsNot Nothing AndAlso [property].Type.SpecialType = SpecialType.System_String AndAlso
                     [property].DeclaredAccessibility = Accessibility.Public AndAlso [property].GetArity() = 0 AndAlso
-                    [property].IsWritable AndAlso [property].SetMethod.DeclaredAccessibility = Accessibility.Public Then
+                    [property].HasSet AndAlso [property].SetMethod.DeclaredAccessibility = Accessibility.Public Then
 
                     Return True
                 End If

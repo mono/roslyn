@@ -1,22 +1,19 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports System.Collections.Immutable
-Imports System.Runtime.InteropServices
 Imports System.Threading
-Imports Microsoft.CodeAnalysis.Text
+Imports Microsoft.CodeAnalysis.CodeGen
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
-Imports TypeKind = Microsoft.CodeAnalysis.TypeKind
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
     ''' <summary>
     ''' Represents a local variable (typically inside a method body). This could also be a local variable implicitly
     ''' declared by a For, Using, etc. When used as a temporary variable, its container can also be a Field or Property Symbol.
     ''' </summary>
-    ''' <remarks></remarks>
     Friend MustInherit Class LocalSymbol
         Inherits Symbol
-        Implements ILocalSymbol
+        Implements ILocalSymbolInternal
 
         Friend Shared ReadOnly UseBeforeDeclarationResultType As ErrorTypeSymbol = New ErrorTypeSymbol()
 
@@ -111,8 +108,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             _lazyType = type
         End Sub
 
+        Friend Overridable ReadOnly Property IsImportedFromMetadata As Boolean
+            Get
+                Return False
+            End Get
+        End Property
+
         Friend MustOverride ReadOnly Property DeclarationKind As LocalDeclarationKind
-        Friend MustOverride ReadOnly Property SynthesizedLocalKind As SynthesizedLocalKind
+        Friend MustOverride ReadOnly Property SynthesizedKind As SynthesizedLocalKind
 
         Public Overridable ReadOnly Property Type As TypeSymbol
             Get
@@ -164,6 +167,19 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ' if a local symbol actually matches a particular definition, even in the presence of duplicates.
         Friend MustOverride ReadOnly Property IdentifierToken As SyntaxToken
 
+        ''' <summary>
+        ''' Returns the syntax node that declares the variable.
+        ''' </summary>
+        ''' <remarks>
+        ''' All user-defined and long-lived synthesized variables must return a reference to a node that is 
+        ''' tracked by the EnC diffing algorithm. For example, for <see cref="LocalDeclarationKind.Catch"/> variable
+        ''' the declarator is the <see cref="CatchStatementSyntax"/> node, not the <see cref="IdentifierNameSyntax"/>
+        ''' that immediately contains the variable.
+        ''' 
+        ''' The location of the declarator is used to calculate <see cref="LocalDebugId.SyntaxOffset"/> during emit.
+        ''' </remarks>
+        Friend MustOverride Function GetDeclaratorSyntax() As SyntaxNode
+
         Public NotOverridable Overrides ReadOnly Property Kind As SymbolKind
             Get
                 Return SymbolKind.Local
@@ -172,7 +188,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         Public Overrides ReadOnly Property Locations As ImmutableArray(Of Location)
             Get
-                Return ImmutableArray.Create(Of Location)(Me.IdentifierLocation)
+                Return ImmutableArray.Create(Me.IdentifierLocation)
             End Get
         End Property
 
@@ -367,6 +383,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
 #End Region
 
+
 #Region "ISymbol"
 
         Protected Overrides ReadOnly Property ISymbol_IsStatic As Boolean
@@ -393,6 +410,26 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
 #End Region
 
+#Region "ILocalSymbolInternal"
+
+        Private ReadOnly Property ILocalSymbolInternal_IsImportedFromMetadata As Boolean Implements ILocalSymbolInternal.IsImportedFromMetadata
+            Get
+                Return Me.IsImportedFromMetadata
+            End Get
+        End Property
+
+        Private ReadOnly Property ILocalSymbolInternal_SynthesizedKind As SynthesizedLocalKind Implements ILocalSymbolInternal.SynthesizedKind
+            Get
+                Return Me.SynthesizedKind
+            End Get
+        End Property
+
+        Private Function ILocalSymbolInternal_GetDeclaratorSyntax() As SyntaxNode Implements ILocalSymbolInternal.GetDeclaratorSyntax
+            Return Me.GetDeclaratorSyntax()
+        End Function
+
+#End Region
+
 #Region "SourceLocalSymbol"
 
         ''' <summary>
@@ -412,7 +449,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                            type As TypeSymbol)
                 MyBase.New(containingSymbol, type)
 
-                Debug.Assert(identifierToken.VisualBasicKind <> SyntaxKind.None)
+                Debug.Assert(identifierToken.VBKind <> SyntaxKind.None)
                 Debug.Assert(declarationKind <> LocalDeclarationKind.None)
                 Debug.Assert(binder IsNot Nothing)
 
@@ -427,9 +464,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 End Get
             End Property
 
-            Friend Overrides ReadOnly Property SynthesizedLocalKind As SynthesizedLocalKind
+            Friend Overrides ReadOnly Property SynthesizedKind As SynthesizedLocalKind
                 Get
-                    Return SynthesizedLocalKind.None
+                    Return SynthesizedLocalKind.UserDefined
                 End Get
             End Property
 
@@ -439,14 +476,63 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 End Get
             End Property
 
+            Friend Overrides Function GetDeclaratorSyntax() As SyntaxNode
+                Dim node As SyntaxNode
+
+                Select Case Me.DeclarationKind
+                    Case LocalDeclarationKind.Variable,
+                         LocalDeclarationKind.Constant,
+                         LocalDeclarationKind.Using,
+                         LocalDeclarationKind.Static
+                        node = _identifierToken.Parent
+                        Debug.Assert(TypeOf node Is ModifiedIdentifierSyntax)
+
+                    Case LocalDeclarationKind.ImplicitVariable
+                        node = _identifierToken.Parent
+                        Debug.Assert(TypeOf node Is IdentifierNameSyntax)
+
+                    Case LocalDeclarationKind.FunctionValue
+                        node = _identifierToken.Parent
+
+                        If node.IsKind(SyntaxKind.PropertyStatement) Then
+                            Dim propertyBlock = DirectCast(node.Parent, PropertyBlockSyntax)
+                            Return propertyBlock.Accessors.Where(Function(a) a.IsKind(SyntaxKind.GetAccessorBlock)).Single().Begin
+                        End If
+
+                        Debug.Assert(node.IsKind(SyntaxKind.FunctionStatement))
+
+                    Case LocalDeclarationKind.Catch
+                        node = _identifierToken.Parent.Parent
+                        Debug.Assert(TypeOf node Is CatchStatementSyntax)
+
+                    Case LocalDeclarationKind.For
+                        node = _identifierToken.Parent
+                        If Not node.IsKind(SyntaxKind.ModifiedIdentifier) Then
+                            node = node.Parent
+                            Debug.Assert(node.IsKind(SyntaxKind.ForStatement))
+                        End If
+
+                    Case LocalDeclarationKind.ForEach
+                        node = _identifierToken.Parent
+                        If Not node.IsKind(SyntaxKind.ModifiedIdentifier) Then
+                            node = node.Parent
+                            Debug.Assert(node.IsKind(SyntaxKind.ForEachStatement))
+                        End If
+
+                    Case Else
+                        Throw ExceptionUtilities.UnexpectedValue(Me.DeclarationKind)
+                End Select
+
+                Return node
+            End Function
+
             Public Overrides ReadOnly Property DeclaringSyntaxReferences As ImmutableArray(Of SyntaxReference)
                 Get
-                    Dim name = TryCast(Me._identifierToken.Parent, IdentifierNameSyntax)
-                    If name IsNot Nothing Then
-                        Return ImmutableArray.Create(name.GetReference())
-                    Else
+                    If Me.DeclarationKind = LocalDeclarationKind.FunctionValue Then
                         Return ImmutableArray(Of SyntaxReference).Empty
                     End If
+
+                    Return ImmutableArray.Create(_identifierToken.Parent.GetReference())
                 End Get
             End Property
 
@@ -761,7 +847,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                         Return New BoundLiteral(_initializerOpt, _evaluatedConstant.Value, _evaluatedConstant.Type)
                     End If
 
-                    Return New BoundBadExpression(If(DirectCast(_initializerOpt, VisualBasicSyntaxNode), _modifiedIdentifierOpt),
+                    Return New BoundBadExpression(If(DirectCast(_initializerOpt, VBSyntaxNode), _modifiedIdentifierOpt),
                                                   LookupResultKind.Empty, ImmutableArray(Of Symbol).Empty, ImmutableArray(Of BoundNode).Empty, _evaluatedConstant.Type, hasErrors:=True)
                 End If
 
@@ -833,9 +919,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 End Get
             End Property
 
-            Friend Overrides ReadOnly Property SynthesizedLocalKind As SynthesizedLocalKind
+            Friend Overrides ReadOnly Property SynthesizedKind As SynthesizedLocalKind
                 Get
-                    Return _originalVariable.SynthesizedLocalKind
+                    Return _originalVariable.SynthesizedKind
                 End Get
             End Property
 
@@ -881,6 +967,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
             Friend Overrides Function GetConstantValueDiagnostics(binder As Binder) As IEnumerable(Of Diagnostic)
                 Return _originalVariable.GetConstantValueDiagnostics(binder)
+            End Function
+
+            Friend Overrides Function GetDeclaratorSyntax() As SyntaxNode
+                Return _originalVariable.GetDeclaratorSyntax()
             End Function
         End Class
 #End Region

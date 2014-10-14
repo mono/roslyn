@@ -40,32 +40,9 @@ class C
             var tree = Parse(text, options: CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp5));
             var comp = CreateCompilationWithMscorlib45(new SyntaxTree[] { tree }, new MetadataReference[] { SystemRef });
             comp.VerifyDiagnostics(diagnostics);
-            var syntaxNode = (PrefixUnaryExpressionSyntax)tree.FindNodeOrTokenByKind(SyntaxKind.AwaitExpression).AsNode();
+            var syntaxNode = (AwaitExpressionSyntax)tree.FindNodeOrTokenByKind(SyntaxKind.AwaitExpression).AsNode();
             var treeModel = comp.GetSemanticModel(tree);
             return treeModel.GetAwaitExpressionInfo(syntaxNode);
-        }
-
-        [Fact]
-        [WorkItem(711413, "DevDiv")]
-        public void TestAwaitInfoWrongSyntaxKind()
-        {
-            var text =
-@"
-class C
-{
-    int Foo(int t)
-    {
-        return + t;
-    }
-}";
-            var tree = Parse(text, options: CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp5));
-            var comp = CreateCompilationWithMscorlib45(new SyntaxTree[] { tree }, new MetadataReference[] { SystemRef });
-            comp.VerifyDiagnostics();
-            var syntaxNode = (PrefixUnaryExpressionSyntax)tree.FindNodeOrTokenByKind(SyntaxKind.UnaryPlusExpression).AsNode();
-            var treeModel = comp.GetSemanticModel(tree);
-            Assert.Throws<System.ArgumentException>(() => {
-                var info = treeModel.GetAwaitExpressionInfo(syntaxNode);
-            });
         }
 
         [Fact]
@@ -146,8 +123,7 @@ class C
             comp.VerifyEmitDiagnostics(
                 // (8,27): error CS4007: 'await' cannot be used in an expression containing the type 'System.TypedReference'
                 //         Console.WriteLine(new TypedReference().Equals(await Task.FromResult(0)));
-                Diagnostic(ErrorCode.ERR_ByRefTypeAndAwait, "new TypedReference()").WithArguments("System.TypedReference").WithLocation(8, 27)
-                );
+                Diagnostic(ErrorCode.ERR_ByRefTypeAndAwait, "await Task.FromResult(0)").WithArguments("System.TypedReference").WithLocation(8, 55));
         }
     }
 }

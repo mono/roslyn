@@ -2748,9 +2748,6 @@ BC30099: 'Exit Select' can only appear inside a 'Select' statement.
 BC30101: Branching out of a 'Finally' is not valid.
                     GoTo Label1
                          ~~~~~~
-BC30754: 'GoTo Label1' is not valid because 'Label1' is inside a 'Try', 'Catch' or 'Finally' statement that does not contain this statement.
-                    GoTo Label1
-                         ~~~~~~
 </expected>)
         End Sub
 
@@ -16913,6 +16910,30 @@ BC36602: 'ReadOnly' variable cannot be the target of an assignment in a lambda e
         End Sub
 
         <Fact()>
+        Public Sub BC36602ERR_ReadOnlyInClosure1()
+            Dim compilation = CompilationUtils.CreateCompilationWithMscorlib(
+    <compilation name="ReadOnlyInClosure">
+        <file name="a.vb">
+        Class Class1
+            ReadOnly property m As Integer
+            Sub New()
+                Dim f = Function() Test(m)
+            End Sub
+            Function Test(ByRef n As Integer) As String
+                Return Nothing
+            End Function
+        End Class
+    </file>
+    </compilation>)
+            CompilationUtils.AssertTheseDiagnostics(compilation,
+    <expected>
+BC36602: 'ReadOnly' variable cannot be the target of an assignment in a lambda expression inside a constructor.
+                Dim f = Function() Test(m)
+                                        ~
+</expected>)
+        End Sub
+
+        <Fact()>
         Public Sub BC36603ERR_ExprTreeNoMultiDimArrayCreation()
             Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntimeAndReferences(
     <compilation name="ExprTreeNoMultiDimArrayCreation">
@@ -19428,7 +19449,7 @@ BC42032: Operands of type Object used for operator '&lt;&gt;'; use the 'IsNot' o
                 End Sub
             End Module
         </file>
-    </compilation>, New VisualBasicCompilationOptions(OutputKind.ConsoleApplication).WithOptionStrict(OptionStrict.Custom))
+    </compilation>, New VBCompilationOptions(OutputKind.ConsoleApplication).WithOptionStrict(OptionStrict.Custom))
             Dim expectedErrors1 = <errors>
 BC42036: Operands of type Object used in expressions for 'Select', 'Case' statements; runtime errors could occur.
                     Select Case o
@@ -19454,7 +19475,7 @@ BC42016: Implicit conversion from 'Object' to 'Boolean'.
                 End Sub
             End Module
         </file>
-    </compilation>, New VisualBasicCompilationOptions(OutputKind.ConsoleApplication).WithOptionStrict(OptionStrict.Custom))
+    </compilation>, New VBCompilationOptions(OutputKind.ConsoleApplication).WithOptionStrict(OptionStrict.Custom))
             Dim expectedErrors1 = <errors>
 BC42016: Implicit conversion from 'Object' to 'Boolean'.
                         Case 2, o

@@ -483,10 +483,11 @@ namespace Microsoft.CodeAnalysis.CSharp
             // bound in the context of the containing symbols base being resolved.
             for (; expression != null && expression.Parent != null; expression = expression.Parent as TypeSyntax)
             {
-                if (expression.Parent.Kind == SyntaxKind.BaseList)
+                var parent = expression.Parent;
+                if (parent is BaseTypeSyntax && parent.Parent != null && parent.Parent.Kind == SyntaxKind.BaseList && ((BaseTypeSyntax)parent).Type == expression)
                 {
                     // we have a winner
-                    var decl = (BaseTypeDeclarationSyntax)expression.Parent.Parent;
+                    var decl = (BaseTypeDeclarationSyntax)parent.Parent.Parent;
                     var symbol = this.GetDeclaredSymbol(decl);
                     return ConsList<Symbol>.Empty.Prepend((Symbol)symbol.OriginalDefinition);
                 }
@@ -878,30 +879,30 @@ namespace Microsoft.CodeAnalysis.CSharp
             switch (node.Kind)
             {
                 case SyntaxKind.Block:
-                    
-                    MemberDeclarationSyntax memberDecl;
-                    AccessorDeclarationSyntax accessorDecl;
-                    if ((memberDecl = node.Parent as MemberDeclarationSyntax) != null)
-                    {
-                        var symbol = (SourceMethodSymbol)GetDeclaredSymbol(memberDecl);
-                        if ((object)symbol == null)
-                            return null;
 
-                        return MethodBodySemanticModel.Create(this.Compilation, symbol, outer, memberDecl);
-                    }
-                    else if ((accessorDecl = node.Parent as AccessorDeclarationSyntax) != null)
-                    {
-                        var symbol = (SourceMethodSymbol)GetDeclaredSymbol(accessorDecl);
-                        if ((object)symbol == null)
-                            return null;
+                        MemberDeclarationSyntax memberDecl;
+                        AccessorDeclarationSyntax accessorDecl;
+                        if ((memberDecl = node.Parent as MemberDeclarationSyntax) != null)
+                        {
+                            var symbol = (SourceMethodSymbol)GetDeclaredSymbol(memberDecl);
+                            if ((object)symbol == null)
+                                return null;
 
-                        return MethodBodySemanticModel.Create(this.Compilation, symbol, outer, accessorDecl);
-                    }
-                    else
-                    {
-                        Debug.Assert(false, "Unexpected node: " + node.Parent);
-                        return null;
-                    }
+                            return MethodBodySemanticModel.Create(this.Compilation, symbol, outer, memberDecl);
+                        }
+                        else if ((accessorDecl = node.Parent as AccessorDeclarationSyntax) != null)
+                        {
+                            var symbol = (SourceMethodSymbol)GetDeclaredSymbol(accessorDecl);
+                            if ((object)symbol == null)
+                                return null;
+
+                            return MethodBodySemanticModel.Create(this.Compilation, symbol, outer, accessorDecl);
+                        }
+                        else
+                        {
+                            Debug.Assert(false, "Unexpected node: " + node.Parent);
+                            return null;
+                        }
 
                 case SyntaxKind.EqualsValueClause:
                     switch (node.Parent.Kind)
@@ -1792,7 +1793,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             MethodSymbol method;
 
-            method = GetDeclaredSymbol(memberDecl, cancellationToken) as MethodSymbol;
+                method = GetDeclaredSymbol(memberDecl, cancellationToken) as MethodSymbol;
 
             if ((object)method == null)
             {
@@ -2091,7 +2092,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             return this.GetDeclaredMember(container, declarationSyntax.Span, name);
         }
 
-        public override AwaitExpressionInfo GetAwaitExpressionInfo(PrefixUnaryExpressionSyntax node)
+        public override AwaitExpressionInfo GetAwaitExpressionInfo(AwaitExpressionSyntax node)
         {
             using (Logger.LogBlock(FunctionId.CSharp_SemanticModel_GetAwaitExpressionInfo, message: this.SyntaxTree.FilePath))
             {

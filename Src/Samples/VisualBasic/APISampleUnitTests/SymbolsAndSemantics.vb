@@ -53,7 +53,7 @@ End Class
         Dim code = New TestCodeContainer("Imports System")
         Dim compilationUnit = CType(code.SyntaxTree.GetRoot(), CompilationUnitSyntax)
 
-        Dim name = CType(compilationUnit.Imports(0).ImportsClauses.First(), MembersImportsClauseSyntax).Name
+        Dim name = CType(compilationUnit.Imports(0).ImportsClauses.First(), SimpleImportsClauseSyntax).Name
         Assert.AreEqual("System", name.ToString())
 
         Dim nameInfo = code.SemanticModel.GetSymbolInfo(name)
@@ -163,7 +163,7 @@ End Class
 </text>.GetCode()
 
 
-        Dim comp = VisualBasicCompilation.Create(
+        Dim comp = VBCompilation.Create(
             "test",
             syntaxTrees:={SyntaxFactory.ParseSyntaxTree(file1), SyntaxFactory.ParseSyntaxTree(file2)},
             references:={MetadataReference.CreateFromAssembly(GetType(Object).Assembly)})

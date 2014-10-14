@@ -295,7 +295,6 @@
     <Kind Name="PreDecrementExpression"/>
     <Kind Name="AddressOfExpression"/>
     <Kind Name="PointerIndirectionExpression"/>
-    <Kind Name="AwaitExpression"/>
     <Field Name="OperatorToken" Type="SyntaxToken">
       <Kind Name="PlusToken"/>
       <Kind Name="MinusToken"/>
@@ -305,7 +304,6 @@
       <Kind Name="MinusMinusToken"/>
       <Kind Name="AmpersandToken"/>
       <Kind Name="AsteriskToken"/>
-      <Kind Name="AwaitKeyword"/>
       <PropertyComment>
         <summary>SyntaxToken representing the kind of the operator of the prefix unary expression.</summary>
       </PropertyComment>
@@ -320,6 +318,26 @@
     </TypeComment>
     <FactoryComment>
       <summary>Creates an PrefixUnaryExpressionSyntax node.</summary>
+    </FactoryComment>
+  </Node>
+  <Node Name="AwaitExpressionSyntax" Base="ExpressionSyntax">
+    <Kind Name="AwaitExpression"/>
+    <Field Name="AwaitKeyword" Type="SyntaxToken">
+      <Kind Name="AwaitKeyword"/>
+      <PropertyComment>
+        <summary>SyntaxToken representing the kind "await" keyword.</summary>
+      </PropertyComment>
+    </Field>
+    <Field Name="Expression" Type="ExpressionSyntax">
+      <PropertyComment>
+        <summary>ExpressionSyntax representing the operand of the "await" operator.</summary>
+      </PropertyComment>
+    </Field>
+    <TypeComment>
+      <summary>Class which represents the syntax node for an "await" expression.</summary>
+    </TypeComment>
+    <FactoryComment>
+      <summary>Creates an AwaitExpressionSyntax node.</summary>
     </FactoryComment>
   </Node>
   <Node Name="PostfixUnaryExpressionSyntax" Base="ExpressionSyntax">
@@ -2614,12 +2632,27 @@
       </PropertyComment>
       <Kind Name="ColonToken"/>
     </Field>
-    <Field Name="Types" Type="SeparatedSyntaxList&lt;TypeSyntax&gt;">
+    <Field Name="Types" Type="SeparatedSyntaxList&lt;BaseTypeSyntax&gt;">
       <PropertyComment>
         <summary>Gets the base type references.</summary>
       </PropertyComment>
     </Field>
   </Node>
+
+  <AbstractNode Name="BaseTypeSyntax" Base="CSharpSyntaxNode">
+    <TypeComment>
+      <summary>Provides the base class from which the classes that represent base type syntax nodes are derived. This is an abstract class.</summary>
+    </TypeComment>
+    <Field Name="Type" Type="TypeSyntax">
+    </Field>
+  </AbstractNode>
+
+  <Node Name="SimpleBaseTypeSyntax" Base="BaseTypeSyntax">
+    <Kind Name="SimpleBaseType"/>
+    <Field Name="Type" Type="TypeSyntax" Override="true">
+    </Field>
+  </Node>
+
   <Node Name="TypeParameterConstraintClauseSyntax" Base="CSharpSyntaxNode">
     <TypeComment>
       <summary>Type parameter constraint clause.</summary>

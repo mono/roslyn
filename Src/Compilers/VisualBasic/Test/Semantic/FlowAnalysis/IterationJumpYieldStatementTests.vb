@@ -1339,7 +1339,7 @@ End Module
 
         <Fact()>
         Public Sub ForEachVariablesDeclared()
-            Dim tree = VisualBasicSyntaxTree.ParseText(<file>
+            Dim tree = VBSyntaxTree.ParseText(<file>
 Public Module Program
     Public Sub Main()
         Dim args = new String(){ "hi" }
@@ -1349,11 +1349,11 @@ Public Module Program
     End Sub
 End Module
                     </file>.Value)
-            Dim comp = VisualBasicCompilation.Create("ForEach",
+            Dim comp = VBCompilation.Create("ForEach",
                                           syntaxTrees:={tree},
                                           references:={MsvbRef, MscorlibRef})
             Dim semanticModel = comp.GetSemanticModel(tree)
-            Dim foreachBlock = tree.GetRoot.DescendantNodes.OfType(Of ForBlockSyntax).Single
+            Dim foreachBlock = tree.GetRoot.DescendantNodes.OfType(Of ForEachBlockSyntax).Single
             Dim flow = semanticModel.AnalyzeDataFlow(foreachBlock)
             Assert.Equal(2, flow.VariablesDeclared.Count)
             Assert.Equal(True, flow.VariablesDeclared.Any(Function(s) s.Name = "b"))

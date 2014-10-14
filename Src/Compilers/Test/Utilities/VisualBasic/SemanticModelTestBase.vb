@@ -7,20 +7,20 @@ Imports Xunit
 
 Public MustInherit Class SemanticModelTestBase : Inherits BasicTestBase
 
-    Protected Function GetNode(compilation As VisualBasicCompilation, treeName As String, textToFind As String) As VisualBasicSyntaxNode
+    Protected Function GetNode(compilation As VBCompilation, treeName As String, textToFind As String) As VBSyntaxNode
         Dim tree = CompilationUtils.GetTree(compilation, treeName)
-        Dim node = DirectCast(CompilationUtils.FindTokenFromText(tree, textToFind).Parent, VisualBasicSyntaxNode)
+        Dim node = DirectCast(CompilationUtils.FindTokenFromText(tree, textToFind).Parent, VBSyntaxNode)
         Return node
     End Function
 
-    Protected Function GetPosition(compilation As VisualBasicCompilation, treeName As String, textToFind As String) As Integer
+    Protected Function GetPosition(compilation As VBCompilation, treeName As String, textToFind As String) As Integer
         Dim tree = CompilationUtils.GetTree(compilation, treeName)
         Dim text As String = tree.GetText().ToString()
         Dim position As Integer = text.IndexOf(textToFind)
         Return position
     End Function
 
-    Private Function GetAncestor(Of T As VisualBasicSyntaxNode)(node As VisualBasicSyntaxNode) As T
+    Private Function GetAncestor(Of T As VBSyntaxNode)(node As VBSyntaxNode) As T
         If node Is Nothing Then
             Throw New ArgumentNullException("node")
         End If
@@ -107,25 +107,23 @@ Public MustInherit Class SemanticModelTestBase : Inherits BasicTestBase
     Friend Function GetAliasInfoForTest(compilation As Compilation, fileName As String, Optional which As Integer = 0) As AliasSymbol
         Dim node As IdentifierNameSyntax = CompilationUtils.FindBindingText(Of IdentifierNameSyntax)(compilation, fileName, which)
         Dim tree = (From t In compilation.SyntaxTrees Where t.FilePath = fileName).Single()
-        Dim semanticModel = DirectCast(compilation.GetSemanticModel(tree), VisualBasicSemanticModel)
+        Dim semanticModel = DirectCast(compilation.GetSemanticModel(tree), VBSemanticModel)
         Return DirectCast(semanticModel.GetAliasInfo(node), AliasSymbol)
     End Function
 
     Protected Function GetBlockOrStatementInfoForTest(Of StmtSyntax As SyntaxNode, ISM As SemanticModel)(compilation As Compilation, fileName As String, Optional which As Integer = 0, Optional useParent As Boolean = False) As Object
         Dim node As SyntaxNode = CompilationUtils.FindBindingText(Of StmtSyntax)(compilation, fileName, which)
         Dim tree = (From t In compilation.SyntaxTrees Where t.FilePath = fileName).Single()
-        Dim semanticModel = CType(compilation.GetSemanticModel(tree), VisualBasicSemanticModel)
+        Dim semanticModel = CType(compilation.GetSemanticModel(tree), VBSemanticModel)
 
         If useParent Then
             node = node.Parent
         End If
 
         If TypeOf node Is ForEachStatementSyntax Then
-            Return semanticModel.GetForEachStatementInfo(TryCast(node, ForEachStatementSyntax))
-        ElseIf TypeOf node Is ForBlockSyntax Then
-            If node.VisualBasicKind = SyntaxKind.ForEachBlock Then
-                Return semanticModel.GetForEachStatementInfo(TryCast(node, ForBlockSyntax))
-            End If
+            Return semanticModel.GetForEachStatementInfo(DirectCast(node, ForEachStatementSyntax))
+        ElseIf TypeOf node Is ForEachBlockSyntax Then
+            Return semanticModel.GetForEachStatementInfo(DirectCast(node, ForEachBlockSyntax).ForEachStatement)
         End If
 
         Throw New NotSupportedException("Type of syntax node is not supported by GetExtendedSemanticInfoForTest")
@@ -133,7 +131,7 @@ Public MustInherit Class SemanticModelTestBase : Inherits BasicTestBase
 
     Friend Function GetLookupNames(compilation As Compilation, filename As String, Optional container As NamespaceOrTypeSymbol = Nothing) As List(Of String)
         Dim tree = (From t In compilation.SyntaxTrees Where t.FilePath = filename).Single()
-        Dim binding = DirectCast(compilation.GetSemanticModel(tree), VisualBasicSemanticModel)
+        Dim binding = DirectCast(compilation.GetSemanticModel(tree), VBSemanticModel)
 
         Return binding.LookupNames(FindBindingTextPosition(compilation, "a.vb"), container).ToList()
     End Function
@@ -142,7 +140,7 @@ Public MustInherit Class SemanticModelTestBase : Inherits BasicTestBase
         Debug.Assert(Not includeReducedExtensionMethods OrElse Not mustBeStatic)
 
         Dim tree = (From t In compilation.SyntaxTrees Where t.FilePath = filename).Single()
-        Dim binding = DirectCast(compilation.GetSemanticModel(tree), VisualBasicSemanticModel)
+        Dim binding = DirectCast(compilation.GetSemanticModel(tree), VBSemanticModel)
 
         Dim anyArity = Not arity.HasValue
         Dim position = FindBindingTextPosition(compilation, "a.vb")

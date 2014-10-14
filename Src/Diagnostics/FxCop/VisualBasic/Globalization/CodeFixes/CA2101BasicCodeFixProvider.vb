@@ -1,5 +1,6 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+Imports System.Composition
 Imports System.Threading
 Imports Microsoft.CodeAnalysis
 Imports Microsoft.CodeAnalysis.CodeFixes
@@ -13,7 +14,7 @@ Imports Microsoft.CodeAnalysis.VisualBasic
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.FxCopAnalyzers.Globalization
-    <ExportCodeFixProvider(PInvokeDiagnosticAnalyzer.CA2101, LanguageNames.VisualBasic)>
+    <ExportCodeFixProvider(PInvokeDiagnosticAnalyzer.CA2101, LanguageNames.VisualBasic), [Shared]>
     Public Class CA2101BasicCodeFixProvider
         Inherits CA2101CodeFixProviderBase
 
@@ -31,7 +32,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.FxCopAnalyzers.Globalization
 
             ' return the unchanged root if no fix is available
             Dim newRoot = root
-            Select Case nodeToFix.VisualBasicKind()
+            Select Case nodeToFix.VBKind()
                 Case SyntaxKind.Attribute
                     ' could be either a <DllImport> Or <MarshalAs> attribute
                     Dim attribute = CType(nodeToFix, AttributeSyntax)
@@ -40,11 +41,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.FxCopAnalyzers.Globalization
                     If dllImportType.Equals(attributeType.ContainingType) Then
                         ' <DllImport> attribute, add Or replace CharSet named parameter
                         Dim argumentValue = CreateCharSetArgument(syntaxFactoryService, charSetType).WithAdditionalAnnotations(Formatter.Annotation)
-                        Dim namedParameter = arguments.OfType(Of NamedArgumentSyntax).
-                        FirstOrDefault(Function(arg) arg.IdentifierName.Identifier.Text = CharSetText)
+                        Dim namedParameter = Aggregate arg In arguments.OfType(Of SimpleArgumentSyntax)
+                                             Where arg.IsNamed
+                                             Into FirstOrDefault(arg.NameColonEquals.Name.Identifier.Text = CharSetText)
+
                         If namedParameter Is Nothing Then
                             ' add the parameter
-                            namedParameter = SyntaxFactory.NamedArgument(SyntaxFactory.IdentifierName(SyntaxFactory.Identifier(CharSetText)), CType(argumentValue, ExpressionSyntax)).
+                            namedParameter = SyntaxFactory.SimpleArgument(SyntaxFactory.NameColonEquals(SyntaxFactory.IdentifierName(SyntaxFactory.Identifier(CharSetText))), CType(argumentValue, ExpressionSyntax)).
                             WithAdditionalAnnotations(Formatter.Annotation)
                             Dim newArguments = arguments.Add(namedParameter)
                             Dim newArgumentList = attribute.ArgumentList.WithArguments(newArguments)

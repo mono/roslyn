@@ -166,7 +166,7 @@ class C
             );
         }
 
-        [Fact(Skip = "1003193"), WorkItem(1003193)]
+        [Fact(), WorkItem(1003193)]
         public void InstanceFieldLikeEventAccessors()
         {
             var source = @"
@@ -175,7 +175,7 @@ class C
     event System.Action E;
 }
 ";
-            var verifier = CompileAndVerify(source, options: TestOptions.ReleaseWinMD, emitOptions: EmitOptions.RefEmitBug, additionalRefs: WinRtRefs);
+            var verifier = CompileAndVerify(source, options: TestOptions.ReleaseWinMD, emitOptions: TestEmitters.RefEmitBug, additionalRefs: WinRtRefs);
 
             verifier.VerifyIL("C.E.add", @"
 {
@@ -202,7 +202,7 @@ class C
 }");
         }
 
-        [Fact(Skip = "1003193"), WorkItem(1003193)]
+        [Fact(), WorkItem(1003193)]
         public void StaticFieldLikeEventAccessors()
         {
             var source = @"
@@ -211,7 +211,7 @@ class C
     static event System.Action<int> E;
 }
 ";
-            var verifier = CompileAndVerify(source, options: TestOptions.ReleaseWinMD, emitOptions: EmitOptions.RefEmitBug, additionalRefs: WinRtRefs);
+            var verifier = CompileAndVerify(source, options: TestOptions.ReleaseWinMD, emitOptions: TestEmitters.RefEmitBug, additionalRefs: WinRtRefs);
 
             verifier.VerifyIL("C.E.add", @"
 {
@@ -275,7 +275,7 @@ class D
     }
 }
 ";
-            var verifier = CompileAndVerify(source, options: TestOptions.ReleaseWinMD, emitOptions: EmitOptions.RefEmitBug, additionalRefs: WinRtRefs);
+            var verifier = CompileAndVerify(source, options: TestOptions.ReleaseWinMD, emitOptions: TestEmitters.RefEmitBug, additionalRefs: WinRtRefs);
 
             verifier.VerifyIL("D.InstanceAdd", @"
 {
@@ -368,7 +368,7 @@ class C
     }
 }
 ";
-            var verifier = CompileAndVerify(source, options: TestOptions.ReleaseWinMD, emitOptions: EmitOptions.RefEmitBug, additionalRefs: WinRtRefs);
+            var verifier = CompileAndVerify(source, options: TestOptions.ReleaseWinMD, emitOptions: TestEmitters.RefEmitBug, additionalRefs: WinRtRefs);
 
             verifier.VerifyIL("C.InstanceAssign", @"
 {
@@ -457,7 +457,7 @@ class C
     }
 }
 ";
-            var verifier = CompileAndVerify(source, options: TestOptions.ReleaseWinMD, emitOptions: EmitOptions.RefEmitBug, additionalRefs: WinRtRefs);
+            var verifier = CompileAndVerify(source, options: TestOptions.ReleaseWinMD, emitOptions: TestEmitters.RefEmitBug, additionalRefs: WinRtRefs);
 
             verifier.VerifyIL("C.InstanceInvoke", @"
 {
@@ -535,7 +535,7 @@ class C
         /// <remarks>
         /// I'm assuming this is why the final dev11 impl uses GetOrCreateEventRegistrationTokenTable.
         /// </remarks>
-        [Fact(Skip = "1003193"), WorkItem(1003193)]
+        [Fact(), WorkItem(1003193)]
         public void FieldLikeEventSerialization()
         {
             var source1 = @"
@@ -622,7 +622,7 @@ namespace EventDeserialization
             var serializationRef = TestReferences.NetFx.v4_0_30319.System_Runtime_Serialization;
             
             var comp2 = CreateCompilation(source2, WinRtRefs.Concat(new MetadataReference[] { new CSharpCompilationReference(comp1), serializationRef, SystemXmlRef}), TestOptions.ReleaseExe);
-            CompileAndVerify(comp2, emitOptions: EmitOptions.RefEmitBug, expectedOutput: @"A
+            CompileAndVerify(comp2, emitOptions: TestEmitters.RefEmitBug, expectedOutput: @"A
 False
 null
 B");

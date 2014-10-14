@@ -1,4 +1,4 @@
-﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
@@ -20,7 +20,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return Parser.ParseStatementInMethodBody()
         End Function
 
-        Friend Overrides Function ProcessSyntax(node As VisualBasicSyntaxNode) As BlockContext
+        Friend Overrides Function ProcessSyntax(node As VBSyntaxNode) As BlockContext
             If Parser.IsDeclarationStatement(node.Kind) Then
                 ' VS 314714
                 ' When we have specifiers or attributes preceding an invalid method declaration,
@@ -84,7 +84,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             End If
         End Function
 
-        Friend Overrides Function TryLinkSyntax(node As VisualBasicSyntaxNode, ByRef newContext As BlockContext) As LinkResult
+        Friend Overrides Function TryLinkSyntax(node As VBSyntaxNode, ByRef newContext As BlockContext) As LinkResult
             newContext = Nothing
             Select Case node.Kind
                 ' these are errors, but ParseStatementInMethodBody accepts them for error recovery
@@ -160,12 +160,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     SyntaxKind.FunctionBlock,
                     SyntaxKind.OperatorBlock,
                     SyntaxKind.PropertyBlock,
-                    SyntaxKind.PropertyGetBlock,
-                    SyntaxKind.PropertySetBlock,
+                    SyntaxKind.GetAccessorBlock,
+                    SyntaxKind.SetAccessorBlock,
                     SyntaxKind.EventBlock,
-                    SyntaxKind.AddHandlerBlock,
-                    SyntaxKind.RemoveHandlerBlock,
-                    SyntaxKind.RaiseEventBlock,
+                    SyntaxKind.AddHandlerAccessorBlock,
+                    SyntaxKind.RemoveHandlerAccessorBlock,
+                    SyntaxKind.RaiseEventAccessorBlock,
                     SyntaxKind.NamespaceBlock,
                     SyntaxKind.ClassBlock,
                     SyntaxKind.StructureBlock,
@@ -174,14 +174,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     SyntaxKind.InterfaceBlock,
                     SyntaxKind.CaseBlock,
                     SyntaxKind.CaseElseBlock,
-                    SyntaxKind.TryPart,
-                    SyntaxKind.CatchPart,
-                    SyntaxKind.FinallyPart,
-                    SyntaxKind.IfPart,
-                    SyntaxKind.ElsePart,
-                    SyntaxKind.ElseIfPart,
-                    SyntaxKind.SingleLineIfPart,
-                    SyntaxKind.SingleLineElsePart,
+                    SyntaxKind.CatchBlock,
+                    SyntaxKind.FinallyBlock,
+                    SyntaxKind.ElseBlock,
+                    SyntaxKind.ElseIfBlock,
+                    SyntaxKind.SingleLineElseClause,
                     SyntaxKind.AttributeList,
                     SyntaxKind.ConstructorBlock,
                     SyntaxKind.FieldDeclaration

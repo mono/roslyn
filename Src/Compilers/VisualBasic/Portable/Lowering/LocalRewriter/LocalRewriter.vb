@@ -34,13 +34,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Private currentLineTemporary As LocalSymbol
 
         Private createSequencePointsForTopLevelNonCompilerGeneratedExpressions As Boolean
+        Private conditionalAccessReceiverPlaceholderId As Integer
 
 #If DEBUG Then
         ''' <summary>
         ''' A map from SyntaxNode to corresponding visited BoundStatement.
         ''' Used to ensure correct generation of resumable code for Unstructured Exception Handling.
         ''' </summary>
-        Private unstructuredExceptionHandlingResumableStatements As New Dictionary(Of VisualBasicSyntaxNode, BoundStatement)(ReferenceEqualityComparer.Instance)
+        Private unstructuredExceptionHandlingResumableStatements As New Dictionary(Of VBSyntaxNode, BoundStatement)(ReferenceEqualityComparer.Instance)
 
         Private leaveRestoreUnstructuredExceptionHandlingContextTracker As New Stack(Of BoundNode)()
 #End If
@@ -324,7 +325,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return result
         End Function
 
-        Private ReadOnly Property Compilation As VisualBasicCompilation
+        Private ReadOnly Property Compilation As VBCompilation
             Get
                 Return Me.topMethod.DeclaringCompilation
             End Get
@@ -347,7 +348,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ' sequence point goes inside the block
         ' This ensures that when we stopped on EndXXX, we are still in the block's scope
         ' and can examine locals declared in the block.
-        Private Function InsertEndBlockSequencePoint(statement As BoundStatement, spSyntax As VisualBasicSyntaxNode) As BoundStatement
+        Private Function InsertEndBlockSequencePoint(statement As BoundStatement, spSyntax As VBSyntaxNode) As BoundStatement
             If Not GenerateDebugInfo Then
                 Return statement
             End If
@@ -392,13 +393,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return block.Update(block.StatementListSyntax, block.Locals, consequenceWithEnd.AsImmutableOrNull)
         End Function
 
-        Private Function InsertBlockEpilogue(statement As BoundStatement, endBlockResumeTargetOpt As BoundStatement, sequencePointSyntax As VisualBasicSyntaxNode) As BoundStatement
+        Private Function InsertBlockEpilogue(statement As BoundStatement, endBlockResumeTargetOpt As BoundStatement, sequencePointSyntax As VBSyntaxNode) As BoundStatement
             Return Concat(statement, If(GenerateDebugInfo, New BoundSequencePoint(sequencePointSyntax, endBlockResumeTargetOpt), endBlockResumeTargetOpt))
         End Function
 
         ' adds a sequence point before stepping on the statement
         ' NOTE: if the statement is a block the sequence point will be outside of the scope
-        Private Function PrependWithSequencePoint(statement As BoundStatement, spSyntax As VisualBasicSyntaxNode) As BoundStatement
+        Private Function PrependWithSequencePoint(statement As BoundStatement, spSyntax As VBSyntaxNode) As BoundStatement
             If Not GenerateDebugInfo Then
                 Return statement
             End If
@@ -410,20 +411,33 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return statement
         End Function
 
-        Private Function PrependWithSequencePoint(statement As BoundBlock, spSyntax As VisualBasicSyntaxNode) As BoundBlock
+        ''' <summary>
+        ''' Adds a sequence point with the specified span before stepping on the statement.
+        ''' </summary>
+        ''' <remarks>
+        ''' If the statement is a block the sequence point will be outside of the scope.
+        ''' </remarks>
+        Private Function PrependWithSequencePoint(statement As BoundStatement, syntax As VBSyntaxNode, span As Text.TextSpan) As BoundStatement
             If Not GenerateDebugInfo Then
                 Return statement
             End If
 
-            Dim consequenceWithEnd(1) As BoundStatement
-            consequenceWithEnd(0) = New BoundSequencePoint(spSyntax, Nothing)
-            consequenceWithEnd(1) = statement
+            Return New BoundStatementList(
+                statement.Syntax,
+                ImmutableArray.Create(New BoundSequencePointWithSpan(syntax, Nothing, span),
+                                      statement))
+        End Function
 
-            statement = New BoundBlock(statement.Syntax,
-                                       Nothing,
-                                       ImmutableArray(Of LocalSymbol).Empty,
-                                       consequenceWithEnd.AsImmutableOrNull)
-            Return statement
+        Private Function PrependWithSequencePoint(statement As BoundBlock, syntax As VBSyntaxNode) As BoundBlock
+            If Not GenerateDebugInfo Then
+                Return statement
+            End If
+
+            Return New BoundBlock(
+                statement.Syntax,
+                Nothing,
+                ImmutableArray(Of LocalSymbol).Empty,
+                ImmutableArray.Create(Of BoundStatement)(New BoundSequencePoint(syntax, Nothing), statement))
         End Function
 
         Public Overrides Function VisitSequencePointWithSpan(node As BoundSequencePointWithSpan) As BoundNode
@@ -471,7 +485,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Private Function RewriteReceiverArgumentsAndGenerateAccessorCall(
-            syntax As VisualBasicSyntaxNode,
+            syntax As VBSyntaxNode,
             methodSymbol As MethodSymbol,
             receiverOpt As BoundExpression,
             arguments As ImmutableArray(Of BoundExpression),
@@ -696,13 +710,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                       value As BoundExpression,
                                                       locals As ArrayBuilder(Of LocalSymbol),
                                                       expressions As ArrayBuilder(Of BoundExpression),
-                                                      Optional kind As SynthesizedLocalKind = SynthesizedLocalKind.LoweringTemp,
-                                                      Optional syntax As StatementSyntax = Nothing) As BoundExpression
+                                                      kind As SynthesizedLocalKind,
+                                                      syntaxOpt As StatementSyntax) As BoundExpression
 
             Debug.Assert(container IsNot Nothing)
             Debug.Assert(locals IsNot Nothing)
             Debug.Assert(expressions IsNot Nothing)
-            Debug.Assert(kind = SynthesizedLocalKind.LoweringTemp OrElse syntax IsNot Nothing)
+            Debug.Assert(kind = SynthesizedLocalKind.LoweringTemp OrElse syntaxOpt IsNot Nothing)
 
             Dim constValue As ConstantValue = value.ConstantValueOpt
 
@@ -717,7 +731,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End Select
             End If
 
-            Dim temp = New SynthesizedLocal(container, value.Type, kind, syntax)
+            Dim temp = New SynthesizedLocal(container, value.Type, kind, syntaxOpt)
 
             locals.Add(temp)
 
@@ -777,7 +791,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 sideEffectsBuilder.Add(value)
                 valueOpt = Nothing
             Else
-                valueOpt = CacheToTempIfNotConst(container, value, temporariesBuilder, sideEffectsBuilder)
+                valueOpt = CacheToTempIfNotConst(container, value, temporariesBuilder, sideEffectsBuilder, SynthesizedLocalKind.LoweringTemp, syntaxOpt:=Nothing)
                 Debug.Assert(Not valueOpt.IsLValue)
             End If
 

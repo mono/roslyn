@@ -3483,26 +3483,6 @@ End Class
 
         <Fact, Trait(Traits.Feature, Traits.Features.Formatting)>
         <WorkItem(17313, "DevDiv_Projects/Roslyn")>
-        Sub TestElseIfFormatting()
-            Dim code =
-<Code><![CDATA[
-        If True Then
-        Else If False Then
-        End If
-]]></Code>
-
-            Dim expected =
-<Code><![CDATA[
-        If True Then
-        ElseIf False Then
-        End If
-]]></Code>
-
-            AssertFormatLf2CrLf(CreateMethod(code.Value), CreateMethod(expected.Value))
-        End Sub
-
-        <Fact, Trait(Traits.Feature, Traits.Features.Formatting)>
-        <WorkItem(17313, "DevDiv_Projects/Roslyn")>
         Sub TestElseIfFormatting_Directive()
             Dim code =
 <Code><![CDATA[
@@ -3850,7 +3830,7 @@ End Module
         <WorkItem(530601, "DevDiv")>
         Sub TestElasticFormattingPropertySetter()
             Dim parameterList = SyntaxFactory.ParseParameterList(String.Format("(value As {0})", "Integer"))
-            Dim setter = SyntaxFactory.AccessorBlock(SyntaxKind.PropertySetBlock,
+            Dim setter = SyntaxFactory.AccessorBlock(SyntaxKind.SetAccessorBlock,
                                                    SyntaxFactory.AccessorStatement(SyntaxKind.SetAccessorStatement, SyntaxFactory.Token(SyntaxKind.SetKeyword)).
                                                                  WithParameterList(parameterList),
                                                    SyntaxFactory.EndBlockStatement(SyntaxKind.EndSetStatement, SyntaxFactory.Token(SyntaxKind.SetKeyword)))

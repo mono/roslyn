@@ -5,6 +5,7 @@ Imports System.Collections.Immutable
 Imports System.Threading
 Imports Microsoft.Cci
 Imports Microsoft.CodeAnalysis
+Imports Microsoft.CodeAnalysis.CodeGen
 Imports Microsoft.CodeAnalysis.Collections
 Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
@@ -22,7 +23,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             ''' The field of the generated iterator class that underlies the Current property.
             ''' </summary>
             Private ReadOnly _current As FieldSymbol
-            Private ReadOnly _originalMethodDeclaration As VisualBasicSyntaxNode
+            Private ReadOnly _originalMethodDeclaration As VBSyntaxNode
 
             Private _exitLabel As LabelSymbol
             Private _methodValue As LocalSymbol
@@ -53,7 +54,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim initialState As Integer = initialStateInfo.Number
                 Dim initialLabel As GeneratedLabelSymbol = initialStateInfo.ResumeLabel
 
-                Me._methodValue = Me.F.SynthesizedLocal(F.CurrentMethod.ReturnType, SynthesizedLocalKind.StateMachineReturnValue, Nothing)
+                Me._methodValue = Me.F.SynthesizedLocal(F.CurrentMethod.ReturnType, SynthesizedLocalKind.StateMachineReturnValue, F.Syntax)
 
                 Dim newBody = DirectCast(Visit(Body), BoundStatement)
                 ' Select Me.state
@@ -70,13 +71,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 ' [[rewritten body]]
                 F.CloseMethod(
                     F.Block(
-                        ImmutableArray.Create(Of LocalSymbol)(Me._methodValue, Me.CachedState),
+                        ImmutableArray.Create(Me._methodValue, Me.CachedState),
                         F.HiddenSequencePoint(),
-                        F.Assignment(Me.F.Local(Me.CachedState, True), F.Field(F.[Me](), Me.StateField, False)),
+                        F.Assignment(Me.F.Local(Me.CachedState, True), F.Field(F.Me, Me.StateField, False)),
                         Dispatch(),
                         GenerateReturn(finished:=True),
                         F.Label(initialLabel),
-                        F.Assignment(F.Field(F.[Me](), Me.StateField, True), Me.F.AssignmentExpression(Me.F.Local(Me.CachedState, True), Me.F.Literal(StateMachineStates.NotStartedStateMachine))),
+                        F.Assignment(F.Field(F.Me, Me.StateField, True), Me.F.AssignmentExpression(Me.F.Local(Me.CachedState, True), Me.F.Literal(StateMachineStates.NotStartedStateMachine))),
                         F.SequencePoint(_originalMethodDeclaration),
                         newBody,
                         HandleReturn()
@@ -93,17 +94,17 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                 Group ft.Key By ft.Value Into Group
                                 Select F.SwitchSection(
                                     New List(Of Integer)(Group),
-                                    F.Assignment(F.Field(F.[Me](), Me.StateField, True), F.Literal(Value)),
+                                    F.Assignment(F.Field(F.Me, Me.StateField, True), F.Literal(Value)),
                                     F.Goto(breakLabel))).ToArray()
 
                 If (sections.Length > 0) Then
                     F.CloseMethod(F.Block(
                         F.Select(
-                            F.Field(F.[Me](), Me.StateField, False),
+                            F.Field(F.Me, Me.StateField, False),
                             sections),
-                        F.Assignment(F.Field(F.[Me](), Me.StateField, True), F.Literal(StateMachineStates.NotStartedStateMachine)),
+                        F.Assignment(F.Field(F.Me, Me.StateField, True), F.Literal(StateMachineStates.NotStartedStateMachine)),
                         F.Label(breakLabel),
-                        F.ExpressionStatement(F.Call(F.[Me](), moveNextMethod)),
+                        F.ExpressionStatement(F.Call(F.Me, moveNextMethod)),
                         F.Return()
                         ))
                 Else
@@ -187,11 +188,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return F.SequencePoint(
                     node.Syntax,
                     F.Block(
-                        F.Assignment(F.Field(F.[Me](), Me._current, True), DirectCast(Visit(node.Expression), BoundExpression)),
-                        F.Assignment(F.Field(F.[Me](), Me.StateField, True), F.AssignmentExpression(F.Local(Me.CachedState, True), F.Literal(newState.Number))),
+                        F.Assignment(F.Field(F.Me, Me._current, True), DirectCast(Visit(node.Expression), BoundExpression)),
+                        F.Assignment(F.Field(F.Me, Me.StateField, True), F.AssignmentExpression(F.Local(Me.CachedState, True), F.Literal(newState.Number))),
                         GenerateReturn(finished:=False),
                         F.Label(newState.ResumeLabel),
-                        F.Assignment(F.Field(F.[Me](), Me.StateField, True), F.AssignmentExpression(F.Local(Me.CachedState, True), F.Literal(StateMachineStates.NotStartedStateMachine)))
+                        F.Assignment(F.Field(F.Me, Me.StateField, True), F.AssignmentExpression(F.Local(Me.CachedState, True), F.Literal(StateMachineStates.NotStartedStateMachine)))
                     )
                 )
 
@@ -204,7 +205,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End Sub
 
             Protected Overrides Function MaterializeProxy(origExpression As BoundExpression, proxy As FieldSymbol) As BoundNode
-                Dim syntax As VisualBasicSyntaxNode = Me.F.Syntax
+                Dim syntax As VBSyntaxNode = Me.F.Syntax
                 Dim framePointer As BoundExpression = Me.FramePointer(syntax, proxy.ContainingType)
                 Dim proxyFieldParented = proxy.AsMember(DirectCast(framePointer.Type, NamedTypeSymbol))
                 Return Me.F.Field(framePointer, proxyFieldParented, origExpression.IsLValue)

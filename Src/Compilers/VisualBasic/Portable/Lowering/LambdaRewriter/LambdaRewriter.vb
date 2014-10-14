@@ -195,11 +195,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                  Not DirectCast(captured, LocalSymbol).IsForEach OrElse
                                  copyConstructor)
 
-                    Dim containingType As NamedTypeSymbol = _topLevelMethod.ContainingType
-                    frame = New LambdaFrame(node.Syntax, containingType, _topLevelMethod, copyConstructor AndAlso Not _analysis.symbolsCapturedWithoutCopyCtor.Contains(captured), CompilationState.GenerateTempNumber())
+                    frame = New LambdaFrame(CompilationState,
+                                            _topLevelMethod,
+                                            node.Syntax,
+                                            copyConstructor AndAlso Not _analysis.symbolsCapturedWithoutCopyCtor.Contains(captured))
                     frames(node) = frame
                     If CompilationState.ModuleBuilderOpt IsNot Nothing Then
-                        CompilationState.ModuleBuilderOpt.AddSynthesizedDefinition(containingType, frame)
+                        CompilationState.ModuleBuilderOpt.AddSynthesizedDefinition(_topLevelMethod.ContainingType, frame)
                         CompilationState.ModuleBuilderOpt.AddSynthesizedDefinition(frame, frame.Constructor)
                     End If
                 End If
@@ -218,7 +220,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' <param name="syntax">The syntax to attach to the bound nodes produced</param>
         ''' <param name="frameType">The type of frame to be returned</param>
         ''' <returns>A bound node that computes the pointer to the required frame</returns>
-        Private Function FrameOfType(syntax As VisualBasicSyntaxNode, frameType As NamedTypeSymbol) As BoundExpression
+        Private Function FrameOfType(syntax As VBSyntaxNode, frameType As NamedTypeSymbol) As BoundExpression
             Dim result As BoundExpression = FramePointer(syntax, frameType.OriginalDefinition)
             Debug.Assert(result.Type = frameType)
             Return result
@@ -232,7 +234,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' <param name="syntax">The syntax to attach to the bound nodes produced</param>
         ''' <param name="frameClass">The class type of frame to be returned</param>
         ''' <returns>A bound node that computes the pointer to the required frame</returns>
-        Friend Overrides Function FramePointer(syntax As VisualBasicSyntaxNode, frameClass As NamedTypeSymbol) As BoundExpression
+        Friend Overrides Function FramePointer(syntax As VBSyntaxNode, frameClass As NamedTypeSymbol) As BoundExpression
             Debug.Assert(frameClass.IsDefinition)
             If currentFrameThis IsNot Nothing AndAlso currentFrameThis.Type = frameClass Then
                 Return New BoundMeReference(syntax, frameClass)
@@ -266,7 +268,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Private Function MakeFrameCtor(frame As LambdaFrame, diagnostics As DiagnosticBag) As BoundBlock
             Dim constructor = frame.Constructor
-            Dim syntaxNode As VisualBasicSyntaxNode = constructor.Syntax
+            Dim syntaxNode As VBSyntaxNode = constructor.Syntax
 
             Dim builder = ArrayBuilder(Of BoundStatement).GetInstance
             builder.Add(MethodCompiler.BindDefaultConstructorInitializer(constructor, diagnostics))
@@ -365,14 +367,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                         Optional origLambda As LambdaSymbol = Nothing) As BoundNode
 
             Dim frameType As NamedTypeSymbol = ConstructFrameType(frame, currentTypeParameters)
-            Dim framePointer = New SynthesizedLocal(Me._topLevelMethod, frameType, SynthesizedLocalKind.LambdaDisplayClass)
+            Dim framePointer = New SynthesizedLocal(Me._topLevelMethod, frameType, SynthesizedLocalKind.LambdaDisplayClass, frame.ScopeSyntax)
 
             CompilationState.AddSynthesizedMethod(frame.Constructor, MakeFrameCtor(frame, Diagnostics))
             Dim prologue = ArrayBuilder(Of BoundExpression).GetInstance()
             Dim constructor As MethodSymbol = frame.Constructor.AsMember(frameType)
             Debug.Assert(frameType = constructor.ContainingType)
 
-            Dim syntaxNode As VisualBasicSyntaxNode = node.Syntax
+            Dim syntaxNode As VBSyntaxNode = node.Syntax
 
             Dim frameAccess = New BoundLocal(syntaxNode, framePointer, frameType)
 
@@ -462,7 +464,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' <summary>
         ''' If parameter is lifted, initializes its proxy
         ''' </summary>
-        Private Sub InitParameterProxy(syntaxNode As VisualBasicSyntaxNode,
+        Private Sub InitParameterProxy(syntaxNode As VBSyntaxNode,
                                        origParameter As ParameterSymbol,
                                        framePointer As LocalSymbol,
                                        frameType As NamedTypeSymbol,
@@ -971,13 +973,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Private Function InLoopOrLambda(lambdaSyntax As SyntaxNode, scopeSyntax As SyntaxNode) As Boolean
             Dim curSyntax = lambdaSyntax.Parent
             While (curSyntax IsNot Nothing AndAlso curSyntax IsNot scopeSyntax)
-                Select Case curSyntax.VisualBasicKind
+                Select Case curSyntax.VBKind
                     Case SyntaxKind.ForBlock,
                          SyntaxKind.ForEachBlock,
                          SyntaxKind.WhileBlock,
-                         SyntaxKind.DoLoopBottomTestBlock,
-                         SyntaxKind.DoLoopTopTestBlock,
-                         SyntaxKind.DoLoopForeverBlock,
+                         SyntaxKind.SimpleDoLoopBlock,
+                         SyntaxKind.DoWhileLoopBlock,
+                         SyntaxKind.DoUntilLoopBlock,
+                         SyntaxKind.DoLoopWhileBlock,
+                         SyntaxKind.DoLoopUntilBlock,
                          SyntaxKind.MultiLineFunctionLambdaExpression,
                          SyntaxKind.MultiLineSubLambdaExpression,
                          SyntaxKind.SingleLineFunctionLambdaExpression,
@@ -1123,6 +1127,18 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Return rewritten
+        End Function
+
+        Public Overrides Function VisitLoweredConditionalAccess(node As BoundLoweredConditionalAccess) As BoundNode
+            Dim result = DirectCast(MyBase.VisitLoweredConditionalAccess(node), BoundLoweredConditionalAccess)
+
+            If Not result.CaptureReceiver AndAlso Not node.ReceiverOrCondition.Type.IsBooleanType() AndAlso
+               node.ReceiverOrCondition.Kind <> result.ReceiverOrCondition.Kind Then
+                ' It looks like the receiver got lifted into a closure, we cannot assume that it will not change between null check and the following access.
+                Return result.Update(result.ReceiverOrCondition, True, result.PlaceholderId, result.WhenNotNull, result.WhenNullOpt, result.Type)
+            Else
+                Return result
+            End If
         End Function
 
         ''' <summary>

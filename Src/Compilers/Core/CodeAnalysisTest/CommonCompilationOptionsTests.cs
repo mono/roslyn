@@ -19,7 +19,6 @@ namespace Microsoft.CodeAnalysis.UnitTests
             ReflectionAssert.AssertPublicAndInternalFieldsAndProperties(
                 typeof(CompilationOptions),
                 "AssemblyIdentityComparer",
-                "BaseAddress",
                 "CheckOverflow",
                 "ConcurrentBuild",
                 "CryptoKeyContainer",
@@ -28,12 +27,9 @@ namespace Microsoft.CodeAnalysis.UnitTests
                 "EnableEditAndContinue",
                 "Errors",
                 "Features",
-                "FileAlignment",
                 "GeneralDiagnosticOption",
-                "HighEntropyVirtualAddressSpace",
                 "MainTypeName",
                 "MetadataImportOptions",
-                "MetadataReferenceProvider",
                 "MetadataReferenceResolver",
                 "ModuleName",
                 "OptimizationLevel",
@@ -43,7 +39,6 @@ namespace Microsoft.CodeAnalysis.UnitTests
                 "SourceReferenceResolver",
                 "SpecificDiagnosticOptions",
                 "StrongNameProvider",
-                "SubsystemVersion",
                 "WarningLevel",
                 "XmlReferenceResolver");
         }

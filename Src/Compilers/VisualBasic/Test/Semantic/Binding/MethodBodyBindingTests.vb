@@ -1,4 +1,4 @@
-﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports System.Globalization
 Imports System.Text
@@ -124,8 +124,8 @@ End Namespace
             Assert.Equal("q", context.Locals(0).Name)
 
             Dim ifBlock = DirectCast(meth1Stmts(1), MultiLineIfBlockSyntax)
-            Dim ifPartStmts = ifBlock.IfPart.Statements
-            Dim elsePartStmts = ifBlock.ElsePart.Statements
+            Dim ifPartStmts = ifBlock.Statements
+            Dim elsePartStmts = ifBlock.ElseBlock.Statements
             Dim ifContext = DirectCast(meth1Binding.RootBinder.GetBinder(ifPartStmts), BlockBaseBinder)
             Assert.Equal(2, ifContext.Locals.Length)
             Assert.Equal("y", ifContext.Locals(0).Name)
@@ -171,7 +171,7 @@ End Module
         <WorkItem(538834, "DevDiv")>
         <Fact>
         Public Sub AssertPassMultipleArgumentsWithByRef()
-            Dim options = New VisualBasicCompilationOptions(OutputKind.ConsoleApplication)
+            Dim options = New VBCompilationOptions(OutputKind.ConsoleApplication)
 
             Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(
     <compilation name="Compilation">
@@ -216,7 +216,7 @@ End Namespace
         <WorkItem(538870, "DevDiv")>
         <Fact>
         Public Sub AssertInvalidArrayInitnializer()
-            Dim options = New VisualBasicCompilationOptions(OutputKind.ConsoleApplication)
+            Dim options = New VBCompilationOptions(OutputKind.ConsoleApplication)
 
             Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(
     <compilation name="Compilation">
@@ -257,7 +257,7 @@ BC30987: '{' expected.
         <WorkItem(538967, "DevDiv")>
         <Fact>
         Public Sub Bug4745()
-            Dim options = New VisualBasicCompilationOptions(OutputKind.ConsoleApplication)
+            Dim options = New VBCompilationOptions(OutputKind.ConsoleApplication)
 
             Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(
     <compilation name="Bug4745">
@@ -283,7 +283,7 @@ Shared x As Integer = 10
         <WorkItem(538491, "DevDiv")>
         <Fact>
         Public Sub Bug4118()
-            Dim options = New VisualBasicCompilationOptions(OutputKind.ConsoleApplication)
+            Dim options = New VBCompilationOptions(OutputKind.ConsoleApplication)
 
             Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(
     <compilation name="Bug4118">

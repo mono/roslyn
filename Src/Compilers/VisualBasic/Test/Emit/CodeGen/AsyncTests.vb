@@ -10,6 +10,7 @@ Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 Imports Microsoft.CodeAnalysis.VisualBasic.UnitTests.Emit
 Imports Roslyn.Test.Utilities
 Imports System.Text.RegularExpressions
+Imports Microsoft.CodeAnalysis.Emit
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
 
@@ -2048,7 +2049,7 @@ End Class
 </compilation>, references:=Me.LatestReferences).VerifyDiagnostics()
 
             Using stream As New MemoryStream()
-                Dim emitResult = compilation.EmitMetadataOnly(stream)
+                Dim emitResult = compilation.Emit(stream, options:=New EmitOptions(metadataOnly:=True))
                 ' This should not crash
             End Using
         End Sub
@@ -8154,7 +8155,7 @@ End Module
 </compilation>
 
             Dim compilation = CompilationUtils.CreateCompilationWithReferences(source, references:=Me.LatestReferences)
-            Dim options As VisualBasicCompilationOptions
+            Dim options As VBCompilationOptions
 
             options = TestOptions.ReleaseExe
             Assert.False(options.EnableEditAndContinue)

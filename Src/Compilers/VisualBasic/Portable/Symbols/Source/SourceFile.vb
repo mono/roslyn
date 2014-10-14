@@ -115,8 +115,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Dim compilationUnitSyntax = m_syntaxTree.GetCompilationUnitRoot()
             For Each statement In compilationUnitSyntax.Imports
                 For Each clause In statement.ImportsClauses
-                    If clause.Kind = SyntaxKind.AliasImportsClause Then
-                        checker.AddAlias(DirectCast(clause, AliasImportsClauseSyntax))
+                    If clause.Kind = SyntaxKind.SimpleImportsClause Then
+
+                        Dim simpleImportsClause = DirectCast(clause, SimpleImportsClauseSyntax)
+
+                        If simpleImportsClause.Alias IsNot Nothing Then
+                            checker.AddAlias(simpleImportsClause)
+                        End If
                     End If
                 Next
             Next
@@ -197,7 +202,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                     Continue For
                 End If
 
-                Select Case optionStmtSyntax.NameKeyword.VisualBasicKind
+                Select Case optionStmtSyntax.NameKeyword.VBKind
                     Case SyntaxKind.StrictKeyword
                         If optionStrict.HasValue Then
                             Binder.ReportDiagnostic(diagBag, optionStmtSyntax, ERRID.ERR_DuplicateOption1, "Strict")

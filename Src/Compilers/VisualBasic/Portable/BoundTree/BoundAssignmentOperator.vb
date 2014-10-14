@@ -9,16 +9,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     Partial Friend NotInheritable Class BoundAssignmentOperator
         Inherits BoundExpression
 
-        Public Sub New(syntax As VisualBasicSyntaxNode, left As BoundExpression, right As BoundExpression, suppressObjectClone As Boolean, type As TypeSymbol, Optional hasErrors As Boolean = False)
+        Public Sub New(syntax As VBSyntaxNode, left As BoundExpression, right As BoundExpression, suppressObjectClone As Boolean, type As TypeSymbol, Optional hasErrors As Boolean = False)
             Me.New(syntax, left, leftOnTheRightOpt:=Nothing, right:=right, suppressObjectClone:=suppressObjectClone, type:=type, hasErrors:=hasErrors)
         End Sub
 
-        Public Sub New(syntax As VisualBasicSyntaxNode, left As BoundExpression, right As BoundExpression, suppressObjectClone As Boolean, Optional hasErrors As Boolean = False)
+        Public Sub New(syntax As VBSyntaxNode, left As BoundExpression, right As BoundExpression, suppressObjectClone As Boolean, Optional hasErrors As Boolean = False)
             Me.New(syntax, left, leftOnTheRightOpt:=Nothing, right:=right, suppressObjectClone:=suppressObjectClone, hasErrors:=hasErrors)
         End Sub
 
         Public Sub New(
-            syntax As VisualBasicSyntaxNode,
+            syntax As VBSyntaxNode,
             left As BoundExpression,
             leftOnTheRightOpt As BoundCompoundAssignmentTargetPlaceholder,
             right As BoundExpression,
@@ -81,7 +81,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Debug.Assert(Left.IsPropertyOrXmlPropertyAccess() OrElse
                          Left.IsLateBound OrElse
                          Left.Type.IsSameTypeIgnoringCustomModifiers(Type) OrElse
-                         (Type.IsVoidType() AndAlso Syntax.Kind = SyntaxKind.MidAssignmentStatement))
+                         (Type.IsVoidType() AndAlso Syntax.Kind = SyntaxKind.MidAssignmentStatement) OrElse
+                         (Left.Kind = BoundKind.FieldAccess AndAlso
+                                DirectCast(Left, BoundFieldAccess).FieldSymbol.AssociatedSymbol.Kind = SymbolKind.Property AndAlso
+                                Type.IsVoidType()))
+
         End Sub
 #End If
 

@@ -235,6 +235,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             }
         }
 
+        internal TypeSymbol EffectiveType(ref HashSet<DiagnosticInfo> useSiteDiagnostics)
+        {
+            return this.IsTypeParameter() ? ((TypeParameterSymbol)this).EffectiveBaseClass(ref useSiteDiagnostics) : this;
+        }
+
         /// <summary>
         /// Returns true if this type derives from a given type.
         /// </summary>
@@ -1040,7 +1045,18 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                         interfaceMemberReturnType = null;
                         break;
                 }
-                diagnostics.Add(ErrorCode.ERR_CloseUnimplementedInterfaceMemberWrongReturnType, interfacelocation, implementingType, interfaceMember, closestMismatch, interfaceMemberReturnType);
+
+                DiagnosticInfo useSiteDiagnostic;
+                if ((object)interfaceMemberReturnType != null &&
+                    (useSiteDiagnostic = interfaceMemberReturnType.GetUseSiteDiagnostic()) != null &&
+                    useSiteDiagnostic.DefaultSeverity == DiagnosticSeverity.Error)
+                {
+                    diagnostics.Add(useSiteDiagnostic, interfacelocation);
+                }
+                else
+                {
+                    diagnostics.Add(ErrorCode.ERR_CloseUnimplementedInterfaceMemberWrongReturnType, interfacelocation, implementingType, interfaceMember, closestMismatch, interfaceMemberReturnType);
+                }
             }
         }
 

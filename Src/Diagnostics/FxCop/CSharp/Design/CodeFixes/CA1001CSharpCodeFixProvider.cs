@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using System.Composition;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -14,7 +15,7 @@ namespace Microsoft.CodeAnalysis.CSharp.FxCopAnalyzers.Design
     /// <summary>
     /// CA1001: Types that own disposable fields should be disposable
     /// </summary>
-    [ExportCodeFixProvider(CA1001DiagnosticAnalyzer.RuleId, LanguageNames.CSharp)]
+    [ExportCodeFixProvider(CA1001DiagnosticAnalyzer.RuleId, LanguageNames.CSharp), Shared]
     public class CA1001CSharpCodeFixProvider : CA1001CodeFixProviderBase
     {
         internal override Task<Document> GetUpdatedDocumentAsync(Document document, SemanticModel model, SyntaxNode root, SyntaxNode nodeToFix, string diagnosticId, CancellationToken cancellationToken)
@@ -41,8 +42,8 @@ namespace Microsoft.CodeAnalysis.CSharp.FxCopAnalyzers.Design
             var member = CreateSimpleMethodDeclaration(CA1001DiagnosticAnalyzer.Dispose, statement);
             var newNode =
                 syntaxNode.BaseList != null ?
-                    syntaxNode.AddBaseListTypes(SyntaxFactory.ParseTypeName(CA1001DiagnosticAnalyzer.IDisposable)).AddMembers(new[] { member }) :
-                    syntaxNode.AddBaseListTypes(SyntaxFactory.ParseTypeName(CA1001DiagnosticAnalyzer.IDisposable)).AddMembers(new[] { member }).WithIdentifier(syntaxNode.Identifier.WithTrailingTrivia(SyntaxFactory.Space));
+                    syntaxNode.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName(CA1001DiagnosticAnalyzer.IDisposable))).AddMembers(new[] { member }) :
+                    syntaxNode.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName(CA1001DiagnosticAnalyzer.IDisposable))).AddMembers(new[] { member }).WithIdentifier(syntaxNode.Identifier.WithTrailingTrivia(SyntaxFactory.Space));
             newNode = newNode.WithAdditionalAnnotations(Formatter.Annotation, Simplifier.Annotation);
             return Task.FromResult(document.WithSyntaxRoot(root.ReplaceNode(nodeToFix, newNode)));
         }

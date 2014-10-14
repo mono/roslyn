@@ -6,10 +6,10 @@ Imports Microsoft.CodeAnalysis
 
 Namespace Microsoft.CodeAnalysis.VisualBasic
     <Serializable>
-    Public NotInheritable Class VisualBasicSerializableCompilationOptions
+    Public NotInheritable Class VBSerializableCompilationOptions
         Inherits SerializableCompilationOptions
 
-        Private _options As VisualBasicCompilationOptions
+        Private _options As VBCompilationOptions
 
         Private Const GlobalImportsString = "GlobalImports"
         Private Const RootNamespaceString = "RootNamespace"
@@ -20,7 +20,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Private Const EmbedVbCoreRuntimeString = "EmbedVbCoreRuntime"
         Private Const ParseOptionsString = "ParseOptions"
 
-        Sub New(options As VisualBasicCompilationOptions)
+        Sub New(options As VBCompilationOptions)
             If options Is Nothing Then
                 Throw New ArgumentNullException("options")
             End If
@@ -29,9 +29,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Sub
 
         Friend Sub New(info As SerializationInfo, context As StreamingContext)
-            Dim serializableOptions = DirectCast(info.GetValue(ParseOptionsString, GetType(VisualBasicSerializableParseOptions)), VisualBasicSerializableParseOptions)
+            Dim serializableOptions = DirectCast(info.GetValue(ParseOptionsString, GetType(VBSerializableParseOptions)), VBSerializableParseOptions)
 
-            _options = New VisualBasicCompilationOptions(
+            _options = New VBCompilationOptions(
                 outputKind:=DirectCast(info.GetInt32(OutputKindString), OutputKind),
                 moduleName:=info.GetString(ModuleNameString),
                 mainTypeName:=info.GetString(MainTypeNameString),
@@ -41,18 +41,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 delaySign:=DirectCast(info.GetValue(DelaySignString, GetType(Boolean?)), Boolean?),
                 optimizationLevel:=DirectCast(info.GetInt32(OptimizeString), OptimizationLevel),
                 checkOverflow:=info.GetBoolean(CheckOverflowString),
-                fileAlignment:=info.GetInt32(FileAlignmentString),
-                baseAddress:=info.GetUInt64(BaseAddressString),
                 platform:=DirectCast(info.GetInt32(PlatformString), Platform),
                 generalDiagnosticOption:=DirectCast(info.GetInt32(GeneralDiagnosticOptionString), ReportDiagnostic),
                 specificDiagnosticOptions:=DirectCast(info.GetValue(SpecificDiagnosticOptionsString, GetType(Dictionary(Of String, ReportDiagnostic))), Dictionary(Of String, ReportDiagnostic)).ToImmutableDictionary(),
-                highEntropyVirtualAddressSpace:=info.GetBoolean(HighEntropyVirtualAddressSpaceString),
-                subsystemVersion:=SubsystemVersion.Create(info.GetInt32(SubsystemVersionMajorString), info.GetInt32(SubsystemVersionMinorString)),
                 concurrentBuild:=info.GetBoolean(ConcurrentBuildString),
                 xmlReferenceResolver:=XmlFileResolver.Default,
                 sourceReferenceResolver:=SourceFileResolver.Default,
-                metadataReferenceResolver:=MetadataFileReferenceResolver.Default,
-                metadataReferenceProvider:=MetadataFileReferenceProvider.Default,
+                metadataReferenceResolver:=New AssemblyReferenceResolver(MetadataFileReferenceResolver.Default, MetadataFileReferenceProvider.Default),
                 assemblyIdentityComparer:=DesktopAssemblyIdentityComparer.Default,
                 strongNameProvider:=New DesktopStrongNameProvider(),
                 metadataImportOptions:=DirectCast(info.GetByte(MetadataImportOptionsString), MetadataImportOptions),
@@ -77,10 +72,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             info.AddValue(OptionExplicitString, _options.OptionExplicit)
             info.AddValue(OptionCompareTextString, _options.OptionCompareText)
             info.AddValue(EmbedVbCoreRuntimeString, _options.EmbedVbCoreRuntime)
-            info.AddValue(ParseOptionsString, If(_options.ParseOptions IsNot Nothing, New VisualBasicSerializableParseOptions(_options.ParseOptions), Nothing))
+            info.AddValue(ParseOptionsString, If(_options.ParseOptions IsNot Nothing, New VBSerializableParseOptions(_options.ParseOptions), Nothing))
         End Sub
 
-        Public Shadows ReadOnly Property Options As VisualBasicCompilationOptions
+        Public Shadows ReadOnly Property Options As VBCompilationOptions
             Get
                 Return _options
             End Get

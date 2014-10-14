@@ -11,14 +11,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CommandLine
         Inherits VisualBasicCompiler
 
         Friend Sub New(responseFile As String, baseDirectory As String, args As String())
-            MyBase.New(VisualBasicCommandLineParser.Default, responseFile, args, baseDirectory, Environment.GetEnvironmentVariable("LIB"))
+            MyBase.New(VBCommandLineParser.Default, responseFile, args, baseDirectory, Environment.GetEnvironmentVariable("LIB"))
         End Sub
 
         Overloads Shared Function Run(args As String()) As Integer
 
             Dim compiler = New Vbc(BasicResponseFileName, Directory.GetCurrentDirectory(), args)
 
-            CompilerFatalError.Handler = AddressOf FailFast.OnFatalException
+            FatalError.Handler = AddressOf FailFast.OnFatalException
 
             ' We store original encoding and restore it later to revert 
             ' the changes that might be done by /utf8output options

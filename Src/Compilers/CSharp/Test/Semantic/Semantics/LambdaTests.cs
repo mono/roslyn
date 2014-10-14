@@ -6,6 +6,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Roslyn.Test.Utilities;
 using Xunit;
@@ -429,10 +430,10 @@ Public Module M
 End Module
 ";
 
-            var vbProject = VisualBasic.VisualBasicCompilation.Create(
+            var vbProject = VisualBasic.VBCompilation.Create(
                 "VBProject",
                 references: new[] { MscorlibRef },
-                syntaxTrees: new[] { VisualBasic.VisualBasicSyntaxTree.ParseText(vbSource) });
+                syntaxTrees: new[] { VisualBasic.VBSyntaxTree.ParseText(vbSource) });
 
             var csSource = @"
 class Program
@@ -444,7 +445,7 @@ class Program
 }
 ";
             var metadataStream = new MemoryStream();
-            var emitResult = vbProject.EmitMetadataOnly(metadataStream);
+            var emitResult = vbProject.Emit(metadataStream, options:new EmitOptions(metadataOnly:true));
             Assert.True(emitResult.Success);
 
             var csProject = CreateCompilationWithMscorlib(
@@ -479,10 +480,10 @@ Public Module M
 End Module
 ";
 
-            var vbProject = VisualBasic.VisualBasicCompilation.Create(
+            var vbProject = VisualBasic.VBCompilation.Create(
                 "VBProject",
                 references: new[] { MscorlibRef },
-                syntaxTrees: new[] { VisualBasic.VisualBasicSyntaxTree.ParseText(vbSource) });
+                syntaxTrees: new[] { VisualBasic.VBSyntaxTree.ParseText(vbSource) });
 
             var csSource = @"
 class Program
@@ -493,7 +494,7 @@ class Program
     }
 }
 ";
-            var vbMetadata = vbProject.EmitToArray(metadataOnly: true);
+            var vbMetadata = vbProject.EmitToArray(options: new EmitOptions(metadataOnly: true));
             var csProject = CreateCompilationWithMscorlib(Parse(csSource), new[] { MetadataReference.CreateFromImage(vbMetadata) });
 
             var diagnostics = csProject.GetDiagnostics().Select(DumpDiagnostic);

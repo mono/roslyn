@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4092303-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4092303-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
+  <Import Project="..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4100302-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4100302-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
   <ImportGroup Label="Settings">
     <Import Project="..\..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Settings.targets" />
   </ImportGroup>
@@ -54,7 +54,6 @@
     <DebugSymbols>true</DebugSymbols>
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
-    <DefineConstants>PERFORMANCE_DIAGNOSTICS</DefineConstants>
     <RemoveIntegerChecks>true</RemoveIntegerChecks>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
@@ -63,7 +62,6 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <DefineTrace>true</DefineTrace>
-    <DefineConstants>PERFORMANCE_DIAGNOSTICS</DefineConstants>
     <RemoveIntegerChecks>true</RemoveIntegerChecks>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -164,7 +162,7 @@
     <Compile Include="Binding\EarlyWellKnownAttributeBinder.vb" />
     <Compile Include="Binding\ExecutableCodeBinder.vb" />
     <Compile Include="Binding\FinallyBlockBinder.vb" />
-    <Compile Include="Binding\ForBlockBinder.vb" />
+    <Compile Include="Binding\ForOrForEachBlockBinder.vb" />
     <Compile Include="Binding\ForEachEnumeratorInfo.vb" />
     <Compile Include="Binding\GetTypeBinder.vb" />
     <Compile Include="Binding\IgnoreBaseClassesBinder.vb" />
@@ -361,7 +359,6 @@
     <Compile Include="Emit\AssemblyReference.vb" />
     <Compile Include="Emit\AttributeDataAdapter.vb" />
     <Compile Include="Emit\CustomModifierAdapter.vb" />
-    <Compile Include="Emit\EditAndContinue\VisualBasicDefinitionMap.LocalVisitors.vb" />
     <Compile Include="Emit\EditAndContinue\VisualBasicDefinitionMap.vb" />
     <Compile Include="Emit\EditAndContinue\EmitHelpers.vb" />
     <Compile Include="Emit\EditAndContinue\PEDeltaAssemblyBuilder.vb" />
@@ -428,6 +425,7 @@
     <Compile Include="Lowering\AsyncRewriter\AsyncRewriter.SpillFieldAllocator.vb" />
     <Compile Include="Lowering\AsyncRewriter\AsyncRewriter.vb" />
     <Compile Include="Lowering\AsyncRewriter\AsyncStateMachine.vb" />
+    <Compile Include="Lowering\DebugAttributes.vb" />
     <Compile Include="Lowering\Diagnostics\DiagnosticsPass.vb" />
     <Compile Include="Lowering\Diagnostics\DiagnosticsPass_ExpressionLambdas.vb" />
     <Compile Include="Lowering\ExpressionLambdaRewriter\ExpressionLambdaRewriter.vb" />
@@ -508,6 +506,7 @@
     <Compile Include="Lowering\StateMachineRewriter\StateMachineRewriter.StateMachineMethodToClassRewriter.vb" />
     <Compile Include="Lowering\StateMachineRewriter\StateMachineRewriter.vb" />
     <Compile Include="Lowering\StateMachineRewriter\StateMachineStates.vb" />
+    <Compile Include="Lowering\StateMachineRewriter\StateMachineTypeSymbol.vb" />
     <Compile Include="Lowering\StateMachineRewriter\SynthesizedContainer.vb" />
     <Compile Include="Lowering\StateMachineRewriter\SynthesizedStateMachineMethod.vb" />
     <Compile Include="Lowering\StateMachineRewriter\SynthesizedStateMachineProperty.vb" />
@@ -769,7 +768,6 @@
     <Compile Include="Symbols\Source\SynthesizedEventBackingFieldSymbol.vb" />
     <Compile Include="Symbols\Source\SynthesizedFieldSymbol.vb" />
     <Compile Include="Symbols\Source\SynthesizedLambdaSymbol.vb" />
-    <Compile Include="Symbols\Source\SynthesizedLocalKind.vb" />
     <Compile Include="Symbols\Source\SynthesizedMainTypeEntryPoint.vb" />
     <Compile Include="Symbols\Source\SynthesizedMyGroupCollectionPropertyAccessorSymbol.vb" />
     <Compile Include="Symbols\Source\SynthesizedMyGroupCollectionPropertyBackingFieldSymbol.vb" />
@@ -825,11 +823,13 @@
     <Compile Include="Symbols\UnboundGenericType.vb" />
     <Compile Include="Symbols\UnsupportedMetadataTypeSymbol.vb" />
     <Compile Include="Symbols\WellKnownMembers.vb" />
+    <Compile Include="Syntax\ArgumentSyntax.vb" />
     <Compile Include="Syntax\ArrayRankSpecifierSyntax.vb" />
     <Compile Include="Syntax\BaseSyntaxExtensions.vb" />
     <Compile Include="Syntax\BeginOfBlockSyntaxReference.vb" />
     <Compile Include="Syntax\CompilationUnitSyntax.vb" />
     <Compile Include="Syntax\DirectiveTriviaSyntax.vb" />
+    <Compile Include="Syntax\ForOrForEachBlockSyntax.vb" />
     <Compile Include="Syntax\InternalSyntax\BadTokenSyntax.vb" />
     <Compile Include="Syntax\InternalSyntax\ComplexIdentifierSyntax.vb" />
     <Compile Include="Syntax\InternalSyntax\DocumentationCommentTriviaSyntax.vb" />
@@ -947,6 +947,7 @@
     <InternalsVisibleTo Include="vbc" />
     <InternalsVisibleTo Include="vbi" />
     <InternalsVisibleTo Include="VBCSCompiler" />
+    <InternalsVisibleToTest Include="Roslyn.Compilers.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Compilers.VisualBasic.CommandLine.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Compilers.VisualBasic.Emit.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Compilers.VisualBasic.Semantic.UnitTests" />
@@ -979,6 +980,6 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-    <Error Condition="!Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4092303-beta\build\Microsoft.Net.ToolsetCompilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4092303-beta\build\Microsoft.Net.ToolsetCompilers.props'))" />
+    <Error Condition="!Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4100302-beta\build\Microsoft.Net.ToolsetCompilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4100302-beta\build\Microsoft.Net.ToolsetCompilers.props'))" />
   </Target>
 </Project>

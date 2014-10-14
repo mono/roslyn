@@ -1202,7 +1202,7 @@ class B {
   }
 }
 ";
-            CompileWithCustomILSource(cSharpSource, ilSource, emitOptions: EmitOptions.RefEmitUnsupported);
+            CompileWithCustomILSource(cSharpSource, ilSource, emitOptions: TestEmitters.RefEmitUnsupported);
         }
 
         [Fact]
@@ -2377,7 +2377,7 @@ End Class";
             Assert.Equal(interfacePropertySetter, classPropertySetter.ExplicitInterfaceImplementations.Single());
 
             var typeDef = (Microsoft.Cci.ITypeDefinition)@class;
-            var module = new PEAssemblyBuilder((SourceAssemblySymbol)@class.ContainingAssembly, null, OutputKind.DynamicallyLinkedLibrary,
+            var module = new PEAssemblyBuilder((SourceAssemblySymbol)@class.ContainingAssembly, EmitOptions.Default, OutputKind.DynamicallyLinkedLibrary,
                 GetDefaultModulePropertiesForSerialization(), SpecializedCollections.EmptyEnumerable<ResourceDescription>());
 
             var context = new EmitContext(module, null, new DiagnosticBag());
@@ -2618,7 +2618,7 @@ public interface IA
                 // We should see the same members from both source and metadata
                 var verifier = CompileAndVerify(
                     libSrc,
-                    emitOptions: EmitOptions.RefEmitBug,
+                    emitOptions: TestEmitters.RefEmitBug,
                     sourceSymbolValidator: validator,
                     symbolValidator: validator,
                     options: winmd ? TestOptions.ReleaseWinMD : TestOptions.ReleaseDll);

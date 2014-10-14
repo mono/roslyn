@@ -31,11 +31,6 @@ namespace Microsoft.CodeAnalysis
         public string ModuleName { get; protected set; }
 
         /// <summary>
-        /// Subsystem version
-        /// </summary>
-        public SubsystemVersion SubsystemVersion { get; protected set; }
-
-        /// <summary>
         /// The full name of a global implicit class (script class). This class implicitly encapsulates top-level statements, 
         /// type declarations, and member declarations. Could be a namespace qualified name.
         /// </summary>
@@ -73,25 +68,9 @@ namespace Microsoft.CodeAnalysis
         public bool CheckOverflow { get; protected set; }
 
         /// <summary>
-        /// Specifies the size of sections in the output file. 
-        /// </summary>
-        /// <remarks>
-        /// Valid values are 0, 512, 1024, 2048, 4096 and 8192.
-        /// If the value is 0 the file alignment is determined based upon the value of <see cref="Platform"/>.
-        /// </remarks>
-        public int FileAlignment { get; protected set; }
-
-        /// <summary>
-        /// Specifies the preferred base address at which to load the output DLL.
-        /// </summary>
-        public ulong BaseAddress { get; protected set; }
-
-        /// <summary>
         /// Specifies which version of the common language runtime (CLR) can run the assembly.
         /// </summary>
         public Platform Platform { get; protected set; }
-
-        public bool HighEntropyVirtualAddressSpace { get; protected set; }
 
         /// <summary>
         /// Specifies whether or not optimizations should be performed on the output IL.
@@ -126,12 +105,6 @@ namespace Microsoft.CodeAnalysis
         /// Warning report option for each warning.
         /// </summary>
         public ImmutableDictionary<string, ReportDiagnostic> SpecificDiagnosticOptions { get; protected set; }
-
-        /// <summary>
-        /// Translates a resolved assembly reference path to an actual <see cref="PortableExecutableReference"/>.
-        /// Null if the compilation can't contain references to metadata other than those explicitly passed to its factory (such as #r directives in sources). 
-        /// </summary>
-        public MetadataReferenceProvider MetadataReferenceProvider { get; protected set; }
 
         /// <summary>
         /// Resolves paths to metadata references specified in source via #r directives.
@@ -181,19 +154,14 @@ namespace Microsoft.CodeAnalysis
             bool? delaySign,
             OptimizationLevel optimizationLevel,
             bool checkOverflow,
-            int fileAlignment,
-            ulong baseAddress,
             Platform platform,
             ReportDiagnostic generalDiagnosticOption,
             int warningLevel,
             ImmutableDictionary<string, ReportDiagnostic> specificDiagnosticOptions,
-            bool highEntropyVirtualAddressSpace,
-            SubsystemVersion subsystemVersion,
             bool concurrentBuild,
             XmlReferenceResolver xmlReferenceResolver,
             SourceReferenceResolver sourceReferenceResolver,
             MetadataReferenceResolver metadataReferenceResolver,
-            MetadataReferenceProvider metadataReferenceProvider,
             AssemblyIdentityComparer assemblyIdentityComparer,
             StrongNameProvider strongNameProvider,
             MetadataImportOptions metadataImportOptions,
@@ -202,25 +170,20 @@ namespace Microsoft.CodeAnalysis
             this.OutputKind = outputKind;
             this.ModuleName = moduleName;
             this.MainTypeName = mainTypeName;
-            this.ScriptClassName = scriptClassName;
+            this.ScriptClassName = scriptClassName ?? WellKnownMemberNames.DefaultScriptClassName;
             this.CryptoKeyContainer = cryptoKeyContainer;
             this.CryptoKeyFile = cryptoKeyFile;
             this.DelaySign = delaySign;
             this.CheckOverflow = checkOverflow;
-            this.FileAlignment = fileAlignment;
-            this.BaseAddress = baseAddress;
             this.Platform = platform;
             this.GeneralDiagnosticOption = generalDiagnosticOption;
             this.WarningLevel = warningLevel;
             this.SpecificDiagnosticOptions = specificDiagnosticOptions;
-            this.HighEntropyVirtualAddressSpace = highEntropyVirtualAddressSpace;
             this.OptimizationLevel = optimizationLevel;
             this.ConcurrentBuild = concurrentBuild;
-            this.SubsystemVersion = subsystemVersion;
             this.XmlReferenceResolver = xmlReferenceResolver;
             this.SourceReferenceResolver = sourceReferenceResolver;
             this.MetadataReferenceResolver = metadataReferenceResolver;
-            this.MetadataReferenceProvider = metadataReferenceProvider;
             this.StrongNameProvider = strongNameProvider;
             this.AssemblyIdentityComparer = assemblyIdentityComparer ?? AssemblyIdentityComparer.Default;
             this.MetadataImportOptions = metadataImportOptions;
@@ -244,7 +207,6 @@ namespace Microsoft.CodeAnalysis
                 && this.OutputKind.IsNetModule() == other.OutputKind.IsNetModule()
                 && object.Equals(this.XmlReferenceResolver, other.XmlReferenceResolver)
                 && object.Equals(this.MetadataReferenceResolver, other.MetadataReferenceResolver)
-                && object.Equals(this.MetadataReferenceProvider, other.MetadataReferenceProvider)
                 && object.Equals(this.AssemblyIdentityComparer, other.AssemblyIdentityComparer);
         }
 
@@ -330,11 +292,6 @@ namespace Microsoft.CodeAnalysis
             return CommonWithSourceReferenceResolver(resolver);
         }
 
-        public CompilationOptions WithMetadataReferenceProvider(MetadataReferenceProvider provider)
-        {
-            return CommonWithMetadataReferenceProvider(provider);
-        }
-
         public CompilationOptions WithMetadataReferenceResolver(MetadataReferenceResolver resolver)
         {
             return CommonWithMetadataReferenceResolver(resolver);
@@ -361,7 +318,6 @@ namespace Microsoft.CodeAnalysis
         protected abstract CompilationOptions CommonWithXmlReferenceResolver(XmlReferenceResolver resolver);
         protected abstract CompilationOptions CommonWithSourceReferenceResolver(SourceReferenceResolver resolver);
         protected abstract CompilationOptions CommonWithMetadataReferenceResolver(MetadataReferenceResolver resolver);
-        protected abstract CompilationOptions CommonWithMetadataReferenceProvider(MetadataReferenceProvider provider);
         protected abstract CompilationOptions CommonWithAssemblyIdentityComparer(AssemblyIdentityComparer comparer);
         protected abstract CompilationOptions CommonWithStrongNameProvider(StrongNameProvider provider);
         protected abstract CompilationOptions CommonWithGeneralDiagnosticOption(ReportDiagnostic generalDiagnosticOption);
@@ -394,15 +350,12 @@ namespace Microsoft.CodeAnalysis
             // NOTE: StringComparison.Ordinal is used for type name comparisons, even for VB.  That's because
             // a change in the canonical case should still change the option.
             bool equal =
-                   this.BaseAddress == other.BaseAddress &&
                    this.CheckOverflow == other.CheckOverflow &&
                    this.ConcurrentBuild == other.ConcurrentBuild &&
                    string.Equals(this.CryptoKeyContainer, other.CryptoKeyContainer, StringComparison.Ordinal) &&
                    string.Equals(this.CryptoKeyFile, other.CryptoKeyFile, StringComparison.Ordinal) &&
                    this.DelaySign == other.DelaySign &&
-                   this.FileAlignment == other.FileAlignment &&
                    this.GeneralDiagnosticOption == other.GeneralDiagnosticOption &&
-                   this.HighEntropyVirtualAddressSpace == other.HighEntropyVirtualAddressSpace &&
                    string.Equals(this.MainTypeName, other.MainTypeName, StringComparison.Ordinal) &&
                    this.MetadataImportOptions == other.MetadataImportOptions &&
                    string.Equals(this.ModuleName, other.ModuleName, StringComparison.Ordinal) &&
@@ -411,9 +364,7 @@ namespace Microsoft.CodeAnalysis
                    this.Platform == other.Platform &&
                    string.Equals(this.ScriptClassName, other.ScriptClassName, StringComparison.Ordinal) &&
                    this.SpecificDiagnosticOptions.SequenceEqual(other.SpecificDiagnosticOptions, (left, right) => (left.Key == right.Key) && (left.Value == right.Value)) &&
-                   this.SubsystemVersion.Equals(other.SubsystemVersion) &&
                    this.WarningLevel == other.WarningLevel &&
-                   object.Equals(this.MetadataReferenceProvider, other.MetadataReferenceProvider) &&
                    object.Equals(this.MetadataReferenceResolver, other.MetadataReferenceResolver) &&
                    object.Equals(this.XmlReferenceResolver, other.XmlReferenceResolver) &&
                    object.Equals(this.SourceReferenceResolver, other.SourceReferenceResolver) &&
@@ -428,15 +379,12 @@ namespace Microsoft.CodeAnalysis
 
         protected int GetHashCodeHelper()
         {
-            return Hash.Combine(this.BaseAddress.GetHashCode(),
-                   Hash.Combine(this.CheckOverflow,
+            return Hash.Combine(this.CheckOverflow,
                    Hash.Combine(this.ConcurrentBuild,
                    Hash.Combine(this.CryptoKeyContainer != null ? StringComparer.Ordinal.GetHashCode(this.CryptoKeyContainer) : 0,
                    Hash.Combine(this.CryptoKeyFile != null ? StringComparer.Ordinal.GetHashCode(this.CryptoKeyFile) : 0,
                    Hash.Combine(this.DelaySign.HasValue ? this.DelaySign.Value : false,
-                   Hash.Combine(this.FileAlignment,
                    Hash.Combine((int)this.GeneralDiagnosticOption,
-                   Hash.Combine(this.HighEntropyVirtualAddressSpace,
                    Hash.Combine(this.MainTypeName != null ? StringComparer.Ordinal.GetHashCode(this.MainTypeName) : 0,
                    Hash.Combine((int)this.MetadataImportOptions,
                    Hash.Combine(this.ModuleName != null ? StringComparer.Ordinal.GetHashCode(this.ModuleName) : 0,
@@ -445,15 +393,13 @@ namespace Microsoft.CodeAnalysis
                    Hash.Combine((int)this.Platform,
                    Hash.Combine(this.ScriptClassName != null ? StringComparer.Ordinal.GetHashCode(this.ScriptClassName) : 0,
                    Hash.Combine(Hash.CombineValues(this.SpecificDiagnosticOptions),
-                   Hash.Combine(this.SubsystemVersion.GetHashCode(),
                    Hash.Combine(this.WarningLevel,
                    Hash.Combine(this.MetadataReferenceResolver,
-                   Hash.Combine(this.MetadataReferenceProvider,
                    Hash.Combine(this.XmlReferenceResolver,
                    Hash.Combine(this.SourceReferenceResolver,
                    Hash.Combine(this.StrongNameProvider,
                    Hash.Combine(this.AssemblyIdentityComparer,
-                   Hash.Combine(Hash.CombineValues(this.Features, StringComparer.Ordinal), 0))))))))))))))))))))))))));
+                   Hash.Combine(Hash.CombineValues(this.Features, StringComparer.Ordinal), 0)))))))))))))))))))));
         }
 
         public static bool operator ==(CompilationOptions left, CompilationOptions right)

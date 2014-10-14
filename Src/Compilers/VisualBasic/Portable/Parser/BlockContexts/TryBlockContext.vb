@@ -1,4 +1,4 @@
-﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 '-----------------------------------------------------------------------------
 ' Contains the definition of the BlockContext
@@ -13,19 +13,19 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
     Friend NotInheritable Class TryBlockContext
         Inherits ExecutableStatementContext
 
-        Private _catchParts As SyntaxListBuilder(Of CatchPartSyntax)
-        Private _optionalFinallyPart As FinallyPartSyntax
+        Private _catchParts As SyntaxListBuilder(Of CatchBlockSyntax)
+        Private _optionalFinallyPart As FinallyBlockSyntax
 
         Friend Sub New(statement As StatementSyntax, prevContext As BlockContext)
             MyBase.New(SyntaxKind.TryBlock, statement, prevContext)
 
             Debug.Assert(statement.Kind = SyntaxKind.TryStatement)
 
-            _catchParts = _parser._pool.Allocate(Of CatchPartSyntax)()
+            _catchParts = _parser._pool.Allocate(Of CatchBlockSyntax)()
 
         End Sub
 
-        Friend Overrides Function ProcessSyntax(node As VisualBasicSyntaxNode) As BlockContext
+        Friend Overrides Function ProcessSyntax(node As VBSyntaxNode) As BlockContext
 
             Select Case node.Kind
                 Case SyntaxKind.CatchStatement
@@ -34,11 +34,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                 Case SyntaxKind.FinallyStatement
                     Return New FinallyPartContext(DirectCast(node, StatementSyntax), Me)
 
-                Case SyntaxKind.CatchPart
-                    _catchParts.Add(DirectCast(node, CatchPartSyntax))
+                Case SyntaxKind.CatchBlock
+                    _catchParts.Add(DirectCast(node, CatchBlockSyntax))
 
-                Case SyntaxKind.FinallyPart
-                    _optionalFinallyPart = DirectCast(node, FinallyPartSyntax)
+                Case SyntaxKind.FinallyBlock
+                    _optionalFinallyPart = DirectCast(node, FinallyBlockSyntax)
 
                 Case Else
                     Return MyBase.ProcessSyntax(node)
@@ -47,7 +47,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return Me
         End Function
 
-        Friend Overrides Function TryLinkSyntax(node As VisualBasicSyntaxNode, ByRef newContext As BlockContext) As LinkResult
+        Friend Overrides Function TryLinkSyntax(node As VBSyntaxNode, ByRef newContext As BlockContext) As LinkResult
             newContext = Nothing
             Select Case node.Kind
 
@@ -57,8 +57,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     Return UseSyntax(node, newContext)
 
                 Case _
-                    SyntaxKind.CatchPart,
-                    SyntaxKind.FinallyPart
+                    SyntaxKind.CatchBlock,
+                    SyntaxKind.FinallyBlock
                     ' Skip terminator because these are not statements
                     Return UseSyntax(node, newContext) Or LinkResult.SkipTerminator
 
@@ -67,7 +67,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             End Select
         End Function
 
-        Friend Overrides Function CreateBlockSyntax(endStmt As StatementSyntax) As VisualBasicSyntaxNode
+        Friend Overrides Function CreateBlockSyntax(endStmt As StatementSyntax) As VBSyntaxNode
 
             Debug.Assert(BeginStatement IsNot Nothing)
             Dim beginStmt As TryStatementSyntax = DirectCast(BeginStatement, TryStatementSyntax)
@@ -77,9 +77,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                 endStmt = SyntaxFactory.EndTryStatement(InternalSyntaxFactory.MissingKeyword(SyntaxKind.EndKeyword), InternalSyntaxFactory.MissingKeyword(SyntaxKind.TryKeyword))
             End If
 
-            Dim tryPart = SyntaxFactory.TryPart(beginStmt, Body())
-
-            Dim result = SyntaxFactory.TryBlock(tryPart, _catchParts.ToList, _optionalFinallyPart, DirectCast(endStmt, EndBlockStatementSyntax))
+            Dim result = SyntaxFactory.TryBlock(beginStmt, Body(), _catchParts.ToList(), _optionalFinallyPart, DirectCast(endStmt, EndBlockStatementSyntax))
 
             _parser._pool.Free(_catchParts)
             FreeStatements()

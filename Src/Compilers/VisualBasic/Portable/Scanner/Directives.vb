@@ -8,8 +8,6 @@ Option Strict On
 
 Imports System.Collections.Immutable
 Imports Microsoft.CodeAnalysis.Text
-Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
-Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 Imports Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts
 Imports System.Runtime.InteropServices
 
@@ -73,7 +71,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' </summary>
         Private Sub ProcessDirective(directiveTrivia As DirectiveTriviaSyntax, tList As SyntaxListBuilder)
 
-            Dim disabledCode As SyntaxList(Of VisualBasicSyntaxNode) = Nothing
+            Dim disabledCode As SyntaxList(Of VBSyntaxNode) = Nothing
             Dim statement As DirectiveTriviaSyntax = directiveTrivia
 
             Dim newState = ApplyDirective(_scannerPreprocessorState,
@@ -115,7 +113,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' Gets an initial preprocessor state and applies all directives from a given node.
         ''' Entry point for blender
         ''' </summary>
-        Protected Shared Function ApplyDirectives(preprocessorState As PreprocessorState, node As VisualBasicSyntaxNode) As PreprocessorState
+        Protected Shared Function ApplyDirectives(preprocessorState As PreprocessorState, node As VBSyntaxNode) As PreprocessorState
             If node.ContainsDirectives Then
                 preprocessorState = ApplyDirectivesRecursive(preprocessorState, node)
             End If
@@ -123,7 +121,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return preprocessorState
         End Function
 
-        Private Shared Function ApplyDirectivesRecursive(preprocessorState As PreprocessorState, node As VisualBasicSyntaxNode) As PreprocessorState
+        Private Shared Function ApplyDirectivesRecursive(preprocessorState As PreprocessorState, node As VBSyntaxNode) As PreprocessorState
             Debug.Assert(node.ContainsDirectives, "we should not be processing nodes without Directives")
 
             ' node is a directive
@@ -143,7 +141,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                 For i As Integer = 0 To sCount - 1
                     Dim child = node.GetSlot(i)
                     If child IsNot Nothing AndAlso child.ContainsDirectives Then
-                        preprocessorState = ApplyDirectivesRecursive(preprocessorState, DirectCast(child, VisualBasicSyntaxNode))
+                        preprocessorState = ApplyDirectivesRecursive(preprocessorState, DirectCast(child, VBSyntaxNode))
                     End If
                 Next
 
@@ -261,9 +259,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             End Sub
         End Class
 
-        ' The class needs to be immutable. 
-        ' as its instances can get associated with multiple on prefetched tokens.
-        Friend Class PreprocessorState
+        ' The class needs to be immutable
+        ' as its instances can get associated with multiple tokens.
+        Friend NotInheritable Class PreprocessorState
             Private ReadOnly _symbols As ImmutableDictionary(Of String, CConst)
             Private ReadOnly _conditionals As ImmutableStack(Of ConditionalState)
             Private ReadOnly _regionDirectives As ImmutableStack(Of RegionDirectiveTriviaSyntax)
@@ -512,7 +510,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         '// 
         '//-------------------------------------------------------------------------------------------------
 
-        Private Function SkipConditionalCompilationSection() As SyntaxList(Of VisualBasicSyntaxNode)
+        Private Function SkipConditionalCompilationSection() As SyntaxList(Of VBSyntaxNode)
             ' // If skipping encounters a nested #if, it is necessary to skip all of it through its
             ' // #end. NestedConditionalsToSkip keeps track of how many nested #if constructs
             ' // need skipping.
@@ -599,9 +597,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             End While
 
             If lengthSkipped > 0 Then
-                Return New SyntaxList(Of VisualBasicSyntaxNode)(Me.GetDisabledTextAt(New TextSpan(startSkipped, lengthSkipped)))
+                Return New SyntaxList(Of VBSyntaxNode)(Me.GetDisabledTextAt(New TextSpan(startSkipped, lengthSkipped)))
             Else
-                Return New SyntaxList(Of VisualBasicSyntaxNode)(Nothing)
+                Return New SyntaxList(Of VBSyntaxNode)(Nothing)
             End If
         End Function
 

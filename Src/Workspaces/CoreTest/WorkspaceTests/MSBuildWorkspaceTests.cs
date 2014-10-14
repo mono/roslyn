@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -1001,20 +1002,6 @@ class C1
         }
 
         [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
-        public void TestCompilationOptions_CSharp_BaseAddress_Default()
-        {
-            CreateCSharpFiles();
-            AssertOptions(0ul, options => options.BaseAddress);
-        }
-
-        [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
-        public void TTestCompilationOptions_CSharp_BaseAddress_Custom()
-        {
-            CreateCSharpFilesWith("BaseAddress", "8388608");
-            AssertOptions(8388608ul, options => options.BaseAddress);
-        }
-
-        [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
         public void TTestCompilationOptions_CSharp_DebugType_Full()
         {
             CreateCSharpFilesWith("DebugType", "full");
@@ -1061,20 +1048,6 @@ class C1
         {
             CreateCSharpFilesWith("OutputType", "Module");
             AssertOptions(OutputKind.NetModule, options => options.OutputKind);
-        }
-
-        [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
-        public void TestCompilationOptions_CSharp_FileAlignment_Missing()
-        {
-            CreateCSharpFiles();
-            AssertOptions((ushort)512, options => options.FileAlignment);
-        }
-
-        [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
-        public void TestCompilationOptions_CSharp_FileAlignment_8192()
-        {
-            CreateCSharpFilesWith("FileAlignment", "8192");
-            AssertOptions((ushort)8192, options => options.FileAlignment);
         }
 
         [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
@@ -1351,7 +1324,7 @@ class C1
 
             var sol = MSBuildWorkspace.Create().OpenSolutionAsync(GetSolutionFileName("TestSolution.sln")).Result;
             var project = sol.GetProjectsByName("VisualBasicProject").FirstOrDefault();
-            var options = (Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions)project.CompilationOptions;
+            var options = (Microsoft.CodeAnalysis.VisualBasic.VBCompilationOptions)project.CompilationOptions;
             var imports = options.GlobalImports;
             AssertEx.Equal(new[]
             {
@@ -1372,7 +1345,7 @@ class C1
 
             var sol = MSBuildWorkspace.Create().OpenSolutionAsync(GetSolutionFileName("TestSolution.sln")).Result;
             var project = sol.GetProjectsByName("VisualBasicProject").FirstOrDefault();
-            var options = (Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions)project.ParseOptions;
+            var options = (Microsoft.CodeAnalysis.VisualBasic.VBParseOptions)project.ParseOptions;
             var defines = new List<KeyValuePair<string, object>>(options.PreprocessorSymbols);
             defines.Sort((x, y) => x.Key.CompareTo(y.Key));
 
@@ -1402,7 +1375,7 @@ class C1
 
             var sol = MSBuildWorkspace.Create().OpenSolutionAsync(GetSolutionFileName("TestSolution.sln")).Result;
             var project = sol.GetProjectsByName("VisualBasicProject").FirstOrDefault();
-            var options = (Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions)project.ParseOptions;
+            var options = (Microsoft.CodeAnalysis.VisualBasic.VBParseOptions)project.ParseOptions;
             Assert.Equal(true, options.PreprocessorSymbolNames.Contains("EnableMyAttribute"));
 
             var compilation = project.GetCompilationAsync().Result;
@@ -1423,7 +1396,7 @@ class C1
 
             var sol = MSBuildWorkspace.Create().OpenSolutionAsync(GetSolutionFileName("TestSolution.sln")).Result;
             var project = sol.GetProjectsByName("VisualBasicProject").FirstOrDefault();
-            var options = (Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions)project.ParseOptions;
+            var options = (Microsoft.CodeAnalysis.VisualBasic.VBParseOptions)project.ParseOptions;
             Assert.Equal(false, options.PreprocessorSymbolNames.Contains("EnableMyAttribute"));
 
             var compilation = project.GetCompilationAsync().Result;
@@ -2022,7 +1995,7 @@ class C1
             {
                 var solution = ws.OpenSolutionAsync(GetSolutionFileName("TestSolution.sln")).Result;
                 var project = solution.Projects.First(p => p.Language == LanguageNames.VisualBasic);
-                var parseOptions = (VB.VisualBasicParseOptions)project.ParseOptions;
+                var parseOptions = (VB.VBParseOptions)project.ParseOptions;
                 Assert.Equal(DocumentationMode.Diagnose, parseOptions.DocumentationMode);
                 var comp = project.GetCompilationAsync().Result;
                 var symbol = comp.GetTypeByMetadataName("VisualBasicProject.VisualBasicClass");
@@ -2049,7 +2022,7 @@ class C1
                 Assert.NotNull(cscomment);
 
                 var vbproject = ws.CurrentSolution.Projects.First(p => p.Language == LanguageNames.VisualBasic);
-                var vboptions = (VB.VisualBasicParseOptions)vbproject.ParseOptions;
+                var vboptions = (VB.VBParseOptions)vbproject.ParseOptions;
                 Assert.Equal(DocumentationMode.Diagnose, vboptions.DocumentationMode);
                 var vbcomp = vbproject.GetCompilationAsync().Result;
                 var vbsymbol = vbcomp.GetTypeByMetadataName("VisualBasicProject.VisualBasicClass");
@@ -2193,6 +2166,89 @@ class C1
             {
                 var c = p.GetCompilationAsync().Result;
             }
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
+        [WorkItem(991528)]
+        public void MSBuildProjectShouldHandleCodePageProperty()
+        {
+            var files = new FileSet(new Dictionary<string, object>
+            {
+                { "Encoding.csproj", GetResourceText("Encoding.csproj").Replace("<CodePage>ReplaceMe</CodePage>", "<CodePage>1254</CodePage>") },
+                { "class1.cs", "//“" }
+            });
+
+            CreateFiles(files);
+
+            var projPath = Path.Combine(this.SolutionDirectory.Path, "Encoding.csproj");
+            var project = MSBuildWorkspace.Create().OpenProjectAsync(projPath).Result;
+
+            var text = project.Documents.First(d => d.Name == "class1.cs").GetTextAsync().Result;
+            Assert.Equal(Encoding.GetEncoding(1254), text.Encoding);
+
+            // The smart quote (“) in class1.cs shows up as "â€œ" in codepage 1254. Do a sanity
+            // check here to make sure this file hasn't been corrupted in a way that would
+            // impact subsequent asserts.
+            Assert.Equal("//â€œ".Length, 5);
+            Assert.Equal("//â€œ".Length, text.Length);
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
+        [WorkItem(991528)]
+        public void MSBuildProjectShouldHandleInvalidCodePageProperty()
+        {
+            var files = new FileSet(new Dictionary<string, object>
+            {
+                { "Encoding.csproj", GetResourceText("Encoding.csproj").Replace("<CodePage>ReplaceMe</CodePage>", "<CodePage>-1</CodePage>") },
+                { "class1.cs", "//“" }
+            });
+
+            CreateFiles(files);
+
+            var projPath = Path.Combine(this.SolutionDirectory.Path, "Encoding.csproj");
+
+            var project = MSBuildWorkspace.Create().OpenProjectAsync(projPath).Result;
+
+            Assert.Equal(new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true), project.Documents.First(d => d.Name == "class1.cs").GetTextAsync().Result.Encoding);
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
+        [WorkItem(991528)]
+        public void MSBuildProjectShouldHandleInvalidCodePageProperty2()
+        {
+            var files = new FileSet(new Dictionary<string, object>
+            {
+                { "Encoding.csproj", GetResourceText("Encoding.csproj").Replace("<CodePage>ReplaceMe</CodePage>", "<CodePage>Broken</CodePage>") },
+                { "class1.cs", "//“" }
+            });
+
+            CreateFiles(files);
+
+            var projPath = Path.Combine(this.SolutionDirectory.Path, "Encoding.csproj");
+
+            var project = MSBuildWorkspace.Create().OpenProjectAsync(projPath).Result;
+
+            Assert.Equal(new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true), project.Documents.First(d => d.Name == "class1.cs").GetTextAsync().Result.Encoding);
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
+        [WorkItem(991528)]
+        public void MSBuildProjectShouldHandleDefaultCodePageProperty()
+        {
+            var files = new FileSet(new Dictionary<string, object>
+            {
+                { "Encoding.csproj", GetResourceText("Encoding.csproj").Replace("<CodePage>ReplaceMe</CodePage>", string.Empty) },
+                { "class1.cs", "//“" }
+            });
+
+            CreateFiles(files);
+
+            var projPath = Path.Combine(this.SolutionDirectory.Path, "Encoding.csproj");
+            var project = MSBuildWorkspace.Create().OpenProjectAsync(projPath).Result;
+
+            var text = project.Documents.First(d => d.Name == "class1.cs").GetTextAsync().Result;
+            Assert.Equal(new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true), text.Encoding);
+            Assert.Equal("//“", text.ToString());
         }
     }
 }

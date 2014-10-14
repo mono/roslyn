@@ -119,12 +119,53 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                          node.Type.IsDelegateType() AndAlso
                          node.Type.SpecialType <> SpecialType.System_MulticastDelegate)
 
-            Return Visit(New BoundDelegateCreationExpression(node.Syntax, node.Operand,
-                                                             DirectCast(node.Operand.Type, NamedTypeSymbol).DelegateInvokeMethod,
-                                                             node.RelaxationLambdaOpt,
-                                                             node.RelaxationReceiverPlaceholderOpt,
-                                                             methodGroupOpt:=Nothing,
-                                                             type:=node.Type))
+            Dim F As New SyntheticBoundNodeFactory(Me.topMethod, Me.currentMethodOrLambda, node.Syntax, Me.compilationState, Me.diagnostics)
+            If (node.Operand.IsDefaultValueConstant) Then
+                Return F.Null(node.Type)
+            ElseIf (Not Me.inExpressionLambda AndAlso CouldPossiblyBeNothing(F, node.Operand)) Then
+                Dim savedOriginalValue = F.SynthesizedLocal(node.Operand.Type)
+                Dim checkIfNothing = F.ReferenceIsNothing(F.Local(savedOriginalValue, False))
+                Dim conversionIfNothing = F.Null(node.Type)
+                Dim convertedValue = New BoundDelegateCreationExpression(node.Syntax, F.Local(savedOriginalValue, False),
+                                                                            DirectCast(node.Operand.Type, NamedTypeSymbol).DelegateInvokeMethod,
+                                                                            node.RelaxationLambdaOpt,
+                                                                            node.RelaxationReceiverPlaceholderOpt,
+                                                                            methodGroupOpt:=Nothing,
+                                                                            type:=node.Type)
+                Dim conditionalResult As BoundExpression = F.TernaryConditionalExpression(condition:=checkIfNothing, ifTrue:=conversionIfNothing, ifFalse:=convertedValue)
+                Return F.Sequence(savedOriginalValue,
+                                  F.AssignmentExpression(F.Local(savedOriginalValue, True), VisitExpression(node.Operand)),
+                                  VisitExpression(conditionalResult))
+            Else
+                Dim convertedValue = New BoundDelegateCreationExpression(node.Syntax, node.Operand,
+                                                                            DirectCast(node.Operand.Type, NamedTypeSymbol).DelegateInvokeMethod,
+                                                                            node.RelaxationLambdaOpt,
+                                                                            node.RelaxationReceiverPlaceholderOpt,
+                                                                            methodGroupOpt:=Nothing,
+                                                                            type:=node.Type)
+                Return VisitExpression(convertedValue)
+            End If
+
+        End Function
+
+        Private Function CouldPossiblyBeNothing(F As SyntheticBoundNodeFactory, node As BoundExpression) As Boolean
+            Select Case node.Kind
+                Case BoundKind.TernaryConditionalExpression
+                    Dim t = DirectCast(node, BoundTernaryConditionalExpression)
+                    Return CouldPossiblyBeNothing(F, t.WhenTrue) OrElse CouldPossiblyBeNothing(F, t.WhenFalse)
+                Case BoundKind.Conversion
+                    Dim t = DirectCast(node, BoundConversion)
+                    Return CouldPossiblyBeNothing(F, t.Operand)
+                Case BoundKind.Lambda
+                    Return False
+                Case BoundKind.Call
+                    Dim t = DirectCast(node, BoundCall)
+                    Return t.Method = F.WellKnownMember(Of MethodSymbol)(WellKnownMember.System_Delegate__CreateDelegate, True) OrElse
+                        t.Method = F.WellKnownMember(Of MethodSymbol)(WellKnownMember.System_Delegate__CreateDelegate4, True) OrElse
+                        t.Method = F.WellKnownMember(Of MethodSymbol)(WellKnownMember.System_Reflection_MethodInfo__CreateDelegate, True)
+                Case Else
+                    Return True
+            End Select
         End Function
 
         Private Function RewriteNullableConversion(node As BoundConversion) As BoundExpression
@@ -243,6 +284,19 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         ' converting null
                         Return NullableNull(result.Syntax, resultType)
                     Else
+                        If rewrittenOperand.Kind = BoundKind.LoweredConditionalAccess Then
+                            Dim conditional = DirectCast(rewrittenOperand, BoundLoweredConditionalAccess)
+
+                            If HasValue(conditional.WhenNotNull) AndAlso HasNoValue(conditional.WhenNullOpt) Then
+                                Return conditional.Update(conditional.ReceiverOrCondition,
+                                                          conditional.CaptureReceiver,
+                                                          conditional.PlaceholderId,
+                                                          FinishRewriteNullableConversion(node, resultType, NullableValueOrDefault(conditional.WhenNotNull), Nothing, Nothing, Nothing),
+                                                          NullableNull(result.Syntax, resultType),
+                                                          resultType)
+                            End If
+                        End If
+
                         ' uncaptured locals are safe here because we are dealing with a single operand
                         result = ProcessNullableOperand(rewrittenOperand, operandHasValue, temps, inits, doNotCaptureLocals:=True)
                     End If
@@ -252,17 +306,30 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End If
             End If
 
+            Return FinishRewriteNullableConversion(node, resultType, result, operandHasValue, temps, inits)
+        End Function
+
+        Private Function FinishRewriteNullableConversion(
+            node As BoundConversion,
+            resultType As TypeSymbol,
+            operand As BoundExpression,
+            operandHasValue As BoundExpression,
+            temps As ArrayBuilder(Of LocalSymbol),
+            inits As ArrayBuilder(Of BoundExpression)
+        ) As BoundExpression
+            Debug.Assert(resultType Is node.Type)
+
             Dim unwrappedResultType = resultType.GetNullableUnderlyingTypeOrSelf
 
             ' apply unlifted conversion
-            If Not result.Type.IsSameTypeIgnoringCustomModifiers(unwrappedResultType) Then
+            If Not operand.Type.IsSameTypeIgnoringCustomModifiers(unwrappedResultType) Then
                 Dim useSiteDiagnostics As HashSet(Of DiagnosticInfo) = Nothing
-                Dim convKind = Conversions.ClassifyConversion(result.Type, unwrappedResultType, useSiteDiagnostics).Key
+                Dim convKind = Conversions.ClassifyConversion(operand.Type, unwrappedResultType, useSiteDiagnostics).Key
                 Debug.Assert(Conversions.ConversionExists(convKind))
                 diagnostics.Add(node, useSiteDiagnostics)
-                result = TransformRewrittenConversion(
+                operand = TransformRewrittenConversion(
                                 New BoundConversion(node.Syntax,
-                                                    result,
+                                                    operand,
                                                     convKind,
                                                     node.Checked,
                                                     node.ExplicitCastInCode,
@@ -275,27 +342,27 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             ' wrap if needed
             If resultType.IsNullableType Then
-                result = WrapInNullable(result, resultType)
+                operand = WrapInNullable(operand, resultType)
 
                 ' propagate null from the operand
                 If operandHasValue IsNot Nothing Then
-                    result = MakeTernaryConditionalExpression(node.Syntax,
+                    operand = MakeTernaryConditionalExpression(node.Syntax,
                                                             operandHasValue,
-                                                            result,
-                                                            NullableNull(result.Syntax, resultType))
+                                                            operand,
+                                                            NullableNull(operand.Syntax, resultType))
 
                     ' if used temps, arrange a sequence for temps and inits.
                     If temps IsNot Nothing Then
-                        result = New BoundSequence(result.Syntax,
+                        operand = New BoundSequence(operand.Syntax,
                                                    temps.ToImmutableAndFree,
                                                    inits.ToImmutableAndFree,
-                                                   result,
-                                                   result.Type)
+                                                   operand,
+                                                   operand.Type)
                     End If
                 End If
             End If
 
-            Return result
+            Return operand
         End Function
 
         Private Function RewriteNullableReferenceConversion(node As BoundConversion,

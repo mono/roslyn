@@ -34,7 +34,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Private ReadOnly _parameterMap As Dictionary(Of ParameterSymbol, BoundExpression) = New Dictionary(Of ParameterSymbol, BoundExpression)()
 
-        Private Sub New(currentMethod As MethodSymbol, compilationState As TypeCompilationState, typeMap As TypeSubstitution, binder As Binder, node As VisualBasicSyntaxNode, diagnostics As DiagnosticBag)
+        Private Sub New(currentMethod As MethodSymbol, compilationState As TypeCompilationState, typeMap As TypeSubstitution, binder As Binder, node As VBSyntaxNode, diagnostics As DiagnosticBag)
             _binder = binder
             _typeMap = typeMap
             _factory = New SyntheticBoundNodeFactory(Nothing, currentMethod, node, compilationState, diagnostics)
@@ -136,7 +136,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             ' The only local should be the Function Value. We'll ignore that.
             Debug.Assert(block.Locals.IsEmpty OrElse
-                         (block.Locals.Length = 1 AndAlso (block.Locals(0).IsFunctionValue OrElse block.Locals(0).SynthesizedLocalKind = SynthesizedLocalKind.FunctionReturnValue)))
+                         (block.Locals.Length = 1 AndAlso (block.Locals(0).IsFunctionValue OrElse block.Locals(0).SynthesizedKind = SynthesizedLocalKind.FunctionReturnValue)))
 
             ' We only need to generate expression tree for the first statement.
             Dim stmt = block.Statements(0)
@@ -181,7 +181,7 @@ lSelect:
             End If
 
             ' Set the syntax node for bound nodes we are generating.
-            Dim old As VisualBasicSyntaxNode = _factory.Syntax
+            Dim old As VBSyntaxNode = _factory.Syntax
             _factory.Syntax = node.Syntax
             Dim result = VisitInternal(node)
             _factory.Syntax = old

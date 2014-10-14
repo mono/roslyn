@@ -53,7 +53,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         '     new {ThisScriptClass}();
         ' }
         Private Function CreateScriptBody() As BoundBlock
-            Dim syntax = VisualBasicSyntaxTree.Dummy.GetRoot()
+            Dim syntax = VBSyntaxTree.Dummy.GetRoot()
 
             Debug.Assert(ContainingType.IsScriptClass)
             Return New BoundBlock(syntax, Nothing,
@@ -78,7 +78,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ' }
         Private Function CreateSubmissionFactoryBody() As BoundBlock
             Debug.Assert(_containingType.TypeKind = TypeKind.Submission)
-            Dim syntax = VisualBasicSyntaxTree.Dummy.GetRoot()
+            Dim syntax = VBSyntaxTree.Dummy.GetRoot()
 
             Dim interactiveSessionParam = New BoundParameter(syntax, Parameters(0), Parameters(0).Type)
 
@@ -87,7 +87,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Debug.Assert(ctor.ParameterCount = 2)
 
             Dim submissionResultType = ctor.Parameters(1).Type
-            Dim resultLocal = New SynthesizedLocal(ctor, submissionResultType, SynthesizedLocalKind.None)
+            Dim resultLocal = New SynthesizedLocal(ctor, submissionResultType, SynthesizedLocalKind.LoweringTemp)
             Dim localReference = New BoundLocal(syntax, localSymbol:=resultLocal, isLValue:=True, type:=submissionResultType)
 
             Dim submissionResult As BoundExpression = localReference
@@ -125,7 +125,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend Overrides ReadOnly Property Syntax As VisualBasicSyntaxNode
+        Friend Overrides ReadOnly Property Syntax As VBSyntaxNode
             Get
                 Return Nothing
             End Get

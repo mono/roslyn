@@ -11,7 +11,7 @@ Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
 Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
 
     Partial Friend MustInherit Class PEModuleBuilder
-        Inherits PEModuleBuilder(Of VisualBasicCompilation, Symbol, SourceModuleSymbol, ModuleSymbol, AssemblySymbol, NamespaceSymbol, TypeSymbol, NamedTypeSymbol, MethodSymbol, VisualBasicSyntaxNode, NoPia.EmbeddedTypesManager, ModuleCompilationState)
+        Inherits PEModuleBuilder(Of VBCompilation, Symbol, SourceModuleSymbol, ModuleSymbol, AssemblySymbol, NamespaceSymbol, TypeSymbol, NamedTypeSymbol, MethodSymbol, VBSyntaxNode, NoPia.EmbeddedTypesManager, ModuleCompilationState)
 
         ' Not many methods should end up here.
         Private ReadOnly m_DisableJITOptimization As ConcurrentDictionary(Of MethodSymbol, Boolean) = New ConcurrentDictionary(Of MethodSymbol, Boolean)(ReferenceEqualityComparer.Instance)
@@ -28,12 +28,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
         Private m_TestDataOperatorKeyFormat As SymbolDisplayFormat
 
         Friend Sub New(sourceModule As SourceModuleSymbol,
-                       outputName As String,
+                       emitOptions As EmitOptions,
                        outputKind As OutputKind,
                        serializationProperties As ModulePropertiesForSerialization,
                        manifestResources As IEnumerable(Of ResourceDescription),
-                       assemblySymbolMapper As Func(Of AssemblySymbol, AssemblyIdentity),
-                       metadataOnly As Boolean)
+                       assemblySymbolMapper As Func(Of AssemblySymbol, AssemblyIdentity))
 
             MyBase.New(sourceModule.ContainingSourceAssembly.DeclaringCompilation,
                        sourceModule,
@@ -41,14 +40,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
                        manifestResources,
                        outputKind,
                        assemblySymbolMapper,
-                       metadataOnly,
+                       emitOptions,
                        New ModuleCompilationState())
 
             Dim specifiedName = sourceModule.MetadataName
 
             m_MetadataName = If(specifiedName <> Microsoft.CodeAnalysis.Compilation.UnspecifiedModuleAssemblyName,
                                 specifiedName,
-                                If(outputName, specifiedName))
+                                If(emitOptions.OutputNameOverride, specifiedName))
 
             m_AssemblyOrModuleSymbolToModuleRefMap.Add(sourceModule, Me)
 
@@ -260,19 +259,19 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             Dim span As FileLinePositionSpan = location.GetLineSpan()
 
             Dim doc As Cci.DebugSourceDocument = Me.TryGetDebugDocument(span.Path, basePath:=location.SourceTree.FilePath)
-            Debug.Assert(doc IsNot Nothing)
-
-            result.Add(doc,
+            If (doc IsNot Nothing) Then
+                result.Add(doc,
                        New Cci.DefinitionWithLocation(
                            definition,
                            span.StartLinePosition.Line,
                            span.StartLinePosition.Character,
                            span.EndLinePosition.Line,
                            span.EndLinePosition.Character))
+            End If
         End Sub
 
         Private Function GetSmallestSourceLocationOrNull(symbol As Symbol) As Location
-            Dim compilation As VisualBasicCompilation = symbol.DeclaringCompilation
+            Dim compilation As VBCompilation = symbol.DeclaringCompilation
             Debug.Assert(Me.Compilation Is compilation, "How did we get symbol from different compilation?")
 
             Dim result As Location = Nothing
@@ -306,7 +305,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
         End Function
 
         Friend Overrides Function GetAnonymousTypes() As ImmutableArray(Of Cci.INamespaceTypeDefinition)
-            If MetadataOnly Then
+            If EmitOptions.EmitMetadataOnly Then
                 Return ImmutableArray(Of Cci.INamespaceTypeDefinition).Empty
             End If
 
@@ -536,7 +535,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             Next
         End Function
 
-        Friend NotOverridable Overrides Function GetSystemType(syntaxOpt As VisualBasicSyntaxNode, diagnostics As DiagnosticBag) As Cci.INamedTypeReference
+        Friend NotOverridable Overrides Function GetSystemType(syntaxOpt As VBSyntaxNode, diagnostics As DiagnosticBag) As Cci.INamedTypeReference
             Dim systemTypeSymbol As NamedTypeSymbol = SourceModule.DeclaringCompilation.GetWellKnownType(WellKnownType.System_Type)
 
             Dim useSiteError = Binder.GetUseSiteErrorForWellKnownType(systemTypeSymbol)
@@ -549,7 +548,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             Return Translate(systemTypeSymbol, syntaxOpt, diagnostics, needDeclaration:=True)
         End Function
 
-        Friend NotOverridable Overrides Function GetSpecialType(specialType As SpecialType, syntaxNodeOpt As VisualBasicSyntaxNode, diagnostics As DiagnosticBag) As Cci.INamedTypeReference
+        Friend NotOverridable Overrides Function GetSpecialType(specialType As SpecialType, syntaxNodeOpt As VBSyntaxNode, diagnostics As DiagnosticBag) As Cci.INamedTypeReference
             Dim typeSymbol = SourceModule.ContainingAssembly.GetSpecialType(specialType)
 
             Dim info = Binder.GetUseSiteErrorForSpecialType(typeSymbol)

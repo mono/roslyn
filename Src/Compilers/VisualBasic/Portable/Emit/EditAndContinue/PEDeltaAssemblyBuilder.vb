@@ -18,7 +18,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
         Private ReadOnly m_Changes As SymbolChanges
 
         Public Sub New(sourceAssembly As SourceAssemblySymbol,
-                       outputName As String,
+                       emitOptions As EmitOptions,
                        outputKind As OutputKind,
                        serializationProperties As ModulePropertiesForSerialization,
                        manifestResources As IEnumerable(Of ResourceDescription),
@@ -26,7 +26,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
                        previousGeneration As EmitBaseline,
                        edits As IEnumerable(Of SemanticEdit))
 
-            MyBase.New(sourceAssembly, outputName, outputKind, serializationProperties, manifestResources, assemblySymbolMapper, additionalTypes:=ImmutableArray(Of NamedTypeSymbol).Empty, metadataOnly:=False)
+            MyBase.New(sourceAssembly, emitOptions, outputKind, serializationProperties, manifestResources, assemblySymbolMapper, additionalTypes:=ImmutableArray(Of NamedTypeSymbol).Empty)
 
             Dim context = New EmitContext(Me, Nothing, New DiagnosticBag())
             Dim [module] = previousGeneration.OriginalMetadata
@@ -40,7 +40,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
 
             Dim matchToPrevious As VisualBasicSymbolMatcher = Nothing
             If previousGeneration.Ordinal > 0 Then
-                Dim previousAssembly = DirectCast(previousGeneration.Compilation, VisualBasicCompilation).SourceAssembly
+                Dim previousAssembly = DirectCast(previousGeneration.Compilation, VBCompilation).SourceAssembly
                 Dim previousContext = New EmitContext(DirectCast(previousGeneration.PEModuleBuilder, PEModuleBuilder), Nothing, New DiagnosticBag())
                 matchToPrevious = New VisualBasicSymbolMatcher(previousGeneration.AnonymousTypeMap, sourceAssembly, context, previousAssembly, previousContext)
             End If
@@ -154,7 +154,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
                 guidStreamLengthAdded:=previousGeneration.GuidStreamLengthAdded,
                 anonymousTypeMap:=anonymousTypeMap,
                 localsForMethodsAddedOrChanged:=previousGeneration.LocalsForMethodsAddedOrChanged,
-                localNames:=previousGeneration.LocalNames)
+                debugInformationProvider:=previousGeneration.DebugInformationProvider)
         End Function
 
         Friend ReadOnly Property PreviousGeneration As EmitBaseline

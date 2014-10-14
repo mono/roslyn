@@ -17,7 +17,7 @@ Public Class AssemblyAttributeTests
 
     <Fact>
     Public Sub VersionAttribute()
-        Dim other As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim other As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyVersion("1.2.3.4")>
@@ -34,7 +34,7 @@ End Class
 
     <Fact, WorkItem(543708, "DevDiv")>
     Public Sub VersionAttribute02()
-        Dim comp As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim comp As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyVersion("1.22.333.4444")>
@@ -67,7 +67,7 @@ End Class
 
     <Fact, WorkItem(545948, "DevDiv")>
     Public Sub VersionAttributeErr()
-        Dim comp As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim comp As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyVersion("1.*")>
@@ -106,7 +106,7 @@ BC36962: The specified version string does not conform to the required format - 
 
     <Fact>
     Public Sub FileVersionAttribute()
-        Dim other As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim other As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyFileVersion("1.2.3.4")>
@@ -123,7 +123,7 @@ End Class
 
     <Fact, WorkItem(545948, "DevDiv")>
     Public Sub SatelliteContractVersionAttributeErr()
-        Dim comp As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim comp As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[<Assembly: System.Resources.SatelliteContractVersionAttribute("1.2.3.A")>]]>
     </file>
@@ -152,7 +152,7 @@ BC36976: The specified version string does not conform to the recommended format
 
     <Fact>
     Public Sub FileVersionAttributeWrn()
-        Dim other As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim other As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyFileVersion("1.2.*")>
@@ -173,7 +173,7 @@ BC42366: The specified version string does not conform to the recommended format
 
     <Fact>
     Public Sub TitleAttribute()
-        Dim other As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim other As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyTitle("One Hundred Years Of Solitude")>
@@ -191,7 +191,7 @@ End Class
 
     <Fact>
     Public Sub TitleAttributeNothing()
-        Dim other As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim other As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyTitle(Nothing)>
@@ -208,7 +208,7 @@ End Class
 
     <Fact>
     Public Sub DescriptionAttribute()
-        Dim other As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim other As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyDescription("A classic of magical realist literature")>
@@ -237,7 +237,7 @@ End Class
                       </file>
                   </compilation>
 
-        Dim other As VisualBasicCompilation = CreateCompilationWithMscorlib(src, OutputKind.DynamicallyLinkedLibrary)
+        Dim other As VBCompilation = CreateCompilationWithMscorlib(src, OutputKind.DynamicallyLinkedLibrary)
         Assert.Empty(other.GetDiagnostics())
         Assert.Equal("pt-BR", other.Assembly.Identity.CultureName)
 
@@ -245,7 +245,7 @@ End Class
 
     <Fact>
     Public Sub CultureAttribute02()
-        Dim comp As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim comp As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyCulture("")>
@@ -278,7 +278,7 @@ End Class
 
     <Fact>
     Public Sub CultureAttribute03()
-        Dim comp As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim comp As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyCulture("")>
@@ -333,7 +333,7 @@ BC36977: Executables cannot be satellite assemblies; culture should always be em
 
     <Fact>
     Public Sub CultureAttributeMismatch()
-        Dim neutral As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim neutral As VBCompilation = CreateCompilationWithMscorlib(
 <compilation name="neutral">
     <file name="a.vb"><![CDATA[
 public class neutral
@@ -344,7 +344,7 @@ end class
 
         Dim neutralRef = New VisualBasicCompilationReference(neutral)
 
-        Dim en_UK As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim en_UK As VBCompilation = CreateCompilationWithMscorlib(
 <compilation name="en_UK">
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyCultureAttribute("en-UK")>
@@ -357,7 +357,7 @@ end class
 
         Dim en_UKRef = New VisualBasicCompilationReference(en_UK)
 
-        Dim en_us As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim en_us As VBCompilation = CreateCompilationWithMscorlib(
 <compilation name="en_us">
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyCultureAttribute("en-us")>
@@ -370,7 +370,7 @@ end class
 
         Dim en_usRef = New VisualBasicCompilationReference(en_us)
 
-        Dim compilation As VisualBasicCompilation
+        Dim compilation As VBCompilation
 
         compilation = CreateCompilationWithMscorlibAndReferences(
 <compilation>
@@ -509,7 +509,7 @@ BC42371: Referenced assembly 'en_UK, Version=0.0.0.0, Culture=en-UK, PublicKeyTo
 
     <Fact>
     Public Sub CompanyAttribute()
-        Dim other As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim other As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyCompany("MossBrain")>
@@ -535,7 +535,7 @@ End Class
 
     <Fact>
     Public Sub ProductAttribute()
-        Dim other As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim other As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyProduct("Sound Cannon")>
@@ -552,7 +552,7 @@ End Class
 
     <Fact>
     Public Sub CopyrightAttribute()
-        Dim other As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim other As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyCopyright("مايكروسوفت")>
@@ -568,7 +568,7 @@ End Structure
 
     <Fact>
     Public Sub TrademarkAttribute()
-        Dim other As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim other As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyTrademark("circle r")>
@@ -584,7 +584,7 @@ End Interface
 
     <Fact>
     Public Sub InformationalVersionAttribute()
-        Dim other As VisualBasicCompilation = CreateCompilationWithMscorlib(
+        Dim other As VBCompilation = CreateCompilationWithMscorlib(
 <compilation>
     <file name="a.vb"><![CDATA[
 <Assembly: System.Reflection.AssemblyInformationalVersion("1.2.3garbage")>
@@ -608,7 +608,7 @@ End Class
             Function() New MemoryStream(TestResources.SymbolsTests.General.snKey, writable:=False),
             True)}
 
-        Dim compilation As VisualBasicCompilation
+        Dim compilation As VBCompilation
 
         compilation = CreateCompilationWithMscorlibAndReferences(
 <compilation>
@@ -620,7 +620,7 @@ end class
     ]]></file>
 </compilation>, options:=TestOptions.ReleaseDll, references:={hash_module})
 
-        CompileAndVerify(compilation, emitOptions:=EmitOptions.RefEmitBug,
+        CompileAndVerify(compilation, emitOptions:=TestEmitters.RefEmitBug,
             manifestResources:=hash_resources,
             validator:=Sub(peAssembly, _omitted)
                            Dim reader = peAssembly.ManifestModule.GetMetadataReader()
@@ -650,7 +650,7 @@ end class
     ]]></file>
 </compilation>, options:=TestOptions.ReleaseDll, references:={hash_module})
 
-        CompileAndVerify(compilation, emitOptions:=EmitOptions.RefEmitBug,
+        CompileAndVerify(compilation, emitOptions:=TestEmitters.RefEmitBug,
             manifestResources:=hash_resources,
             validator:=Sub(peAssembly, _omitted)
                            Dim reader = peAssembly.ManifestModule.GetMetadataReader()
@@ -680,7 +680,7 @@ end class
     ]]></file>
 </compilation>, options:=TestOptions.ReleaseDll, references:={hash_module})
 
-        CompileAndVerify(compilation, emitOptions:=EmitOptions.RefEmitBug,
+        CompileAndVerify(compilation, emitOptions:=TestEmitters.RefEmitBug,
             manifestResources:=hash_resources,
             validator:=Sub(peAssembly, _omitted)
                            Dim reader = peAssembly.ManifestModule.GetMetadataReader()
@@ -710,7 +710,7 @@ end class
     ]]></file>
 </compilation>, options:=TestOptions.ReleaseDll, references:={hash_module})
 
-        CompileAndVerify(compilation, emitOptions:=EmitOptions.RefEmitBug,
+        CompileAndVerify(compilation, emitOptions:=TestEmitters.RefEmitBug,
             manifestResources:=hash_resources,
             validator:=Sub(peAssembly, _omitted)
                            Dim reader = peAssembly.ManifestModule.GetMetadataReader()
@@ -740,7 +740,7 @@ end class
     ]]></file>
 </compilation>, options:=TestOptions.ReleaseDll, references:={MscorlibRef_v4_0_30316_17626, hash_module})
 
-        CompileAndVerify(compilation, verify:=False, emitOptions:=EmitOptions.RefEmitBug,
+        CompileAndVerify(compilation, verify:=False, emitOptions:=TestEmitters.RefEmitBug,
             manifestResources:=hash_resources,
             validator:=Sub(peAssembly, _omitted)
                            Dim reader = peAssembly.ManifestModule.GetMetadataReader()
@@ -771,7 +771,7 @@ end class
     ]]></file>
 </compilation>, options:=TestOptions.ReleaseDll, references:={MscorlibRef_v4_0_30316_17626, hash_module})
 
-        CompileAndVerify(compilation, verify:=False, emitOptions:=EmitOptions.RefEmitBug,
+        CompileAndVerify(compilation, verify:=False, emitOptions:=TestEmitters.RefEmitBug,
             manifestResources:=hash_resources,
             validator:=Sub(peAssembly, _omitted)
                            Dim reader = peAssembly.ManifestModule.GetMetadataReader()
@@ -805,7 +805,7 @@ end class
     ]]></file>
 </compilation>, options:=TestOptions.ReleaseDll, references:={MscorlibRef_v4_0_30316_17626, hash_module})
 
-        CompileAndVerify(compilation, verify:=False, emitOptions:=EmitOptions.RefEmitBug,
+        CompileAndVerify(compilation, verify:=False, emitOptions:=TestEmitters.RefEmitBug,
             manifestResources:=hash_resources,
             validator:=Sub(peAssembly, _omitted)
                            Dim reader = peAssembly.ManifestModule.GetMetadataReader()
@@ -849,7 +849,7 @@ end class
     ]]></file>
 </compilation>, options:=TestOptions.ReleaseDll, references:={hash_module_Comp.EmitToImageReference()})
 
-        CompileAndVerify(compilation, emitOptions:=EmitOptions.RefEmitBug,
+        CompileAndVerify(compilation, emitOptions:=TestEmitters.RefEmitBug,
             validator:=Sub(peAssembly, _omitted)
                            Dim metadataReader = peAssembly.ManifestModule.GetMetadataReader()
                            Dim assembly As AssemblyDefinition = metadataReader.GetAssemblyDefinition()
@@ -908,7 +908,7 @@ BC37215: Cryptographic failure while creating hashes.
 
         Dim comp = CreateVisualBasicCompilation("AlgorithmIdAttribute",
         <![CDATA[<Assembly: System.Reflection.AssemblyAlgorithmIdAttribute(System.Configuration.Assemblies.AssemblyHashAlgorithm.MD5)>]]>,
-            compilationOptions:=New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+            compilationOptions:=New VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
         VerifyAssemblyTable(comp, Sub(r)
                                       Assert.Equal(AssemblyHashAlgorithm.MD5, r.HashAlgorithm)
@@ -916,7 +916,7 @@ BC37215: Cryptographic failure while creating hashes.
         '
         comp = CreateVisualBasicCompilation("AlgorithmIdAttribute1",
         <![CDATA[<Assembly: System.Reflection.AssemblyAlgorithmIdAttribute(System.Configuration.Assemblies.AssemblyHashAlgorithm.None)>]]>,
-            compilationOptions:=New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+            compilationOptions:=New VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
         VerifyAssemblyTable(comp, Sub(r)
                                       Assert.Equal(AssemblyHashAlgorithm.None, r.HashAlgorithm)
@@ -925,7 +925,7 @@ BC37215: Cryptographic failure while creating hashes.
         '
         comp = CreateVisualBasicCompilation("AlgorithmIdAttribute2",
         <![CDATA[<Assembly: System.Reflection.AssemblyAlgorithmIdAttribute(12345UI)>]]>,
-            compilationOptions:=New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+            compilationOptions:=New VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
         VerifyAssemblyTable(comp, Sub(r) Assert.Equal(12345, CInt(r.HashAlgorithm)))
     End Sub
@@ -936,7 +936,7 @@ BC37215: Cryptographic failure while creating hashes.
         <![CDATA[
 Imports System.Reflection
 <Assembly: AssemblyFlags(AssemblyNameFlags.EnableJITcompileOptimizer Or AssemblyNameFlags.Retargetable)>]]>,
-            compilationOptions:=New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+            compilationOptions:=New VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
         VerifyAssemblyTable(comp, Sub(r)
                                       Assert.Equal(AssemblyFlags.DisableJitCompileOptimizer Or AssemblyFlags.Retargetable, r.Flags)
@@ -948,7 +948,7 @@ Imports System.Reflection
     Public Sub AssemblyFlagsAttribute02()
         Dim comp = CreateVisualBasicCompilation("AssemblyFlagsAttribute02",
         <![CDATA[<Assembly: System.Reflection.AssemblyFlags(12345)>]]>,
- compilationOptions:=New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+ compilationOptions:=New VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
         ' Both native & Roslyn PEVerifier fail: [MD]: Error: Invalid Assembly flags (0x3038). [token:0x20000001]
         VerifyAssemblyTable(comp, Sub(r)
@@ -964,7 +964,7 @@ Imports System.Reflection
     Public Sub AssemblyFlagsAttribute03()
         Dim comp = CreateVisualBasicCompilation("AssemblyFlagsAttribute02",
         <![CDATA[<Assembly: System.Reflection.AssemblyFlags(12345UI)>]]>,
- compilationOptions:=New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+ compilationOptions:=New VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
         ' Both native & Roslyn PEVerifier fail: [MD]: Error: Invalid Assembly flags (0x3038). [token:0x20000001]
         VerifyAssemblyTable(comp, Sub(r)
@@ -978,7 +978,7 @@ Imports System.Reflection
 
 #Region "Metadata Verifier (TODO: consolidate with others)"
 
-    Friend Sub VerifyAssemblyTable(comp As VisualBasicCompilation, verifier As Action(Of AssemblyDefinition), Optional strData As String = Nothing)
+    Friend Sub VerifyAssemblyTable(comp As VBCompilation, verifier As Action(Of AssemblyDefinition), Optional strData As String = Nothing)
 
         Dim stream = New MemoryStream()
         Assert.True(comp.Emit(stream).Success)
@@ -1367,7 +1367,7 @@ Imports System.Runtime.CompilerServices
             </compilation>
 
         Dim comp = CreateCompilationWithMscorlib(source, OutputKind.DynamicallyLinkedLibrary)
-        CompileAndVerify(comp, emitOptions:=EmitOptions.RefEmitBug)
+        CompileAndVerify(comp, emitOptions:=TestEmitters.RefEmitBug)
 
         TestDuplicateAssemblyAttributesNotEmitted(comp.Assembly,
             expectedSrcAttrCount:=2,

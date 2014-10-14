@@ -63,7 +63,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                 Me.F = F
                 Me.StateField = stateField
-                Me.CachedState = F.SynthesizedLocal(F.SpecialType(SpecialType.System_Int32), SynthesizedLocalKind.StateMachineCachedState, Nothing)
+                Me.CachedState = F.SynthesizedLocal(F.SpecialType(SpecialType.System_Int32), SynthesizedLocalKind.StateMachineCachedState, F.Syntax)
 
                 For Each p In initialProxies
                     Me.Proxies.Add(p.Key, p.Value)
@@ -98,8 +98,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End Get
             End Property
 
-            Friend Overrides Function FramePointer(syntax As VisualBasicSyntaxNode, frameClass As NamedTypeSymbol) As BoundExpression
-                Dim oldSyntax As VisualBasicSyntaxNode = Me.F.Syntax
+            Friend Overrides Function FramePointer(syntax As VBSyntaxNode, frameClass As NamedTypeSymbol) As BoundExpression
+                Dim oldSyntax As VBSyntaxNode = Me.F.Syntax
                 Me.F.Syntax = syntax
                 Dim result = Me.F.Me()
                 Debug.Assert(frameClass = result.Type)
@@ -153,7 +153,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Return node
                 End If
 
-                Dim oldSyntax As VisualBasicSyntaxNode = Me.F.Syntax
+                Dim oldSyntax As VBSyntaxNode = Me.F.Syntax
                 Me.F.Syntax = node.Syntax
                 Dim result As BoundNode = MyBase.Visit(node)
                 Me.F.Syntax = oldSyntax
@@ -171,7 +171,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                 Dim proxyFields = ArrayBuilder(Of FieldSymbol).GetInstance()
                 For Each local In locals
-                    If local.SynthesizedLocalKind = SynthesizedLocalKind.None OrElse local.SynthesizedLocalKind = SynthesizedLocalKind.LambdaDisplayClass Then
+                    If local.SynthesizedKind = SynthesizedLocalKind.UserDefined OrElse local.SynthesizedKind = SynthesizedLocalKind.LambdaDisplayClass Then
                         Dim proxy As TProxy = Nothing
                         If Proxies.TryGetValue(local, proxy) Then
                             Me.AddProxyFieldsForStateMachineScope(proxy, proxyFields)

@@ -20,7 +20,7 @@
 '
 ' *********************************************************
 
-Imports System.ComponentModel.Composition
+Imports System.Composition
 Imports System.Threading
 Imports System.Threading.Tasks
 Imports Microsoft.CodeAnalysis
@@ -32,7 +32,7 @@ Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
-<ExportCodeRefactoringProvider("ConvertToAutoPropertyVB", LanguageNames.VisualBasic)>
+<ExportCodeRefactoringProvider("ConvertToAutoPropertyVB", LanguageNames.VisualBasic), [Shared]>
 Class ConvertToAutoPropertyCodeRefactoringProvider
     Inherits CodeRefactoringProvider
 
@@ -64,8 +64,8 @@ Class ConvertToAutoPropertyCodeRefactoringProvider
     ''' </summary>  
     Private Shared Function HasBothAccessors(propertyBlock As PropertyBlockSyntax) As Boolean
         Dim accessors = propertyBlock.Accessors
-        Dim getter = accessors.FirstOrDefault(Function(node) node.VisualBasicKind() = SyntaxKind.PropertyGetBlock)
-        Dim setter = accessors.FirstOrDefault(Function(node) node.VisualBasicKind() = SyntaxKind.PropertySetBlock)
+        Dim getter = accessors.FirstOrDefault(Function(node) node.VBKind() = SyntaxKind.GetAccessorBlock)
+        Dim setter = accessors.FirstOrDefault(Function(node) node.VBKind() = SyntaxKind.SetAccessorBlock)
 
         Return getter IsNot Nothing AndAlso setter IsNot Nothing
     End Function
@@ -106,7 +106,7 @@ Class ConvertToAutoPropertyCodeRefactoringProvider
 
     Private Async Function GetBackingFieldAsync(document As Document, propertyAnnotation As SyntaxAnnotation, cancellationToken As CancellationToken) As Task(Of IFieldSymbol)
         Dim propertyBlock = Await GetAnnotatedPropertyBlockAsync(document, propertyAnnotation, cancellationToken).ConfigureAwait(False)
-        Dim propertyGetter = propertyBlock.Accessors.FirstOrDefault(Function(node) node.VisualBasicKind() = SyntaxKind.PropertyGetBlock)
+        Dim propertyGetter = propertyBlock.Accessors.FirstOrDefault(Function(node) node.VBKind() = SyntaxKind.GetAccessorBlock)
 
         Dim semanticModel = Await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(False)
         Dim containingType = semanticModel.GetDeclaredSymbol(propertyBlock).ContainingType
@@ -135,7 +135,7 @@ Class ConvertToAutoPropertyCodeRefactoringProvider
         Dim oldRoot = DirectCast(Await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(False), SyntaxNode)
         Dim semanticModel = Await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(False)
 
-        Dim referenceRewriter = New ReferenceRewriter(propertyName, backingField, semanticModel)
+        Dim referenceRewriter = New referenceRewriter(propertyName, backingField, semanticModel)
         Dim newRoot = referenceRewriter.Visit(oldRoot)
 
         Return document.WithSyntaxRoot(newRoot)
@@ -178,7 +178,7 @@ Class ConvertToAutoPropertyCodeRefactoringProvider
             .WithAdditionalAnnotations(Formatter.Annotation)
 
         Dim oldRoot = Await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(False)
-        Dim newRoot = oldRoot.ReplaceNode(Of SyntaxNode)(propertyBlock, autoProperty)
+        Dim newRoot = oldRoot.ReplaceNode(propertyBlock, autoProperty)
 
         Return document.WithSyntaxRoot(newRoot)
     End Function

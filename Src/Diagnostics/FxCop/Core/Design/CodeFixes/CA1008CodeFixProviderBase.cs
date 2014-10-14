@@ -42,7 +42,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
             ////        return FxCopFixersResources.EnumsShouldZeroValueNotFlagsNoZeroValueCodeFix;
 
             ////    default:
-            ////        throw Contract.Unreachable;
+            ////        throw ExceptionUtilities.Unreachable;
             ////}
 
             throw new NotImplementedException();
@@ -169,7 +169,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
             var constantValueExpression = syntaxFactoryService.LiteralExpression(0);
             var newInitializer = CreateConstantValueInitializer(constantValueExpression);
             var newField = CodeGenerationSymbolFactory.CreateFieldSymbol(SpecializedCollections.EmptyList<AttributeData>(), Accessibility.Public,
-                    default(SymbolModifiers), enumType.EnumUnderlyingType, "None", true, 0, newInitializer);
+                    default(DeclarationModifiers), enumType.EnumUnderlyingType, "None", true, 0, newInitializer);
             newFields.Add(newField);
 
             foreach (var member in enumType.GetMembers())
@@ -217,7 +217,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
                 ////    return GetUpdatedDocumentForRuleNameNoZeroValue(document, root, nodeToFix, enumType, cancellationToken);
 
                 default:
-                    throw Contract.Unreachable;
+                    throw ExceptionUtilities.Unreachable;
             }
         }
     }

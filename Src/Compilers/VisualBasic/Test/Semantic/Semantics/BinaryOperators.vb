@@ -1,4 +1,4 @@
-﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports System.IO
 Imports Microsoft.CodeAnalysis
@@ -727,7 +727,7 @@ BC42019: Operands of type Object used for operator '&gt;'; runtime errors could 
                   ~~
 </expected>
 
-            Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(compilationDef, New VisualBasicCompilationOptions(OutputKind.ConsoleApplication).WithOptionStrict(OptionStrict.Custom))
+            Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(compilationDef, New VBCompilationOptions(OutputKind.ConsoleApplication).WithOptionStrict(OptionStrict.Custom))
             Assert.Equal(OptionStrict.Custom, compilation.Options.OptionStrict)
             CompilationUtils.AssertTheseDiagnostics(compilation, expected)
 
@@ -978,7 +978,7 @@ End Class
             op As BinaryOperatorKind,
             leftType As TypeSymbol,
             rightType As TypeSymbol,
-            compilation As VisualBasicCompilation,
+            compilation As VBCompilation,
             semanticModel As SemanticModel,
             node1 As BinaryExpressionSyntax,
             node2 As BinaryExpressionSyntax,

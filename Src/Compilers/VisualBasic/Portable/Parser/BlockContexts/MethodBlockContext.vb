@@ -23,7 +23,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                          SyntaxFacts.IsMultiLineLambdaExpression(contextKind))
         End Sub
 
-        Friend Overrides Function ProcessSyntax(node As VisualBasicSyntaxNode) As BlockContext
+        Friend Overrides Function ProcessSyntax(node As VBSyntaxNode) As BlockContext
 
             If Statements.Count = 0 Then
                 Dim trailingTrivia = BeginStatement.LastTriviaIfAny()
@@ -40,8 +40,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                 ' is implemented in semantics.
 
                 Case SyntaxKind.ExitPropertyStatement
-                    If BlockKind <> SyntaxKind.PropertyGetBlock AndAlso
-                       BlockKind <> SyntaxKind.PropertySetBlock Then
+                    If BlockKind <> SyntaxKind.GetAccessorBlock AndAlso
+                       BlockKind <> SyntaxKind.SetAccessorBlock Then
                         node = Parser.ReportSyntaxError(node, ERRID.ERR_ExitPropNot)
                     End If
 
@@ -50,9 +50,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return MyBase.ProcessSyntax(node)
         End Function
 
-        Friend Overrides Function CreateBlockSyntax(endStmt As StatementSyntax) As VisualBasicSyntaxNode
+        Friend Overrides Function CreateBlockSyntax(endStmt As StatementSyntax) As VBSyntaxNode
             Dim endBlockStmt As EndBlockStatementSyntax = DirectCast(endStmt, EndBlockStatementSyntax)
-            Dim result As VisualBasicSyntaxNode
+            Dim result As VBSyntaxNode
 
             Select Case BlockKind
                 Case SyntaxKind.SubBlock,
@@ -66,11 +66,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     GetBeginEndStatements(beginBlockStmt, endBlockStmt)
                     result = SyntaxFactory.ConstructorBlock(beginBlockStmt, BodyWithWeakChildren(), endBlockStmt)
 
-                Case SyntaxKind.PropertyGetBlock,
-                    SyntaxKind.PropertySetBlock,
-                    SyntaxKind.AddHandlerBlock,
-                    SyntaxKind.RemoveHandlerBlock,
-                    SyntaxKind.RaiseEventBlock
+                Case SyntaxKind.GetAccessorBlock,
+                    SyntaxKind.SetAccessorBlock,
+                    SyntaxKind.AddHandlerAccessorBlock,
+                    SyntaxKind.RemoveHandlerAccessorBlock,
+                    SyntaxKind.RaiseEventAccessorBlock
                     Dim beginBlockStmt As AccessorStatementSyntax = Nothing
                     GetBeginEndStatements(beginBlockStmt, endBlockStmt)
                     result = SyntaxFactory.AccessorBlock(BlockKind, beginBlockStmt, BodyWithWeakChildren(), endBlockStmt)
@@ -89,7 +89,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return result
         End Function
 
-        Friend Overrides Function TryLinkSyntax(node As VisualBasicSyntaxNode, ByRef newContext As BlockContext) As LinkResult
+        Friend Overrides Function TryLinkSyntax(node As VBSyntaxNode, ByRef newContext As BlockContext) As LinkResult
 
             ' Reparse a method block if the Async modifier is added or removed.
             '

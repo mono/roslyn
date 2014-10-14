@@ -31,18 +31,18 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     ''' When the same SemanticModel object is used, the answers exhibit reference-equality.  
     ''' </para>
     ''' </remarks>
-    Friend MustInherit Class VisualBasicSemanticModel
+    Friend MustInherit Class VBSemanticModel
         Inherits SemanticModel
 
         ''' <summary> 
         ''' The compilation associated with this binding.
         ''' </summary> 
-        Public MustOverride Shadows ReadOnly Property Compilation As VisualBasicCompilation
+        Public MustOverride Shadows ReadOnly Property Compilation As VBCompilation
 
         ''' <summary> 
         ''' The root node of the syntax tree that this binding is based on.
         ''' </summary> 
-        Friend MustOverride ReadOnly Property Root As VisualBasicSyntaxNode
+        Friend MustOverride ReadOnly Property Root As VBSyntaxNode
 
         ''' <summary>
         ''' Gets symbol information about an expression syntax node. This is the worker
@@ -107,7 +107,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend MustOverride Function GetCrefReferenceSymbolInfo(crefReference As CrefReferenceSyntax, options As SymbolInfoOptions, Optional cancellationToken As CancellationToken = Nothing) As SymbolInfo
 
         ' Is this node one that could be successfully interrogated by GetSymbolInfo/GetTypeInfo/GetMemberGroup/GetConstantValue?
-        Friend Function CanGetSemanticInfo(node As VisualBasicSyntaxNode, Optional allowNamedArgumentName As Boolean = False) As Boolean
+        Friend Function CanGetSemanticInfo(node As VBSyntaxNode, Optional allowNamedArgumentName As Boolean = False) As Boolean
             Debug.Assert(node IsNot Nothing)
 
             ' These aren't really expressions - it's just a manifestation of the SyntaxNode type hierarchy.
@@ -593,7 +593,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Throw New ArgumentException(VBResources.PositionIsNotWithinSyntax)
         End Sub
 
-        Friend Sub CheckSyntaxNode(node As VisualBasicSyntaxNode)
+        Friend Sub CheckSyntaxNode(node As VBSyntaxNode)
             If node Is Nothing Then
                 Throw New ArgumentNullException("node")
             End If
@@ -603,7 +603,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
         End Sub
 
-        Private Sub CheckModelAndSyntaxNodeToSpeculate(node As VisualBasicSyntaxNode)
+        Private Sub CheckModelAndSyntaxNodeToSpeculate(node As VBSyntaxNode)
             If node Is Nothing Then
                 Throw New ArgumentNullException("node")
             End If
@@ -621,7 +621,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ' a position. Just using FindToken doesn't give quite the right results, especially in situations where
         ' end constructs haven't been typed yet. If we are in the trivia between two tokens, we move backward to the previous
         ' token. There are also some special cases around beginning and end of the whole tree.
-        Friend Function FindInitialNodeFromPosition(position As Integer) As VisualBasicSyntaxNode
+        Friend Function FindInitialNodeFromPosition(position As Integer) As VBSyntaxNode
             Dim fullStart As Integer = Root.Position
             Dim fullEnd As Integer = Root.EndPosition
 
@@ -637,8 +637,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     token = Root.FindToken(position, True)
                 End If
 
-                Dim trivia As StructuredTriviaSyntax = DirectCast(token.Parent, VisualBasicSyntaxNode).EnclosingStructuredTrivia
-                If trivia Is Nothing OrElse Not IsInCrefOrNameAttributeInterior(DirectCast(token.Parent, VisualBasicSyntaxNode)) Then
+                Dim trivia As StructuredTriviaSyntax = DirectCast(token.Parent, VBSyntaxNode).EnclosingStructuredTrivia
+                If trivia Is Nothing OrElse Not IsInCrefOrNameAttributeInterior(DirectCast(token.Parent, VBSyntaxNode)) Then
                     If atEOF Then
                         token = SyntaxTree.GetRoot().FindToken(position)
                     Else
@@ -658,7 +658,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Return Root
                 ElseIf token.Parent IsNot Nothing Then
                     Debug.Assert(IsInTree(token.Parent))
-                    Return DirectCast(token.Parent, VisualBasicSyntaxNode)
+                    Return DirectCast(token.Parent, VBSyntaxNode)
                 Else
                     Return Root
                 End If
@@ -673,7 +673,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         ' Is this node in a place where it bind to an implemented member.
-        Friend Shared Function IsInCrefOrNameAttributeInterior(node As VisualBasicSyntaxNode) As Boolean
+        Friend Shared Function IsInCrefOrNameAttributeInterior(node As VBSyntaxNode) As Boolean
             Debug.Assert(node IsNot Nothing)
 
             Select Case node.Kind
@@ -692,7 +692,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Return False
             End Select
 
-            Dim parent As VisualBasicSyntaxNode = node.Parent
+            Dim parent As VBSyntaxNode = node.Parent
             Dim inXmlAttribute As Boolean = False
 
             While parent IsNot Nothing
@@ -786,9 +786,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Throw New ArgumentNullException("expression")
             End If
 
-            expression = SyntaxFactory.GetStandaloneExpression(expression)
+            Dim standalone = SyntaxFactory.GetStandaloneExpression(expression)
 
-            Dim bnode = Me.GetSpeculativelyBoundNode(position, expression, bindingOption, binder)
+            Dim bnode = Me.GetSpeculativelyBoundNode(position, standalone, bindingOption, binder)
             If bnode IsNot Nothing Then
                 Debug.Assert(binder IsNot Nothing)
                 Return New BoundNodeSummary(bnode, bnode, Nothing)
@@ -999,7 +999,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 ' Special case: overload failure on X in New X(...), where overload resolution failed. 
                 ' Binds to method group which can't have a type.
 
-                Dim parentSyntax As VisualBasicSyntaxNode = boundNodes.LowestBoundNodeOfSyntacticParent.Syntax
+                Dim parentSyntax As VBSyntaxNode = boundNodes.LowestBoundNodeOfSyntacticParent.Syntax
                 If parentSyntax IsNot Nothing AndAlso
                    parentSyntax Is boundNodes.LowestBoundNode.Syntax.Parent AndAlso
                    ((parentSyntax.Kind = SyntaxKind.ObjectCreationExpression AndAlso (DirectCast(parentSyntax, ObjectCreationExpressionSyntax).Type Is boundNodes.LowestBoundNode.Syntax))) Then
@@ -1410,7 +1410,7 @@ _Default:
             Debug.Assert(boundNodeOfSyntacticParent IsNot Nothing)
 
             ' Check if boundNode.Syntax is the type-name child of an ObjectCreationExpression or Attribute.
-            Dim parentSyntax As VisualBasicSyntaxNode = boundNodeOfSyntacticParent.Syntax
+            Dim parentSyntax As VBSyntaxNode = boundNodeOfSyntacticParent.Syntax
             If parentSyntax IsNot Nothing AndAlso
                lowestBoundNode IsNot Nothing AndAlso
                parentSyntax Is lowestBoundNode.Syntax.Parent AndAlso
@@ -1546,7 +1546,7 @@ _Default:
         End Function
 
         ' This is used by other binding API's to invoke the right binder API
-        Friend Overridable Function Bind(binder As Binder, node As VisualBasicSyntaxNode, diagnostics As DiagnosticBag) As BoundNode
+        Friend Overridable Function Bind(binder As Binder, node As VBSyntaxNode, diagnostics As DiagnosticBag) As BoundNode
             Dim expr = TryCast(node, ExpressionSyntax)
             If expr IsNot Nothing Then
                 Return binder.BindNamespaceOrTypeOrExpressionSyntaxForSemanticModel(expr, diagnostics)
@@ -2093,7 +2093,7 @@ _Default:
         ''' <remarks>
         ''' This can be used to resolve constructors as well as methods.
         ''' </remarks>
-        Friend Shadows Function ResolveOverloads(Of TMember As Symbol)(
+        Friend Function ResolveOverloads(Of TMember As Symbol)(
                  position As Integer,
                  members As ImmutableArray(Of TMember),
                  typeArguments As ImmutableArray(Of TypeSymbol),
@@ -2723,7 +2723,7 @@ _Default:
         ''' </summary>
         ''' <param name="declarationSyntax">The import statement syntax node.</param>
         ''' <returns>The alias symbol that was declared or Nothing if no alias symbol was declared.</returns>
-        Public MustOverride Overloads Function GetDeclaredSymbol(declarationSyntax As AliasImportsClauseSyntax, Optional cancellationToken As CancellationToken = Nothing) As IAliasSymbol
+        Public MustOverride Overloads Function GetDeclaredSymbol(declarationSyntax As SimpleImportsClauseSyntax, Optional cancellationToken As CancellationToken = Nothing) As IAliasSymbol
 
         ''' <summary>
         ''' Given a field declaration syntax, get the corresponding symbols.
@@ -2756,13 +2756,15 @@ _Default:
                 Return SymbolInfo.None
             End If
 
+            ' RaiseEvent Invocation(SimpleArgument(((Identifier):=)(Expression))
             ' check for RaiseEvent here, it is not an expression.
-            If identifierNameSyntax.Parent.Parent.Parent.Kind = SyntaxKind.RaiseEventStatement Then
-                Dim asRaiseEvent = DirectCast(identifierNameSyntax.Parent.Parent.Parent, RaiseEventStatementSyntax)
+            If identifierNameSyntax.Parent.Parent.Parent.Parent.Kind = SyntaxKind.RaiseEventStatement Then
+                Dim asRaiseEvent = DirectCast(identifierNameSyntax.Parent.Parent.Parent.Parent, RaiseEventStatementSyntax)
                 Return GetNamedArgumentSymbolInfoInRaiseEvent(argumentName, asRaiseEvent)
             End If
 
-            Dim containingInvocation = DirectCast(identifierNameSyntax.Parent.Parent.Parent, ExpressionSyntax)
+            ' Invocation(SimpleArgument(((Identifier):=)(Expression))
+            Dim containingInvocation = DirectCast(identifierNameSyntax.Parent.Parent.Parent.Parent, ExpressionSyntax)
 
             Dim containingInvocationInfo As SymbolInfo = GetExpressionSymbolInfo(containingInvocation, SymbolInfoOptions.PreferConstructorsToType Or SymbolInfoOptions.ResolveAliases, cancellationToken)
 
@@ -2867,7 +2869,7 @@ _Default:
         Public Shadows Function GetForEachStatementInfo(node As ForEachStatementSyntax) As ForEachStatementInfo
             Using Logger.LogBlock(FunctionId.VisualBasic_SemanticModel_GetForEachStatementInfo, message:=Me.SyntaxTree.FilePath)
                 If node.Parent IsNot Nothing AndAlso node.Parent.Kind = SyntaxKind.ForEachBlock Then
-                    Return GetForEachStatementInfoWorker(DirectCast(node.Parent, ForBlockSyntax))
+                    Return GetForEachStatementInfoWorker(DirectCast(node.Parent, ForEachBlockSyntax))
                 End If
 
                 Return Nothing
@@ -2878,7 +2880,7 @@ _Default:
         ''' Gets the semantic information of a for each statement.
         ''' </summary>
         ''' <param name="node">The for block syntax node.</param>
-        Public Shadows Function GetForEachStatementInfo(node As ForBlockSyntax) As ForEachStatementInfo
+        Public Shadows Function GetForEachStatementInfo(node As ForEachBlockSyntax) As ForEachStatementInfo
             Using Logger.LogBlock(FunctionId.VisualBasic_SemanticModel_GetForEachStatementInfo, message:=Me.SyntaxTree.FilePath)
                 If node.Kind = SyntaxKind.ForEachBlock Then
                     Return GetForEachStatementInfoWorker(node)
@@ -2892,7 +2894,7 @@ _Default:
         ''' Gets the semantic information of a for each statement.
         ''' </summary>
         ''' <param name="node">The for each syntax node.</param>
-        Friend MustOverride Function GetForEachStatementInfoWorker(node As ForBlockSyntax) As ForEachStatementInfo
+        Friend MustOverride Function GetForEachStatementInfoWorker(node As ForEachBlockSyntax) As ForEachStatementInfo
 
 
         ''' <summary>
@@ -3237,11 +3239,11 @@ _Default:
         Protected NotOverridable Overrides Function GetDeclaredSymbolCore(declaration As SyntaxNode, Optional cancellationToken As CancellationToken = Nothing) As ISymbol
             cancellationToken.ThrowIfCancellationRequested()
 
-            Dim node = DirectCast(declaration, VisualBasicSyntaxNode)
+            Dim node = DirectCast(declaration, VBSyntaxNode)
 
             Select Case node.Kind
-                Case SyntaxKind.AliasImportsClause
-                    Return Me.GetDeclaredSymbol(DirectCast(node, AliasImportsClauseSyntax), cancellationToken)
+                Case SyntaxKind.SimpleImportsClause
+                    Return Me.GetDeclaredSymbol(DirectCast(node, SimpleImportsClauseSyntax), cancellationToken)
 
                 Case SyntaxKind.ModifiedIdentifier
                     Return Me.GetDeclaredSymbol(DirectCast(node, ModifiedIdentifierSyntax), cancellationToken)
@@ -3300,8 +3302,8 @@ _Default:
                     Return Me.GetDeclaredSymbol(DirectCast(node, EnumBlockSyntax), cancellationToken)
 
                 Case SyntaxKind.SubBlock, SyntaxKind.FunctionBlock, SyntaxKind.ConstructorBlock, SyntaxKind.OperatorBlock,
-                 SyntaxKind.PropertyGetBlock, SyntaxKind.PropertySetBlock,
-                 SyntaxKind.AddHandlerBlock, SyntaxKind.RemoveHandlerBlock, SyntaxKind.RaiseEventBlock
+                 SyntaxKind.GetAccessorBlock, SyntaxKind.SetAccessorBlock,
+                 SyntaxKind.AddHandlerAccessorBlock, SyntaxKind.RemoveHandlerAccessorBlock, SyntaxKind.RaiseEventAccessorBlock
                     Return Me.GetDeclaredSymbol(DirectCast(node, MethodBlockBaseSyntax), cancellationToken)
 
                 Case SyntaxKind.PropertyBlock
@@ -3421,24 +3423,6 @@ _Default:
             Return GetEnclosingSymbol(position, cancellationToken)
         End Function
 
-        Friend NotOverridable Overrides Function ResolveOverloadsCore(Of TSymbol As ISymbol)(position As Integer,
-                                                                                       members As ImmutableArray(Of TSymbol),
-                                                                                       typeArguments As ImmutableArray(Of ITypeSymbol),
-                                                                                       arguments As ImmutableArray(Of SyntaxNode)) As CommonOverloadResolutionResult(Of TSymbol)
-            For Each member In members
-                EnsureVbSymbolOrNothing(Of ISymbol, Symbol)(member, "members")
-            Next
-
-            For Each typeArg In typeArguments
-                typeArg.EnsureVbSymbolOrNothing(Of TypeSymbol)("typeArguments")
-            Next
-
-            Return ResolveOverloads(position,
-                                    members.Cast(Of MethodSymbol).AsImmutable(),
-                                    typeArguments.Cast(Of TypeSymbol).AsImmutable(),
-                                    arguments.Cast(Of ArgumentSyntax).AsImmutable()).ToCommon(Of TSymbol)()
-        End Function
-
         Protected NotOverridable Overrides Function IsAccessibleCore(position As Integer, symbol As ISymbol) As Boolean
             Return Me.IsAccessible(position, symbol.EnsureVbSymbolOrNothing(Of Symbol)("symbol"))
         End Function
@@ -3524,7 +3508,7 @@ _Default:
 
             Dim newLevel = DecrementLevel(levelsToCompute)
 
-            Select Case node.VisualBasicKind()
+            Select Case node.VBKind()
                 Case SyntaxKind.NamespaceBlock
                     Dim ns = CType(node, NamespaceBlockSyntax)
                     For Each decl In ns.Members
@@ -3602,11 +3586,11 @@ _Default:
                     Dim codeBlocks = propertyInitializers.Concat(t.Initializer)
                     builder.Add(GetDeclarationInfo(node, getSymbol, cancellationToken, codeBlocks))
                     Return
-                Case SyntaxKind.PropertyGetBlock,
-                     SyntaxKind.PropertySetBlock,
-                     SyntaxKind.AddHandlerBlock,
-                     SyntaxKind.RemoveHandlerBlock,
-                     SyntaxKind.RaiseEventBlock,
+                Case SyntaxKind.GetAccessorBlock,
+                     SyntaxKind.SetAccessorBlock,
+                     SyntaxKind.AddHandlerAccessorBlock,
+                     SyntaxKind.RemoveHandlerAccessorBlock,
+                     SyntaxKind.RaiseEventAccessorBlock,
                      SyntaxKind.SubBlock,
                      SyntaxKind.FunctionBlock,
                      SyntaxKind.OperatorBlock,
@@ -3646,12 +3630,12 @@ _Default:
             Return String.Format("{0}: at {1}", Me.SyntaxTree.FilePath, position)
         End Function
 
-        Friend Function GetMessage(node As VisualBasicSyntaxNode) As String
+        Friend Function GetMessage(node As VBSyntaxNode) As String
             If node Is Nothing Then Return Me.SyntaxTree.FilePath
             Return String.Format("{0}: {1} ({2})", Me.SyntaxTree.FilePath, node.Kind.ToString(), node.Position)
         End Function
 
-        Friend Function GetMessage(node As VisualBasicSyntaxNode, position As Integer) As String
+        Friend Function GetMessage(node As VBSyntaxNode, position As Integer) As String
             If node Is Nothing Then Return Me.SyntaxTree.FilePath
             Return String.Format("{0}: {1} ({2}) at {3}", Me.SyntaxTree.FilePath, node.Kind.ToString(), node.Position, position)
         End Function

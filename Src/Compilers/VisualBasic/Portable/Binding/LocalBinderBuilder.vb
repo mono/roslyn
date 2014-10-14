@@ -1,4 +1,4 @@
-﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports System.Collections.Immutable
 Imports Microsoft.CodeAnalysis.Text
@@ -9,7 +9,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
     ''' <summary>
     ''' The <see cref="LocalBinderBuilder"/> is used to build up the map of all <see cref="Binder"/>s within a method body, and the associated
-    ''' <see cref="VisualBasicSyntaxNode"/>. To do so it traverses all the statements, handling blocks and other
+    ''' <see cref="VBSyntaxNode"/>. To do so it traverses all the statements, handling blocks and other
     ''' statements that create scopes. For efficiency reasons, it does not traverse into
     ''' expressions. This means that blocks within lambdas and queries are not created. 
     ''' Blocks within lambdas are bound by their own <see cref="LocalBinderBuilder"/> when they are 
@@ -17,38 +17,38 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     '''
     ''' For reasons of lifetime management, this type is distinct from the <see
     ''' cref="BinderFactory"/> 
-    ''' which also creates a map from <see cref="VisualBasicSyntaxNode"/> to <see cref="Binder"/>. That type owns it's binders
+    ''' which also creates a map from <see cref="VBSyntaxNode"/> to <see cref="Binder"/>. That type owns it's binders
     ''' and that type's lifetime is that of the compilation. Therefore we do not store
     ''' binders local to method bodies in that type's cache. 
     ''' </summary>
     Friend Class LocalBinderBuilder
-        Inherits VisualBasicSyntaxVisitor
+        Inherits VBSyntaxVisitor
 
-        Private _nodeMap As ImmutableDictionary(Of VisualBasicSyntaxNode, BlockBaseBinder)
+        Private _nodeMap As ImmutableDictionary(Of VBSyntaxNode, BlockBaseBinder)
         Private _listMap As ImmutableDictionary(Of SyntaxList(Of StatementSyntax), BlockBaseBinder)
         Private _enclosingMethod As MethodSymbol
         Private containingBinder As Binder
 
         Public Sub New(enclosingMethod As MethodSymbol)
             _enclosingMethod = enclosingMethod
-            _nodeMap = ImmutableDictionary.Create(Of VisualBasicSyntaxNode, BlockBaseBinder)()
+            _nodeMap = ImmutableDictionary.Create(Of VBSyntaxNode, BlockBaseBinder)()
             _listMap = ImmutableDictionary.Create(Of SyntaxList(Of StatementSyntax), BlockBaseBinder)()
         End Sub
 
-        Public Sub New(enclosingMethod As MethodSymbol, nodeMap As ImmutableDictionary(Of VisualBasicSyntaxNode, BlockBaseBinder), listMap As ImmutableDictionary(Of SyntaxList(Of StatementSyntax), BlockBaseBinder))
+        Public Sub New(enclosingMethod As MethodSymbol, nodeMap As ImmutableDictionary(Of VBSyntaxNode, BlockBaseBinder), listMap As ImmutableDictionary(Of SyntaxList(Of StatementSyntax), BlockBaseBinder))
             _enclosingMethod = enclosingMethod
             _nodeMap = nodeMap
             _listMap = listMap
         End Sub
 
-        Public Sub MakeBinder(node As VisualBasicSyntaxNode, containingBinder As Binder)
+        Public Sub MakeBinder(node As VBSyntaxNode, containingBinder As Binder)
             Dim oldContainingBinder As Binder = Me.containingBinder
             Me.containingBinder = containingBinder
             MyBase.Visit(node)
             Me.containingBinder = oldContainingBinder
         End Sub
 
-        Public ReadOnly Property NodeToBinderMap As ImmutableDictionary(Of VisualBasicSyntaxNode, BlockBaseBinder)
+        Public ReadOnly Property NodeToBinderMap As ImmutableDictionary(Of VBSyntaxNode, BlockBaseBinder)
             Get
                 Return _nodeMap
             End Get
@@ -75,7 +75,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Sub
 
         ' Add a binder to the map.
-        Private Sub RememberBinder(node As VisualBasicSyntaxNode, binder As Binder)
+        Private Sub RememberBinder(node As VBSyntaxNode, binder As Binder)
             _nodeMap = _nodeMap.SetItem(node, DirectCast(binder, BlockBaseBinder))
         End Sub
 
@@ -227,51 +227,45 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Sub
 
         Public Overrides Sub VisitSingleLineIfStatement(node As SingleLineIfStatementSyntax)
-            MakeBinder(node.IfPart, containingBinder)
-            MakeBinder(node.ElsePart, containingBinder)
-        End Sub
-
-        Public Overrides Sub VisitSingleLineIfPart(node As SingleLineIfPartSyntax)
             CreateBinderFromStatementList(node.Statements, containingBinder)
+            MakeBinder(node.ElseClause, containingBinder)
         End Sub
 
-        Public Overrides Sub VisitSingleLineElsePart(node As SingleLineElsePartSyntax)
+        Public Overrides Sub VisitSingleLineElseClause(node As SingleLineElseClauseSyntax)
             CreateBinderFromStatementList(node.Statements, containingBinder)
         End Sub
 
         Public Overrides Sub VisitMultiLineIfBlock(node As MultiLineIfBlockSyntax)
-            MakeBinder(node.IfPart, containingBinder)
-            For Each elseifPart In node.ElseIfParts
-                MakeBinder(elseifPart, containingBinder)
+            CreateBinderFromStatementList(node.Statements, containingBinder)
+
+            For Each elseifBlock In node.ElseIfBlocks
+                MakeBinder(elseifBlock, containingBinder)
             Next
-            MakeBinder(node.ElsePart, containingBinder)
+
+            MakeBinder(node.ElseBlock, containingBinder)
         End Sub
 
-        Public Overrides Sub VisitIfPart(node As IfPartSyntax)
+        Public Overrides Sub VisitElseBlock(node As ElseBlockSyntax)
             CreateBinderFromStatementList(node.Statements, containingBinder)
         End Sub
 
-        Public Overrides Sub VisitElsePart(node As ElsePartSyntax)
+        Public Overrides Sub VisitElseIfBlock(node As ElseIfBlockSyntax)
             CreateBinderFromStatementList(node.Statements, containingBinder)
         End Sub
 
         Public Overrides Sub VisitTryBlock(node As TryBlockSyntax)
             containingBinder = New ExitableStatementBinder(containingBinder,
-                                                           continueKind:=SyntaxKind.NothingKeyword, exitKind:=SyntaxKind.ExitTryStatement)
+                                                           continueKind:=SyntaxKind.None, exitKind:=SyntaxKind.ExitTryStatement)
             RememberBinder(node, containingBinder)
 
-            MakeBinder(node.TryPart, containingBinder)
-            For Each catchPart In node.CatchParts
-                MakeBinder(catchPart, containingBinder)
-            Next
-            MakeBinder(node.FinallyPart, containingBinder)
-        End Sub
-
-        Public Overrides Sub VisitTryPart(node As TryPartSyntax)
             CreateBinderFromStatementList(node.Statements, containingBinder)
+            For Each catchBlock In node.CatchBlocks
+                MakeBinder(catchBlock, containingBinder)
+            Next
+            MakeBinder(node.FinallyBlock, containingBinder)
         End Sub
 
-        Public Overrides Sub VisitCatchPart(node As CatchPartSyntax)
+        Public Overrides Sub VisitCatchBlock(node As CatchBlockSyntax)
             containingBinder = New CatchBlockBinder(containingBinder, node)
 
             RememberBinder(node, containingBinder)
@@ -279,7 +273,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             CreateBinderFromStatementList(node.Statements, containingBinder)
         End Sub
 
-        Public Overrides Sub VisitFinallyPart(node As FinallyPartSyntax)
+        Public Overrides Sub VisitFinallyBlock(node As FinallyBlockSyntax)
             containingBinder = New FinallyBlockBinder(containingBinder)
 
             RememberBinder(node, containingBinder)
@@ -310,7 +304,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Sub
 
         Public Overrides Sub VisitForBlock(node As ForBlockSyntax)
-            containingBinder = New ForBlockBinder(containingBinder, node)
+            containingBinder = New ForOrForEachBlockBinder(containingBinder, node)
+
+            RememberBinder(node, containingBinder)
+
+            CreateBinderFromStatementList(node.Statements, containingBinder)
+        End Sub
+
+        Public Overrides Sub VisitForEachBlock(node As ForEachBlockSyntax)
+            containingBinder = New ForOrForEachBlockBinder(containingBinder, node)
 
             RememberBinder(node, containingBinder)
 

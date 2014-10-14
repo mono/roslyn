@@ -353,7 +353,7 @@
         <Field Name="Type" Type="TypeSymbol" Override="true" Null="disallow"/>
 
         <Field Name="ByRefLocal" Type="BoundLocal"/>
-        <Field Name="Target" Type="BoundExpression" Null="allow"/>
+        <Field Name="LValue" Type="BoundExpression" Null="allow"/>
         <Field Name="IsLValue" PropertyOverrides="true" Type="Boolean"/>
     </Node>
   
@@ -833,7 +833,12 @@
              semantic information, it is discarded in the rewriter -->
         <Field Name="PropertyGroupOpt" Type="BoundPropertyGroup" Null="allow" SkipInVisitor="true" />
 
-        <Field Name="AccessKind" Type="PropertyAccessKind"/>
+        <Field Name="AccessKind" Type="PropertyAccessKind"/>           
+      
+        <!-- autoproperty could be writeable even when having no setter 
+             when in a corresponding constructor or initializer -->
+        <Field Name="IsWriteable" Type="Boolean"/>
+      
         <Field Name="ReceiverOpt" Type="BoundExpression" Null="allow"/>
         <Field Name="Arguments" Type="ImmutableArray(Of BoundExpression)"/>
     </Node>
@@ -1454,7 +1459,7 @@
 
       <Field Name="Binder" Type="Binder" Null="disallow"/>
       <Field Name="Parameters" Type="ImmutableArray(Of ParameterSymbol)" Null="disallow"/>
-      <Field Name="Compilation" Type="VisualBasicCompilation" Null="disallow"/>
+      <Field Name="Compilation" Type="VBCompilation" Null="disallow"/>
     </Node>
 
     <!-- Corresponds to AggregateClauseSyntax. -->
@@ -1715,5 +1720,18 @@
     <Field Name="Receiver" Type="BoundExpression"/>
     <Field Name="Placeholder" Type="BoundRValuePlaceholder"/>
     <Field Name="AccessExpression" Type="BoundExpression"/>
+  </Node>
+
+  <Node Name="BoundConditionalAccessReceiverPlaceholder" Base="BoundRValuePlaceholderBase" HasValidate="true">
+    <Field Name="PlaceholderId" Type="Integer"/>
+  </Node>
+
+  <Node Name="BoundLoweredConditionalAccess" Base="BoundExpression" HasValidate="true">
+    <Field Name="Type" Type="TypeSymbol" Override="true" Null="disallow"/>
+    <Field Name="ReceiverOrCondition" Type="BoundExpression"/>
+    <Field Name="CaptureReceiver" Type="Boolean" Null="NotApplicable"/>
+    <Field Name="PlaceholderId" Type="Integer"/>
+    <Field Name="WhenNotNull" Type="BoundExpression"/>
+    <Field Name="WhenNullOpt" Type="BoundExpression" Null="allow"/>
   </Node>
 </Tree>

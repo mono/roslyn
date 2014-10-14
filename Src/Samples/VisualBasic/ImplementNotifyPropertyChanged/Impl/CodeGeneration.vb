@@ -20,6 +20,7 @@
 '
 ' *********************************************************
 
+Imports System.ComponentModel
 Imports System.Runtime.CompilerServices
 Imports System.Threading
 Imports Microsoft.CodeAnalysis
@@ -72,9 +73,9 @@ Friend Module CodeGeneration
     Private Function WithImport(root As CompilationUnitSyntax, name As String) As CompilationUnitSyntax
         If Not root.Imports _
             .SelectMany(Function(i) i.ImportsClauses) _
-            .Any(Function(i) i.IsKind(SyntaxKind.MembersImportsClause) AndAlso DirectCast(i, MembersImportsClauseSyntax).Name.ToString() = name) Then
+            .Any(Function(i) i.IsKind(SyntaxKind.SimpleImportsClause) AndAlso DirectCast(i, SimpleImportsClauseSyntax).Name.ToString() = name) Then
 
-            Dim clause As ImportsClauseSyntax = SyntaxFactory.MembersImportsClause(SyntaxFactory.ParseName(name).NormalizeWhitespace(elasticTrivia:=True))
+            Dim clause As ImportsClauseSyntax = SyntaxFactory.SimpleImportsClause(SyntaxFactory.ParseName(name).NormalizeWhitespace(elasticTrivia:=True))
             Dim clauseList = SyntaxFactory.SeparatedList({clause})
             Dim statement = SyntaxFactory.ImportsStatement(clauseList)
             statement = statement.WithAdditionalAnnotations(Formatter.Annotation)
@@ -105,34 +106,34 @@ Friend Module CodeGeneration
         End If
 
         If getter Is Nothing Then
-            getter = SyntaxFactory.AccessorBlock(SyntaxKind.PropertyGetBlock,
+            getter = SyntaxFactory.AccessorBlock(SyntaxKind.GetAccessorBlock,
                                         SyntaxFactory.AccessorStatement(SyntaxKind.GetAccessorStatement, SyntaxFactory.Token(SyntaxKind.GetKeyword)),
                                         SyntaxFactory.EndBlockStatement(SyntaxKind.EndGetStatement, SyntaxFactory.Token(SyntaxKind.GetKeyword)))
         End If
 
         Dim returnFieldStatement = SyntaxFactory.ParseExecutableStatement(String.Format("Return {0}", backingFieldName))
-        getter = getter.WithStatements(SyntaxFactory.SingletonList(returnFieldStatement))
+            getter = getter.WithStatements(SyntaxFactory.SingletonList(returnFieldStatement))
 
-        If setter Is Nothing Then
-            Dim propertyTypeText = DirectCast(propertyStatement.AsClause, SimpleAsClauseSyntax).Type.ToString()
-            Dim parameterList = SyntaxFactory.ParseParameterList(String.Format("(value As {0})", propertyTypeText))
-            setter = SyntaxFactory.AccessorBlock(SyntaxKind.PropertySetBlock,
-                                        SyntaxFactory.AccessorStatement(SyntaxKind.SetAccessorStatement, SyntaxFactory.Token(SyntaxKind.SetKeyword)).
-                                                                 WithParameterList(parameterList),
-                                        SyntaxFactory.EndBlockStatement(SyntaxKind.EndSetStatement, SyntaxFactory.Token(SyntaxKind.SetKeyword)))
-        End If
+            If setter Is Nothing Then
+                Dim propertyTypeText = DirectCast(propertyStatement.AsClause, SimpleAsClauseSyntax).Type.ToString()
+                Dim parameterList = SyntaxFactory.ParseParameterList(String.Format("(value As {0})", propertyTypeText))
+                setter = SyntaxFactory.AccessorBlock(SyntaxKind.SetAccessorBlock,
+                                            SyntaxFactory.AccessorStatement(SyntaxKind.SetAccessorStatement, SyntaxFactory.Token(SyntaxKind.SetKeyword)).
+                                                                     WithParameterList(parameterList),
+                                            SyntaxFactory.EndBlockStatement(SyntaxKind.EndSetStatement, SyntaxFactory.Token(SyntaxKind.SetKeyword)))
+            End If
 
-        Dim setPropertyStatement = SyntaxFactory.ParseExecutableStatement(String.Format("SetProperty({0}, value, ""{1}"")", backingFieldName, propertyStatement.Identifier.ValueText))
-        setter = setter.WithStatements(SyntaxFactory.SingletonList(setPropertyStatement))
+            Dim setPropertyStatement = SyntaxFactory.ParseExecutableStatement(String.Format("SetProperty({0}, value, ""{1}"")", backingFieldName, propertyStatement.Identifier.ValueText))
+            setter = setter.WithStatements(SyntaxFactory.SingletonList(setPropertyStatement))
 
-        Dim newPropertyBlock As PropertyBlockSyntax = propertyBlock
-        If newPropertyBlock Is Nothing Then
-            newPropertyBlock = SyntaxFactory.PropertyBlock(propertyStatement, SyntaxFactory.List(Of AccessorBlockSyntax)())
-        End If
+            Dim newPropertyBlock As PropertyBlockSyntax = propertyBlock
+            If newPropertyBlock Is Nothing Then
+                newPropertyBlock = SyntaxFactory.PropertyBlock(propertyStatement, SyntaxFactory.List(Of AccessorBlockSyntax)())
+            End If
 
-        newPropertyBlock = newPropertyBlock.WithAccessors(SyntaxFactory.List({getter, setter}))
+            newPropertyBlock = newPropertyBlock.WithAccessors(SyntaxFactory.List({getter, setter}))
 
-        Return newPropertyBlock
+            Return newPropertyBlock
     End Function
 
     Private Function ExpandType(
@@ -155,16 +156,61 @@ Friend Module CodeGeneration
 
     <Extension>
     Private Function WithBackingFields(node As TypeBlockSyntax, properties As IEnumerable(Of ExpandablePropertyInfo), workspace As Workspace) As TypeBlockSyntax
-        For Each propertyInfo In properties
-            Dim newField = CodeGenerationSymbolFactory.CreateFieldSymbol(
-                attributes:=Nothing,
-                accessibility:=Microsoft.CodeAnalysis.Accessibility.Private,
-                modifiers:=New SymbolModifiers(),
-                type:=propertyInfo.Type,
-                name:=propertyInfo.BackingFieldName)
 
-            node = CodeGenerator.AddFieldDeclaration(node, newField, workspace)
+        For Each propertyInfo In properties
+            Dim newField = GenerateBackingField(propertyInfo, workspace)
+            Dim currentProp = GetProperty(node, GetPropertyName(propertyInfo.PropertyDeclaration))
+            node = node.InsertNodesBefore(currentProp, {newField})
         Next
+
+        Return node
+    End Function
+
+    Private Function GetPropertyName(node As DeclarationStatementSyntax) As String
+        Dim block = TryCast(node, PropertyBlockSyntax)
+        If block IsNot Nothing Then
+            Return block.PropertyStatement.Identifier.Text
+        End If
+        Dim prop = TryCast(node, PropertyStatementSyntax)
+        If prop IsNot Nothing Then
+            Return prop.Identifier.Text
+        End If
+        Return Nothing
+    End Function
+
+    Private Function GetProperty(node As TypeBlockSyntax, name As String) As DeclarationStatementSyntax
+        Return node.DescendantNodes().OfType(Of DeclarationStatementSyntax).FirstOrDefault(Function(n) GetPropertyName(n) = name)
+    End Function
+
+    Private Function GenerateBackingField(propertyInfo As ExpandablePropertyInfo, workspace As Workspace) As StatementSyntax
+        Dim g = SyntaxGenerator.GetGenerator(workspace, LanguageNames.VisualBasic)
+        Dim fieldType = g.TypeExpression(propertyInfo.Type)
+
+        Dim fieldDecl = DirectCast(ParseMember(String.Format("Private {0} As _fieldType_", propertyInfo.BackingFieldName)), FieldDeclarationSyntax)
+        Return fieldDecl.ReplaceNode(fieldDecl.Declarators(0).AsClause.Type, fieldType).WithAdditionalAnnotations(Formatter.Annotation)
+    End Function
+
+    Private Function ParseMember(source As String) As StatementSyntax
+        Dim cu = SyntaxFactory.ParseCompilationUnit("Class x" & vbCrLf & source & vbCrLf & "End Class")
+        Return DirectCast(cu.Members(0), ClassBlockSyntax).Members(0)
+    End Function
+
+    <Extension>
+    Private Function AddMembers(node As TypeBlockSyntax, ParamArray members As StatementSyntax()) As TypeBlockSyntax
+        Return AddMembers(node, DirectCast(members, IEnumerable(Of StatementSyntax)))
+    End Function
+
+    <Extension>
+    Private Function AddMembers(node As TypeBlockSyntax, members As IEnumerable(Of StatementSyntax)) As TypeBlockSyntax
+        Dim classBlock = TryCast(node, ClassBlockSyntax)
+        If classBlock IsNot Nothing Then
+            Return classBlock.WithMembers(classBlock.Members.AddRange(members))
+        End If
+
+        Dim structBlock = TryCast(node, StructureBlockSyntax)
+        If structBlock IsNot Nothing Then
+            Return structBlock.WithMembers(structBlock.Members.AddRange(members))
+        End If
 
         Return node
     End Function
@@ -203,26 +249,15 @@ Friend Module CodeGeneration
 
         ' Does this class contain an implementation for the PropertyChanged event? If not, add it.
         If propertyChangedEvent Is Nothing Then
-            node = CodeGenerator.AddEventDeclaration(
-                node,
-                GeneratePropertyChangedEvent(model.Compilation),
-                workspace)
+            node = AddMembers(node, GeneratePropertyChangedEvent())
         End If
 
         Return node
     End Function
 
-    Friend Function GeneratePropertyChangedEvent(compilation As Compilation) As IEventSymbol
-        Dim notifyPropertyChangedInterface = compilation.GetTypeByMetadataName("System.ComponentModel.INotifyPropertyChanged")
-        Dim propertyChangedEventHandlerType = compilation.GetTypeByMetadataName("System.ComponentModel.PropertyChangedEventHandler")
-
-        Return CodeGenerationSymbolFactory.CreateEventSymbol(
-            attributes:=Nothing,
-            accessibility:=Microsoft.CodeAnalysis.Accessibility.Public,
-            modifiers:=New SymbolModifiers(),
-            type:=propertyChangedEventHandlerType,
-            explicitInterfaceSymbol:=DirectCast(notifyPropertyChangedInterface.GetMembers("PropertyChanged").Single(), IEventSymbol),
-            name:="PropertyChanged")
+    Friend Function GeneratePropertyChangedEvent() As StatementSyntax
+        Dim decl = ParseMember("Public Event PropertyChanged As System.ComponentModel.PropertyChangedEventHandler Implements System.ComponentModel.INotifyPropertyChanged.PropertyChanged")
+        Return decl.WithAdditionalAnnotations(Simplifier.Annotation)
     End Function
 
     <Extension>
@@ -234,50 +269,21 @@ Friend Module CodeGeneration
 
         Dim setPropertyMethod = classSymbol.FindSetPropertyMethod(model.Compilation)
         If setPropertyMethod Is Nothing Then
-            node = CodeGenerator.AddMethodDeclaration(
-                node,
-                GenerateSetPropertyMethod(model.Compilation),
-                workspace)
+            node = AddMembers(node, GenerateSetPropertyMethod())
         End If
 
         Return node
     End Function
 
-    Friend Function GenerateSetPropertyMethod(compilation As Compilation) As IMethodSymbol
-        Dim body = SyntaxFactory.ParseExecutableStatement(
-"If Not EqualityComparer(Of T).Default.Equals(field, value) Then" & vbCrLf &
-"    field = value" & vbCrLf &
-"" & vbCrLf &
-"    RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(name))" & vbCrLf &
-"End If")
-
-        body = body.WithAdditionalAnnotations(Simplifier.Annotation)
-
-        Dim stringType = compilation.GetSpecialType(SpecialType.System_String)
-        Dim voidType = compilation.GetSpecialType(SpecialType.System_Void)
-
-        Dim typeParameter = CodeGenerationSymbolFactory.CreateTypeParameterSymbol("T")
-
-        Dim parameter1 = CodeGenerationSymbolFactory.CreateParameterSymbol(
-            attributes:=Nothing,
-            refKind:=RefKind.Ref,
-            isParams:=False,
-            type:=typeParameter,
-            name:="field")
-
-        Dim parameter2 = CodeGenerationSymbolFactory.CreateParameterSymbol(typeParameter, "value")
-        Dim parameter3 = CodeGenerationSymbolFactory.CreateParameterSymbol(stringType, "name")
-
-        Return CodeGenerationSymbolFactory.CreateMethodSymbol(
-            attributes:=Nothing,
-            accessibility:=Microsoft.CodeAnalysis.Accessibility.Private,
-            modifiers:=New SymbolModifiers(),
-            returnType:=voidType,
-            explicitInterfaceSymbol:=Nothing,
-            name:="SetProperty",
-            typeParameters:={typeParameter},
-            parameters:={parameter1, parameter2, parameter3},
-            statements:={body})
+    Friend Function GenerateSetPropertyMethod() As StatementSyntax
+        Return ParseMember(<x>
+Private Sub SetProperty(Of T)(ByRef field As T, value As T, name As String)
+    If Not EqualityComparer(Of T).Default.Equals(field, value) Then
+        field = value
+        RaiseEvent PropertyChanged(Me, New System.ComponentModel.PropertyChangedEventArgs(name))
+    End If
+End Sub
+</x>.Value).WithAdditionalAnnotations(Simplifier.Annotation)
 
     End Function
 
@@ -307,3 +313,4 @@ Friend Module CodeGeneration
         Return Nothing
     End Function
 End Module
+

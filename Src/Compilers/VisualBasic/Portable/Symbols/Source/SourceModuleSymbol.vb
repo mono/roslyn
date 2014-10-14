@@ -32,7 +32,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         Private ReadOnly m_declarationTable As DeclarationTable
 
         ' Options that control compilation
-        Private ReadOnly m_options As VisualBasicCompilationOptions
+        Private ReadOnly m_options As VBCompilationOptions
 
         ' Module attributes
         Private m_lazyCustomAttributesBag As CustomAttributesBag(Of VisualBasicAttributeData)
@@ -51,7 +51,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         'Private m_diagnosticBagCompile As New DiagnosticBag()
         'Private m_diagnosticBagEmit As New DiagnosticBag()
 
-        Friend ReadOnly Property Options As VisualBasicCompilationOptions
+        Friend ReadOnly Property Options As VBCompilationOptions
             Get
                 Return m_options
             End Get
@@ -80,7 +80,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         Friend Sub New(assemblySymbol As SourceAssemblySymbol,
                        declarationTable As DeclarationTable,
-                       options As VisualBasicCompilationOptions,
+                       options As VBCompilationOptions,
                        nameAndExtension As String)
             Debug.Assert(assemblySymbol IsNot Nothing)
 
@@ -138,7 +138,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' <summary>
         ''' This override is essential - it's a base case of the recursive definition.
         ''' </summary>
-        Friend Overrides ReadOnly Property DeclaringCompilation As VisualBasicCompilation
+        Friend Overrides ReadOnly Property DeclaringCompilation As VBCompilation
             Get
                 Return m_AssemblySymbol.DeclaringCompilation
             End Get
@@ -323,8 +323,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
             ' Now process alias imports
             For Each globalImport In Options.GlobalImports
-                If globalImport.Clause.Kind = SyntaxKind.AliasImportsClause Then
-                    checker.AddAlias(DirectCast(globalImport.Clause, AliasImportsClauseSyntax))
+                If globalImport.Clause.Kind = SyntaxKind.SimpleImportsClause Then
+                    Dim simpleImportsClause = DirectCast(globalImport.Clause, SimpleImportsClauseSyntax)
+
+                    If simpleImportsClause.Alias IsNot Nothing Then
+                        checker.AddAlias(simpleImportsClause)
+                    End If
                 End If
             Next
 
@@ -359,7 +363,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
                     Dim data = New ModuleImportData(globalImport, membersMap, aliasesMap, membersBuilder, membersInfoBuilder, aliasesBuilder, aliasesInfoBuilder, xmlNamespaces)
                     Dim diagBagForThisImport = DiagnosticBag.GetInstance()
-                    Dim binder As binder = BinderBuilder.CreateBinderForProjectImports(Me, VisualBasicSyntaxTree.Dummy)
+                    Dim binder As binder = BinderBuilder.CreateBinderForProjectImports(Me, VBSyntaxTree.Dummy)
                     binder.BindImportClause(globalImport.Clause, data, diagBagForThisImport)
 
                     ' Map diagnostics to new ones.
@@ -679,7 +683,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                             Sub()
                                 Try
                                     visitor(symbol)
-                                Catch e As Exception When CompilerFatalError.ReportUnlessCanceled(e)
+                                Catch e As Exception When FatalError.ReportUnlessCanceled(e)
                                     Throw ExceptionUtilities.Unreachable
                                 End Try
                             End Sub,
@@ -943,7 +947,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 For Each d As Diagnostic In diagBag.AsEnumerableWithoutResolution()
                     Dim loc = d.Location
                     If loc.IsInSource Then
-                        Dim tree = DirectCast(loc.SourceTree, VisualBasicSyntaxTree)
+                        Dim tree = DirectCast(loc.SourceTree, VBSyntaxTree)
                         Dim sourceFile = GetSourceFile(tree)
                         sourceFile.AddDiagnostic(d, stage)
                     Else

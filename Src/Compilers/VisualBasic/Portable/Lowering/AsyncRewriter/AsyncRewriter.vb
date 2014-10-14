@@ -91,10 +91,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Friend Shared Function CreateAsyncStateMachine(method As MethodSymbol,
-                                                                 typeIndex As Integer,
+                                                       typeIndex As Integer,
                                                        typeKind As TypeKind,
-                                                                 valueTypeSymbol As NamedTypeSymbol,
-                                                                 iAsyncStateMachine As NamedTypeSymbol) As NamedTypeSymbol
+                                                       valueTypeSymbol As NamedTypeSymbol,
+                                                       iAsyncStateMachine As NamedTypeSymbol) As NamedTypeSymbol
 
             Return New AsyncStateMachine(method, typeIndex, typeKind, valueTypeSymbol, iAsyncStateMachine)
         End Function
@@ -168,13 +168,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim debuggerHidden = IsDebuggerHidden(Me.Method)
             Dim moveNextAttrs As DebugAttributes = DebugAttributes.CompilerGeneratedAttribute
             If debuggerHidden Then moveNextAttrs = moveNextAttrs Or DebugAttributes.DebuggerHiddenAttribute
-            GenerateMoveNext(Me.StartMethodImplementation(
+            GenerateMoveNext(Me.OpenMethodImplementation(
                     WellKnownMember.System_Runtime_CompilerServices_IAsyncStateMachine_MoveNext,
                     "MoveNext",
-                    moveNextAttrs, Accessibility.Friend, True, asyncKickoffMethod:=Me.Method))
+                    moveNextAttrs, Accessibility.Friend, True))
 
             'Add IAsyncStateMachine.SetStateMachine()
-            Me.StartMethodImplementation(
+            Me.OpenMethodImplementation(
                     WellKnownMember.System_Runtime_CompilerServices_IAsyncStateMachine_SetStateMachine,
                     "System.Runtime.CompilerServices.IAsyncStateMachine.SetStateMachine",
                     DebugAttributes.DebuggerNonUserCodeAttribute, Accessibility.Private, False)
@@ -357,7 +357,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return AsyncMethodKind.[Sub]
             End If
 
-            Dim compilation As VisualBasicCompilation = method.DeclaringCompilation
+            Dim compilation As VBCompilation = method.DeclaringCompilation
             Debug.Assert(compilation IsNot Nothing)
 
             Dim returnType As TypeSymbol = method.ReturnType

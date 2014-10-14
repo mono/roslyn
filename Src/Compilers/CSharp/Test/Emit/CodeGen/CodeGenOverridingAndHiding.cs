@@ -2151,7 +2151,7 @@ public class Derived2 : Base<int>
     public sealed override List<int> Property1 { protected set { } }
     public sealed override List<int> Property2 { protected get { return null; } }
 }";
-            var comp = CompileAndVerify(source2,  new[] { new CSharpCompilationReference(compilation1) }, emitOptions: EmitOptions.RefEmitBug, expectedSignatures: new[] 
+            var comp = CompileAndVerify(source2,  new[] { new CSharpCompilationReference(compilation1) }, emitOptions: TestEmitters.RefEmitBug, expectedSignatures: new[] 
             {
                 Signature("Derived", "get_Property1", ".method public hidebysig specialname virtual final instance System.Collections.Generic.List`1[System.Int32] get_Property1() cil managed"),
                 Signature("Derived", "set_Property1", ".method family hidebysig specialname virtual final instance System.Void set_Property1(System.Collections.Generic.List`1[System.Int32] value) cil managed"),
@@ -3388,7 +3388,7 @@ namespace Metadata
                 text, 
                 new[] { TestReferences.SymbolsTests.CustomModifiers.Modifiers.dll },
                 expectedOutput: @"Hello 3",
-                emitOptions: EmitOptions.RefEmitUnsupported_646023,
+                emitOptions: TestEmitters.RefEmitUnsupported_646023,
                 expectedSignatures: new[] 
                 {
                     // The ILDASM output is following,and Roslyn handles it correctly. 
@@ -3958,7 +3958,7 @@ class B : A
                 }
             };
 
-            var verifier = CompileAndVerify(source, emitOptions: EmitOptions.CCI, symbolValidator: validator(false), sourceSymbolValidator: validator(true), expectedOutput: @"System.Int32[]");
+            var verifier = CompileAndVerify(source, emitOptions: TestEmitters.CCI, symbolValidator: validator(false), sourceSymbolValidator: validator(true), expectedOutput: @"System.Int32[]");
 
         }
 
@@ -3998,7 +3998,7 @@ public class Test
 @"Public MustInherit Class C1
     MustOverride Sub foo()
 End Class",
-                compilationOptions: new VisualBasic.VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                compilationOptions: new VisualBasic.VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
             vb1Compilation.VerifyDiagnostics();
 
             var cs1Compilation = CreateCSharpCompilation("CS1",
@@ -4012,7 +4012,7 @@ public abstract class C2 : C1
 }",
                 compilationOptions: TestOptions.ReleaseDll,
                 referencedCompilations: new[] { vb1Compilation });
-            var cs1Verifier = CompileAndVerify(cs1Compilation, emitOptions: EmitOptions.RefEmitBug);
+            var cs1Verifier = CompileAndVerify(cs1Compilation, emitOptions: TestEmitters.RefEmitBug);
             cs1Verifier.VerifyDiagnostics();
 
             var vb2Compilation = CreateVisualBasicCompilation("VB2",
@@ -4022,7 +4022,7 @@ Public Class C3 : Inherits C2
         Console.WriteLine(""C3"")
     End Sub
 End Class",
-                compilationOptions: new VisualBasic.VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
+                compilationOptions: new VisualBasic.VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
                 referencedCompilations: new Compilation[] { vb1Compilation, cs1Compilation });
             vb2Compilation.VerifyDiagnostics();
 
@@ -4055,7 +4055,7 @@ public class Program
                 compilationOptions: TestOptions.ReleaseExe,
                 referencedCompilations: new Compilation[] { vb1Compilation, cs1Compilation, vb2Compilation });
             var cs2Verifier = CompileAndVerify(cs2Compilation,
-                emitOptions: EmitOptions.RefEmitBug,
+                emitOptions: TestEmitters.RefEmitBug,
                 expectedOutput: @"C3");
             cs2Verifier.VerifyDiagnostics();
         }
@@ -4067,7 +4067,7 @@ public class Program
 @"Public MustInherit Class C1
     MustOverride Sub foo()
 End Class",
-                compilationOptions: new VisualBasic.VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                compilationOptions: new VisualBasic.VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
             vb1Compilation.VerifyDiagnostics();
 
             var cs1Compilation = CreateCSharpCompilation("CS1",
@@ -4082,7 +4082,7 @@ public abstract class C2 : C1
 }",
                 compilationOptions: TestOptions.ReleaseDll,
                 referencedCompilations: new[] { vb1Compilation });
-            var cs1Verifier = CompileAndVerify(cs1Compilation, emitOptions:EmitOptions.RefEmitBug);
+            var cs1Verifier = CompileAndVerify(cs1Compilation, emitOptions:TestEmitters.RefEmitBug);
             cs1Verifier.VerifyDiagnostics();
 
             var vb2Compilation = CreateVisualBasicCompilation("VB2",
@@ -4092,7 +4092,7 @@ Public Class C3 : Inherits C2
         Console.WriteLine(""C3"")
     End Sub
 End Class",
-                compilationOptions: new VisualBasic.VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
+                compilationOptions: new VisualBasic.VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
                 referencedCompilations: new Compilation[] { vb1Compilation, cs1Compilation });
             vb2Compilation.VerifyDiagnostics();
 
@@ -4128,7 +4128,7 @@ public class Program
                 compilationOptions: TestOptions.ReleaseExe,
                 referencedCompilations: new Compilation[] { vb1Compilation, cs1Compilation, vb2Compilation });
             var cs2Verifier = CompileAndVerify(cs2Compilation,
-                emitOptions:EmitOptions.RefEmitBug, expectedOutput: @"C4
+                emitOptions:TestEmitters.RefEmitBug, expectedOutput: @"C4
 C2");
             cs2Verifier.VerifyDiagnostics();
         }
@@ -4181,14 +4181,12 @@ Derived.M(y:2)");
                 referencedCompilations: new[] { A });
             CompileAndVerify(B).VerifyDiagnostics();
 
-            // This doesn't necessarily have to generate specifically this diagnostic - it could
-            // very well signal a missing assembly - but it must not report NO diagnostics.
             var D = CreateCSharpCompilation("D", @"public class D : C, B { }",
                 compilationOptions: TestOptions.ReleaseDll,
                 referencedCompilations: new[] { B, C }).VerifyDiagnostics(
-                // (1,14): error CS0535: 'D' does not implement interface member 'B.M(A)'
-                // public class D : C, B { }
-                    Diagnostic(ErrorCode.ERR_UnimplementedInterfaceMember, "B").WithArguments("D", "B.M(A)")
+    // (1,21): error CS0012: The type 'A' is defined in an assembly that is not referenced. You must add a reference to assembly 'A, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null'.
+    // public class D : C, B { }
+    Diagnostic(ErrorCode.ERR_NoTypeDef, "B").WithArguments("A", "A, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null").WithLocation(1, 21)
                 );
         }
 
@@ -4220,7 +4218,7 @@ Derived.M(y:2)");
 @"Public MustInherit Class C1
     MustOverride Sub foo()
 End Class",
-                compilationOptions: new VisualBasic.VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                compilationOptions: new VisualBasic.VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
             vb1Compilation.VerifyDiagnostics();
 
             var cs1Compilation = CreateCSharpCompilation("CS1",
@@ -4241,7 +4239,7 @@ public abstract class C2 : C1
     Public Overrides Sub foo
     End Sub
 End Class",
-                compilationOptions: new VisualBasic.VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
+                compilationOptions: new VisualBasic.VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
                 referencedCompilations: new Compilation[] { vb1Compilation, cs1Compilation });
             vb2Compilation.VerifyDiagnostics();
 

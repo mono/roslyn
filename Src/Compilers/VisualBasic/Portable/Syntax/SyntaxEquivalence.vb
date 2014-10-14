@@ -84,11 +84,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax
                          SyntaxKind.FunctionBlock,
                          SyntaxKind.ConstructorBlock,
                          SyntaxKind.OperatorBlock,
-                         SyntaxKind.PropertyGetBlock,
-                         SyntaxKind.PropertySetBlock,
-                         SyntaxKind.AddHandlerBlock,
-                         SyntaxKind.RemoveHandlerBlock,
-                         SyntaxKind.RaiseEventBlock
+                         SyntaxKind.GetAccessorBlock,
+                         SyntaxKind.SetAccessorBlock,
+                         SyntaxKind.AddHandlerAccessorBlock,
+                         SyntaxKind.RemoveHandlerAccessorBlock,
+                         SyntaxKind.RaiseEventAccessorBlock
                         ' Once we get down to the block level we need to only compare the header
                         Return AreEquivalentRecursive(DirectCast(before, Green.MethodBlockBaseSyntax).Begin,
                                                       DirectCast(after, Green.MethodBlockBaseSyntax).Begin,
@@ -118,8 +118,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax
             End If
 
             If ignoreChildNode IsNot Nothing Then
-                Dim e1 = DirectCast(before, Green.VisualBasicSyntaxNode).ChildNodesAndTokens().GetEnumerator()
-                Dim e2 = DirectCast(after, Green.VisualBasicSyntaxNode).ChildNodesAndTokens().GetEnumerator()
+                Dim e1 = DirectCast(before, Green.VBSyntaxNode).ChildNodesAndTokens().GetEnumerator()
+                Dim e2 = DirectCast(after, Green.VBSyntaxNode).ChildNodesAndTokens().GetEnumerator()
 
                 While True
                     Dim child1 As GreenNode = Nothing

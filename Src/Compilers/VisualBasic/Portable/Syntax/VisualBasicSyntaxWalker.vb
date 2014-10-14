@@ -6,11 +6,11 @@ Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
 Namespace Microsoft.CodeAnalysis.VisualBasic
     ''' <summary>
-    ''' Represents a <see cref="T:Roslyn.Microsoft.CodeAnalysis.VisualBasic.SyntaxVisitor"/> that descends an entire <see cref="T:Microsoft.CodeAnalysis.VisualBasic.SyntaxNode"/> graph
-    ''' visiting each SyntaxNode and its child SyntaxNodes and <see cref="T:Microsoft.CodeAnalysis.VisualBasic.SyntaxToken"/>s in depth-first order.
+    ''' Represents a <see cref="VBSyntaxVisitor"/> that descends an entire <see cref="SyntaxNode"/> tree
+    ''' visiting each SyntaxNode and its child <see cref="SyntaxNode"/>s and <see cref="SyntaxToken"/>s in depth-first order.
     ''' </summary>
-    Public MustInherit Class VisualBasicSyntaxWalker
-        Inherits VisualBasicSyntaxVisitor
+    Public MustInherit Class VBSyntaxWalker
+        Inherits VBSyntaxVisitor
 
         Protected ReadOnly Depth As SyntaxWalkerDepth
 
@@ -66,26 +66,26 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Public Overridable Sub VisitTrivia(trivia As SyntaxTrivia)
             If Depth >= SyntaxWalkerDepth.StructuredTrivia AndAlso trivia.HasStructure Then
-                Visit(DirectCast(trivia.GetStructure(), VisualBasicSyntaxNode))
+                Visit(DirectCast(trivia.GetStructure(), VBSyntaxNode))
             End If
         End Sub
     End Class
 
     ''' <summary>
-    ''' Represents a <see cref="T:Roslyn.Compilers.VisualBasic.SyntaxNode"/> visitor that visits only the single SyntaxNode
-    ''' passed into its <see cref="M:Roslyn.Compilers.VisualBasic.SyntaxVisitor.Visit(Roslyn.Compilers.VisualBasic.SyntaxNode)"/> method.
+    ''' Represents a <see cref="SyntaxNode"/> visitor that visits only the single SyntaxNode
+    ''' passed into its <see cref="Visit(SyntaxNode)"/> method.
     ''' </summary>
-    Partial Public MustInherit Class VisualBasicSyntaxVisitor
+    Partial Public MustInherit Class VBSyntaxVisitor
     End Class
 
     ''' <summary>
-    ''' Represents a <see cref="T:Roslyn.Compilers.VisualBasic.SyntaxNode"/> visitor that visits only the single SyntaxNode
-    ''' passed into its <see cref="M:Roslyn.Compilers.VisualBasic.SyntaxVisitor`1.Visit(Roslyn.Compilers.VisualBasic.SyntaxNode)"/> method and produces 
+    ''' Represents a <see cref="SyntaxNode"/> visitor that visits only the single SyntaxNode
+    ''' passed into its <see cref="Visit(SyntaxNode)"/> method and produces 
     ''' a value of the type specified by the <typeparamref name="TResult"/> parameter.
     ''' </summary>
     ''' <typeparam name="TResult">
     ''' The type of the return value this visitor's Visit method.
     ''' </typeparam>
-    Partial Public MustInherit Class VisualBasicSyntaxVisitor(Of TResult)
+    Partial Public MustInherit Class VBSyntaxVisitor(Of TResult)
     End Class
 End Namespace

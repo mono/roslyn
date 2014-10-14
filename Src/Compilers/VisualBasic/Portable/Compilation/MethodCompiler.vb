@@ -19,7 +19,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     Friend NotInheritable Class MethodCompiler
         Inherits VisualBasicSymbolVisitor
 
-        Private ReadOnly _compilation As VisualBasicCompilation
+        Private ReadOnly _compilation As VBCompilation
         Private ReadOnly _cancellationToken As CancellationToken
         Private ReadOnly _generateDebugInfo As Boolean
         Private ReadOnly _diagnostics As DiagnosticBag
@@ -77,7 +77,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
 
         ' moduleBeingBuilt can be Nothing in order to just analyze methods for errors.
-        Private Sub New(compilation As VisualBasicCompilation,
+        Private Sub New(compilation As VBCompilation,
                        moduleBeingBuiltOpt As PEModuleBuilder,
                        generateDebugInfo As Boolean,
                        doEmitPhase As Boolean,
@@ -134,7 +134,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         '''       and immediately lost after diagnostics of a particular tree is done.
         '''       
         ''' </summary>
-        Public Shared Sub GetCompileDiagnostics(compilation As VisualBasicCompilation,
+        Public Shared Sub GetCompileDiagnostics(compilation As VBCompilation,
                                                 root As NamespaceSymbol,
                                                 tree As SyntaxTree,
                                                 filterSpanWithinTree As TextSpan?,
@@ -181,7 +181,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         '''       immediately lost after obtaining method bodies and diagnostics for a particular
         '''       tree.
         ''' </summary>
-        Friend Shared Sub CompileMethodBodies(compilation As VisualBasicCompilation,
+        Friend Shared Sub CompileMethodBodies(compilation As VBCompilation,
                                               moduleBeingBuiltOpt As PEModuleBuilder,
                                               generateDebugInfo As Boolean,
                                               hasDeclarationErrors As Boolean,
@@ -252,12 +252,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End Using
         End Sub
 
-        Friend Shared Function GetEntryPoint(compilation As VisualBasicCompilation,
+        Friend Shared Function GetEntryPoint(compilation As VBCompilation,
                                              moduleBeingBuilt As PEModuleBuilder,
                                              diagnostics As DiagnosticBag,
                                              cancellationToken As CancellationToken) As MethodSymbol
 
-            Dim options As VisualBasicCompilationOptions = compilation.Options
+            Dim options As VBCompilationOptions = compilation.Options
             If Not options.OutputKind.IsApplication() Then
                 Debug.Assert(compilation.GetEntryPointAndDiagnostics(Nothing) Is Nothing)
 
@@ -287,7 +287,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return entryPointAndDiagnostics.MethodSymbol
         End Function
 
-        Friend Shared Function DefineScriptEntryPoint(compilation As VisualBasicCompilation, moduleBeingBuilt As PEModuleBuilder, returnType As TypeSymbol, diagnostics As DiagnosticBag) As MethodSymbol
+        Friend Shared Function DefineScriptEntryPoint(compilation As VBCompilation, moduleBeingBuilt As PEModuleBuilder, returnType As TypeSymbol, diagnostics As DiagnosticBag) As MethodSymbol
             Dim scriptEntryPoint = New SynthesizedEntryPointSymbol(compilation.ScriptClass, returnType)
             If moduleBeingBuilt IsNot Nothing AndAlso Not diagnostics.HasAnyErrors Then
                 Dim compilationState = New TypeCompilationState(compilation, moduleBeingBuilt, initializeComponentOpt:=Nothing)
@@ -455,7 +455,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Sub()
                     Try
                         CompileNamespace(symbol)
-                    Catch e As Exception When CompilerFatalError.ReportUnlessCanceled(e)
+                    Catch e As Exception When FatalError.ReportUnlessCanceled(e)
                         Throw ExceptionUtilities.Unreachable
                     End Try
                 End Sub,
@@ -487,7 +487,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Sub()
                     Try
                         CompileNamedType(symbol, filter)
-                    Catch e As Exception When CompilerFatalError.ReportUnlessCanceled(e)
+                    Catch e As Exception When FatalError.ReportUnlessCanceled(e)
                         Throw ExceptionUtilities.Unreachable
                     End Try
                 End Sub,
@@ -1339,25 +1339,27 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Debug.Assert(Not diagnostics.HasAnyErrors)
 
                 Dim asyncDebugInfo As Cci.AsyncMethodBodyDebugInfo = Nothing
+                Dim codeGen = New CodeGen.CodeGenerator(method, block, builder, moduleBuilder, diagnostics, optimizations, emittingPdbs)
 
-                Dim asyncKickoffMethod As MethodSymbol = method.AsyncKickoffMethod
-                If asyncKickoffMethod Is Nothing Then
-                    CodeGen.CodeGenerator.Run(method, block, builder, moduleBuilder, diagnostics, optimizations, emittingPdbs)
-                Else
+                ' We need to save additional debugging information for MoveNext of an async state machine.
+                Dim stateMachineMethod = TryCast(method, SynthesizedStateMachineMethod)
+                If stateMachineMethod IsNot Nothing AndAlso
+                   stateMachineMethod.StateMachineType.KickoffMethod.IsAsync AndAlso
+                   method.Name = WellKnownMemberNames.MoveNextMethodName Then
+
                     Dim asyncCatchHandlerOffset As Integer = -1
                     Dim asyncYieldPoints As ImmutableArray(Of Integer) = Nothing
                     Dim asyncResumePoints As ImmutableArray(Of Integer) = Nothing
 
-                    CodeGen.CodeGenerator.Run(method, block, builder, moduleBuilder, diagnostics, optimizations, emittingPdbs,
-                                              asyncCatchHandlerOffset, asyncYieldPoints, asyncResumePoints)
+                    codeGen.Generate(asyncCatchHandlerOffset, asyncYieldPoints, asyncResumePoints)
 
-                    asyncKickoffMethod = If(asyncKickoffMethod.PartialDefinitionPart, asyncKickoffMethod)
+                    Dim kickoffMethod = stateMachineMethod.StateMachineType.KickoffMethod
 
-                    asyncDebugInfo = New Cci.AsyncMethodBodyDebugInfo(asyncKickoffMethod,
-                                                                      asyncCatchHandlerOffset,
-                                                                      asyncYieldPoints,
-                                                                      asyncResumePoints)
-
+                    ' In VB async method may be partial. Debug info needs to be associated with the emitted definition, 
+                    ' but the kickoff method is the method implementation (the part with body).
+                    asyncDebugInfo = New Cci.AsyncMethodBodyDebugInfo(If(kickoffMethod.PartialDefinitionPart, kickoffMethod), asyncCatchHandlerOffset, asyncYieldPoints, asyncResumePoints)
+                Else
+                    codeGen.Generate()
                 End If
 
                 If diagnostics.HasAnyErrors() Then
@@ -1399,9 +1401,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                       debugDocumentProvider,
                                       builder.RealizedExceptionHandlers,
                                       builder.GetAllScopes(edgeInclusive:=True),
-                                      Cci.CustomDebugInfoKind.VisualBasicStyle,
                                       hasDynamicLocalVariables:=False,
                                       namespaceScopes:=namespaceScopes,
+                                      namespaceScopeEncoding:=Cci.NamespaceScopeEncoding.Forwarding,
+                                      iteratorClassName:=Nothing,
+                                      iteratorScopes:=Nothing,
                                       asyncMethodDebugInfo:=asyncDebugInfo)
             Finally
                 ' Free resources used by the basic blocks in the builder.
@@ -1683,7 +1687,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             ' NOTE: we can ignore use site errors in this place because they should have already be reported 
             '       either in real or synthesized constructor
 
-            Dim syntaxNode As VisualBasicSyntaxNode = constructor.Syntax
+            Dim syntaxNode As VBSyntaxNode = constructor.Syntax
 
             Dim thisRef As New BoundMeReference(syntaxNode, constructor.ContainingType)
             thisRef.SetWasCompilerGenerated()

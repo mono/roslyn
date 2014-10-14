@@ -17,21 +17,21 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
 
         End Sub
 
-        Friend Overrides Function ProcessSyntax(node As VisualBasicSyntaxNode) As BlockContext
+        Friend Overrides Function ProcessSyntax(node As VBSyntaxNode) As BlockContext
 
             Select Case node.Kind
                 Case SyntaxKind.AddHandlerAccessorStatement
-                    Return New MethodBlockContext(SyntaxKind.AddHandlerBlock, DirectCast(node, StatementSyntax), Me)
+                    Return New MethodBlockContext(SyntaxKind.AddHandlerAccessorBlock, DirectCast(node, StatementSyntax), Me)
 
                 Case SyntaxKind.RemoveHandlerAccessorStatement
-                    Return New MethodBlockContext(SyntaxKind.RemoveHandlerBlock, DirectCast(node, StatementSyntax), Me)
+                    Return New MethodBlockContext(SyntaxKind.RemoveHandlerAccessorBlock, DirectCast(node, StatementSyntax), Me)
 
                 Case SyntaxKind.RaiseEventAccessorStatement
-                    Return New MethodBlockContext(SyntaxKind.RaiseEventBlock, DirectCast(node, StatementSyntax), Me)
+                    Return New MethodBlockContext(SyntaxKind.RaiseEventAccessorBlock, DirectCast(node, StatementSyntax), Me)
 
-                Case SyntaxKind.AddHandlerBlock,
-                    SyntaxKind.RemoveHandlerBlock,
-                    SyntaxKind.RaiseEventBlock
+                Case SyntaxKind.AddHandlerAccessorBlock,
+                    SyntaxKind.RemoveHandlerAccessorBlock,
+                    SyntaxKind.RaiseEventAccessorBlock
                     ' Handle any block created by this context
                     Add(node)
 
@@ -49,7 +49,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return Me
         End Function
 
-        Friend Overrides Function TryLinkSyntax(node As VisualBasicSyntaxNode, ByRef newContext As BlockContext) As LinkResult
+        Friend Overrides Function TryLinkSyntax(node As VBSyntaxNode, ByRef newContext As BlockContext) As LinkResult
             newContext = Nothing
 
             If KindEndsBlock(node.Kind) Then
@@ -65,9 +65,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     Return UseSyntax(node, newContext)
 
                 Case _
-                    SyntaxKind.AddHandlerBlock,
-                    SyntaxKind.RemoveHandlerBlock,
-                    SyntaxKind.RaiseEventBlock
+                    SyntaxKind.AddHandlerAccessorBlock,
+                    SyntaxKind.RemoveHandlerAccessorBlock,
+                    SyntaxKind.RaiseEventAccessorBlock
                     Return UseSyntax(node, newContext, DirectCast(node, AccessorBlockSyntax).End.IsMissing)
 
                 Case Else
@@ -75,7 +75,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             End Select
         End Function
 
-        Friend Overrides Function CreateBlockSyntax(statement As StatementSyntax) As VisualBasicSyntaxNode
+        Friend Overrides Function CreateBlockSyntax(statement As StatementSyntax) As VBSyntaxNode
 
             Dim beginEvent As EventStatementSyntax = Nothing
             Dim endEvent As EndBlockStatementSyntax = DirectCast(statement, EndBlockStatementSyntax)

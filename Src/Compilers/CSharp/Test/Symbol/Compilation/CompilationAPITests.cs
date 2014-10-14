@@ -13,6 +13,7 @@ using System.Threading;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Test.Utilities;
@@ -91,52 +92,12 @@ namespace A.B {
             // Create Compilation with Assembly name contains invalid char
             var asmname = "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â";
             comp = CSharpCompilation.Create(asmname, listSyntaxTree, listRef, ops);
-            // Not Implemented code
-            //Assert.Equal(asmname, comp.Assembly.Name, StringComparer.OrdinalIgnoreCase);
-            //Assert.Equal(asmname, comp.SourceModule.Name);
-
             var comp1 = CSharpCompilation.Create(asmname, listSyntaxTree, listRef, null);
-            // Get Special Type by enum
-            // Not Implemented code
-            //var ntSmb = comp.GetSpecialType(typeId: SpecialType.Count);
-            //Assert.Equal(SpecialType.Count, ntSmb.SpecialType);
-            //// Get Special Type by integer
-            //ntSmb = comp.GetSpecialType((SpecialType)31);
-            //Assert.Equal(31, (int)ntSmb.SpecialType);
-
-            // Get Type by metadata name
-            // Not Implemented code
-            //Assert.Null(comp.GetTypeByMetadataName("`1"));
-            //Assert.Null(comp.GetTypeByMetadataName("ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢"));
-            //Assert.Null(comp.GetTypeByMetadataName(""));
-            //Assert.Null(comp.GetTypeByMetadataName("+"));
-            //Assert.Null(comp.GetTypeByMetadataName("++"));
-            //Assert.Equal("C", comp.GetTypeByMetadataName("A.B.C").Name);
-            //Assert.Equal("D", comp.GetTypeByMetadataName("A.B.C+D").Name);
-            //Assert.Equal("E", comp.GetTypeByMetadataName("A.B.C+D+E").Name);
-            //Assert.Equal(1, comp.GetTypeByMetadataName("A.B.G`1").Arity);
-            //Assert.Equal(2, comp.GetTypeByMetadataName("A.B.G`1+Q`2").Arity);
-            //Assert.Equal(2, comp.GetTypeByMetadataName("A.B.G`2").Arity);
-
-            // Not Implemented code
-            //comp = comp.ChangeOptions(options:null);
-            //Assert.Equal(CompilationOptions.Default, comp.Options);
-            //comp = comp.ChangeOptions(ops1);
-            //Assert.Equal(ops1, comp.Options);
-            //comp = comp.ChangeOptions(comp1.Options);
-            //Assert.Equal(comp1.Options, comp.Options);
-            //comp = comp.ChangeOptions(CompilationOptions.Default);
-            //Assert.Equal(CompilationOptions.Default, comp.Options);
-
-
         }
 
         [Fact]
         public void EmitToMemoryStreams()
         {
-            const string pdbPath = "Foo.pdb";
-            const string outputName = null;
-
             var comp = CSharpCompilation.Create("Compilation", options: TestOptions.ReleaseDll);
 
             using (var output = new MemoryStream())
@@ -145,35 +106,68 @@ namespace A.B {
                 {
                     using (var outputxml = new MemoryStream())
                     {
-                        var result = comp.Emit(output, outputName, pdbPath, outputPdb, null);
+                        var result = comp.Emit(output, outputPdb, null);
                         Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, pdbPath, outputPdb);
+                        result = comp.Emit(output,  outputPdb);
                         Assert.True(result.Success);
-                        result = comp.Emit(peStream: output, outputName: outputName, pdbFilePath: pdbPath, pdbStream: outputPdb, xmlDocumentationStream: null);
+                        result = comp.Emit(peStream: output, xmlDocumentationStream: null);
                         Assert.True(result.Success);
-                        result = comp.Emit(peStream: output, outputName: outputName, pdbFilePath: pdbPath, pdbStream: outputPdb);
+                        result = comp.Emit(peStream: output, pdbStream: outputPdb);
                         Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, pdbPath, outputPdb, null);
+                        result = comp.Emit(output, outputPdb, null);
                         Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, pdbPath, outputPdb);
+                        result = comp.Emit(output, outputPdb);
                         Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, pdbPath, outputPdb, outputxml);
+                        result = comp.Emit(output, outputPdb, outputxml);
                         Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, null, null, null);
+                        result = comp.Emit(output, null, null, null);
                         Assert.True(result.Success);
                         result = comp.Emit(output);
                         Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, null, null, outputxml);
+                        result = comp.Emit(output, null, outputxml);
                         Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, xmlDocumentationStream: outputxml);
+                        result = comp.Emit(output, xmlDocumentationStream: outputxml);
                         Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, pdbPath, null, outputxml);
+                        result = comp.Emit(output, xmlDocumentationStream: outputxml);
                         Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, pdbPath, xmlDocumentationStream: outputxml);
+                        result = comp.Emit(output, options: null);
+                        Assert.True(result.Success);
+                        result = comp.Emit(output, options: EmitOptions.Default.WithHighEntropyVirtualAddressSpace(true));
+                        Assert.True(result.Success);
+                        result = comp.Emit(output, options: EmitOptions.Default.WithOutputNameOverride("foo"));
+                        Assert.True(result.Success);
+                        result = comp.Emit(output, options: EmitOptions.Default.WithPdbFilePath("foo.pdb"));
                         Assert.True(result.Success);
                     }
                 }
             }
+        }
+
+        [Fact]
+        public void EmitOptionsDiagnostics()
+        {
+            var c = CreateCompilationWithMscorlib("class C {}");
+            var stream = new MemoryStream();
+
+            var options = new EmitOptions(
+                debugInformationFormat: (DebugInformationFormat)(-1),
+                outputNameOverride: " ",
+                fileAlignment: 513,
+                subsystemVersion: SubsystemVersion.Create(1000000, -1000000));
+
+            EmitResult result = c.Emit(stream, options: options);
+
+            result.Diagnostics.Verify(
+                // error CS2042: Invalid debug information format: -1
+                Diagnostic(ErrorCode.ERR_InvalidDebugInformationFormat).WithArguments("-1"),
+                // error CS2041: Invalid output name: Name cannot start with whitespace.
+                Diagnostic(ErrorCode.ERR_InvalidOutputName).WithArguments("Name cannot start with whitespace."),
+                // error CS2024: Invalid file section alignment '513'
+                Diagnostic(ErrorCode.ERR_InvalidFileAlignment).WithArguments("513"),
+                // error CS1773: Invalid version 1000000.-1000000 for /subsystemversion. The version must be 6.02 or greater for ARM or AppContainerExe, and 4.00 or greater otherwise
+                Diagnostic(ErrorCode.ERR_InvalidSubsystemVersion).WithArguments("1000000.-1000000"));
+
+            Assert.False(result.Success);
         }
 
         [Fact]
@@ -187,47 +181,13 @@ namespace A.B {
                 {
                     using (MemoryStream outputxml = new MemoryStream())
                     {
-                        var result = comp.Emit(output, null, null, outputPdb, outputxml);
+                        var result = comp.Emit(output, outputPdb, outputxml);
                         Assert.True(result.Success);
                     }
                 }
             }
+
             Assert.Throws<ArgumentNullException>(() => comp.Emit(peStream: null));
-        }
-
-        [Fact]
-        public void EmitToFileStreams()
-        {
-            var exe = Temp.CreateFile();
-            var pdb = Temp.CreateFile();
-            var xml = Temp.CreateFile();
-            var ops = TestOptions.ReleaseDll.WithRuntimeMetadataVersion("");
-            var comp = CSharpCompilation.Create("Compilation", null, null, ops);
-            const string outputName = null;
-
-            using (var output = exe.Open())
-            {
-                using (var outputPdb = pdb.Open())
-                {
-                    using (var outputxml = xml.Open())
-                    {
-                        var result = comp.Emit(output, outputName, pdb.Path, outputPdb);
-                        Assert.True(result.Success);
-                        result = comp.Emit(peStream: output, outputName: outputName, pdbFilePath: pdb.Path, pdbStream: outputPdb);
-                        Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, pdb.Path, outputPdb);
-                        Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, pdb.Path, outputPdb, outputxml);
-                        Assert.True(result.Success);
-                        result = comp.Emit(output, outputName);
-                        Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, null, null, outputxml);
-                        Assert.True(result.Success);
-                        result = comp.Emit(output, outputName, pdb.Path, null, outputxml);
-                        Assert.True(result.Success);
-                    }
-                }
-            }
         }
 
         [Fact]
@@ -633,7 +593,7 @@ var a = new C2();
 }"
             });
             assembly.VerifyEmitDiagnostics();
-            CompileAndVerify(assembly, emitOptions: EmitOptions.RefEmitBug);
+            CompileAndVerify(assembly, emitOptions: TestEmitters.RefEmitBug);
         }
 
         [WorkItem(713356, "DevDiv")]
@@ -767,7 +727,7 @@ var a = new C2();
         [Fact]
         public void MixedRefType()
         {
-            var vbComp = VB.VisualBasicCompilation.Create("CompilationVB");
+            var vbComp = VB.VBCompilation.Create("CompilationVB");
             var comp = CSharpCompilation.Create("Compilation");
 
             vbComp = vbComp.AddReferences(SystemRef);
@@ -977,7 +937,7 @@ var a = new C2();
         {
             var opt = TestOptions.ReleaseDll;
             var comp = CSharpCompilation.Create("Compilation");
-            var vbComp = VB.VisualBasicCompilation.Create("CompilationVB");
+            var vbComp = VB.VBCompilation.Create("CompilationVB");
             vbComp = vbComp.AddReferences(SystemRef);
             var compRef = vbComp.ToMetadataReference();
             Assert.Throws<ArgumentException>(() => comp.AddReferences(compRef));
@@ -1191,12 +1151,12 @@ var a = new C2();
             });
 
             var s1 = "Imports System.Text";
-            SyntaxTree t1 = VB.VisualBasicSyntaxTree.ParseText(s1);
+            SyntaxTree t1 = VB.VBSyntaxTree.ParseText(s1);
             SyntaxTree t2 = t1;
             var t3 = t2;
 
-            var vbComp = VB.VisualBasicCompilation.Create("CompilationVB");
-            vbComp = vbComp.AddSyntaxTrees(t1, VB.VisualBasicSyntaxTree.ParseText("Using Foo;"));
+            var vbComp = VB.VBCompilation.Create("CompilationVB");
+            vbComp = vbComp.AddSyntaxTrees(t1, VB.VBSyntaxTree.ParseText("Using Foo;"));
             // Throw exception when cast SyntaxTree
             foreach (var item in vbComp.SyntaxTrees)
             {
@@ -1504,7 +1464,9 @@ public class TestClass
         {
             var c1 = CSharpCompilation.Create("c", options: TestOptions.ReleaseDll);
 
-            var c2 = c1.WithOptions(TestOptions.ReleaseDll.WithMetadataReferenceResolver(new MetadataFileReferenceResolver(ImmutableArray.Create<string>(), null)));
+            var c2 = c1.WithOptions(TestOptions.ReleaseDll.WithMetadataReferenceResolver(
+                new AssemblyReferenceResolver(new MetadataFileReferenceResolver(ImmutableArray.Create<string>(), null), MetadataFileReferenceProvider.Default)));
+
             Assert.False(c1.ReferenceManagerEquals(c2));
 
             var c3 = c1.WithOptions(TestOptions.ReleaseDll.WithMetadataReferenceResolver(c1.Options.MetadataReferenceResolver));
@@ -1520,18 +1482,6 @@ public class TestClass
             Assert.False(c1.ReferenceManagerEquals(c2));
 
             var c3 = c1.WithOptions(TestOptions.ReleaseDll.WithXmlReferenceResolver(c1.Options.XmlReferenceResolver));
-            Assert.True(c1.ReferenceManagerEquals(c3));
-        }
-
-        [Fact]
-        public void ReferenceManagerReuse_WithMetadataReferenceProvider()
-        {
-            var c1 = CSharpCompilation.Create("c", options: TestOptions.ReleaseDll);
-
-            var c2 = c1.WithOptions(TestOptions.ReleaseDll.WithMetadataReferenceProvider(new MetadataFileReferenceProvider()));
-            Assert.False(c1.ReferenceManagerEquals(c2));
-
-            var c3 = c1.WithOptions(TestOptions.ReleaseDll.WithMetadataReferenceProvider(c1.Options.MetadataReferenceProvider));
             Assert.True(c1.ReferenceManagerEquals(c3));
         }
 

@@ -679,8 +679,8 @@ Class Test
     End Sub
 End Class
 </literal>.Value
-            Dim tree = VisualBasicSyntaxTree.ParseText(SourceText.From(text), VisualBasicParseOptions.Default, "")
-            Dim comp As VisualBasicCompilation = VisualBasicCompilation.Create("Test", {tree}, {mscorlibRef, module1Ref})
+            Dim tree = VBSyntaxTree.ParseText(SourceText.From(text), VBParseOptions.Default, "")
+            Dim comp As VBCompilation = VBCompilation.Create("Test", {tree}, {mscorlibRef, module1Ref})
 
             Dim globalNS = comp.SourceModule.GlobalNamespace
             Dim classTest = DirectCast(globalNS.GetTypeMembers("Test").First(), NamedTypeSymbol)
@@ -867,7 +867,7 @@ Namespace ShadowsGen203
 End Namespace
     </file>
 </compilation>, {compRef1})
-            '  VisualBasicCompilation.Create("Test", CompilationOptions.Default, {SyntaxTree.ParseCompilationUnit(text1)}, {compRef1})
+            '  VBCompilation.Create("Test", CompilationOptions.Default, {SyntaxTree.ParseCompilationUnit(text1)}, {compRef1})
 
             Dim ns = DirectCast(comp.GlobalNamespace.GetMembers("ShadowsGen203").Single(), NamespaceSymbol)
             Dim mod1 = DirectCast(ns.GetMembers("m1").Single(), NamedTypeSymbol)
@@ -3193,7 +3193,7 @@ BC37218: Type 'ns.CF2' forwarded to assembly 'ForwardedTypes1, Version=0.0.0.0, 
                 }, TestOptions.ReleaseDll)
 
             ' Exported types in .Net modules cause PEVerify to fail.
-            CompileAndVerify(compilation, emitOptions:=EmitOptions.RefEmitBug, verify:=False).VerifyDiagnostics()
+            CompileAndVerify(compilation, emitOptions:=TestEmitters.RefEmitBug, verify:=False).VerifyDiagnostics()
 
             compilation = CreateCompilationWithMscorlibAndReferences(emptySource,
                 {

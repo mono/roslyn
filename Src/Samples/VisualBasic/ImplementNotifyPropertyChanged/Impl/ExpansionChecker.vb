@@ -91,8 +91,8 @@ Friend Class ExpansionChecker
                                     ByRef getter As AccessorBlockSyntax,
                                     ByRef setter As AccessorBlockSyntax) As Boolean
         Dim accessors = propertyBlock.Accessors
-        getter = accessors.FirstOrDefault(Function(ad) ad.Begin.VisualBasicKind() = SyntaxKind.GetAccessorStatement)
-        setter = accessors.FirstOrDefault(Function(ad) ad.Begin.VisualBasicKind() = SyntaxKind.SetAccessorStatement)
+        getter = accessors.FirstOrDefault(Function(ad) ad.Begin.VBKind() = SyntaxKind.GetAccessorStatement)
+        setter = accessors.FirstOrDefault(Function(ad) ad.Begin.VBKind() = SyntaxKind.SetAccessorStatement)
         Return getter IsNot Nothing AndAlso setter IsNot Nothing
     End Function
 
@@ -178,7 +178,7 @@ Friend Class ExpansionChecker
             Return False
         End If
 
-        If condition Is Nothing OrElse condition.VisualBasicKind() <> SyntaxKind.NotEqualsExpression Then
+        If condition Is Nothing OrElse condition.VBKind() <> SyntaxKind.NotEqualsExpression Then
             Return False
         End If
 
@@ -211,7 +211,7 @@ Friend Class ExpansionChecker
             Return False
         End If
 
-        If condition.VisualBasicKind() <> SyntaxKind.EqualsExpression Then
+        If condition.VBKind() <> SyntaxKind.EqualsExpression Then
             Return False
         End If
 
@@ -222,7 +222,7 @@ Friend Class ExpansionChecker
 
     Private Shared Function IsAssignmentOfPropertyValueParameterToBackingField(statement As StatementSyntax,
                                                                         backingField As IFieldSymbol, semanticModel As SemanticModel) As Boolean
-        If statement.VisualBasicKind() <> SyntaxKind.SimpleAssignmentStatement Then
+        If statement.VBKind() <> SyntaxKind.SimpleAssignmentStatement Then
             Return False
         End If
 
@@ -235,22 +235,22 @@ Friend Class ExpansionChecker
                                                                    ByRef condition As ExpressionSyntax) As Boolean
         Dim multiLineIfStatement = TryCast(ifStatement, MultiLineIfBlockSyntax)
         If multiLineIfStatement IsNot Nothing Then
-            If multiLineIfStatement.IfPart.Statements.Count <> 1 Then
+            If multiLineIfStatement.Statements.Count <> 1 Then
                 Return False
             End If
 
-            statement = multiLineIfStatement.IfPart.Statements.First()
-            condition = multiLineIfStatement.IfPart.Begin.Condition
+            statement = multiLineIfStatement.Statements.First()
+            condition = multiLineIfStatement.IfStatement.Condition
             Return True
         Else
             Dim singleLineIfStatement = TryCast(ifStatement, SingleLineIfStatementSyntax)
             If singleLineIfStatement IsNot Nothing Then
-                If singleLineIfStatement.IfPart.Statements.Count <> 1 Then
+                If singleLineIfStatement.Statements.Count <> 1 Then
                     Return False
                 End If
 
-                statement = singleLineIfStatement.IfPart.Statements.First()
-                condition = singleLineIfStatement.IfPart.Begin.Condition
+                statement = singleLineIfStatement.Statements.First()
+                condition = singleLineIfStatement.Condition
                 Return True
             End If
             Return False

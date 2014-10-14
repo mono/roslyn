@@ -1,4 +1,4 @@
-﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 '-----------------------------------------------------------------------------
 ' Contains the definition of the BlockContext
@@ -52,8 +52,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
 
                     _isWithinIteratorMethodOrLambdaOrProperty = DirectCast(statement, PropertyStatementSyntax).Modifiers.Any(SyntaxKind.IteratorKeyword)
 
-                Case SyntaxKind.PropertyGetBlock,
-                     SyntaxKind.PropertySetBlock
+                Case SyntaxKind.GetAccessorBlock,
+                     SyntaxKind.SetAccessorBlock
 
                     Debug.Assert(_prev IsNot Nothing)
                     _isWithinIteratorMethodOrLambdaOrProperty = _prev.IsWithinIteratorMethodOrLambdaOrProperty
@@ -111,13 +111,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             End If
         End Sub
 
-        Friend Function KindEndsBlock(kind As SyntaxKind) As Boolean
+        Friend Overridable Function KindEndsBlock(kind As SyntaxKind) As Boolean
             Return _endKind = kind
         End Function
 
         Friend ReadOnly Property IsLineIf As Boolean
             Get
-                Return _kind = SyntaxKind.SingleLineIfStatement OrElse _kind = SyntaxKind.SingleLineElsePart
+                Return _kind = SyntaxKind.SingleLineIfStatement OrElse _kind = SyntaxKind.SingleLineElseClause
             End Get
         End Property
 
@@ -188,7 +188,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             End Get
         End Property
 
-        Friend Sub Add(node As VisualBasicSyntaxNode)
+        Friend Sub Add(node As VBSyntaxNode)
             Debug.Assert(node IsNot Nothing)
 
             _statements.Add(DirectCast(node, StatementSyntax))
@@ -284,9 +284,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
 
         Friend MustOverride Function Parse() As StatementSyntax
 
-        Friend MustOverride Function ProcessSyntax(syntax As VisualBasicSyntaxNode) As BlockContext
+        Friend MustOverride Function ProcessSyntax(syntax As VBSyntaxNode) As BlockContext
 
-        Friend MustOverride Function CreateBlockSyntax(statement As StatementSyntax) As VisualBasicSyntaxNode
+        Friend MustOverride Function CreateBlockSyntax(statement As StatementSyntax) As VBSyntaxNode
 
         Friend MustOverride Function EndBlock(statement As StatementSyntax) As BlockContext
 
@@ -361,9 +361,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Crumble = 8             ' Crumble the syntax and try to reuse the parts.
         End Enum
 
-        Friend MustOverride Function TryLinkSyntax(node As VisualBasicSyntaxNode, ByRef newContext As BlockContext) As LinkResult
+        Friend MustOverride Function TryLinkSyntax(node As VBSyntaxNode, ByRef newContext As BlockContext) As LinkResult
 
-        Friend Function LinkSyntax(node As VisualBasicSyntaxNode) As BlockContext
+        Friend Function LinkSyntax(node As VBSyntaxNode) As BlockContext
             Debug.Assert(node IsNot Nothing)
 
             Dim kind As SyntaxKind = node.Kind
@@ -406,7 +406,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return RecoverFromMismatchedEnd(DirectCast(node, StatementSyntax))
         End Function
 
-        Friend Function UseSyntax(node As VisualBasicSyntaxNode, ByRef newContext As BlockContext, Optional AddMissingTerminator As Boolean = False) As LinkResult
+        Friend Function UseSyntax(node As VBSyntaxNode, ByRef newContext As BlockContext, Optional AddMissingTerminator As Boolean = False) As LinkResult
             ' get off the current node as we are definitely using it and LinkStatement may need to look at next token
             Parser.GetNextSyntaxNode()
 
@@ -422,7 +422,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return LinkResult.Used
         End Function
 
-        Friend Function TryUseStatement(node As VisualBasicSyntaxNode, ByRef newContext As BlockContext) As LinkResult
+        Friend Function TryUseStatement(node As VBSyntaxNode, ByRef newContext As BlockContext) As LinkResult
             Dim statement = TryCast(node, StatementSyntax)
             If statement IsNot Nothing Then
                 ' get off the current node as we are definitely using it and LinkStatement may need to look at next token
@@ -433,7 +433,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         End Function
 
         ' Returns Nothing if the statement isn't processed
-        Friend Function TryProcessExecutableStatement(node As VisualBasicSyntaxNode) As BlockContext
+        Friend Function TryProcessExecutableStatement(node As VBSyntaxNode) As BlockContext
             ' top-level statements
             Select Case node.Kind
                 Case SyntaxKind.SingleLineIfStatement
@@ -468,7 +468,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
 
                     Add(Parser.ReportSyntaxError(node, ERRID.ERR_ElseIfNoMatchingIf))
 
-                Case SyntaxKind.DoStatement
+                Case SyntaxKind.SimpleDoStatement,
+                     SyntaxKind.DoWhileStatement,
+                     SyntaxKind.DoUntilStatement
                     Return New DoLoopBlockContext(DirectCast(node, StatementSyntax), Me)
 
                 Case SyntaxKind.ForStatement, SyntaxKind.ForEachStatement
@@ -505,7 +507,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     Return New TryBlockContext(DirectCast(node, StatementSyntax), Me)
 
                 Case SyntaxKind.CatchStatement, SyntaxKind.FinallyStatement
-                    Dim context = FindNearestInSameMethodScope(SyntaxKind.TryBlock, SyntaxKind.CatchPart, SyntaxKind.FinallyPart)
+                    Dim context = FindNearestInSameMethodScope(SyntaxKind.TryBlock, SyntaxKind.CatchBlock, SyntaxKind.FinallyBlock)
                     If context IsNot Nothing Then
                         RecoverFromMissingEnd(context)
                         Return context.ProcessSyntax(DirectCast(node, StatementSyntax))
@@ -515,20 +517,21 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     ' If needed this error can be moved to ParseCatchStatement.
                     Add(Parser.ReportSyntaxError(node, If(node.Kind = SyntaxKind.CatchStatement, ERRID.ERR_CatchNoMatchingTry, ERRID.ERR_FinallyNoMatchingTry)))
 
-                Case _
-                    SyntaxKind.SelectBlock,
-                    SyntaxKind.WhileBlock,
-                    SyntaxKind.WithBlock,
-                    SyntaxKind.SyncLockBlock,
-                    SyntaxKind.UsingBlock,
-                    SyntaxKind.TryBlock,
-                    SyntaxKind.DoLoopBottomTestBlock,
-                    SyntaxKind.DoLoopTopTestBlock,
-                    SyntaxKind.DoLoopForeverBlock,
-                    SyntaxKind.ForBlock,
-                    SyntaxKind.ForEachBlock,
-                    SyntaxKind.SingleLineIfStatement,
-                    SyntaxKind.MultiLineIfBlock
+                Case SyntaxKind.SelectBlock,
+                     SyntaxKind.WhileBlock,
+                     SyntaxKind.WithBlock,
+                     SyntaxKind.SyncLockBlock,
+                     SyntaxKind.UsingBlock,
+                     SyntaxKind.TryBlock,
+                     SyntaxKind.SimpleDoLoopBlock,
+                     SyntaxKind.DoWhileLoopBlock,
+                     SyntaxKind.DoUntilLoopBlock,
+                     SyntaxKind.DoLoopWhileBlock,
+                     SyntaxKind.DoLoopUntilBlock,
+                     SyntaxKind.ForBlock,
+                     SyntaxKind.ForEachBlock,
+                     SyntaxKind.SingleLineIfStatement,
+                     SyntaxKind.MultiLineIfBlock
                     ' Handle any block that can be created by this context
                     Add(node)
 
@@ -542,7 +545,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return Me
         End Function
 
-        Friend Function TryLinkStatement(node As VisualBasicSyntaxNode, ByRef newContext As BlockContext) As LinkResult
+        Friend Function TryLinkStatement(node As VBSyntaxNode, ByRef newContext As BlockContext) As LinkResult
             newContext = Nothing
             Select Case node.Kind
                 Case SyntaxKind.SelectBlock
@@ -561,19 +564,19 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     Return UseSyntax(node, newContext, DirectCast(node, UsingBlockSyntax).EndUsingStatement.IsMissing)
 
                 Case SyntaxKind.TryBlock
-                    Return UseSyntax(node, newContext, DirectCast(node, TryBlockSyntax).End.IsMissing)
+                    Return UseSyntax(node, newContext, DirectCast(node, TryBlockSyntax).EndTryStatement.IsMissing)
 
-                Case _
-                    SyntaxKind.DoLoopBottomTestBlock,
-                    SyntaxKind.DoLoopTopTestBlock,
-                    SyntaxKind.DoLoopForeverBlock
+                Case SyntaxKind.SimpleDoLoopBlock,
+                     SyntaxKind.DoWhileLoopBlock,
+                     SyntaxKind.DoUntilLoopBlock,
+                     SyntaxKind.DoLoopWhileBlock,
+                     SyntaxKind.DoLoopUntilBlock
+
                     Return UseSyntax(node, newContext, DirectCast(node, DoLoopBlockSyntax).LoopStatement.IsMissing)
 
-                Case _
-                    SyntaxKind.ForBlock,
-                    SyntaxKind.ForEachBlock
+                Case SyntaxKind.ForBlock,
+                     SyntaxKind.ForEachBlock
 
-                    Dim forBlock = DirectCast(node, ForBlockSyntax)
                     ' The EndOpt syntax can influence the next context in case it contains
                     ' several control variables. If they are still valid needs to be checked in the ForBlockContext.
                     ' This is the reason why we can't simply reuse the syntax here. 
@@ -584,7 +587,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     Return UseSyntax(node, newContext)
 
                 Case SyntaxKind.MultiLineIfBlock
-                    Return UseSyntax(node, newContext, DirectCast(node, MultiLineIfBlockSyntax).End.IsMissing)
+                    Return UseSyntax(node, newContext, DirectCast(node, MultiLineIfBlockSyntax).EndIfStatement.IsMissing)
 
                 Case SyntaxKind.NextStatement
                     ' Don't reuse a next statement. The parser matches the variable list with the for context blocks.
@@ -659,11 +662,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     'TODO rename this enum for consistency ERRID_MissingEndProperty
                     errorId = ERRID.ERR_EndProp
 
-                Case SyntaxKind.PropertyGetBlock
+                Case SyntaxKind.GetAccessorBlock
                     endStmt = SyntaxFactory.EndGetStatement(missingEndKeyword, InternalSyntaxFactory.MissingKeyword(SyntaxKind.GetKeyword))
                     errorId = ERRID.ERR_MissingEndGet
 
-                Case SyntaxKind.PropertySetBlock
+                Case SyntaxKind.SetAccessorBlock
                     endStmt = SyntaxFactory.EndSetStatement(missingEndKeyword, InternalSyntaxFactory.MissingKeyword(SyntaxKind.SetKeyword))
                     errorId = ERRID.ERR_MissingEndSet
 
@@ -672,24 +675,24 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     'TODO rename this enum for consistency ERRID_MissingEndProperty
                     errorId = ERRID.ERR_MissingEndEvent
 
-                Case SyntaxKind.AddHandlerBlock
+                Case SyntaxKind.AddHandlerAccessorBlock
                     endStmt = SyntaxFactory.EndAddHandlerStatement(missingEndKeyword, InternalSyntaxFactory.MissingKeyword(SyntaxKind.AddHandlerKeyword))
                     errorId = ERRID.ERR_MissingEndAddHandler
 
-                Case SyntaxKind.RemoveHandlerBlock
+                Case SyntaxKind.RemoveHandlerAccessorBlock
                     endStmt = SyntaxFactory.EndRemoveHandlerStatement(missingEndKeyword, InternalSyntaxFactory.MissingKeyword(SyntaxKind.RemoveHandlerKeyword))
                     errorId = ERRID.ERR_MissingEndRemoveHandler
 
-                Case SyntaxKind.RaiseEventBlock
+                Case SyntaxKind.RaiseEventAccessorBlock
                     endStmt = SyntaxFactory.EndRaiseEventStatement(missingEndKeyword, InternalSyntaxFactory.MissingKeyword(SyntaxKind.RaiseEventKeyword))
                     errorId = ERRID.ERR_MissingEndRaiseEvent
 
-                Case SyntaxKind.MultiLineIfBlock, SyntaxKind.ElseIfPart, SyntaxKind.ElsePart
+                Case SyntaxKind.MultiLineIfBlock, SyntaxKind.ElseIfBlock, SyntaxKind.ElseBlock
                     endStmt = SyntaxFactory.EndIfStatement(missingEndKeyword, InternalSyntaxFactory.MissingKeyword(SyntaxKind.IfKeyword))
                     errorId = ERRID.ERR_ExpectedEndIf
 
-                Case SyntaxKind.DoLoopForeverBlock, SyntaxKind.DoLoopTopTestBlock
-                    endStmt = SyntaxFactory.LoopStatement(InternalSyntaxFactory.MissingKeyword(SyntaxKind.LoopKeyword), Nothing)
+                Case SyntaxKind.SimpleDoLoopBlock, SyntaxKind.DoWhileLoopBlock
+                    endStmt = SyntaxFactory.SimpleLoopStatement(InternalSyntaxFactory.MissingKeyword(SyntaxKind.LoopKeyword), Nothing)
                     errorId = ERRID.ERR_ExpectedLoop
 
                 Case SyntaxKind.WhileBlock
@@ -767,32 +770,33 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                 Case SyntaxKind.PropertyBlock
                     Return SyntaxKind.EndPropertyStatement
 
-                Case SyntaxKind.PropertyGetBlock
+                Case SyntaxKind.GetAccessorBlock
                     Return SyntaxKind.EndGetStatement
 
-                Case SyntaxKind.PropertySetBlock
+                Case SyntaxKind.SetAccessorBlock
                     Return SyntaxKind.EndSetStatement
 
                 Case SyntaxKind.EventBlock
                     Return SyntaxKind.EndEventStatement
 
-                Case SyntaxKind.AddHandlerBlock
+                Case SyntaxKind.AddHandlerAccessorBlock
                     Return SyntaxKind.EndAddHandlerStatement
 
-                Case SyntaxKind.RemoveHandlerBlock
+                Case SyntaxKind.RemoveHandlerAccessorBlock
                     Return SyntaxKind.EndRemoveHandlerStatement
 
-                Case SyntaxKind.RaiseEventBlock
+                Case SyntaxKind.RaiseEventAccessorBlock
                     Return SyntaxKind.EndRaiseEventStatement
 
-                Case SyntaxKind.MultiLineIfBlock, SyntaxKind.ElseIfPart, SyntaxKind.ElsePart
+                Case SyntaxKind.MultiLineIfBlock, SyntaxKind.ElseIfBlock, SyntaxKind.ElseBlock
                     Return SyntaxKind.EndIfStatement
 
-                Case SyntaxKind.SingleLineIfStatement, SyntaxKind.SingleLineElsePart
+                Case SyntaxKind.SingleLineIfStatement, SyntaxKind.SingleLineElseClause
                     Return SyntaxKind.None
 
-                Case SyntaxKind.DoLoopForeverBlock, SyntaxKind.DoLoopTopTestBlock
-                    Return SyntaxKind.LoopStatement
+                Case SyntaxKind.SimpleDoLoopBlock,
+                     SyntaxKind.DoWhileLoopBlock
+                    Return SyntaxKind.SimpleLoopStatement
 
                 Case SyntaxKind.WhileBlock
                     Return SyntaxKind.EndWhileStatement
@@ -809,7 +813,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                 Case SyntaxKind.SelectBlock, SyntaxKind.CaseBlock, SyntaxKind.CaseElseBlock
                     Return SyntaxKind.EndSelectStatement
 
-                Case SyntaxKind.TryBlock, SyntaxKind.CatchPart, SyntaxKind.FinallyPart
+                Case SyntaxKind.TryBlock, SyntaxKind.CatchBlock, SyntaxKind.FinallyBlock
                     Return SyntaxKind.EndTryStatement
 
                 Case SyntaxKind.UsingBlock

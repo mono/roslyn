@@ -118,16 +118,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' Represents an Imports statement, which has one or more imports clauses.
         ''' </summary>
         ImportsStatement = 42                    ' ImportsStatementSyntax : DeclarationStatementSyntax : StatementSyntax
+
+        ' AliasImportsClause = 43                ' Removed.
+
         ''' <summary>
-        ''' Represents the clause of an Imports statement that defines an alias for a
-        ''' namespace or type.
+        ''' Represents the clause of an Imports statement that imports all members of a type or namespace or aliases a type or namespace.
         ''' </summary>
-        AliasImportsClause = 43                  ' AliasImportsClauseSyntax : ImportsClauseSyntax
-        ''' <summary>
-        ''' Represents the clause of an Imports statement that imports all members of a
-        ''' namespace.
-        ''' </summary>
-        MembersImportsClause = 44                ' MembersImportsClauseSyntax : ImportsClauseSyntax
+        SimpleImportsClause = 44                ' SimpleImportsClauseSyntax : ImportsClauseSyntax
         ''' <summary>
         ''' Defines a XML namespace for XML expressions.
         ''' </summary>
@@ -268,31 +265,31 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' beginning declaration, a body of executable statements and an end statement.
         ''' Examples include property accessors and custom event accessors.
         ''' </summary>
-        PropertyGetBlock = 83                    ' AccessorBlockSyntax : MethodBlockBaseSyntax : DeclarationStatementSyntax : StatementSyntax
+        GetAccessorBlock = 83                    ' AccessorBlockSyntax : MethodBlockBaseSyntax : DeclarationStatementSyntax : StatementSyntax
         ''' <summary>
         ''' Represents an accessor block member declaration: A declaration that has a
         ''' beginning declaration, a body of executable statements and an end statement.
         ''' Examples include property accessors and custom event accessors.
         ''' </summary>
-        PropertySetBlock = 84                    ' AccessorBlockSyntax : MethodBlockBaseSyntax : DeclarationStatementSyntax : StatementSyntax
+        SetAccessorBlock = 84                    ' AccessorBlockSyntax : MethodBlockBaseSyntax : DeclarationStatementSyntax : StatementSyntax
         ''' <summary>
         ''' Represents an accessor block member declaration: A declaration that has a
         ''' beginning declaration, a body of executable statements and an end statement.
         ''' Examples include property accessors and custom event accessors.
         ''' </summary>
-        AddHandlerBlock = 85                     ' AccessorBlockSyntax : MethodBlockBaseSyntax : DeclarationStatementSyntax : StatementSyntax
+        AddHandlerAccessorBlock = 85                     ' AccessorBlockSyntax : MethodBlockBaseSyntax : DeclarationStatementSyntax : StatementSyntax
         ''' <summary>
         ''' Represents an accessor block member declaration: A declaration that has a
         ''' beginning declaration, a body of executable statements and an end statement.
         ''' Examples include property accessors and custom event accessors.
         ''' </summary>
-        RemoveHandlerBlock = 86                  ' AccessorBlockSyntax : MethodBlockBaseSyntax : DeclarationStatementSyntax : StatementSyntax
+        RemoveHandlerAccessorBlock = 86                  ' AccessorBlockSyntax : MethodBlockBaseSyntax : DeclarationStatementSyntax : StatementSyntax
         ''' <summary>
         ''' Represents an accessor block member declaration: A declaration that has a
         ''' beginning declaration, a body of executable statements and an end statement.
         ''' Examples include property accessors and custom event accessors.
         ''' </summary>
-        RaiseEventBlock = 87                     ' AccessorBlockSyntax : MethodBlockBaseSyntax : DeclarationStatementSyntax : StatementSyntax
+        RaiseEventAccessorBlock = 87                     ' AccessorBlockSyntax : MethodBlockBaseSyntax : DeclarationStatementSyntax : StatementSyntax
         ''' <summary>
         ''' Represents a block property declaration: A declaration that has a beginning
         ''' declaration, some get or set accessor blocks and an end statement.
@@ -656,29 +653,26 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' Represents the Else part of an If statement, consisting of a Else statement,
         ''' followed by a body of statement controlled by that Else.
         ''' </summary>
-        SingleLineElsePart = 172                 ' SingleLineElsePartSyntax
+        SingleLineElseClause = 172                 ' SingleLineElseClauseSyntax
         ''' <summary>
         ''' Represents a block If...Then...Else...EndIf Statement. The Kind property can be
         ''' used to determine if it is a block or line If.
         ''' </summary>
         MultiLineIfBlock = 173                   ' MultiLineIfBlockSyntax : ExecutableStatementSyntax : StatementSyntax
+
+        ' IfPart = 179                           ' This node was removed.
+
         ''' <summary>
         ''' Represents part of an If statement, consisting of a beginning statement (If or
         ''' ElseIf), followed by a body of statement controlled by that beginning
         ''' statement. The Kind property returns if this is an If or ElseIf.
         ''' </summary>
-        IfPart = 179                             ' IfPartSyntax
-        ''' <summary>
-        ''' Represents part of an If statement, consisting of a beginning statement (If or
-        ''' ElseIf), followed by a body of statement controlled by that beginning
-        ''' statement. The Kind property returns if this is an If or ElseIf.
-        ''' </summary>
-        ElseIfPart = 180                         ' IfPartSyntax
+        ElseIfBlock = 180                         ' ElseIfBlockSyntax
         ''' <summary>
         ''' Represents the Else part of an If statement, consisting of a Else statement,
         ''' followed by a body of statement controlled by that Else.
         ''' </summary>
-        ElsePart = 181                           ' ElsePartSyntax
+        ElseBlock = 181                           ' ElseBlockSyntax
         ''' <summary>
         ''' Represents the If part or ElseIf part of a If...End If block (or line If). This
         ''' statement is always the Begin of a IfPart. The Kind can be examined to
@@ -700,25 +694,21 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' Represents an entire Try...Catch...Finally...End Try statement.
         ''' </summary>
         TryBlock = 185                           ' TryBlockSyntax : ExecutableStatementSyntax : StatementSyntax
-        ''' <summary>
-        ''' Represents part of an Try...Catch...Finally...End Try statement, consisting of
-        ''' a beginning statement (Try, Catch or Finally), followed by a body of statements
-        ''' controlled by that beginning statement. The Kind property returns which kind of
-        ''' part this is.
-        ''' </summary>
-        TryPart = 186                            ' TryPartSyntax
+
+        ' TryPart = 186                            ' This node was removed.
+
         ''' <summary>
         ''' Represents a Catch part of an Try...Catch...Finally...End Try statement,
         ''' consisting of a Catch statement, followed by a body of statements controlled by
         ''' that Catch statement. The Kind property returns which kind of part this is.
         ''' </summary>
-        CatchPart = 187                          ' CatchPartSyntax
+        CatchBlock = 187                          ' CatchBlockSyntax
         ''' <summary>
         ''' Represents the Finally part of an Try...Catch...Finally...End Try statement,
         ''' consisting of a Finally statement, followed by a body of statements controlled
         ''' by the Finally.
         ''' </summary>
-        FinallyPart = 188                        ' FinallyPartSyntax
+        FinallyBlock = 188                        ' FinallyBlockSyntax
         ''' <summary>
         ''' Represents the Try part part of a Try...Catch...Finally...End Try. This
         ''' statement is always the Begin of a TryPart.
@@ -844,47 +834,21 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' of a SyncLockBlock.
         ''' </summary>
         SyncLockStatement = 226                  ' SyncLockStatementSyntax : StatementSyntax
-        ''' <summary>
-        ''' Represents a Do-Loop block. The Kind property can be used to determine if this
-        ''' is a top-test, bottom-test or infinite loop.
-        ''' </summary>
-        DoLoopTopTestBlock = 227                 ' DoLoopBlockSyntax : ExecutableStatementSyntax : StatementSyntax
-        ''' <summary>
-        ''' Represents a Do-Loop block. The Kind property can be used to determine if this
-        ''' is a top-test, bottom-test or infinite loop.
-        ''' </summary>
-        DoLoopBottomTestBlock = 228              ' DoLoopBlockSyntax : ExecutableStatementSyntax : StatementSyntax
-        ''' <summary>
-        ''' Represents a Do-Loop block. The Kind property can be used to determine if this
-        ''' is a top-test, bottom-test or infinite loop.
-        ''' </summary>
-        DoLoopForeverBlock = 229                 ' DoLoopBlockSyntax : ExecutableStatementSyntax : StatementSyntax
-        ''' <summary>
-        ''' The Do statement that begins a Do-Loop block. This statement always occurs as
-        ''' the Begin of a DoLoopBlock.
-        ''' </summary>
-        DoStatement = 230                        ' DoStatementSyntax : StatementSyntax
-        ''' <summary>
-        ''' The Loop statement that ends a Do-Loop block. This statement always occurs as
-        ''' the End of a DoLoopBlock.
-        ''' </summary>
-        LoopStatement = 231                      ' LoopStatementSyntax : StatementSyntax
-        ''' <summary>
-        ''' Represents a "While expression" or "Until expression" in a Do or Loop
-        ''' statement. The Kind of the clause can be "WhileClause" or "UntilClause" to
-        ''' indicate which kind of clause.
-        ''' </summary>
-        WhileClause = 232                        ' WhileUntilClauseSyntax
-        ''' <summary>
-        ''' Represents a "While expression" or "Until expression" in a Do or Loop
-        ''' statement. The Kind of the clause can be "WhileClause" or "UntilClause" to
-        ''' indicate which kind of clause.
-        ''' </summary>
-        UntilClause = 233                        ' WhileUntilClauseSyntax
-        ''' <summary>
-        ''' The While statement that begins a While...End While block. This statement
-        ''' always occurs as the Begin of a WhileBlock.
-        ''' </summary>
+
+        'DoLoopTopTestBlock = 227                'Removed
+
+        'DoLoopBottomTestBlock = 228             'Removed
+
+        'DoLoopForeverBlock = 229                'Removed
+
+        'DoStatement = 230                       'Removed
+
+        'LoopStatement = 231                     'Removed
+
+        'WhileClause = 232                       'Removed
+
+        'UntilClause = 233                       'Removed
+
         WhileStatement = 234                     ' WhileStatementSyntax : StatementSyntax
         ''' <summary>
         ''' Represents a For or For Each block, including the introducting statement, the
@@ -1389,13 +1353,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' </summary>
         OmittedArgument = 348                    ' OmittedArgumentSyntax : ArgumentSyntax
         ''' <summary>
-        ''' Represents a simple argument that is just an expression.
+        ''' Represents an argument that is just an optional argument name and an expression.
         ''' </summary>
         SimpleArgument = 349                     ' SimpleArgumentSyntax : ArgumentSyntax
-        ''' <summary>
-        ''' Represents a named argument, such as "Value:=7".
-        ''' </summary>
-        NamedArgument = 350                      ' NamedArgumentSyntax : ArgumentSyntax
+
+        ' NamedArgument = 350                    ' Removed
+
         ''' <summary>
         ''' Represents a range argument, such as "0 to 5", used in array bounds. The
         ''' "Value" property represents the upper bound of the range.
@@ -3084,6 +3047,82 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' directive.
         ''' </summary>
         BadDirectiveTrivia = 753                 ' BadDirectiveTriviaSyntax : DirectiveTriviaSyntax : StructuredTriviaSyntax
+
+        ''' <summary>
+        ''' Represents an alias identifier followed by an "=" token in an Imports clause.
+        ''' </summary>
+        ImportAliasClause = 754                   ' ImportAliasClauseSyntax : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents an identifier name followed by a ":=" token in a named argument.
+        ''' </summary>
+        NameColonEquals = 755
+
+        ''' <summary>
+        ''' Represents a "Do ... Loop" block.
+        ''' </summary>
+        SimpleDoLoopBlock = 756                 ' DoLoopBlockSyntax : ExecutableStatementSyntax : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents a "Do ... Loop" block.
+        ''' </summary>
+        DoWhileLoopBlock = 757                 ' DoLoopBlockSyntax : ExecutableStatementSyntax : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents a "Do ... Loop" block.
+        ''' </summary>
+        DoUntilLoopBlock = 758                 ' DoLoopBlockSyntax : ExecutableStatementSyntax : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents a "Do ... Loop" block.
+        ''' </summary>
+        DoLoopWhileBlock = 759                 ' DoLoopBlockSyntax : ExecutableStatementSyntax : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents a "Do ... Loop" block.
+        ''' </summary>
+        DoLoopUntilBlock = 760                 ' DoLoopBlockSyntax : ExecutableStatementSyntax : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents a simple "Do" statement that begins a "Do ... Loop" block.
+        ''' </summary>
+        SimpleDoStatement = 770                 ' DoStatement : StatementSyntax : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents a "Do While" statement that begins a "Do ... Loop" block.
+        ''' </summary>
+        DoWhileStatement = 771                 ' DoStatement : StatementSyntax : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents a "Do Until" statement that begins a "Do ... Loop" block.
+        ''' </summary>
+        DoUntilStatement = 772                 ' DoStatement : StatementSyntax : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents a simple "Loop" statement that end a "Do ... Loop" block.
+        ''' </summary>
+        SimpleLoopStatement = 773               ' LoopStatement : StatementSyntax : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents a "Loop While" statement that end a "Do ... Loop" block.
+        ''' </summary>
+        LoopWhileStatement = 774               ' LoopStatement : StatementSyntax : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents a "Loop Until" statement that end a "Do ... Loop" block.
+        ''' </summary>
+        LoopUntilStatement = 775               ' LoopStatement : StatementSyntax : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents a "While ..." clause of a "Do" or "Loop" statement.
+        ''' </summary>
+        WhileClause = 776                       ' WhileOrUntilClause : VBSyntaxNode
+
+        ''' <summary>
+        ''' Represents an "Until ..." clause of a "Do" or "Loop" statement.
+        ''' </summary>
+        UntilClause = 777                       ' WhileOrUntilClause : VBSyntaxNode
+
     End Enum
 
 End Namespace

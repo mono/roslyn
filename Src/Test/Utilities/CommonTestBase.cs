@@ -71,12 +71,12 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             CommonTestBase test,
             Compilation compilation,
             IEnumerable<ModuleData> dependencies,
-            EmitOptions emitOptions,
+            TestEmitters emitOptions,
             IEnumerable<ResourceDescription> manifestResources,
             SignatureDescription[] expectedSignatures,
             string expectedOutput,
-            Action<PEAssembly, EmitOptions> assemblyValidator,
-            Action<IModuleSymbol, EmitOptions> symbolValidator,
+            Action<PEAssembly, TestEmitters> assemblyValidator,
+            Action<IModuleSymbol, TestEmitters> symbolValidator,
             bool collectEmittedAssembly,
             bool verify);
 
@@ -86,10 +86,10 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             string source,
             IEnumerable<MetadataReference> additionalRefs = null,
             IEnumerable<ModuleData> dependencies = null,
-            EmitOptions emitOptions = EmitOptions.All,
-            Action<IModuleSymbol, EmitOptions> sourceSymbolValidator = null,
-            Action<PEAssembly, EmitOptions> assemblyValidator = null,
-            Action<IModuleSymbol, EmitOptions> symbolValidator = null,
+            TestEmitters emitOptions = TestEmitters.All,
+            Action<IModuleSymbol, TestEmitters> sourceSymbolValidator = null,
+            Action<PEAssembly, TestEmitters> assemblyValidator = null,
+            Action<IModuleSymbol, TestEmitters> symbolValidator = null,
             SignatureDescription[] expectedSignatures = null,
             string expectedOutput = null,
             CompilationOptions options = null,
@@ -115,10 +115,10 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             string[] sources,
             IEnumerable<MetadataReference> additionalRefs = null,
             IEnumerable<ModuleData> dependencies = null,
-            EmitOptions emitOptions = EmitOptions.All,
-            Action<IModuleSymbol, EmitOptions> sourceSymbolValidator = null,
-            Action<PEAssembly, EmitOptions> assemblyValidator = null,
-            Action<IModuleSymbol, EmitOptions> symbolValidator = null,
+            TestEmitters emitOptions = TestEmitters.All,
+            Action<IModuleSymbol, TestEmitters> sourceSymbolValidator = null,
+            Action<PEAssembly, TestEmitters> assemblyValidator = null,
+            Action<IModuleSymbol, TestEmitters> symbolValidator = null,
             SignatureDescription[] expectedSignatures = null,
             string expectedOutput = null,
             CompilationOptions options = null,
@@ -150,10 +150,10 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             Compilation compilation,
             IEnumerable<ResourceDescription> manifestResources = null,
             IEnumerable<ModuleData> dependencies = null,
-            EmitOptions emitOptions = EmitOptions.All,
-            Action<IModuleSymbol, EmitOptions> sourceSymbolValidator = null,
-            Action<PEAssembly, EmitOptions> assemblyValidator = null,
-            Action<IModuleSymbol, EmitOptions> symbolValidator = null,
+            TestEmitters emitOptions = TestEmitters.All,
+            Action<IModuleSymbol, TestEmitters> sourceSymbolValidator = null,
+            Action<PEAssembly, TestEmitters> assemblyValidator = null,
+            Action<IModuleSymbol, TestEmitters> symbolValidator = null,
             SignatureDescription[] expectedSignatures = null,
             string expectedOutput = null,
             bool collectEmittedAssembly = true,
@@ -236,7 +236,7 @@ Example app.config:
             string source,
             MetadataReference[] additionalRefs = null,
             IEnumerable<ModuleData> dependencies = null,
-            EmitOptions emitOptions = EmitOptions.All,
+            TestEmitters emitOptions = TestEmitters.All,
             Action<IModuleSymbol> sourceSymbolValidator = null,
             Action<PEAssembly> validator = null,
             Action<IModuleSymbol> symbolValidator = null,
@@ -266,7 +266,7 @@ Example app.config:
         internal CompilationVerifier CompileAndVerifyOnWin8Only(
             Compilation compilation,
             IEnumerable<ModuleData> dependencies = null,
-            EmitOptions emitOptions = EmitOptions.All,
+            TestEmitters emitOptions = TestEmitters.All,
             Action<IModuleSymbol> sourceSymbolValidator = null,
             Action<PEAssembly> validator = null,
             Action<IModuleSymbol> symbolValidator = null,
@@ -295,7 +295,7 @@ Example app.config:
             string[] sources,
             MetadataReference[] additionalRefs = null,
             IEnumerable<ModuleData> dependencies = null,
-            EmitOptions emitOptions = EmitOptions.All,
+            TestEmitters emitOptions = TestEmitters.All,
             Action<IModuleSymbol> sourceSymbolValidator = null,
             Action<PEAssembly> validator = null,
             Action<IModuleSymbol> symbolValidator = null,
@@ -320,7 +320,7 @@ Example app.config:
                 verify: verify && OSVersion.IsWin8);
         }
 
-        private static Action<T, EmitOptions> Translate<T>(Action<T> action)
+        private static Action<T, TestEmitters> Translate<T>(Action<T> action)
         {
             if (action != null)
             {
@@ -332,7 +332,7 @@ Example app.config:
             }
         }
         
-        internal CompilationVerifier CompileAndVerifyFieldMarshal(string source, Dictionary<string, byte[]> expectedBlobs, bool isField = true, EmitOptions emitOptions = EmitOptions.All)
+        internal CompilationVerifier CompileAndVerifyFieldMarshal(string source, Dictionary<string, byte[]> expectedBlobs, bool isField = true, TestEmitters emitOptions = TestEmitters.All)
         {
             return CompileAndVerifyFieldMarshal(
                 source, 
@@ -345,12 +345,12 @@ Example app.config:
                 emitOptions);
         }
 
-        internal CompilationVerifier CompileAndVerifyFieldMarshal(string source, Func<string, PEAssembly, EmitOptions, byte[]> getExpectedBlob, bool isField = true, EmitOptions emitOptions = EmitOptions.All)
+        internal CompilationVerifier CompileAndVerifyFieldMarshal(string source, Func<string, PEAssembly, TestEmitters, byte[]> getExpectedBlob, bool isField = true, TestEmitters emitOptions = TestEmitters.All)
         {
             return CompileAndVerify(source, emitOptions: emitOptions, options: CompilationOptionsReleaseDll, assemblyValidator: (assembly, options) => MarshalAsMetadataValidator(assembly, getExpectedBlob, options, isField));
         }
 
-        static internal void RunValidators(CompilationVerifier verifier, EmitOptions emitOptions, Action<PEAssembly, EmitOptions> assemblyValidator, Action<IModuleSymbol, EmitOptions> symbolValidator)
+        static internal void RunValidators(CompilationVerifier verifier, TestEmitters emitOptions, Action<PEAssembly, TestEmitters> assemblyValidator, Action<IModuleSymbol, TestEmitters> symbolValidator)
         {
             if (assemblyValidator != null)
             {
@@ -381,19 +381,19 @@ Example app.config:
             CommonTestBase test,
             Compilation compilation,
             IEnumerable<ModuleData> dependencies,
-            EmitOptions emitOptions,
+            TestEmitters emitOptions,
             IEnumerable<ResourceDescription> manifestResources,
             SignatureDescription[] expectedSignatures,
             string expectedOutput,
-            Action<PEAssembly, EmitOptions> assemblyValidator,
-            Action<IModuleSymbol, EmitOptions> symbolValidator,
+            Action<PEAssembly, TestEmitters> assemblyValidator,
+            Action<IModuleSymbol, TestEmitters> symbolValidator,
             bool collectEmittedAssembly,
             bool verify)
         {
             CompilationVerifier verifier = null;
 
             // We only handle CCI emit here for now...
-            if (emitOptions != EmitOptions.RefEmit)
+            if (emitOptions != TestEmitters.RefEmit)
             {
                 verifier = new CompilationVerifier(test, compilation, dependencies);
 
@@ -401,7 +401,7 @@ Example app.config:
 
                 // We're dual-purposing EmitOptions here.  In this context, it
                 // tells the validator the version of Emit that is calling it. 
-                RunValidators(verifier, EmitOptions.CCI, assemblyValidator, symbolValidator);
+                RunValidators(verifier, TestEmitters.CCI, assemblyValidator, symbolValidator);
             }
 
             return verifier;
@@ -504,21 +504,21 @@ Example app.config:
                 referencedCompilations);
         }
 
-        protected VisualBasic.VisualBasicCompilation CreateVisualBasicCompilation(
+        protected VisualBasic.VBCompilation CreateVisualBasicCompilation(
             XCData code,
-            VisualBasic.VisualBasicParseOptions parseOptions = null,
-            VisualBasic.VisualBasicCompilationOptions compilationOptions = null,
+            VisualBasic.VBParseOptions parseOptions = null,
+            VisualBasic.VBCompilationOptions compilationOptions = null,
             string assemblyName = null,
             IEnumerable<MetadataReference> referencedAssemblies = null)
         {
             return CreateVisualBasicCompilation(assemblyName, code, parseOptions, compilationOptions, referencedAssemblies, referencedCompilations: null);
         }
 
-        protected VisualBasic.VisualBasicCompilation CreateVisualBasicCompilation(
+        protected VisualBasic.VBCompilation CreateVisualBasicCompilation(
             string assemblyName,
             XCData code,
-            VisualBasic.VisualBasicParseOptions parseOptions = null,
-            VisualBasic.VisualBasicCompilationOptions compilationOptions = null,
+            VisualBasic.VBParseOptions parseOptions = null,
+            VisualBasic.VBCompilationOptions compilationOptions = null,
             IEnumerable<MetadataReference> referencedAssemblies = null,
             IEnumerable<Compilation> referencedCompilations = null)
         {
@@ -586,21 +586,21 @@ Example app.config:
             return CSharp.CSharpCompilation.Create(assemblyName, new[] { tree }, references, compilationOptions);
         }
 
-        protected VisualBasic.VisualBasicCompilation CreateVisualBasicCompilation(
+        protected VisualBasic.VBCompilation CreateVisualBasicCompilation(
             string code,
-            VisualBasic.VisualBasicParseOptions parseOptions = null,
-            VisualBasic.VisualBasicCompilationOptions compilationOptions = null,
+            VisualBasic.VBParseOptions parseOptions = null,
+            VisualBasic.VBCompilationOptions compilationOptions = null,
             string assemblyName = null,
             IEnumerable<MetadataReference> referencedAssemblies = null)
         {
             return CreateVisualBasicCompilation(assemblyName, code, parseOptions, compilationOptions, referencedAssemblies, referencedCompilations: null);
         }
 
-        protected VisualBasic.VisualBasicCompilation CreateVisualBasicCompilation(
+        protected VisualBasic.VBCompilation CreateVisualBasicCompilation(
             string assemblyName,
             string code,
-            VisualBasic.VisualBasicParseOptions parseOptions = null,
-            VisualBasic.VisualBasicCompilationOptions compilationOptions = null,
+            VisualBasic.VBParseOptions parseOptions = null,
+            VisualBasic.VBCompilationOptions compilationOptions = null,
             IEnumerable<MetadataReference> referencedAssemblies = null,
             IEnumerable<Compilation> referencedCompilations = null)
         {
@@ -611,12 +611,12 @@ Example app.config:
                         
             if (parseOptions == null)
             {
-                parseOptions = VisualBasic.VisualBasicParseOptions.Default;
+                parseOptions = VisualBasic.VBParseOptions.Default;
             }
 
             if (compilationOptions == null)
             {
-                compilationOptions = new VisualBasic.VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+                compilationOptions = new VisualBasic.VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
             }
 
             var references = new List<MetadataReference>();
@@ -636,9 +636,9 @@ Example app.config:
 
             AddReferencedCompilations(referencedCompilations, references);
 
-            var tree = VisualBasic.VisualBasicSyntaxTree.ParseText(code, options: parseOptions);
+            var tree = VisualBasic.VBSyntaxTree.ParseText(code, options: parseOptions);
 
-            return VisualBasic.VisualBasicCompilation.Create(assemblyName, new[] { tree }, references, compilationOptions);
+            return VisualBasic.VBCompilation.Create(assemblyName, new[] { tree }, references, compilationOptions);
         }
 
         private void AddReferencedCompilations(IEnumerable<Compilation> referencedCompilations, List<MetadataReference> references)

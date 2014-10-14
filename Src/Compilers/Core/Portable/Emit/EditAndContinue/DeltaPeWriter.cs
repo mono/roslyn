@@ -180,7 +180,7 @@ namespace Microsoft.CodeAnalysis.Emit
                 guidStreamLengthAdded: (int)this.guidWriter.BaseStream.Length + this.previousGeneration.GuidStreamLengthAdded,
                 anonymousTypeMap: ((IPEDeltaAssemblyBuilder)moduleBuilder).GetAnonymousTypeMap(),
                 localsForMethodsAddedOrChanged: AddRange(locals, this.previousGeneration.LocalsForMethodsAddedOrChanged, replace: true),
-                localNames: baseline.LocalNames);
+                debugInformationProvider: baseline.DebugInformationProvider);
         }
 
         private static IReadOnlyDictionary<K, V> AddRange<K, V>(IReadOnlyDictionary<K, V> a, IReadOnlyDictionary<K, V> b, bool replace = false)
@@ -209,13 +209,13 @@ namespace Microsoft.CodeAnalysis.Emit
         /// <summary>
         /// Return tokens for all modified methods.
         /// </summary>
-        public void GetMethodTokens(ICollection<uint> methods)
+        public void GetMethodTokens(ICollection<MethodHandle> methods)
         {
             foreach (var def in this.methodDefs.GetRows())
             {
                 if (!this.methodDefs.IsAddedNotChanged(def))
                 {
-                    methods.Add(TokenTypeIds.MethodDef | this.methodDefs[def]);
+                    methods.Add(MetadataTokens.MethodHandle((int)this.methodDefs[def]));
                 }
             }
         }

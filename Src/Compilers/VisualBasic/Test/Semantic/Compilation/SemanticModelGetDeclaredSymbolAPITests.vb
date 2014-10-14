@@ -397,41 +397,41 @@ End Namespace
 
             ' Test NamespaceBlockSyntax and NamespaceStatementSyntax
             Dim n1Syntax = tree.GetCompilationUnitRoot().DescendantNodes().OfType(Of NamespaceBlockSyntax)().First()
-            Dim sym1 = model1.GetDeclaredSymbol(DirectCast(n1Syntax, VisualBasicSyntaxNode))
+            Dim sym1 = model1.GetDeclaredSymbol(DirectCast(n1Syntax, VBSyntaxNode))
             Assert.Equal("N1", sym1.ToDisplayString(SymbolDisplayFormat.TestFormat))
-            Dim sym2 = model1.GetDeclaredSymbol(DirectCast(n1Syntax.NamespaceStatement, VisualBasicSyntaxNode))
+            Dim sym2 = model1.GetDeclaredSymbol(DirectCast(n1Syntax.NamespaceStatement, VBSyntaxNode))
             Assert.Equal(sym1, sym2)
 
             ' Test TypeBlocks in the Namespace (Interface, Class, Structure, Module)
             Dim typeBlocks = n1Syntax.DescendantNodes().OfType(Of TypeBlockSyntax)()
             For Each tb In typeBlocks
-                sym1 = model1.GetDeclaredSymbol(DirectCast(tb, VisualBasicSyntaxNode))
-                sym2 = model1.GetDeclaredSymbol(DirectCast(tb.Begin, VisualBasicSyntaxNode))
+                sym1 = model1.GetDeclaredSymbol(DirectCast(tb, VBSyntaxNode))
+                sym2 = model1.GetDeclaredSymbol(DirectCast(tb.Begin, VBSyntaxNode))
                 Assert.Equal(sym1.ToDisplayString(SymbolDisplayFormat.TestFormat), sym2.ToDisplayString(SymbolDisplayFormat.TestFormat))
                 Assert.Equal(sym1, sym2)
             Next
 
             ' Test EnumBlockSyntax and EnumStatementSyntax
             Dim e1Syntax = tree.GetCompilationUnitRoot().DescendantNodes().OfType(Of EnumBlockSyntax)().First()
-            sym1 = model1.GetDeclaredSymbol(DirectCast(e1Syntax, VisualBasicSyntaxNode))
+            sym1 = model1.GetDeclaredSymbol(DirectCast(e1Syntax, VBSyntaxNode))
             Assert.Equal("N1.E1", sym1.ToDisplayString(SymbolDisplayFormat.TestFormat))
 
-            sym2 = model1.GetDeclaredSymbol(DirectCast(e1Syntax.EnumStatement, VisualBasicSyntaxNode))
+            sym2 = model1.GetDeclaredSymbol(DirectCast(e1Syntax.EnumStatement, VBSyntaxNode))
             Assert.Equal(sym1, sym2)
 
             ' Test ClassBlockSyntax and ClassStatementSyntax
             Dim c1Syntax = tree.GetCompilationUnitRoot().DescendantNodes().OfType(Of ClassBlockSyntax)().First()
-            sym1 = model1.GetDeclaredSymbol(DirectCast(c1Syntax, VisualBasicSyntaxNode))
+            sym1 = model1.GetDeclaredSymbol(DirectCast(c1Syntax, VBSyntaxNode))
             Assert.Equal("N1.C1", sym1.ToDisplayString(SymbolDisplayFormat.TestFormat))
 
-            sym2 = model1.GetDeclaredSymbol(DirectCast(c1Syntax.Begin, VisualBasicSyntaxNode))
+            sym2 = model1.GetDeclaredSymbol(DirectCast(c1Syntax.Begin, VBSyntaxNode))
             Assert.Equal(sym1, sym2)
 
             ' Test MethodBlock Members of C1
             Dim methodBlocks = c1Syntax.DescendantNodes().OfType(Of MethodBlockSyntax)()
             For Each mb In methodBlocks
-                sym1 = model1.GetDeclaredSymbol(DirectCast(mb, VisualBasicSyntaxNode))
-                sym2 = model1.GetDeclaredSymbol(DirectCast(mb.Begin, VisualBasicSyntaxNode))
+                sym1 = model1.GetDeclaredSymbol(DirectCast(mb, VBSyntaxNode))
+                sym2 = model1.GetDeclaredSymbol(DirectCast(mb.Begin, VBSyntaxNode))
                 Assert.Equal(sym1.ToDisplayString(SymbolDisplayFormat.TestFormat), sym2.ToDisplayString(SymbolDisplayFormat.TestFormat))
                 Assert.Equal(sym1, sym2)
             Next
@@ -439,8 +439,8 @@ End Namespace
             ' Test PropertyBlock Members of C1
             Dim propertyBlocks = c1Syntax.DescendantNodes().OfType(Of PropertyBlockSyntax)()
             For Each pb In propertyBlocks
-                sym1 = model1.GetDeclaredSymbol(DirectCast(pb, VisualBasicSyntaxNode))
-                sym2 = model1.GetDeclaredSymbol(DirectCast(pb.PropertyStatement, VisualBasicSyntaxNode))
+                sym1 = model1.GetDeclaredSymbol(DirectCast(pb, VBSyntaxNode))
+                sym2 = model1.GetDeclaredSymbol(DirectCast(pb.PropertyStatement, VBSyntaxNode))
                 Assert.Equal(sym1.ToDisplayString(SymbolDisplayFormat.TestFormat), sym2.ToDisplayString(SymbolDisplayFormat.TestFormat))
                 Assert.Equal(sym1, sym2)
             Next
@@ -748,7 +748,7 @@ BC30460: 'End Class' must be preceded by a matching 'Class'.
             CompilationUtils.AssertTheseDiagnostics(compilation, expectedErrors)
         End Sub
 
-        Private Function GetNamespaceSymbol(compilation As VisualBasicCompilation,
+        Private Function GetNamespaceSymbol(compilation As VBCompilation,
                                             semanticModel As SemanticModel,
                                             treeName As String,
                                             stringInDecl As String) As INamespaceSymbol
@@ -887,7 +887,7 @@ BC30460: 'End Class' must be preceded by a matching 'Class'.
             CompilationUtils.AssertTheseDiagnostics(compilation, expectedErrors)
         End Sub
 
-        Private Function GetMethodSymbol(compilation As VisualBasicCompilation,
+        Private Function GetMethodSymbol(compilation As VBCompilation,
                                             semanticModel As SemanticModel,
                                             treeName As String,
                                             stringInDecl As String,
@@ -895,7 +895,7 @@ BC30460: 'End Class' must be preceded by a matching 'Class'.
             Return DirectCast(GetMethodBaseSymbol(compilation, semanticModel, treeName, stringInDecl, syntax), MethodSymbol)
         End Function
 
-        Private Function GetPropertySymbol(compilation As VisualBasicCompilation,
+        Private Function GetPropertySymbol(compilation As VBCompilation,
                                             semanticModel As SemanticModel,
                                             treeName As String,
                                             stringInDecl As String,
@@ -903,7 +903,7 @@ BC30460: 'End Class' must be preceded by a matching 'Class'.
             Return DirectCast(GetMethodBaseSymbol(compilation, semanticModel, treeName, stringInDecl, syntax), PropertySymbol)
         End Function
 
-        Private Function GetMethodBaseSymbol(compilation As VisualBasicCompilation,
+        Private Function GetMethodBaseSymbol(compilation As VBCompilation,
                                             semanticModel As SemanticModel,
                                             treeName As String,
                                             stringInDecl As String,
@@ -1160,7 +1160,7 @@ End Class
 
         End Sub
 
-        Private Function GetParameterSymbol(compilation As VisualBasicCompilation,
+        Private Function GetParameterSymbol(compilation As VBCompilation,
                                             semanticModel As SemanticModel,
                                             treeName As String,
                                             stringInDecl As String,
@@ -1176,7 +1176,7 @@ End Class
             Return semanticModel.GetDeclaredSymbol(syntax)
         End Function
 
-        Private Function GetLabelSymbol(compilation As VisualBasicCompilation,
+        Private Function GetLabelSymbol(compilation As VBCompilation,
                                     semanticModel As SemanticModel,
                                     treeName As String,
                                     stringInDecl As String,
@@ -1478,12 +1478,12 @@ End Class
             Dim regularPropBlockSyntax = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.PropertyBlock, 2).AsNode(), PropertyBlockSyntax)
             Assert.Equal(regularPropSymbol, model.GetDeclaredSymbol(regularPropBlockSyntax))
 
-            Dim defPropGetBlockSyntax = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.PropertyGetBlock, 1).AsNode(), AccessorBlockSyntax)
+            Dim defPropGetBlockSyntax = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.GetAccessorBlock, 1).AsNode(), AccessorBlockSyntax)
             Assert.Equal("Public Overridable Property Get DefProp(p As Integer) As String", model.GetDeclaredSymbol(defPropGetBlockSyntax).ToString())
             Assert.True(TypeOf (model.GetDeclaredSymbol(defPropGetBlockSyntax)) Is MethodSymbol, "API should return a MethodSymbol")
-            Dim defPropSetBlockSyntax = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.PropertySetBlock, 1).AsNode(), AccessorBlockSyntax)
+            Dim defPropSetBlockSyntax = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.SetAccessorBlock, 1).AsNode(), AccessorBlockSyntax)
             Assert.Equal("Public Overridable Property Set DefProp(p As Integer, value As String)", model.GetDeclaredSymbol(defPropSetBlockSyntax).ToString())
-            Dim regularPropSetBlockSyntax = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.PropertySetBlock, 2).AsNode(), AccessorBlockSyntax)
+            Dim regularPropSetBlockSyntax = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.SetAccessorBlock, 2).AsNode(), AccessorBlockSyntax)
             Assert.Equal("Public Property Set RegularProp(value As String)", model.GetDeclaredSymbol(regularPropSetBlockSyntax).ToString())
 
             Dim defPropGetSyntax = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.GetAccessorStatement, 1).AsNode(), MethodBaseSyntax)
@@ -1520,7 +1520,7 @@ End Class
             Dim tree = compilation.SyntaxTrees(0)
             Dim model = compilation.GetSemanticModel(tree)
 
-            Dim importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.AliasImportsClause, 1).AsNode(), AliasImportsClauseSyntax)
+            Dim importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.SimpleImportsClause, 1).AsNode(), SimpleImportsClauseSyntax)
             Dim aliasSymbol = DirectCast(model.GetDeclaredSymbol(importsClause), AliasSymbol)
             Assert.NotNull(aliasSymbol)
             Assert.Equal("M", aliasSymbol.Name)
@@ -1532,30 +1532,28 @@ End Class
             Assert.False(aliasSymbol.IsOverridable)
             Assert.False(aliasSymbol.IsShared)
             Assert.Equal(1, aliasSymbol.DeclaringSyntaxReferences.Length)
-            Assert.Equal(SyntaxKind.AliasImportsClause, aliasSymbol.DeclaringSyntaxReferences.First.GetSyntax().VisualBasicKind)
+            Assert.Equal(SyntaxKind.SimpleImportsClause, aliasSymbol.DeclaringSyntaxReferences.First.GetSyntax().VBKind)
             Assert.Equal(Accessibility.NotApplicable, aliasSymbol.DeclaredAccessibility)
             Dim x8 As Symbol = aliasSymbol.ContainingSymbol
             Assert.Equal(aliasSymbol.Locations.Item(0).GetHashCode, aliasSymbol.GetHashCode)
             Assert.Equal(aliasSymbol, aliasSymbol)
             Assert.NotNull(aliasSymbol)
-            importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.AliasImportsClause, 2).AsNode(), AliasImportsClauseSyntax)
+            importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.SimpleImportsClause, 2).AsNode(), SimpleImportsClauseSyntax)
             Assert.Equal("MS_=Microsoft", model.GetDeclaredSymbol(importsClause).ToTestDisplayString())
-            importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.AliasImportsClause, 3).AsNode(), AliasImportsClauseSyntax)
+            importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.SimpleImportsClause, 3).AsNode(), SimpleImportsClauseSyntax)
             Assert.Equal("Sys=System.Collections", model.GetDeclaredSymbol(importsClause).ToTestDisplayString())
-            importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.AliasImportsClause, 4).AsNode(), AliasImportsClauseSyntax)
+            importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.SimpleImportsClause, 4).AsNode(), SimpleImportsClauseSyntax)
             Assert.Equal("Sys_Collections=System", model.GetDeclaredSymbol(importsClause).ToTestDisplayString())
-            importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.AliasImportsClause, 5).AsNode(), AliasImportsClauseSyntax)
+            importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.SimpleImportsClause, 5).AsNode(), SimpleImportsClauseSyntax)
             Assert.Equal("Sys_Collections_BitArray=System.Collections.BitArray", model.GetDeclaredSymbol(importsClause).ToTestDisplayString())
-            importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.AliasImportsClause, 6).AsNode(), AliasImportsClauseSyntax)
+            importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.SimpleImportsClause, 6).AsNode(), SimpleImportsClauseSyntax)
             Assert.Equal("MS_=System.Collections", model.GetDeclaredSymbol(importsClause).ToTestDisplayString())
-            importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.AliasImportsClause, 7).AsNode(), AliasImportsClauseSyntax)
+            importsClause = DirectCast(tree.FindNodeOrTokenByKind(SyntaxKind.SimpleImportsClause, 7).AsNode(), SimpleImportsClauseSyntax)
             Assert.Equal("M=System.Collections", model.GetDeclaredSymbol(importsClause).ToTestDisplayString())
 
-            Dim genericSyntax = tree.FindNodeOrTokenByKind(SyntaxKind.AliasImportsClause, 7).AsNode()
+            Dim genericSyntax = tree.FindNodeOrTokenByKind(SyntaxKind.SimpleImportsClause, 7).AsNode()
             Assert.Equal("M=System.Collections", model.GetDeclaredSymbolFromSyntaxNode(genericSyntax).ToTestDisplayString())
         End Sub
-
-
 
         <Fact()>
         Public Sub TestGetDeclaredSymbolForOnErrorGotoLabels()
@@ -1632,10 +1630,10 @@ Imports VB6 = Microsoft.VisualBasic
 
             Dim treeA = CompilationUtils.GetTree(compilation, "a.vb")
             Dim bindingsA = compilation.GetSemanticModel(treeA)
-            Dim node = treeA.GetCompilationUnitRoot().FindToken(treeA.GetCompilationUnitRoot().ToFullString().IndexOf("VB6")).Parent
+            Dim node = treeA.GetCompilationUnitRoot().FindToken(treeA.GetCompilationUnitRoot().ToFullString().IndexOf("VB6")).Parent.Parent
             Dim symbol = bindingsA.GetDeclaredSymbol(node)
 
-            Assert.Equal(SyntaxKind.AliasImportsClause, node.VisualBasicKind)
+            Assert.Equal(SyntaxKind.SimpleImportsClause, node.VBKind)
             Assert.Null(symbol)
 
         End Sub
@@ -1778,7 +1776,7 @@ End Namespace
             Assert.Equal(nsSymbol, model.GetDeclaredSymbol(DirectCast(nsSyntax.Parent, NamespaceBlockSyntax)))
         End Sub
 
-        Private Function GetTypeParameterSymbol(compilation As VisualBasicCompilation,
+        Private Function GetTypeParameterSymbol(compilation As VBCompilation,
                                                 semanticModel As SemanticModel,
                                                 treeName As String,
                                                 stringInDecl As String,
@@ -1892,7 +1890,7 @@ BC30001: Statement is not valid in a namespace.
             CompilationUtils.AssertTheseDeclarationDiagnostics(compilation, expectedErrors)
         End Sub
 
-        Private Function GetVariableSymbol(compilation As VisualBasicCompilation,
+        Private Function GetVariableSymbol(compilation As VBCompilation,
                                            semanticModel As SemanticModel,
                                            treeName As String,
                                            stringInDecl As String,
@@ -2497,22 +2495,22 @@ End Namespace
             Dim treeA = CompilationUtils.GetTree(compilation, "a.vb")
             Dim bindingsA = compilation.GetSemanticModel(treeA)
             Dim node = treeA.GetCompilationUnitRoot().FindToken(treeA.GetCompilationUnitRoot().ToFullString().IndexOf("Delegate")).Parent
-            Assert.Equal(SyntaxKind.DelegateFunctionStatement, node.VisualBasicKind)
+            Assert.Equal(SyntaxKind.DelegateFunctionStatement, node.VBKind)
             Dim symbol = bindingsA.GetDeclaredSymbol(node)
             Assert.Equal("Foo.Bar.Server.FD", symbol.ToString())
 
             node = treeA.GetCompilationUnitRoot().FindToken(treeA.GetCompilationUnitRoot().ToFullString().IndexOf("Delegate", 30)).Parent
-            Assert.Equal(SyntaxKind.DelegateSubStatement, node.VisualBasicKind)
+            Assert.Equal(SyntaxKind.DelegateSubStatement, node.VBKind)
             symbol = bindingsA.GetDeclaredSymbol(node)
             Assert.Equal("Foo.Bar.Server.FD2", symbol.ToString())
 
             node = treeA.GetCompilationUnitRoot().FindToken(treeA.GetCompilationUnitRoot().ToFullString().IndexOf("Delegate", 140)).Parent
-            Assert.Equal(SyntaxKind.DelegateFunctionStatement, node.VisualBasicKind)
+            Assert.Equal(SyntaxKind.DelegateFunctionStatement, node.VBKind)
             symbol = bindingsA.GetDeclaredSymbol(node)
             Assert.Equal("Foo.Bar.Server.C1.FD3", symbol.ToString())
 
             node = treeA.GetCompilationUnitRoot().FindToken(treeA.GetCompilationUnitRoot().ToFullString().IndexOf("Delegate", 160)).Parent
-            Assert.Equal(SyntaxKind.DelegateSubStatement, node.VisualBasicKind)
+            Assert.Equal(SyntaxKind.DelegateSubStatement, node.VBKind)
             symbol = bindingsA.GetDeclaredSymbol(node)
             Assert.Equal("Foo.Bar.Server.C1.FD4", symbol.ToString())
         End Sub

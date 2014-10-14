@@ -109,7 +109,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         End Sub
 
         ' Figure out the "right" name spelling, it should come from lexically first declaration.
-        Private Shared Function GetBestName(declaration As MergedTypeDeclaration, compilation As VisualBasicCompilation) As String
+        Private Shared Function GetBestName(declaration As MergedTypeDeclaration, compilation As VBCompilation) As String
             Dim declarations As ImmutableArray(Of SingleTypeDeclaration) = declaration.Declarations
             Dim best As SingleTypeDeclaration = declarations(0)
 
@@ -354,7 +354,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Next
 
             If asyncMethods IsNot Nothing Then
-                Dim compilation As VisualBasicCompilation = Me.DeclaringCompilation
+                Dim compilation As VBCompilation = Me.DeclaringCompilation
 
                 ' NOTE: we don't check for use-site errors on the following two types, because 
                 '       for EmitMetadataOnly scenario this is not important, and for regular 
@@ -1743,7 +1743,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         Private Function BuildMembersAndInitializers(diagBag As DiagnosticBag) As MembersAndInitializers
 #If DEBUG Then
-            Dim threadId = ThreadingUtilities.GetCurrentThreadId()
+            Dim threadId = Environment.CurrentManagedThreadId
             Debug.Assert(m_computingMembersThreadId <> threadId)
             Interlocked.CompareExchange(m_computingMembersThreadId, threadId, 0)
 #End If
@@ -2676,7 +2676,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             ' initialization can happen because of a "= value" (InitializerOpt) or a "As New Type(...)" (AsClauseOpt)
             Dim initializerOpt = syntax.Initializer
             Dim asClauseOpt = syntax.AsClause
-            Dim equalsValueOrAsNewSyntax As VisualBasicSyntaxNode
+            Dim equalsValueOrAsNewSyntax As VBSyntaxNode
             If asClauseOpt IsNot Nothing AndAlso asClauseOpt.Kind = SyntaxKind.AsNewClause Then
                 equalsValueOrAsNewSyntax = asClauseOpt
             Else
@@ -3260,6 +3260,31 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 Return Me.MemberAndInitializerLookup.InstanceInitializers
             End Get
         End Property
+
+        Friend Function CalculateLocalSyntaxOffsetInSynthesizedConstructor(localPosition As Integer, localTree As SyntaxTree, isShared As Boolean) As Integer
+            Dim aggregateLength As Integer = 0
+
+            If IsScriptClass AndAlso Not isShared Then
+                For Each declaration In Me.m_declaration.Declarations
+                    Dim syntaxRef = declaration.SyntaxReference
+
+                    If localTree Is syntaxRef.SyntaxTree Then
+                        Return aggregateLength + localPosition
+                    End If
+
+                    aggregateLength += syntaxRef.Span.Length
+                Next
+
+                Throw ExceptionUtilities.Unreachable
+            End If
+
+            'Dim initializerStart As Integer = 0
+            'If TryFindDeclaringInitializerStart(localPosition, localTree, isShared, initializerStart, aggregateLength) Then
+            '    Return -aggregateLength + (localPosition - initializerStart)
+            'End If
+
+            Throw ExceptionUtilities.Unreachable
+        End Function
 
         Public Overrides ReadOnly Property MightContainExtensionMethods As Boolean
             Get

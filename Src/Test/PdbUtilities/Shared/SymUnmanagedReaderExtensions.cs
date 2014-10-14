@@ -9,11 +9,45 @@ namespace Roslyn.Utilities.Pdb
     internal static class SymUnmanagedReaderExtensions
     {
         private const int E_FAIL = unchecked((int)0x80004005);
-        
+
+        // The name of the attribute containing the byte array of custom debug info.
+        // MSCUSTOMDEBUGINFO in Dev10.
+        private const string CdiAttributeName = "MD2"; 
+
+        /// <summary>
+        /// Get the blob of binary custom debug info for a given method.
+        /// </summary>
+        internal static byte[] GetCustomDebugInfo(this ISymUnmanagedReader symReader, int methodToken)
+        {
+            int bytesAvailable;
+            symReader.GetSymAttribute(methodToken, CdiAttributeName, 0, out bytesAvailable, buffer: null);
+
+            if (bytesAvailable <= 0)
+            {
+                return null;
+            }
+
+            var buffer = new byte[bytesAvailable];
+            int bytesRead;
+            symReader.GetSymAttribute(methodToken, CdiAttributeName, bytesAvailable, out bytesRead, buffer);
+
+            if (bytesAvailable != bytesRead)
+            {
+                return null;
+            }
+
+            return buffer;
+        }
+
         internal static ISymUnmanagedMethod GetBaselineMethod(this ISymUnmanagedReader reader, int methodToken)
         {
+            return reader.GetMethodByVersion(methodToken, methodVersion: 1);
+        }
+
+        internal static ISymUnmanagedMethod GetMethodByVersion(this ISymUnmanagedReader reader, int methodToken, int methodVersion)
+        {
             ISymUnmanagedMethod method = null;
-            int hr = reader.GetMethodByVersion(methodToken, 1, out method);
+            int hr = reader.GetMethodByVersion(methodToken, methodVersion, out method);
             if (hr == E_FAIL)
             {
                 // method has no symbol info
@@ -21,7 +55,7 @@ namespace Roslyn.Utilities.Pdb
             }
             else if (hr != 0)
             {
-                throw new ArgumentException(string.Format("Invalid method token '0x{0:x8}' (hresult = 0x{1:x8})", methodToken, hr), "methodToken");
+                throw new ArgumentException(string.Format("Invalid method token '0x{0:x8}' or version '{1}' (hresult = 0x{2:x8})", methodToken, methodVersion, hr), "methodToken");
             }
 
             Debug.Assert(method != null);
