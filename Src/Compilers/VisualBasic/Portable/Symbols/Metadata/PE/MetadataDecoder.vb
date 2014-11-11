@@ -3,11 +3,8 @@
 Imports System.Collections.Concurrent
 Imports System.Collections.Generic
 Imports System.Collections.Immutable
-Imports System.Collections.ObjectModel
 Imports System.Reflection.Metadata
-Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
-Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 Imports System.Runtime.InteropServices
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE
@@ -154,7 +151,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE
                             m_ModuleSymbol.ContainingAssembly)
         End Function
 
-        Protected Overrides Function GetTypeHandleToTypeMap() As ConcurrentDictionary(Of TypeHandle, TypeSymbol)
+        Protected Overrides Function GetTypeHandleToTypeMap() As ConcurrentDictionary(Of TypeDefinitionHandle, TypeSymbol)
             Return m_ModuleSymbol.TypeHandleToTypeMap
         End Function
 
@@ -364,72 +361,53 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE
         End Function
 
         Protected Overrides Function SubstituteNoPiaLocalType(
-            typeDef As TypeHandle,
+            typeDef As TypeDefinitionHandle,
             ByRef name As MetadataTypeName,
             interfaceGuid As String,
             scope As String,
             identifier As String
         ) As TypeSymbol
-            Dim lookupIn As ImmutableArray(Of AssemblySymbol)
 
-            lookupIn = m_ModuleSymbol.ContainingAssembly.GetNoPiaResolutionAssemblies()
+            Dim result As TypeSymbol
 
-            Dim result As TypeSymbol = Nothing
+            Try
+                Dim isInterface As Boolean = Me.Module.IsInterfaceOrThrow(typeDef)
+                Dim baseType As TypeSymbol = Nothing
 
-            If Not lookupIn.IsDefault Then
-                Try
-                    Dim isInterface As Boolean = Me.Module.IsInterfaceOrThrow(typeDef)
-                    Dim baseType As TypeSymbol = Nothing
+                If Not isInterface Then
+                    Dim baseToken As Handle = Me.Module.GetBaseTypeOfTypeOrThrow(typeDef)
 
-                    If Not isInterface Then
-                        Dim baseToken As Handle = Me.Module.GetBaseTypeOfTypeOrThrow(typeDef)
-
-                        If Not baseToken.IsNil() Then
-                            baseType = GetTypeOfToken(baseToken)
-                        End If
+                    If Not baseToken.IsNil() Then
+                        baseType = GetTypeOfToken(baseToken)
                     End If
+                End If
 
-                    result = SubstituteNoPiaLocalType(
+                result = SubstituteNoPiaLocalType(
                         name,
                         isInterface,
                         baseType,
                         interfaceGuid,
                         scope,
                         identifier,
-                        m_ModuleSymbol.ContainingAssembly,
-                        lookupIn)
+                        m_ModuleSymbol.ContainingAssembly)
 
-                Catch mrEx As BadImageFormatException
-                    result = GetUnsupportedMetadataTypeSymbol(mrEx)
-                End Try
+            Catch mrEx As BadImageFormatException
+                result = GetUnsupportedMetadataTypeSymbol(mrEx)
+            End Try
 
-                Debug.Assert(result IsNot Nothing)
-            End If
+            Debug.Assert(result IsNot Nothing)
 
-            If result IsNot Nothing Then
-                Dim cache As ConcurrentDictionary(Of TypeHandle, TypeSymbol) = GetTypeHandleToTypeMap()
+            Dim cache As ConcurrentDictionary(Of TypeDefinitionHandle, TypeSymbol) = GetTypeHandleToTypeMap()
+            Debug.Assert(cache IsNot Nothing)
 
-                If cache IsNot Nothing Then
-                    Dim newresult As TypeSymbol = cache.GetOrAdd(typeDef, result)
-                    Debug.Assert(newresult Is result OrElse (newresult.Kind = SymbolKind.ErrorType))
-                    result = newresult
-                End If
-            End If
-
-            Return result
+            Dim newresult As TypeSymbol = cache.GetOrAdd(typeDef, result)
+            Debug.Assert(newresult Is result OrElse (newresult.Kind = SymbolKind.ErrorType))
+            Return newresult
         End Function
 
         ''' <summary>
         ''' Find canonical type for NoPia embedded type.
         ''' </summary>
-        ''' <param name="fullEmittedName"></param>
-        ''' <param name="isInterface"></param>
-        ''' <param name="baseType"></param>
-        ''' <param name="interfaceGuid"></param>
-        ''' <param name="scope"></param>
-        ''' <param name="identifier"></param>
-        ''' <param name="referringAssembly"></param>
-        ''' <param name="lookupIn"></param>
         ''' <returns>
         ''' Symbol for the canonical type or an ErrorTypeSymbol. Never returns null.
         ''' </returns>
@@ -440,8 +418,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE
             interfaceGuid As String,
             scope As String,
             identifier As String,
-            referringAssembly As AssemblySymbol,
-            lookupIn As ImmutableArray(Of AssemblySymbol)
+            referringAssembly As AssemblySymbol
         ) As NamedTypeSymbol
 
             Dim result As NamedTypeSymbol = Nothing
@@ -465,8 +442,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE
                 haveScopeGuidValue = Guid.TryParse(scope, scopeGuidValue)
             End If
 
-            For Each assembly As AssemblySymbol In lookupIn
-                If assembly Is Nothing OrElse assembly Is referringAssembly Then
+            For Each assembly As AssemblySymbol In referringAssembly.GetNoPiaResolutionAssemblies()
+                Debug.Assert(assembly IsNot Nothing)
+                If assembly Is referringAssembly Then
                     Continue For
                 End If
 
@@ -565,7 +543,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE
             Return result
         End Function
 
-        Protected Overrides Function FindMethodSymbolInType(typeSymbol As TypeSymbol, targetMethodDef As MethodHandle) As MethodSymbol
+        Protected Overrides Function FindMethodSymbolInType(typeSymbol As TypeSymbol, targetMethodDef As MethodDefinitionHandle) As MethodSymbol
             Debug.Assert(TypeOf typeSymbol Is PENamedTypeSymbol OrElse TypeOf typeSymbol Is ErrorTypeSymbol)
 
             For Each member In typeSymbol.GetMembersUnordered()
@@ -578,7 +556,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE
             Return Nothing
         End Function
 
-        Protected Overrides Function FindFieldSymbolInType(typeSymbol As TypeSymbol, fieldDef As FieldHandle) As FieldSymbol
+        Protected Overrides Function FindFieldSymbolInType(typeSymbol As TypeSymbol, fieldDef As FieldDefinitionHandle) As FieldSymbol
             Debug.Assert(TypeOf typeSymbol Is PENamedTypeSymbol OrElse TypeOf typeSymbol Is ErrorTypeSymbol)
 
             For Each member In typeSymbol.GetMembersUnordered()
@@ -604,7 +582,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE
             Return memberRefDecoder.FindMember(targetTypeSymbol, memberRef, methodsOnly)
         End Function
 
-        Protected Overrides Sub EnqueueTypeSymbolInterfacesAndBaseTypes(typeDefsToSearch As Queue(Of TypeHandle), typeSymbolsToSearch As Queue(Of TypeSymbol), typeSymbol As TypeSymbol)
+        Protected Overrides Sub EnqueueTypeSymbolInterfacesAndBaseTypes(typeDefsToSearch As Queue(Of TypeDefinitionHandle), typeSymbolsToSearch As Queue(Of TypeSymbol), typeSymbol As TypeSymbol)
             For Each iface In typeSymbol.InterfacesNoUseSiteDiagnostics
                 EnqueueTypeSymbol(typeDefsToSearch, typeSymbolsToSearch, iface)
             Next
@@ -612,7 +590,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE
             EnqueueTypeSymbol(typeDefsToSearch, typeSymbolsToSearch, typeSymbol.BaseTypeNoUseSiteDiagnostics)
         End Sub
 
-        Protected Overrides Sub EnqueueTypeSymbol(typeDefsToSearch As Queue(Of TypeHandle), typeSymbolsToSearch As Queue(Of TypeSymbol), typeSymbol As TypeSymbol)
+        Protected Overrides Sub EnqueueTypeSymbol(typeDefsToSearch As Queue(Of TypeDefinitionHandle), typeSymbolsToSearch As Queue(Of TypeSymbol), typeSymbol As TypeSymbol)
             If typeSymbol IsNot Nothing Then
                 Dim peTypeSymbol As PENamedTypeSymbol = TryCast(typeSymbol, PENamedTypeSymbol)
                 If peTypeSymbol IsNot Nothing AndAlso peTypeSymbol.ContainingPEModule Is m_ModuleSymbol Then
@@ -624,7 +602,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE
             End If
         End Sub
 
-        Protected Overrides Function GetMethodHandle(method As MethodSymbol) As MethodHandle
+        Protected Overrides Function GetMethodHandle(method As MethodSymbol) As MethodDefinitionHandle
             Dim peMethod As PEMethodSymbol = TryCast(method, PEMethodSymbol)
             If peMethod IsNot Nothing AndAlso peMethod.ContainingModule Is m_ModuleSymbol Then
                 Return peMethod.Handle

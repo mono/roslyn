@@ -1,24 +1,4 @@
-﻿' *********************************************************
-'
-' Copyright © Microsoft Corporation
-'
-' Licensed under the Apache License, Version 2.0 (the
-' "License"); you may not use this file except in
-' compliance with the License. You may obtain a copy of
-' the License at
-'
-' http://www.apache.org/licenses/LICENSE-2.0 
-'
-' THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES
-' OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-' INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES
-' OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR
-' PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
-'
-' See the Apache 2 License for the specific language
-' governing permissions and limitations under the License.
-'
-' *********************************************************
+﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports System.Composition
 Imports System.Threading
@@ -35,7 +15,7 @@ Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 Friend Class ImplementNotifyPropertyChangedCodeRefactoringProvider
     Inherits CodeRefactoringProvider
 
-    Public NotOverridable Overrides Async Function GetRefactoringsAsync(context As CodeRefactoringContext) As Task(Of IEnumerable(Of CodeAction))
+    Public NotOverridable Overrides Async Function ComputeRefactoringsAsync(context As CodeRefactoringContext) As Task
         Dim document = context.Document
         Dim textSpan = context.Span
         Dim cancellationToken = context.CancellationToken
@@ -53,11 +33,13 @@ Friend Class ImplementNotifyPropertyChangedCodeRefactoringProvider
 
         Dim properties = ExpansionChecker.GetExpandableProperties(textSpan, root, model)
 
-#Disable Warning RS005
-        Return If(properties.Any(),
-            {CodeAction.Create("Apply INotifyPropertyChanged pattern", Function(c) ImplementNotifyPropertyChangedAsync(document, root, model, properties, c))},
-            Nothing)
-#Enable Warning RS005
+        If properties.Any Then
+#Disable Warning RS0005
+            context.RegisterRefactoring(
+                CodeAction.Create("Apply INotifyPropertyChanged pattern",
+                                  Function(c) ImplementNotifyPropertyChangedAsync(document, root, model, properties, c)))
+#Enable Warning RS0005
+        End If
     End Function
 
     Private Async Function ImplementNotifyPropertyChangedAsync(document As Document, root As CompilationUnitSyntax, model As SemanticModel, properties As IEnumerable(Of ExpandablePropertyInfo), cancellationToken As CancellationToken) As Task(Of Document)

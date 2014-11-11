@@ -70,7 +70,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         /// Indices of duplicate assembly attributes, i.e. attributes that bind to the same constructor and have identical arguments, that must not be emitted.
         /// </summary>
         /// <remarks>
-        /// These indices correspond to the merged assembly attributes from source and added net modules, i.e. attributes returned by <see cref="M:GetAttributes"/> method.
+        /// These indices correspond to the merged assembly attributes from source and added net modules, i.e. attributes returned by <see cref="GetAttributes"/> method.
         /// </remarks>
         private HashSet<int> lazyDuplicateAttributeIndices;
 
@@ -1485,7 +1485,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             return (CommonAssemblyWellKnownAttributeData)attributesBag.DecodedWellKnownAttributeData;
         }
 
-        private static IEnumerable<Microsoft.Cci.SecurityAttribute> GetSecurityAttributes(CustomAttributesBag<CSharpAttributeData> attributesBag)
+        private static IEnumerable<Cci.SecurityAttribute> GetSecurityAttributes(CustomAttributesBag<CSharpAttributeData> attributesBag)
         {
             Debug.Assert(attributesBag.IsSealed);
 
@@ -1503,7 +1503,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             }
         }
 
-        internal IEnumerable<Microsoft.Cci.SecurityAttribute> GetSecurityAttributes()
+        internal IEnumerable<Cci.SecurityAttribute> GetSecurityAttributes()
         {
             // user defined security attributes:
 
@@ -1549,7 +1549,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
                         if (attribute != null)
                         {
-                            yield return new Microsoft.Cci.SecurityAttribute((Cci.SecurityAction)constantValue, attribute);
+                            yield return new Cci.SecurityAttribute((Cci.SecurityAction)constantValue, attribute);
                         }
                     }
                 }

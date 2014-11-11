@@ -4147,7 +4147,7 @@ End Interface
 
             Dim verifier = CompileAndVerify(compilation)
 
-            verifier.VerifyIL("Module1.VB$StateMachine_0_Test1(Of SM$T).MoveNext",
+            verifier.VerifyIL("Module1.VB$StateMachine_1_Test1(Of SM$T).MoveNext",
             <![CDATA[
 {
   // Code size      143 (0x8f)
@@ -4158,12 +4158,12 @@ End Interface
                 Short? V_3,
                 System.Exception V_4)
   IL_0000:  ldarg.0
-  IL_0001:  ldfld      "Friend $State As Integer"
+  IL_0001:  ldfld      "Module1.VB$StateMachine_1_Test1(Of SM$T).$State As Integer"
   IL_0006:  stloc.1
   .try
   {
     IL_0007:  ldarg.0
-    IL_0008:  ldfld      "Friend $VB$Local_x As SM$T()"
+    IL_0008:  ldfld      "Module1.VB$StateMachine_1_Test1(Of SM$T).$VB$Local_x As SM$T()"
     IL_000d:  ldc.i4.0
     IL_000e:  readonly.
     IL_0010:  ldelema    "SM$T"
@@ -4196,9 +4196,9 @@ End Interface
     IL_005a:  stloc.s    V_4
     IL_005c:  ldarg.0
     IL_005d:  ldc.i4.s   -2
-    IL_005f:  stfld      "Friend $State As Integer"
+    IL_005f:  stfld      "Module1.VB$StateMachine_1_Test1(Of SM$T).$State As Integer"
     IL_0064:  ldarg.0
-    IL_0065:  ldflda     "Friend $Builder As System.Runtime.CompilerServices.AsyncTaskMethodBuilder(Of Short?)"
+    IL_0065:  ldflda     "Module1.VB$StateMachine_1_Test1(Of SM$T).$Builder As System.Runtime.CompilerServices.AsyncTaskMethodBuilder(Of Short?)"
     IL_006a:  ldloc.s    V_4
     IL_006c:  call       "Sub System.Runtime.CompilerServices.AsyncTaskMethodBuilder(Of Short?).SetException(System.Exception)"
     IL_0071:  call       "Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()"
@@ -4208,9 +4208,9 @@ End Interface
   IL_0079:  ldc.i4.s   -2
   IL_007b:  dup
   IL_007c:  stloc.1
-  IL_007d:  stfld      "Friend $State As Integer"
+  IL_007d:  stfld      "Module1.VB$StateMachine_1_Test1(Of SM$T).$State As Integer"
   IL_0082:  ldarg.0
-  IL_0083:  ldflda     "Friend $Builder As System.Runtime.CompilerServices.AsyncTaskMethodBuilder(Of Short?)"
+  IL_0083:  ldflda     "Module1.VB$StateMachine_1_Test1(Of SM$T).$Builder As System.Runtime.CompilerServices.AsyncTaskMethodBuilder(Of Short?)"
   IL_0088:  ldloc.0
   IL_0089:  call       "Sub System.Runtime.CompilerServices.AsyncTaskMethodBuilder(Of Short?).SetResult(Short?)"
   IL_008e:  ret
@@ -4992,6 +4992,145 @@ End Module
 }
 ]]>)
 
+        End Sub
+
+        <Fact()>
+        Public Sub CodeGen_22()
+
+            Dim compilationDef =
+<compilation>
+    <file name="a.vb"><![CDATA[
+Imports System.Threading.Tasks
+Imports System.Runtime.CompilerServices
+
+Module Module1
+
+    Sub Main()
+        System.Console.WriteLine("---")
+        Dim s1 = {New S1 With {.F1 = 1}}
+        System.Console.WriteLine(s1(0).F1)
+        Dim x = Test1(Of S1)(s1)
+        Task.WaitAll(x)
+        System.Console.WriteLine(If(x.Result, "Null"))
+        System.Console.WriteLine("{0}", s1(0).F1)
+
+        System.Console.WriteLine("---")
+        Dim y = Test1(Of C1)({Nothing})
+        Task.WaitAll(y)
+        System.Console.WriteLine(If(y.Result, "Null"))
+
+        System.Console.WriteLine("---")
+        y = Test1(Of C1)({New C1()})
+        Task.WaitAll(y)
+        System.Console.WriteLine(If(y.Result, "Null"))
+
+        System.Console.WriteLine("---")
+        s1(0) = New S1 With {.F1 = 3}
+        System.Console.WriteLine(s1(0).F1)
+        Dim z = Test2(Of S1)(s1)
+        Task.WaitAll(z)
+        System.Console.WriteLine(If(z.Result, "Null"))
+        System.Console.WriteLine(s1(0).F1)
+
+        System.Console.WriteLine("---")
+        z = Test3(Of C1)({Nothing})
+        Task.WaitAll(z)
+        System.Console.WriteLine(If(z.Result, "Null"))
+
+        System.Console.WriteLine("---")
+        Dim c1 = {new C1()}
+        System.Console.WriteLine(c1(0))
+        z = Test3(Of C1)(c1)
+        Task.WaitAll(z)
+        System.Console.WriteLine(If(z.Result, "Null"))
+        System.Console.WriteLine(c1(0))
+    End Sub
+
+    Async Function Test1(Of T As I1)(x() As T) As Task(Of Object)
+        Return (x(0))?.CallAsync(Await PassAsync())
+    End Function
+
+    Async Function Test2(Of T As I1)(x() As T) As Task(Of Integer?)
+        Return (x(0))?.CallAsyncExt1(Await PassAsync())
+    End Function
+
+    Async Function Test3(Of T As I1)(x() As T) As Task(Of Integer?)
+        Return (x(0))?.CallAsyncExt2(Await PassAsync())
+    End Function
+
+    Async Function PassAsync() As Task(Of Integer)
+        Return 1
+    End Function
+
+    <Extension>    
+    Function CallAsyncExt1(Of T)(ByRef x As T, y as Integer) As Integer
+        System.Console.WriteLine("CallAsyncExt1")
+        x = Nothing
+        return 100
+    End Function
+
+    <Extension>    
+    Function CallAsyncExt2(Of T)(ByRef x As T, y as Integer) As Integer?
+        System.Console.WriteLine("CallAsyncExt2")
+        x = Nothing
+        return 101
+    End Function
+End Module
+
+Interface I1
+    Function CallAsync(x As Integer) As Object
+End Interface
+
+Structure S1
+    Implements I1
+
+    Public F1 As Integer
+
+    Public Function CallAsync(x As Integer) As Object Implements I1.CallAsync
+        System.Console.WriteLine("S1.CallAsync")
+        F1+=1
+        Return 1
+    End Function
+End Structure
+
+Class C1
+    Implements I1
+
+    Public Function CallAsync(x As Integer) As Object Implements I1.CallAsync
+        System.Console.WriteLine("C1.CallAsync")
+        Return 2
+    End Function
+End Class
+    ]]></file>
+</compilation>
+
+            Dim compilation = CompilationUtils.CreateCompilationWithReferences(compilationDef, {MscorlibRef_v4_0_30316_17626, MsvbRef_v4_0_30319_17929}, TestOptions.ReleaseExe, parseOptions:=TestOptions.ReleaseExe.ParseOptions)
+
+            Dim verifier = CompileAndVerify(compilation, expectedOutput:=
+            <![CDATA[
+---
+1
+S1.CallAsync
+1
+2
+---
+Null
+---
+C1.CallAsync
+2
+---
+3
+CallAsyncExt1
+100
+3
+---
+Null
+---
+C1
+CallAsyncExt2
+101
+C1
+]]>)
         End Sub
 
         <Fact()>
@@ -6712,6 +6851,149 @@ Else
   IL_0052:  call       "Sub System.Console.WriteLine(String)"
   IL_0057:  ret
 }
+]]>)
+        End Sub
+
+        <Fact()>
+        Public Sub Bug1078014_01()
+
+            Dim compilationDef =
+<compilation>
+    <file name="a.vb">
+Module Program
+    Sub Main()
+        Dim x = New Test()
+        x?.M1()?.M1()
+    End Sub
+End Module
+
+Class Test
+    Function M1() As Test
+        System.Console.WriteLine("Test.M1")
+        return Me
+    End Function
+End Class
+    </file>
+</compilation>
+
+            Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(compilationDef, TestOptions.ReleaseExe)
+
+            Dim verifier = CompileAndVerify(compilation, expectedOutput:=
+            <![CDATA[
+Test.M1
+Test.M1
+]]>)
+        End Sub
+
+        <Fact()>
+        Public Sub Bug1078014_02()
+
+            Dim compilationDef =
+<compilation>
+    <file name="a.vb">
+Module Program
+    Sub Main()
+        Dim x = New Test()
+        x?.M1()?.M1()?.M1()?.M1()?.M1()?.M1()?.M1()?.M1()
+    End Sub
+End Module
+
+Class Test
+    Function M1() As Test
+        System.Console.WriteLine("Test.M1")
+        return Me
+    End Function
+End Class
+    </file>
+</compilation>
+
+            Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(compilationDef, TestOptions.ReleaseExe)
+
+            Dim verifier = CompileAndVerify(compilation, expectedOutput:=
+            <![CDATA[
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+]]>)
+        End Sub
+
+        <Fact()>
+        Public Sub Bug1078014_03()
+
+            Dim compilationDef =
+<compilation>
+    <file name="a.vb">
+Module Program
+    Sub Main()
+        Dim x = New Test()
+        Call x?.M1()?.M1()?.M1()?.M1()?.M1()?.M1()?.M1()?.M1()
+    End Sub
+End Module
+
+Class Test
+    Function M1() As Test
+        System.Console.WriteLine("Test.M1")
+        return Me
+    End Function
+End Class
+    </file>
+</compilation>
+
+            Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(compilationDef, TestOptions.ReleaseExe)
+
+            Dim verifier = CompileAndVerify(compilation, expectedOutput:=
+            <![CDATA[
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+]]>)
+        End Sub
+
+        <Fact()>
+        Public Sub Bug1078014_04()
+
+            Dim compilationDef =
+<compilation>
+    <file name="a.vb">
+Module Program
+    Sub Main()
+        Dim x = New Test()
+        System.Console.WriteLine(x?.M1()?.M1()?.M1()?.M1()?.M1()?.M1()?.M1()?.M1())
+    End Sub
+End Module
+
+Class Test
+    Function M1() As Test
+        System.Console.WriteLine("Test.M1")
+        return Me
+    End Function
+End Class
+    </file>
+</compilation>
+
+            Dim compilation = CompilationUtils.CreateCompilationWithMscorlibAndVBRuntime(compilationDef, TestOptions.ReleaseExe)
+
+            Dim verifier = CompileAndVerify(compilation, expectedOutput:=
+            <![CDATA[
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test.M1
+Test
 ]]>)
         End Sub
 

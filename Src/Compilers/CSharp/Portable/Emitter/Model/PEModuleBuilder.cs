@@ -86,6 +86,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             get { return metadataName; }
         }
 
+        internal sealed override Cci.ICustomAttribute SynthesizeAttribute(WellKnownMember attributeConstructor)
+        {
+            return Compilation.SynthesizeAttribute(attributeConstructor);
+        }
+
         internal sealed override IEnumerable<Cci.ICustomAttribute> GetSourceAssemblyAttributes()
         {
             return SourceModule.ContainingSourceAssembly.GetCustomAttributesToEmit(this.CompilationState, emittingAssemblyAttributesInNetModule: OutputKind.IsNetModule());
@@ -99,11 +104,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
         internal sealed override IEnumerable<Cci.ICustomAttribute> GetSourceModuleAttributes()
         {
             return SourceModule.GetCustomAttributesToEmit(this.CompilationState);
-        }
-
-        internal sealed override Cci.ICustomAttribute SynthesizeAttribute(WellKnownMember attributeConstructor)
-        {
-            return Compilation.SynthesizeAttribute(attributeConstructor);
         }
 
         internal sealed override AssemblySymbol CorLibrary
@@ -460,7 +460,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
                         if (aliasedType.IsTopLevelType())
                         {
                             string fullEmittedName = MetadataHelpers.BuildQualifiedName(((Cci.INamespaceTypeReference)aliasedType).NamespaceName,
-                                                                                        Cci.PeWriter.GetMangledName(aliasedType));
+                                                                                        Cci.MetadataWriter.GetMangledName(aliasedType));
 
                             // First check against types declared in the primary module
                             if (ContainsTopLevelType(fullEmittedName))

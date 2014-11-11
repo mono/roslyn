@@ -165,7 +165,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             return new ArrayTypeSymbol(moduleSymbol.ContainingAssembly, elementType, CSharpCustomModifier.Convert(customModifiers));
         }
 
-        protected override ConcurrentDictionary<TypeHandle, TypeSymbol> GetTypeHandleToTypeMap()
+        protected override ConcurrentDictionary<TypeDefinitionHandle, TypeSymbol> GetTypeHandleToTypeMap()
         {
             return moduleSymbol.TypeHandleToTypeMap;
         }
@@ -426,79 +426,57 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
         }
 
         protected override TypeSymbol SubstituteNoPiaLocalType(
-            TypeHandle typeDef,
+            TypeDefinitionHandle typeDef,
             ref MetadataTypeName name,
             string interfaceGuid,
             string scope,
             string identifier)
         {
-            ImmutableArray<AssemblySymbol> lookupIn;
+            TypeSymbol result;
 
-            lookupIn = moduleSymbol.ContainingAssembly.GetNoPiaResolutionAssemblies();
-
-            TypeSymbol result = null;
-
-            if (!lookupIn.IsDefault)
+            try
             {
-                try
-                {
-                    bool isInterface = Module.IsInterfaceOrThrow(typeDef);
-                    TypeSymbol baseType = null;
+                bool isInterface = Module.IsInterfaceOrThrow(typeDef);
+                TypeSymbol baseType = null;
 
-                    if (!isInterface)
+                if (!isInterface)
+                {
+                    Handle baseToken = Module.GetBaseTypeOfTypeOrThrow(typeDef);
+
+                    if (!baseToken.IsNil)
                     {
-                        Handle baseToken = Module.GetBaseTypeOfTypeOrThrow(typeDef);
-
-                        if (!baseToken.IsNil)
-                        {
-                            baseType = GetTypeOfToken(baseToken);
-                        }
+                        baseType = GetTypeOfToken(baseToken);
                     }
-
-                    result = SubstituteNoPiaLocalType(
-                        ref name,
-                        isInterface,
-                        baseType,
-                        interfaceGuid,
-                        scope,
-                        identifier,
-                        moduleSymbol.ContainingAssembly,
-                        lookupIn);
-                }
-                catch (BadImageFormatException mrEx)
-                {
-                    result = GetUnsupportedMetadataTypeSymbol(mrEx);
                 }
 
-                Debug.Assert((object)result != null);
+                result = SubstituteNoPiaLocalType(
+                    ref name,
+                    isInterface,
+                    baseType,
+                    interfaceGuid,
+                    scope,
+                    identifier,
+                    moduleSymbol.ContainingAssembly);
             }
-
-            if ((object)result != null)
+            catch (BadImageFormatException mrEx)
             {
-                ConcurrentDictionary<TypeHandle, TypeSymbol> cache = GetTypeHandleToTypeMap();
-
-                if (cache != null)
-                {
-                    TypeSymbol newresult = cache.GetOrAdd(typeDef, result);
-                    Debug.Assert(ReferenceEquals(newresult, result) || (newresult.Kind == SymbolKind.ErrorType));
-                    result = newresult;
-                }
+                result = GetUnsupportedMetadataTypeSymbol(mrEx);
             }
 
-            return result;
+            Debug.Assert((object)result != null);
+
+            ConcurrentDictionary<TypeDefinitionHandle, TypeSymbol> cache = GetTypeHandleToTypeMap();
+            Debug.Assert(cache != null);
+
+            TypeSymbol newresult = cache.GetOrAdd(typeDef, result);
+            Debug.Assert(ReferenceEquals(newresult, result) || (newresult.Kind == SymbolKind.ErrorType));
+
+            return newresult;
         }
 
         /// <summary>
         /// Find canonical type for NoPia embedded type.
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="isInterface"></param>
-        /// <param name="baseType"></param>
-        /// <param name="interfaceGuid"></param>
-        /// <param name="scope"></param>
-        /// <param name="identifier"></param>
-        /// <param name="referringAssembly"></param>
-        /// <param name="lookupIn"></param>
         /// <returns>
         /// Symbol for the canonical type or an ErrorTypeSymbol. Never returns null.
         /// </returns>
@@ -509,8 +487,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             string interfaceGuid,
             string scope,
             string identifier,
-            AssemblySymbol referringAssembly,
-            ImmutableArray<AssemblySymbol> lookupIn)
+            AssemblySymbol referringAssembly)
         {
             NamedTypeSymbol result = null;
 
@@ -536,9 +513,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
                 haveScopeGuidValue = Guid.TryParse(scope, out scopeGuidValue);
             }
 
-            foreach (AssemblySymbol assembly in lookupIn)
+            foreach (AssemblySymbol assembly in referringAssembly.GetNoPiaResolutionAssemblies())
             {
-                if ((object)assembly == null || ReferenceEquals(assembly, referringAssembly))
+                Debug.Assert((object)assembly != null);
+                if (ReferenceEquals(assembly, referringAssembly))
                 {
                     continue;
                 }
@@ -656,7 +634,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             return result;
         }
 
-        protected override MethodSymbol FindMethodSymbolInType(TypeSymbol typeSymbol, MethodHandle targetMethodDef)
+        protected override MethodSymbol FindMethodSymbolInType(TypeSymbol typeSymbol, MethodDefinitionHandle targetMethodDef)
         {
             Debug.Assert(typeSymbol is PENamedTypeSymbol || typeSymbol is ErrorTypeSymbol);
 
@@ -672,7 +650,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             return null;
         }
 
-        protected override FieldSymbol FindFieldSymbolInType(TypeSymbol typeSymbol, FieldHandle fieldDef)
+        protected override FieldSymbol FindFieldSymbolInType(TypeSymbol typeSymbol, FieldDefinitionHandle fieldDef)
         {
             Debug.Assert(typeSymbol is PENamedTypeSymbol || typeSymbol is ErrorTypeSymbol);
 
@@ -714,7 +692,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             return memberRefDecoder.FindMember(targetTypeSymbol, memberRef, methodsOnly);
         }
 
-        protected override void EnqueueTypeSymbolInterfacesAndBaseTypes(Queue<TypeHandle> typeDefsToSearch, Queue<TypeSymbol> typeSymbolsToSearch, TypeSymbol typeSymbol)
+        protected override void EnqueueTypeSymbolInterfacesAndBaseTypes(Queue<TypeDefinitionHandle> typeDefsToSearch, Queue<TypeSymbol> typeSymbolsToSearch, TypeSymbol typeSymbol)
         {
             foreach (NamedTypeSymbol @interface in typeSymbol.InterfacesNoUseSiteDiagnostics)
             {
@@ -724,7 +702,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             EnqueueTypeSymbol(typeDefsToSearch, typeSymbolsToSearch, typeSymbol.BaseTypeNoUseSiteDiagnostics);
         }
 
-        protected override void EnqueueTypeSymbol(Queue<TypeHandle> typeDefsToSearch, Queue<TypeSymbol> typeSymbolsToSearch, TypeSymbol typeSymbol)
+        protected override void EnqueueTypeSymbol(Queue<TypeDefinitionHandle> typeDefsToSearch, Queue<TypeSymbol> typeSymbolsToSearch, TypeSymbol typeSymbol)
         {
             if ((object)typeSymbol != null)
             {
@@ -740,7 +718,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             }
         }
 
-        protected override MethodHandle GetMethodHandle(MethodSymbol method)
+        protected override MethodDefinitionHandle GetMethodHandle(MethodSymbol method)
         {
             PEMethodSymbol peMethod = method as PEMethodSymbol;
             if ((object)peMethod != null && ReferenceEquals(peMethod.ContainingModule, moduleSymbol))
@@ -748,7 +726,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
                 return peMethod.Handle;
             }
 
-            return default(MethodHandle);
+            return default(MethodDefinitionHandle);
         }
     }
 }

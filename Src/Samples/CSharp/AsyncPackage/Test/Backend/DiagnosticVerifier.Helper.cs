@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -64,10 +66,7 @@ namespace TestTemplate
             {
                 var compilation = project.GetCompilationAsync().GetAwaiter().GetResult();
 
-                var driver = AnalyzerDriver.Create(compilation, ImmutableArray.Create(analyzer), null, out compilation, CancellationToken.None);
-
-                var discarded = compilation.GetDiagnostics();
-                var diags = driver.GetDiagnosticsAsync().GetAwaiter().GetResult();
+                var diags = compilation.GetDiagnosticsAsync(ImmutableArray.Create(analyzer)).GetAwaiter().GetResult();
                 foreach (var diag in diags)
                 {
                     if (diag.Location == Location.None || diag.Location.IsInMetadata)

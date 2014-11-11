@@ -254,6 +254,8 @@ namespace Microsoft.CodeAnalysis.Internal.Log
 
         IncrementalAnalyzerProcessor_Analyzers,
         IncrementalAnalyzerProcessor_Analyzer,
+        IncrementalAnalyzerProcessor_ActiveFileAnalyzers,
+        IncrementalAnalyzerProcessor_ActiveFileAnalyzer,
         IncrementalAnalyzerProcessor_Shutdown,
 
         WorkCoordinatorRegistrationService_Register,
@@ -266,7 +268,8 @@ namespace Microsoft.CodeAnalysis.Internal.Log
         WorkCoordinator_Shutdown,
 
         DiagnosticAnalyzerService_Analyzers,
-        DiagnosticAnalyzerDriver_AnalyzerCrash,        
+        DiagnosticAnalyzerDriver_AnalyzerCrash,
+        DiagnosticAnalyzerDriver_AnalyzerTypeCount,
         PersistedSemanticVersion_Info,
         Esent_Exceptions,
         WorkCoordinator_ShutdownTimeout,
@@ -282,5 +285,6 @@ namespace Microsoft.CodeAnalysis.Internal.Log
 
         SolutionExplorer_AnalyzerItemSource_GetItems,
         SolutionExplorer_DiagnosticItemSource_GetItems,
+        WorkCoordinator_ActivieFileEnqueue,
     }
 }

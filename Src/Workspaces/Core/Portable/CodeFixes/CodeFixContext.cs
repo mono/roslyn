@@ -1,6 +1,11 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
+using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 
@@ -28,8 +33,11 @@ namespace Microsoft.CodeAnalysis.CodeFixes
 
         /// <summary>
         /// Diagnostics to fix.
+        /// NOTE: All the diagnostics in this collection have the same span <see ref="CodeFixContext.Span"/>.
         /// </summary>
         public IEnumerable<Diagnostic> Diagnostics { get { return this.diagnostics; } }
+
+        private readonly Action<CodeAction, IEnumerable<Diagnostic>> registerFix;
 
         /// <summary>
         /// CancellationToken.
@@ -37,29 +45,148 @@ namespace Microsoft.CodeAnalysis.CodeFixes
         public CancellationToken CancellationToken { get { return this.cancellationToken; } }
 
         /// <summary>
-        /// Creates a code fix context to be passed into <see cref="CodeFixProvider.GetFixesAsync(CodeFixContext)"/> method.
+        /// Creates a code fix context to be passed into <see cref="CodeFixProvider.ComputeFixesAsync(CodeFixContext)"/> method.
         /// </summary>
+        /// <param name="document">Document to fix.</param>
+        /// <param name="span">Text span within the <paramref name="document"/> to fix.</param>
+        /// <param name="diagnostics">Diagnostics to fix. All the diagnostics should have the same span <paramref name="span"/>.</param>
+        /// <param name="registerFix">Delegate to register a <see cref="CodeAction"/> fixing a subset of diagnostics.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <exception cref="ArgumentNullException">Throws this exception if any of the arguments is null.</exception>
+        /// <exception cref="ArgumentException">
+        /// Throws this exception if the given <paramref name="diagnostics"/> is empty,
+        /// has a null element or has an element whose span is not equal to <paramref name="span"/>.
+        /// </exception>
         public CodeFixContext(
             Document document,
-            TextSpan span, 
+            TextSpan span,
             IEnumerable<Diagnostic> diagnostics,
+            Action<CodeAction, IEnumerable<Diagnostic>> registerFix,
             CancellationToken cancellationToken)
-        {
-            this.document = document;
-            this.span = span;
-            this.diagnostics = diagnostics;
-            this.cancellationToken = cancellationToken;
+            : this(document, span, diagnostics, registerFix, cancellationToken, verifyArguments: true)
+        {            
         }
 
         /// <summary>
-        /// Creates a code fix context to be passed into <see cref="CodeFixProvider.GetFixesAsync(CodeFixContext)"/> method.
+        /// Creates a code fix context to be passed into <see cref="CodeFixProvider.ComputeFixesAsync(CodeFixContext)"/> method.
         /// </summary>
+        /// <param name="document">Document to fix.</param>
+        /// <param name="diagnostic">Diagnostic to fix.</param>
+        /// <param name="registerFix">Delegate to register a <see cref="CodeAction"/> fixing a subset of diagnostics.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <exception cref="ArgumentNullException">Throws this exception if any of the arguments is null.</exception>
         public CodeFixContext(
             Document document,
             Diagnostic diagnostic,
+            Action<CodeAction, IEnumerable<Diagnostic>> registerFix,
             CancellationToken cancellationToken)
-            : this(document, diagnostic.Location.SourceSpan, SpecializedCollections.SingletonEnumerable(diagnostic), cancellationToken)
+            : this(document, diagnostic.Location.SourceSpan, SpecializedCollections.SingletonEnumerable(diagnostic), registerFix, cancellationToken, verifyArguments: true)
         {
+        }
+
+        internal CodeFixContext(
+            Document document,
+            TextSpan span,
+            IEnumerable<Diagnostic> diagnostics,
+            Action<CodeAction, IEnumerable<Diagnostic>> registerFix,
+            CancellationToken cancellationToken,
+            bool verifyArguments)
+        {
+            if (verifyArguments)
+            {
+                if (document == null)
+                {
+                    throw new ArgumentNullException(nameof(document));
+                }
+
+                if (registerFix == null)
+                {
+                    throw new ArgumentNullException(nameof(registerFix));
+                }
+
+                VerifyDiagnosticsArgument(diagnostics, span);
+            }
+
+            this.document = document;
+            this.span = span;
+            this.diagnostics = diagnostics;
+            this.registerFix = registerFix;
+            this.cancellationToken = cancellationToken;
+        }
+
+        internal CodeFixContext(
+            Document document,
+            Diagnostic diagnostic,
+            Action<CodeAction, IEnumerable<Diagnostic>> registerFix,
+            CancellationToken cancellationToken,
+            bool verifyArguments)
+            : this(document, diagnostic.Location.SourceSpan, SpecializedCollections.SingletonEnumerable(diagnostic), registerFix, cancellationToken, verifyArguments)
+        {
+        }
+
+        /// <summary>
+        /// Add supplied <paramref name="action"/> to the list of fixes that will be offered to the user.
+        /// </summary>
+        /// <param name="action">The <see cref="CodeAction"/> that will be invoked to apply the fix.</param>
+        /// <param name="diagnostic">The subset of <see cref="Diagnostics"/> being addressed / fixed by the <paramref name="action"/>.</param>
+        public void RegisterFix(CodeAction action, Diagnostic diagnostic)
+        {
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            if (diagnostic == null)
+            {
+                throw new ArgumentNullException(nameof(diagnostic));
+            }
+
+            this.registerFix(action, ImmutableArray.Create(diagnostic));
+        }
+
+        /// <summary>
+        /// Add supplied <paramref name="action"/> to the list of fixes that will be offered to the user.
+        /// </summary>
+        /// <param name="action">The <see cref="CodeAction"/> that will be invoked to apply the fix.</param>
+        /// <param name="diagnostics">The subset of <see cref="Diagnostics"/> being addressed / fixed by the <paramref name="action"/>.</param>
+        public void RegisterFix(CodeAction action, IEnumerable<Diagnostic> diagnostics)
+        {
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            VerifyDiagnosticsArgument(diagnostics, this.span);
+
+            // TODO: 
+            // - Check that all diagnostics are unique (no duplicates).
+            // - Check that supplied diagnostics form subset of diagnostics originally
+            //   passed to the provider via CodeFixContext.Diagnostics.
+
+            this.registerFix(action, diagnostics.ToImmutableArray());
+        }
+
+        private static void VerifyDiagnosticsArgument(IEnumerable<Diagnostic> diagnostics, TextSpan span)
+        {
+            if (diagnostics == null)
+            {
+                throw new ArgumentNullException(nameof(diagnostics));
+            }
+
+            if (diagnostics.IsEmpty())
+            {
+                throw new ArgumentException(WorkspacesResources.DiagnosticsCannotBeEmpty, nameof(diagnostics));
+            }
+
+            if (diagnostics.Any(d => d == null))
+            {
+                throw new ArgumentException(WorkspacesResources.DiagnosticCannotBeNull, nameof(diagnostics));
+            }
+
+            if (diagnostics.Any(d => d.Location.SourceSpan != span))
+            {
+                throw new ArgumentException(string.Format(WorkspacesResources.DiagnosticMustHaveMatchingSpan, span.ToString()), nameof(diagnostics));
+            }
         }
     }
 }

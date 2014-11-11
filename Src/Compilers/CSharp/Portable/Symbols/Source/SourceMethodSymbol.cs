@@ -253,10 +253,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                         // allow the same thread to see the return type and parameters from the syntax (though
                         // they do not yet take on their final values), we return here.
 
-                        // Our normal pattern would be to wait for FinishMethodChecks to be set, but profiling
-                        // showed too many threads spinning at this location, so we switched to a lock.  Also,
-                        // the comment above seems to indicate that we might deadlock if we followed this pattern.
-                        // state.SpinWaitComplete(CompletionPart.FinishMethodChecks, CancellationToken.None)
+                        // Due to the fact that LazyMethodChecks is potentially reentrant, we must use a 
+                        // reentrant lock to avoid deadlock and cannot assert that at this point method checks
+                        // have completed (state.HasComplete(CompletionPart.FinishMethodChecks)).
                     }
                 }
             }
@@ -1464,26 +1463,23 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         {
             base.AddSynthesizedAttributes(compilationState, ref attributes);
 
-            if (this.IsAsync)
+            if (this.IsAsync || this.IsIterator)
             {
                 var compilation = this.DeclaringCompilation;
 
-                AddSynthesizedAttribute(ref attributes, compilation.SynthesizeAttribute(
-                    WellKnownMember.System_Diagnostics_DebuggerStepThroughAttribute__ctor));
-
                 // The async state machine type is not synthesized until the async method body is rewritten. If we are
                 // only emitting metadata the method body will not have been rewritten, and the async state machine
-                // type will not have been created. In this case, omit the AsyncStateMachineAttribute.
-                NamedTypeSymbol asyncStateMachineType;
-                if (compilationState.TryGetStateMachineType(this, out asyncStateMachineType))
+                // type will not have been created. In this case, omit the attribute.
+                NamedTypeSymbol stateMachineType;
+                if (compilationState.TryGetStateMachineType(this, out stateMachineType))
                 {
-                    AddSynthesizedAttribute(ref attributes, compilation.SynthesizeAttribute(
-                       WellKnownMember.System_Runtime_CompilerServices_AsyncStateMachineAttribute__ctor,
-                       ImmutableArray.Create(
-                           new TypedConstant(
-                               compilation.GetWellKnownType(WellKnownType.System_Type),
-                               TypedConstantKind.Type,
-                               asyncStateMachineType.ConstructUnboundGenericType()))));   
+                    WellKnownMember ctor = this.IsAsync ?
+                        WellKnownMember.System_Runtime_CompilerServices_AsyncStateMachineAttribute__ctor :
+                        WellKnownMember.System_Runtime_CompilerServices_IteratorStateMachineAttribute__ctor;
+
+                    var arg = new TypedConstant(compilation.GetWellKnownType(WellKnownType.System_Type), TypedConstantKind.Type, stateMachineType.GetUnboundGenericTypeOrSelf());
+
+                    AddSynthesizedAttribute(ref attributes, compilation.SynthesizeAttribute(ctor, ImmutableArray.Create(arg)));
                 }
             }
         }

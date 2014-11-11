@@ -22,7 +22,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             Stream metadataStream,
             Stream ilStream,
             Stream pdbStream,
-            ICollection<MethodHandle> updatedMethods,
+            ICollection<MethodDefinitionHandle> updatedMethods,
             CompilationTestData testData,
             CancellationToken cancellationToken)
         {
@@ -88,10 +88,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
 
                     try
                     {
-                        var writer = new DeltaPeWriter(
+                        var writer = new DeltaMetadataWriter(
                             context,
                             compilation.MessageProvider,
-                            pdbWriter,
                             baseline,
                             encId,
                             definitionMap,
@@ -99,7 +98,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
                             cancellationToken);
 
                         Cci.MetadataSizes metadataSizes;
-                        writer.WriteMetadataAndIL(metadataStream, ilStream, out metadataSizes);
+                        writer.WriteMetadataAndIL(pdbWriter, metadataStream, ilStream, out metadataSizes);
                         writer.GetMethodTokens(updatedMethods);
 
                         return new EmitDifferenceResult(

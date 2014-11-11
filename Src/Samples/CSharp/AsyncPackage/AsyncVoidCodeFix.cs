@@ -1,5 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
@@ -30,17 +31,21 @@ namespace AsyncPackage
             return null;
         }
 
-        public sealed override async Task<IEnumerable<CodeAction>> GetFixesAsync(CodeFixContext context)
+        public sealed override async Task ComputeFixesAsync(CodeFixContext context)
         {
             var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-            var diagnosticSpan = context.Diagnostics.First().Location.SourceSpan;
+            var diagnostic = context.Diagnostics.First();
+            var diagnosticSpan = diagnostic.Location.SourceSpan;
 
             // Find the type declaration identified by the diagnostic.
             var methodDeclaration = root.FindToken(diagnosticSpan.Start).Parent.FirstAncestorOrSelf<MethodDeclarationSyntax>();
 
-            // Return a code action that will invoke the fix.
-            return new[] { new AsyncVoidCodeAction("Async methods should not return void", c => VoidToTaskAsync(context.Document, methodDeclaration, c)) };
+            // Register a code action that will invoke the fix.
+            context.RegisterFix(
+                new AsyncVoidCodeAction("Async methods should not return void", 
+                                        c => VoidToTaskAsync(context.Document, methodDeclaration, c)),
+                diagnostic);
         }
 
         private async Task<Document> VoidToTaskAsync(Document document, MethodDeclarationSyntax methodDeclaration, CancellationToken cancellationToken)

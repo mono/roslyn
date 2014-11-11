@@ -3493,8 +3493,8 @@ End Module
                 sourceBuilder.AppendLine("    End Sub")
                 sourceBuilder.AppendLine("End Module")
 
-                Dim sourceTree = VBSyntaxTree.ParseText(sourceBuilder.ToString())
-                Dim comp = VBCompilation.Create(Guid.NewGuid().ToString(), {sourceTree}, DefaultReferences.Concat(XmlReferences))
+                Dim sourceTree = VisualBasicSyntaxTree.ParseText(sourceBuilder.ToString())
+                Dim comp = VisualBasicCompilation.Create(Guid.NewGuid().ToString(), {sourceTree}, DefaultReferences.Concat(XmlReferences))
                 CompileAndVerify(comp, expectedOutput:=<![CDATA[
 91
 10
@@ -3544,8 +3544,8 @@ End Module
             sourceBuilder.AppendLine("    End Sub")
             sourceBuilder.AppendLine("End Module")
 
-            Dim sourceTree = VBSyntaxTree.ParseText(sourceBuilder.ToString())
-            Dim comp = VBCompilation.Create(Guid.NewGuid().ToString(), {sourceTree}, DefaultReferences.Concat(XmlReferences))
+            Dim sourceTree = VisualBasicSyntaxTree.ParseText(sourceBuilder.ToString())
+            Dim comp = VisualBasicCompilation.Create(Guid.NewGuid().ToString(), {sourceTree}, DefaultReferences.Concat(XmlReferences))
             CompileAndVerify(comp, expectedOutput:="[[" & NormalizeValue(str) & "]]")
         End Sub
 
@@ -4500,7 +4500,7 @@ content
         <WorkItem(814052, "DevDiv")>
         <Fact()>
         Public Sub XmlnsNamespaceTooLong()
-            Dim identifier = New String("a"c, PeWriter.PdbLengthLimit)
+            Dim identifier = New String("a"c, MetadataWriter.PdbLengthLimit)
             XmlnsNamespaceTooLong(identifier.Substring(6), tooLong:=False)
             XmlnsNamespaceTooLong(identifier, tooLong:=True)
         End Sub

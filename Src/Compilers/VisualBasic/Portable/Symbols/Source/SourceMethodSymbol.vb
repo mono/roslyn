@@ -761,7 +761,7 @@ lReportErrorOnTwoTokens:
             End Get
         End Property
 
-        Friend Overrides ReadOnly Property Syntax As VBSyntaxNode
+        Friend Overrides ReadOnly Property Syntax As VisualBasicSyntaxNode
             Get
                 If m_syntaxReferenceOpt Is Nothing Then
                     Return Nothing
@@ -870,7 +870,7 @@ lReportErrorOnTwoTokens:
 
         ' Get the location of a method given the syntax for its declaration. We use the location of the name
         ' of the method, or similar keywords.
-        Private Shared Function GetMethodLocationFromSyntax(node As VBSyntaxNode) As TextSpan
+        Private Shared Function GetMethodLocationFromSyntax(node As VisualBasicSyntaxNode) As TextSpan
             Select Case node.Kind
                 Case SyntaxKind.MultiLineFunctionLambdaExpression,
                      SyntaxKind.MultiLineSubLambdaExpression,
@@ -1211,6 +1211,28 @@ lReportErrorOnTwoTokens:
 
             Return New BoundBlock(methodBlock, methodBlock.Statements, ImmutableArray(Of LocalSymbol).Empty, ImmutableArray.Create(boundStatement))
         End Function
+
+        Friend NotOverridable Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+            Dim span As TextSpan
+
+            Dim block = BlockSyntax
+            If block IsNot Nothing AndAlso localTree Is block.SyntaxTree Then
+                ' Assign all variables that are associated with the header -1.
+                ' We can't assign >=0 since user-defined variables defined in the first statement of the body have 0
+                ' and user-defined variables need to have a unique syntax offset.
+                If localPosition = block.Begin.SpanStart Then
+                    Return -1
+                End If
+
+                span = block.Statements.Span
+
+                If span.Contains(localPosition) Then
+                    Return localPosition - span.Start
+                End If
+            End If
+
+            Throw ExceptionUtilities.Unreachable
+        End Function
 #End Region
 
 #Region "Signature"
@@ -1399,8 +1421,8 @@ lReportErrorOnTwoTokens:
             Return Me.GetAttributesBag().Attributes
         End Function
 
-        Friend Overrides Sub AddSynthesizedAttributes(ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
-            MyBase.AddSynthesizedAttributes(attributes)
+        Friend Overrides Sub AddSynthesizedAttributes(compilationState as ModuleCompilationState, ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
+            MyBase.AddSynthesizedAttributes(compilationState, attributes)
 
             ' Emit synthesized STAThreadAttribute for this method if both the following requirements are met:
             ' (a) This is the entry point method.

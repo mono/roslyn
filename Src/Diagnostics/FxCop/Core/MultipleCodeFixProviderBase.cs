@@ -1,15 +1,10 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
-using Microsoft.CodeAnalysis.Text;
-using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.FxCopAnalyzers
 {
@@ -22,7 +17,7 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers
 
         internal abstract Task<IEnumerable<CodeAction>> GetFixesAsync(Document document, SemanticModel model, SyntaxNode root, SyntaxNode nodeToFix, CancellationToken cancellationToken);
 
-        public sealed override async Task<IEnumerable<CodeAction>> GetFixesAsync(CodeFixContext context)
+        public sealed override async Task ComputeFixesAsync(CodeFixContext context)
         {
             var document = context.Document;
             var cancellationToken = context.CancellationToken;
@@ -30,7 +25,6 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers
             var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
             var model = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
 
-            var actions = SpecializedCollections.EmptyEnumerable<CodeAction>();
             foreach (var diagnostic in context.Diagnostics)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -41,11 +35,12 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers
 
                 if (newActions != null)
                 {
-                    actions = actions.Concat(newActions);
+                    foreach (var a in newActions)
+                    {
+                        context.RegisterFix(a, diagnostic);
+                    }
                 }
             }
-
-            return actions;
         }
     }
 }

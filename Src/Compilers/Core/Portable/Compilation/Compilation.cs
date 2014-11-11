@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CodeGen;
 using Microsoft.CodeAnalysis.Collections;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -173,8 +174,8 @@ namespace Microsoft.CodeAnalysis
         /// 
         /// If the compilation represents an assembly the value of <see cref="AssemblyName"/> is its simple name.
         /// 
-        /// Unless <see cref="P:CompilationOptions.ModuleName"/> specifies otherwise the module name
-        /// written to metadata is <see cref="P:Name"/> with an extension based upon <see cref="P:CompilationOptions.OutputKind"/>.
+        /// Unless <see cref="CompilationOptions.ModuleName"/> specifies otherwise the module name
+        /// written to metadata is <see cref="AssemblyName"/> with an extension based upon <see cref="CompilationOptions.OutputKind"/>.
         /// </remarks>
         public string AssemblyName { get; private set; }
 
@@ -857,9 +858,38 @@ namespace Microsoft.CodeAnalysis
         /// <summary>
         /// Gets all the diagnostics for the compilation, including syntax, declaration, and
         /// binding. Does not include any diagnostics that might be produced during emit, see
-        /// <see cref="T:EmitResult"/>.
+        /// <see cref="EmitResult"/>.
         /// </summary>
         public abstract ImmutableArray<Diagnostic> GetDiagnostics(CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// Returns all diagnostics computed by the analyzers for the compilation.
+        /// </summary>
+        /// <param name="analyzers">The set of analyzers to include in the analysis</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to abort analysis.</param>
+        public Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync(ImmutableArray<DiagnosticAnalyzer> analyzers, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return GetDiagnosticsAsync(analyzers, null, cancellationToken);
+        }
+
+        /// <summary>
+        /// Returns all diagnostics computed by the analyzers for the compilation.
+        /// </summary>
+        /// <param name="analyzers">The set of analyzers to include in the analysis</param>
+        /// <param name="options">Options that are passed to analyzers</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to abort analysis.</param>
+        public Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync(ImmutableArray<DiagnosticAnalyzer> analyzers, AnalyzerOptions options, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            options = options ?? AnalyzerOptions.Empty;
+            Compilation newCompilation = null;
+            var analyzerDriver = AnalyzerDriver.Create(this, analyzers, options, out newCompilation, cancellationToken);
+
+            // We need to generate compiler events in order for the event queue to be populated and the analyzer driver to return diagnostics.
+            // So we'll call GetDiagnostics which will generate all events except for those on emit.
+            newCompilation.GetDiagnostics(cancellationToken);
+
+            return analyzerDriver.GetDiagnosticsAsync();
+        }
 
         internal abstract CommonMessageProvider MessageProvider { get; }
 
@@ -1345,7 +1375,7 @@ namespace Microsoft.CodeAnalysis
             Stream metadataStream,
             Stream ilStream,
             Stream pdbStream,
-            ICollection<MethodHandle> updatedMethods,
+            ICollection<MethodDefinitionHandle> updatedMethods,
             CancellationToken cancellationToken = default(CancellationToken))
         {
             if (baseline == null)
@@ -1385,7 +1415,7 @@ namespace Microsoft.CodeAnalysis
             Stream metadataStream,
             Stream ilStream,
             Stream pdbStream,
-            ICollection<MethodHandle> updatedMethodHandles,
+            ICollection<MethodDefinitionHandle> updatedMethodHandles,
             CompilationTestData testData,
             CancellationToken cancellationToken);
 

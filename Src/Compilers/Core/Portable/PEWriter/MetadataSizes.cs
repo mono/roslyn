@@ -60,13 +60,37 @@ namespace Microsoft.Cci
         /// </summary>
         public readonly int MetadataTableStreamSize;
 
-        public MetadataSizes(ImmutableArray<int> rowCounts, ImmutableArray<int> heapSizes, bool isMinimalDelta)
+        /// <summary>
+        /// The size of IL stream.
+        /// </summary>
+        public readonly int ILStreamSize;
+
+        /// <summary>
+        /// The size of mapped field data stream.
+        /// </summary>
+        public readonly int MappedFieldDataSize;
+
+        /// <summary>
+        /// The size of managed resource data stream.
+        /// </summary>
+        public readonly int ResourceDataSize;
+
+        public MetadataSizes(
+            ImmutableArray<int> rowCounts,
+            ImmutableArray<int> heapSizes, 
+            int ilStreamSize,
+            int mappedFieldDataSize,
+            int resourceDataSize, 
+            bool isMinimalDelta)
         {
             const byte large = 4;
             const byte small = 2;
 
             this.RowCounts = rowCounts;
             this.HeapSizes = heapSizes;
+            this.ResourceDataSize = resourceDataSize;
+            this.ILStreamSize = ilStreamSize;
+            this.MappedFieldDataSize = mappedFieldDataSize;
             this.isMinimalDelta = isMinimalDelta;
 
             this.BlobIndexSize = (isMinimalDelta || heapSizes[(int)HeapIndex.Blob] > ushort.MaxValue) ? large : small;

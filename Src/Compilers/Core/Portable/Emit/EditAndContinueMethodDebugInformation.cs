@@ -16,9 +16,9 @@ namespace Microsoft.CodeAnalysis.Emit
     /// </summary>
     public struct EditAndContinueMethodDebugInformation
     {
-        internal readonly ImmutableArray<ValueTuple<SynthesizedLocalKind, LocalDebugId>> LocalSlots;
+        internal readonly ImmutableArray<LocalSlotDebugInfo> LocalSlots;
 
-        internal EditAndContinueMethodDebugInformation(ImmutableArray<ValueTuple<SynthesizedLocalKind, LocalDebugId>> localSlots)
+        internal EditAndContinueMethodDebugInformation(ImmutableArray<LocalSlotDebugInfo> localSlots)
         {
             this.LocalSlots = localSlots;
         }
@@ -28,33 +28,22 @@ namespace Microsoft.CodeAnalysis.Emit
             return new EditAndContinueMethodDebugInformation(UncompressSlotMap(compressedSlotMap));
         }
 
-        private static bool HasSubordinal(SynthesizedLocalKind kind)
-        {
-            switch (kind)
-            {
-                case SynthesizedLocalKind.AwaitByRefSpill:
-                    return true;
-
-                default:
-                    return false;
-            }
-        }
-
         private const byte AlignmentValue = 0xff;
+        private const byte SyntaxOffsetBaseline = 0xfe;
 
-        private unsafe static ImmutableArray<ValueTuple<SynthesizedLocalKind, LocalDebugId>> UncompressSlotMap(ImmutableArray<byte> compressedSlotMap)
+        private unsafe static ImmutableArray<LocalSlotDebugInfo> UncompressSlotMap(ImmutableArray<byte> compressedSlotMap)
         {
             if (compressedSlotMap.IsDefaultOrEmpty)
             {
-                return default(ImmutableArray<ValueTuple<SynthesizedLocalKind, LocalDebugId>>);
+                return default(ImmutableArray<LocalSlotDebugInfo>);
             }
 
-            var mapBuilder = ArrayBuilder<ValueTuple<SynthesizedLocalKind, LocalDebugId>>.GetInstance();
-            
+            var mapBuilder = ArrayBuilder<LocalSlotDebugInfo>.GetInstance();
+            int syntaxOffsetBaseline = -1;
+
             fixed (byte* compressedSlotMapPtr = &compressedSlotMap.ToArray()[0])
             {
-                var blobReader = new BlobReader((IntPtr)compressedSlotMapPtr, compressedSlotMap.Length);
-
+                var blobReader = new BlobReader(compressedSlotMapPtr, compressedSlotMap.Length);
                 while (blobReader.RemainingBytes > 0)
                 {
                     byte b = blobReader.ReadByte();
@@ -64,49 +53,37 @@ namespace Microsoft.CodeAnalysis.Emit
                         break;
                     }
 
-                    if (b == 0)
+                    if (b == SyntaxOffsetBaseline)
                     {
-                        // short-lived temp, no info
-                        mapBuilder.Add(ValueTuple.Create(SynthesizedLocalKind.LoweringTemp, default(LocalDebugId)));
+                        syntaxOffsetBaseline = -blobReader.ReadCompressedInteger();
                         continue;
                     }
 
-                    int ordinalCount = 0;
-
-                    if ((b & (1 << 7)) != 0)
+                    if (b == 0)
                     {
-                        // highest bit set - we have an ordinal
-                        ordinalCount++;
+                        // short-lived temp, no info
+                        mapBuilder.Add(new LocalSlotDebugInfo(SynthesizedLocalKind.LoweringTemp, default(LocalDebugId)));
+                        continue;
                     }
 
                     var kind = (SynthesizedLocalKind)((b & 0x3f) - 1);
-                    if (HasSubordinal(kind))
+                    bool hasOrdinal = (b & (1 << 7)) != 0;
+
+                    int syntaxOffset;
+                    if (!blobReader.TryReadCompressedInteger(out syntaxOffset)) 
                     {
-                        ordinalCount++;
+                        return default(ImmutableArray<LocalSlotDebugInfo>);
                     }
 
-                    // TODO: Right now all integers are >= -1, but we should not assume that and read Ecma335 compressed int instead.
-                    uint syntaxOffsetUnsigned;
-                    if (!blobReader.TryReadCompressedUInt32(out syntaxOffsetUnsigned)) 
+                    syntaxOffset += syntaxOffsetBaseline;
+
+                    int ordinal = 0;
+                    if (hasOrdinal && !blobReader.TryReadCompressedInteger(out ordinal))
                     {
-                        return default(ImmutableArray<ValueTuple<SynthesizedLocalKind, LocalDebugId>>);
+                        return default(ImmutableArray<LocalSlotDebugInfo>);
                     }
 
-                    int syntaxOffset = (int)syntaxOffsetUnsigned - 1;
-
-                    uint ordinal = 0;
-                    if (ordinalCount >= 1 && (!blobReader.TryReadCompressedUInt32(out ordinal) || ordinal > int.MaxValue))
-                    {
-                        return default(ImmutableArray<ValueTuple<SynthesizedLocalKind, LocalDebugId>>);
-                    }
-
-                    uint subordinal = 0;
-                    if (ordinalCount >= 2 && (!blobReader.TryReadCompressedUInt32(out subordinal) || subordinal > int.MaxValue))
-                    {
-                        return default(ImmutableArray<ValueTuple<SynthesizedLocalKind, LocalDebugId>>);
-                    }
-
-                    mapBuilder.Add(ValueTuple.Create(kind, new LocalDebugId(syntaxOffset, (int)ordinal, (int)subordinal)));
+                    mapBuilder.Add(new LocalSlotDebugInfo(kind, new LocalDebugId(syntaxOffset, ordinal)));
                 }
             }
 
@@ -121,7 +98,7 @@ namespace Microsoft.CodeAnalysis.Emit
             }
 
             Cci.MemoryStream customMetadata = new Cci.MemoryStream();
-            Cci.BinaryWriter cmw = new Cci.BinaryWriter(customMetadata, true);
+            Cci.BinaryWriter cmw = new Cci.BinaryWriter(customMetadata);
             cmw.WriteByte(4); // version
             cmw.WriteByte(6); // kind: EditAndContinueLocalSlotMap
             cmw.Align(4);
@@ -130,40 +107,7 @@ namespace Microsoft.CodeAnalysis.Emit
             uint lengthPosition = cmw.BaseStream.Position;
             cmw.WriteUint(0);
 
-            foreach (ValueTuple<SynthesizedLocalKind, LocalDebugId> localSlot in this.LocalSlots)
-            {
-                var kind = localSlot.Item1;
-
-                byte b = (byte)(kind.IsLongLived() ? kind + 1 : 0);
-                Debug.Assert((b & (1 << 7)) == 0);
-
-                cmw.WriteByte(b);
-
-                if (b == 0)
-                {
-                    continue;
-                }
-
-                if (localSlot.Item2.Ordinal != 0)
-                {
-                    b |= 1 << 7;
-                }
-
-                Debug.Assert(HasSubordinal(kind) == (localSlot.Item2.Subordinal != 0));
-                
-                // TODO: Right now all integers are >= -1, but we should not assume that and write Ecma335 compressed int instead.
-                cmw.WriteCompressedUInt(unchecked((uint)(localSlot.Item2.SyntaxOffset + 1)));
-
-                if (localSlot.Item2.Ordinal != 0)
-                {
-                    cmw.WriteCompressedUInt((uint)localSlot.Item2.Ordinal);
-                }
-
-                if (localSlot.Item2.Subordinal != 0)
-                {
-                    cmw.WriteCompressedUInt((uint)localSlot.Item2.Subordinal);
-                }
-            }
+            SerializeLocalSlots(cmw);
 
             uint length = customMetadata.Position;
 
@@ -179,6 +123,52 @@ namespace Microsoft.CodeAnalysis.Emit
             cmw.BaseStream.Position = length;
 
             customDebugInfo.Add(customMetadata);
+        }
+
+        internal void SerializeLocalSlots(Cci.BinaryWriter cmw)
+        {
+            int syntaxOffsetBaseline = -1;
+            foreach (LocalSlotDebugInfo localSlot in this.LocalSlots)
+            {
+                if (localSlot.Id.SyntaxOffset < syntaxOffsetBaseline)
+                {
+                    syntaxOffsetBaseline = localSlot.Id.SyntaxOffset;
+                }
+            }
+
+            if (syntaxOffsetBaseline != -1)
+            {
+                cmw.WriteByte(SyntaxOffsetBaseline);
+                cmw.WriteCompressedUInt((uint)(-syntaxOffsetBaseline));
+            }
+
+            foreach (LocalSlotDebugInfo localSlot in this.LocalSlots)
+            {
+                var kind = localSlot.SynthesizedKind;
+                bool hasOrdinal = localSlot.Id.Ordinal > 0;
+
+                if (!kind.IsLongLived())
+                {
+                    cmw.WriteByte(0);
+                    continue;
+                }
+
+                byte b = (byte)(kind + 1);
+                Debug.Assert((b & (1 << 7)) == 0);
+
+                if (hasOrdinal)
+                {
+                    b |= 1 << 7;
+                }
+
+                cmw.WriteByte(b);
+                cmw.WriteCompressedUInt((uint)(localSlot.Id.SyntaxOffset - syntaxOffsetBaseline));
+
+                if (hasOrdinal)
+                {
+                    cmw.WriteCompressedUInt((uint)localSlot.Id.Ordinal);
+                }
+            }
         }
     }
 }

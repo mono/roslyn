@@ -1,5 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Diagnostics;
@@ -13,7 +14,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Simplification;
-using Microsoft.CodeAnalysis.Text;
 
 namespace AsyncPackage
 {
@@ -33,11 +33,12 @@ namespace AsyncPackage
             return null;
         }
 
-        public sealed override async Task<IEnumerable<CodeAction>> GetFixesAsync(CodeFixContext context)
+        public sealed override async Task ComputeFixesAsync(CodeFixContext context)
         {
             var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-            var diagnosticSpan = context.Diagnostics.First().Location.SourceSpan;
+            var diagnostic = context.Diagnostics.First();
+            var diagnosticSpan = diagnostic.Location.SourceSpan;
 
             Debug.Assert(root != null);
             var parent = root.FindToken(diagnosticSpan.Start).Parent;
@@ -46,11 +47,12 @@ namespace AsyncPackage
                 // Find the type declaration identified by the diagnostic.
                 var variableDeclaration = parent.FirstAncestorOrSelf<VariableDeclarationSyntax>();
 
-                // Return a code action that will invoke the fix.
-                return new[] { new AsyncLambdaVariableCodeAction("Async lambdas should not be stored in void-returning delegates", c => ChangeToFunc(context.Document, variableDeclaration, c)) };
+                // Register a code action that will invoke the fix.
+                context.RegisterFix(
+                    new AsyncLambdaVariableCodeAction("Async lambdas should not be stored in void-returning delegates",
+                                                      c => ChangeToFunc(context.Document, variableDeclaration, c)),
+                    diagnostic);
             }
-
-            return ImmutableArray<CodeAction>.Empty;
         }
 
         private async Task<Document> ChangeToFunc(Document document, VariableDeclarationSyntax variableDeclaration, CancellationToken cancellationToken)

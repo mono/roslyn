@@ -1,6 +1,7 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports System.Collections.Immutable
+Imports Microsoft.CodeAnalysis.CodeGen
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
 
 Namespace Microsoft.CodeAnalysis.VisualBasic
@@ -11,16 +12,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Private ReadOnly _typeKind As TypeKind
         Private ReadOnly _constructor As SynthesizedSimpleConstructorSymbol
 
-        Protected Friend Sub New(kickoffMethod As MethodSymbol,
-                                 typeIndex As Integer,
-                                 typeKind As TypeKind,
-                                 valueTypeSymbol As NamedTypeSymbol,
-                                 iAsyncStateMachineInterface As NamedTypeSymbol)
-
-            MyBase.New(kickoffMethod,
-                       GeneratedNames.MakeStateMachineTypeName(typeIndex, kickoffMethod.Name),
-                       If(typeKind = TypeKind.Class, valueTypeSymbol.BaseTypeNoUseSiteDiagnostics, valueTypeSymbol),
-                       ImmutableArray.Create(iAsyncStateMachineInterface))
+        Protected Friend Sub New(slotAllocatorOpt As VariableSlotAllocator, asyncMethod As MethodSymbol, typeKind As TypeKind)
+            MyBase.New(slotAllocatorOpt,
+                       asyncMethod,
+                       asyncMethod.ContainingAssembly.GetSpecialType(If(typeKind = TypeKind.Struct, SpecialType.System_ValueType, SpecialType.System_Object)),
+                       ImmutableArray.Create(asyncMethod.DeclaringCompilation.GetWellKnownType(WellKnownType.System_Runtime_CompilerServices_IAsyncStateMachine)))
 
             Me._constructor = New SynthesizedSimpleConstructorSymbol(Me)
             Me._constructor.SetParameters(ImmutableArray(Of ParameterSymbol).Empty)

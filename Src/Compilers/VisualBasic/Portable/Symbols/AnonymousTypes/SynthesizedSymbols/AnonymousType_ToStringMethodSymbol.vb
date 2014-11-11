@@ -13,7 +13,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Inherits SynthesizedRegularMethodBase
 
             Public Sub New(container As AnonymousTypeTemplateSymbol)
-                MyBase.New(VisualBasic.VBSyntaxTree.Dummy.GetRoot(), container, WellKnownMemberNames.ObjectToString)
+                MyBase.New(VisualBasic.VisualBasicSyntaxTree.Dummy.GetRoot(), container, WellKnownMemberNames.ObjectToString)
             End Sub
 
             Private ReadOnly Property AnonymousType As AnonymousTypeTemplateSymbol
@@ -52,12 +52,23 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 End Get
             End Property
 
-            Friend Overrides Sub AddSynthesizedAttributes(ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
-                MyBase.AddSynthesizedAttributes(attributes)
+            Friend Overrides Sub AddSynthesizedAttributes(compilationState As ModuleCompilationState, ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
+                MyBase.AddSynthesizedAttributes(compilationState, attributes)
 
+                ' May call user-defined method.
                 Dim compilation = DirectCast(Me.ContainingType, AnonymousTypeTemplateSymbol).Manager.Compilation
                 AddSynthesizedAttribute(attributes, compilation.SynthesizeDebuggerHiddenAttribute())
             End Sub
+
+            Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
+                Get
+                    Return False
+                End Get
+            End Property
+
+            Friend Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+                Throw ExceptionUtilities.Unreachable
+            End Function
         End Class
     End Class
 End Namespace

@@ -339,12 +339,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Retargeting
             End Get
         End Property
 
-        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
-            Get
-                Return m_UnderlyingMethod.GenerateDebugInfo
-            End Get
-        End Property
-
         Friend Overrides ReadOnly Property ObsoleteAttributeData As ObsoleteAttributeData
             Get
                 Return m_UnderlyingMethod.ObsoleteAttributeData
@@ -359,8 +353,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Retargeting
             Return RetargetingTranslator.GetRetargetedAttributes(m_UnderlyingMethod, m_LazyReturnTypeCustomAttributes, True)
         End Function
 
-        Friend Overrides Function GetCustomAttributesToEmit() As IEnumerable(Of VisualBasicAttributeData)
-            Return RetargetingTranslator.RetargetAttributes(m_UnderlyingMethod.GetCustomAttributesToEmit())
+        Friend Overrides Function GetCustomAttributesToEmit(compilationState As ModuleCompilationState) As IEnumerable(Of VisualBasicAttributeData)
+            Return RetargetingTranslator.RetargetAttributes(m_UnderlyingMethod.GetCustomAttributesToEmit(compilationState))
         End Function
 
         Public Overrides ReadOnly Property ContainingAssembly As AssemblySymbol
@@ -457,7 +451,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Retargeting
             Return builder.ToImmutableAndFree()
         End Function
 
-        Friend Overrides ReadOnly Property Syntax As VBSyntaxNode
+        Friend Overrides ReadOnly Property Syntax As VisualBasicSyntaxNode
             Get
                 Return Nothing
             End Get
@@ -474,7 +468,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Retargeting
         ''' <remarks>
         ''' This is for perf, not for correctness.
         ''' </remarks>
-        Friend Overrides ReadOnly Property DeclaringCompilation As VBCompilation
+        Friend Overrides ReadOnly Property DeclaringCompilation As VisualBasicCompilation
             Get
                 Return Nothing
             End Get
@@ -482,6 +476,17 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols.Retargeting
 
         Public Overrides Function GetDocumentationCommentXml(Optional preferredCulture As CultureInfo = Nothing, Optional expandIncludes As Boolean = False, Optional cancellationToken As CancellationToken = Nothing) As String
             Return m_UnderlyingMethod.GetDocumentationCommentXml(preferredCulture, expandIncludes, cancellationToken)
+        End Function
+
+        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
+            Get
+                Return False
+            End Get
+        End Property
+
+        Friend Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+            ' retargeting symbols refer to a symbol from another compilation, they don't define locals in the current compilation
+            Throw ExceptionUtilities.Unreachable
         End Function
     End Class
 End Namespace

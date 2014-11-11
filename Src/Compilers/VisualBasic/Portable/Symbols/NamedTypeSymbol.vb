@@ -624,7 +624,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         Friend MustOverride ReadOnly Property CoClassType As TypeSymbol
 
         ''' <summary>
-        ''' Returns a sequence of preprocessor symbols specified in <see cref="T:ConditionalAttribute"/> applied on this symbol, or null if there are none.
+        ''' Returns a sequence of preprocessor symbols specified in <see cref="ConditionalAttribute"/> applied on this symbol, or null if there are none.
         ''' </summary>
         Friend MustOverride Function GetAppliedConditionalSymbols() As ImmutableArray(Of String)
 
@@ -764,7 +764,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         End Function
 
         Friend Function GetDirectBaseInterfacesNoUseSiteDiagnostics(basesBeingResolved As ConsList(Of Symbol)) As ImmutableArray(Of NamedTypeSymbol)
-            If (Me.TypeKind = TypeKind.Interface) Then
+            If Me.TypeKind = TypeKind.Interface Then
                 If basesBeingResolved Is Nothing Then
                     Return Me.InterfacesNoUseSiteDiagnostics
                 Else
@@ -783,8 +783,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
             Return GetDeclaredInterfacesNoUseSiteDiagnostics(If(basesBeingResolved, ConsList(Of Symbol).Empty).Prepend(Me))
         End Function
-
-
 
         ''' <summary>
         ''' NamedTypeSymbol calls derived implementations of this method when acyclic base type

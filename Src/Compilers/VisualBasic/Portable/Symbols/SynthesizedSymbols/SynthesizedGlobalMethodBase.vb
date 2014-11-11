@@ -37,12 +37,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
-            Get
-                Return False
-            End Get
-        End Property
-
         ''' <summary>
         ''' Gets the symbol name. Returns the empty string if unnamed.
         ''' </summary>
@@ -185,9 +179,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend NotOverridable Overrides ReadOnly Property Syntax As VBSyntaxNode
+        Friend NotOverridable Overrides ReadOnly Property Syntax As VisualBasicSyntaxNode
             Get
-                Return VisualBasic.VBSyntaxTree.Dummy.GetRoot()
+                Return VisualBasic.VisualBasicSyntaxTree.Dummy.GetRoot()
             End Get
         End Property
 
@@ -334,6 +328,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 Return False
             End Get
         End Property
+
+        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
+            Get
+                Return False
+            End Get
+        End Property
+
+        Friend Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+            Throw ExceptionUtilities.Unreachable
+        End Function
     End Class
 
 End Namespace

@@ -24,7 +24,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The compilation in which the analysis is taking place.  This is needed to determine which
         ''' conditional methods will be compiled and which will be omitted.
         ''' </summary>
-        Protected ReadOnly compilation As VBCompilation
+        Protected ReadOnly compilation As VisualBasicCompilation
 
         ''' <summary>
         ''' The symbol of method whose body is being analyzed or field or property whose 
@@ -2500,6 +2500,19 @@ lUnsplitAndFinish:
 
         Public Overrides Function VisitAwaitOperator(node As BoundAwaitOperator) As BoundNode
             Visit(node.Operand)
+            Return Nothing
+        End Function
+
+        Public Overrides Function VisitNameOfOperator(node As BoundNameOfOperator) As BoundNode
+            Dim savedState As LocalState = Me.State.Clone()
+            SetUnreachable()
+            Visit(node.Argument)
+            Me.SetState(savedState)
+            Return Nothing
+        End Function
+
+        Public Overrides Function VisitTypeAsValueExpression(node As BoundTypeAsValueExpression) As BoundNode
+            Visit(node.Expression)
             Return Nothing
         End Function
 #End Region

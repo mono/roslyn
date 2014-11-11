@@ -22,7 +22,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' <param name="binder">Binder to be used for error reporting, or Nothing.</param>
         ''' <param name="diagnostics">Diagnostic bag, or Nothing.</param>
         Friend Sub New(
-            syntaxNode As VBSyntaxNode,
+            syntaxNode As VisualBasicSyntaxNode,
             container As NamedTypeSymbol,
             isShared As Boolean,
             isDebuggable As Boolean,
@@ -33,8 +33,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Me._debuggable = isDebuggable
         End Sub
 
-        Friend Overrides Sub AddSynthesizedAttributes(ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
-            MyBase.AddSynthesizedAttributes(attributes)
+        Friend Overrides Sub AddSynthesizedAttributes(compilationState as ModuleCompilationState, ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
+            MyBase.AddSynthesizedAttributes(compilationState, attributes)
 
             ' Dev11 emits DebuggerNonUserCodeAttribute. This attribute is not needed since we don't emit any debug info for the constructor.
         End Sub

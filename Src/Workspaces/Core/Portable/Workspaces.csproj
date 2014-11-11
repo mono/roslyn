@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4100302-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4100302-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
+  <Import Project="..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4101501-beta\build\Microsoft.Net.ToolsetCompilers.props" Condition="Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4101501-beta\build\Microsoft.Net.ToolsetCompilers.props')" />
+  <Import Project="..\..\..\..\packages\Microsoft.Net.RoslynDiagnostics.0.7.4101501-beta\build\Microsoft.Net.RoslynDiagnostics.props" Condition="Exists('..\..\..\..\packages\Microsoft.Net.RoslynDiagnostics.0.7.4101501-beta\build\Microsoft.Net.RoslynDiagnostics.props')" />
   <ImportGroup Label="Settings">
     <Import Project="..\..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Settings.targets" />
   </ImportGroup>
@@ -19,11 +20,10 @@
     <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
     <TargetFrameworkIdentifier>.NETPortable</TargetFrameworkIdentifier>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <NeedsFakeSign>true</NeedsFakeSign>
   </PropertyGroup>
   <ItemGroup Label="File References">
-    <Reference Include="System.Collections.Immutable">
-      <HintPath>..\..\..\..\packages\Microsoft.Bcl.Immutable.1.1.20-beta\lib\portable-net45+win8\System.Collections.Immutable.dll</HintPath>
-    </Reference>
+    <Reference Include="..\..\..\..\packages\System.Collections.Immutable.1.1.32-beta\lib\portable-net45+win8+wp8+wpa81\\System.Collections.Immutable.dll" />
     <Reference Include="System.Composition.AttributedModel, Version=1.0.27.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\packages\Microsoft.Composition.1.0.27\lib\portable-net45+win8+wp8+wpa81\System.Composition.AttributedModel.dll</HintPath>
@@ -84,6 +84,9 @@
     </Compile>
     <Compile Include="..\..\..\Compilers\Core\Portable\InternalUtilities\EnumUtilties.cs">
       <Link>InternalUtilities\EnumUtilties.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Compilers\Core\Portable\InternalUtilities\FailFast.cs">
+      <Link>InternalUtilities\FailFast.cs</Link>
     </Compile>
     <Compile Include="..\..\..\Compilers\Core\Portable\InternalUtilities\FatalError.cs">
       <Link>InternalUtilities\FatalError.cs</Link>
@@ -194,9 +197,6 @@
     <Compile Include="..\..\..\Compilers\Core\Portable\InternalUtilities\ObjectPool`1.cs">
       <Link>InternalUtilities\ObjectPool`1.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\Compilers\Core\Desktop\FailFast.cs">
-      <Link>NonPortable\FailFast.cs</Link>
-    </Compile>
     <Compile Include="..\..\..\Compilers\Core\Portable\Serialization\FixedObjectBinder.cs">
       <Link>Serialization\FixedObjectBinder.cs</Link>
     </Compile>
@@ -263,9 +263,6 @@
     <InternalsVisibleTo Include="Microsoft.VisualStudio.LanguageServices.VisualBasic" />
     <InternalsVisibleTo Include="csi" />
     <InternalsVisibleTo Include="Roslyn.CSharp.InteractiveEditorFeatures" />
-    <InternalsVisibleTo Include="Roslyn.Diagnostics.Analyzers" />
-    <InternalsVisibleTo Include="Roslyn.Diagnostics.Analyzers.CSharp" />
-    <InternalsVisibleTo Include="Roslyn.Diagnostics.Analyzers.VisualBasic" />
     <InternalsVisibleTo Include="Roslyn.InteractiveEditorFeatures" />
     <InternalsVisibleTo Include="Roslyn.InteractiveFeatures" />
     <InternalsVisibleTo Include="Roslyn.VisualBasic.InteractiveEditorFeatures" />
@@ -319,6 +316,7 @@
     <Compile Include="CodeFixes\FixAllOccurrences\FixAllContext.cs" />
     <Compile Include="CodeFixes\FixAllOccurrences\FixAllScope.cs" />
     <Compile Include="CodeFixes\FixAllOccurrences\FixAllProvider.cs" />
+    <Compile Include="CodeFixes\CodeFix.cs" />
     <Compile Include="CodeGeneration\AbstractCodeGenerationService.cs" />
     <Compile Include="CodeGeneration\AbstractCodeGenerationService_FindDeclaration.cs" />
     <Compile Include="CodeGeneration\AbstractFlagsEnumGenerator.cs" />
@@ -374,11 +372,13 @@
     <Compile Include="Log\LogMessage.cs" />
     <Compile Include="Shared\Extensions\ITypeSymbolExtensions.ReplaceTypeParameterBasedOnTypeConstraintVisitor.cs" />
     <Compile Include="Shared\Utilities\XmlFragmentParser.cs" />
+    <Compile Include="Simplification\SimplificationOptionProvider.cs" />
     <Compile Include="Simplification\SimplifyTypeNameCodeAction.cs" />
     <Compile Include="Utilities\WeakEventHandler.cs" />
     <Compile Include="Versions\Extensions.cs" />
     <Compile Include="Versions\ISemanticVersionTrackingService.cs" />
     <Compile Include="Versions\PersistedVersionStampLogger.cs" />
+    <Compile Include="Workspace\CustomWorkspace.cs" />
     <Compile Include="Workspace\Host\Caching\AbstractCacheServiceFactory.cs" />
     <Compile Include="Workspace\Host\Caching\CacheOptions.cs" />
     <Compile Include="Workspace\Host\Caching\CostBasedCache.Nested.cs" />
@@ -529,6 +529,10 @@
     <Compile Include="Utilities\ObjectPools\PooledObject.cs" />
     <Compile Include="Workspace\Host\Mef\ILanguagesMetadata.cs" />
     <Compile Include="Workspace\Host\Mef\CodeFixProviderMetadata.cs" />
+    <Compile Include="Workspace\Host\Mef\IMefHostExportProvider.cs" />
+    <Compile Include="Workspace\Host\Mef\MefHostServices.cs" />
+    <Compile Include="Workspace\Host\Mef\MefLanguageServices.cs" />
+    <Compile Include="Workspace\Host\Mef\MefWorkspaceServices.cs" />
     <Compile Include="Workspace\Host\Mef\ServiceLayer.cs" />
     <Compile Include="Workspace\Host\Documentation\IDocumentationProviderService.cs" />
     <Compile Include="Workspace\Host\PersistentStorage\PersistentStorageOptionsProvider.cs" />
@@ -554,13 +558,11 @@
     <Compile Include="LanguageServices\TypeInferenceService\ITypeInferenceService.cs" />
     <Compile Include="Log\EmptyLogBlock.cs" />
     <Compile Include="Log\EmptyLogger.cs" />
-    <Compile Include="Log\EtwLogger.cs" />
     <Compile Include="Log\FunctionId.cs" />
     <Compile Include="Log\FunctionIdOptions.cs" />
     <Compile Include="Log\ILogger.cs" />
     <Compile Include="Log\InteractionClass.cs" />
     <Compile Include="Log\Logger.cs" />
-    <Compile Include="Log\RoslynEventSource.cs" />
     <Compile Include="Notification\AbstractGlobalOperationNotificationService.cs" />
     <Compile Include="Notification\GlobalOperationEventArgs.cs" />
     <Compile Include="Notification\GlobalOperationNotificationService.cs" />
@@ -834,11 +836,16 @@
     <Compile Include="Workspace\Host\TemporaryStorage\ISupportDirectMemoryAccess.cs" />
     <Compile Include="Workspace\Host\TemporaryStorage\ITemporaryStorage.cs" />
     <Compile Include="Workspace\Host\TemporaryStorage\ITemporaryStorageService.cs" />
+    <Compile Include="Workspace\Host\TemporaryStorage\TrivialTemporaryStorageService.cs" />
     <Compile Include="Workspace\Host\TextFactory\ITextFactoryService.cs" />
     <Compile Include="Workspace\Host\HostWorkspaceServices.cs" />
+    <Compile Include="Workspace\Host\TextFactory\TextFactoryServiceFactory.cs" />
+    <Compile Include="Workspace\Host\TextFactory\TextFactoryServiceFactory.TextFactoryService.cs" />
     <Compile Include="Workspace\Solution\AbstractLinkedFileMergeConflictCommentAdditionService.cs" />
     <Compile Include="Workspace\Solution\AdditionalDocumentStream.cs" />
-    <Compile Include="Workspace\Solution\TextDocumentState.cs" />
+    <Compile Include="Workspace\Solution\TextDocumentState.cs">
+      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
+    </Compile>
     <Compile Include="Workspace\Solution\BranchId.cs" />
     <Compile Include="Workspace\Solution\Document.cs">
       <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
@@ -945,6 +952,7 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-    <Error Condition="!Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4100302-beta\build\Microsoft.Net.ToolsetCompilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4100302-beta\build\Microsoft.Net.ToolsetCompilers.props'))" />
+    <Error Condition="!Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4101501-beta\build\Microsoft.Net.ToolsetCompilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4101501-beta\build\Microsoft.Net.ToolsetCompilers.props'))" />
+    <Error Condition="!Exists('..\..\..\..\packages\Microsoft.Net.RoslynDiagnostics.0.7.4101501-beta\build\Microsoft.Net.RoslynDiagnostics.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\Microsoft.Net.RoslynDiagnostics.0.7.4101501-beta\build\Microsoft.Net.RoslynDiagnostics.props'))" />
   </Target>
 </Project>

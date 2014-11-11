@@ -17,8 +17,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
     Friend Class SynthesizedMainTypeEntryPoint
         Inherits SynthesizedRegularMethodBase
 
-        Public Sub New(syntaxNode As VBSyntaxNode, container As SourceNamedTypeSymbol)
-            MyBase.New(syntaxNode, container, WellKnownMemberNames.EntryPointMethodName, IsShared:=True)
+        Public Sub New(syntaxNode As VisualBasicSyntaxNode, container As SourceNamedTypeSymbol)
+            MyBase.New(syntaxNode, container, WellKnownMemberNames.EntryPointMethodName, isShared:=True)
         End Sub
 
         Public Overrides ReadOnly Property DeclaredAccessibility As Accessibility
@@ -44,7 +44,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         Friend Overrides Function GetBoundMethodBody(diagnostics As DiagnosticBag, <Out()> Optional ByRef methodBodyBinder As Binder = Nothing) As BoundBlock
             methodBodyBinder = Nothing
 
-            Dim syntaxNode As VBSyntaxNode = Me.Syntax
+            Dim syntaxNode As VisualBasicSyntaxNode = Me.Syntax
             Dim container = DirectCast(ContainingSymbol, SourceNamedTypeSymbol)
             Dim binder As Binder = BinderBuilder.CreateBinderForType(container.ContainingSourceModule, syntaxNode.SyntaxTree, container)
 
@@ -75,15 +75,23 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Return New BoundBlock(syntaxNode, Nothing, ImmutableArray(Of LocalSymbol).Empty, ImmutableArray.Create(statement, New BoundReturnStatement(syntaxNode, Nothing, Nothing, Nothing)))
         End Function
 
-        Friend Overrides Sub AddSynthesizedAttributes(ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
-            MyBase.AddSynthesizedAttributes(attributes)
+        Friend Overrides Sub AddSynthesizedAttributes(compilationState As ModuleCompilationState, ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
+            MyBase.AddSynthesizedAttributes(compilationState, attributes)
 
             AddSynthesizedAttribute(attributes,
                                     DeclaringCompilation.SynthesizeAttribute(WellKnownMember.System_STAThreadAttribute__ctor))
         End Sub
 
-    End Class
+        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
+            Get
+                Return False
+            End Get
+        End Property
 
+        Friend Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+            Throw ExceptionUtilities.Unreachable
+        End Function
+    End Class
 End Namespace
 
 

@@ -1,14 +1,9 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
-using Microsoft.CodeAnalysis.Text;
-using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis
 {
@@ -18,7 +13,7 @@ namespace Microsoft.CodeAnalysis
 
         internal abstract Task<Document> GetUpdatedDocumentAsync(Document document, SemanticModel model, SyntaxNode root, SyntaxNode nodeToFix, string diagnosticId, CancellationToken cancellationToken);
 
-        public sealed override async Task<IEnumerable<CodeAction>> GetFixesAsync(CodeFixContext context)
+        public sealed override async Task ComputeFixesAsync(CodeFixContext context)
         {
             var document = context.Document;
             var cancellationToken = context.CancellationToken;
@@ -26,7 +21,6 @@ namespace Microsoft.CodeAnalysis
             var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
             var model = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
 
-            var actions = SpecializedCollections.EmptyEnumerable<CodeAction>();
             foreach (var diagnostic in context.Diagnostics)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -39,11 +33,9 @@ namespace Microsoft.CodeAnalysis
                 if (newDocument != document)
                 {
                     var codeFixDescription = GetCodeFixDescription(diagnostic.Id);
-                    actions = actions.Concat(new MyCodeAction(codeFixDescription, newDocument));
+                    context.RegisterFix(new MyCodeAction(codeFixDescription, newDocument), diagnostic);
                 }
             }
-
-            return actions;
         }
 
         public override FixAllProvider GetFixAllProvider()
@@ -51,7 +43,7 @@ namespace Microsoft.CodeAnalysis
             return null;
         }
 
-        private class MyCodeAction : CodeAction.DocumentChangeAction
+        private class MyCodeAction : DocumentChangeAction
         {
             public MyCodeAction(string title, Document newDocument) :
                 base(title, c => Task.FromResult(newDocument))

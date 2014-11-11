@@ -111,7 +111,7 @@ namespace Microsoft.CodeAnalysis.FindSymbols
             {
                 var symbolId = symbol.GetSymbolKey();
                 var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
-                var result = symbolId.Resolve(compilation);
+                var result = symbolId.Resolve(compilation, ignoreAssemblyKey: true, cancellationToken: cancellationToken);
 
                 if (result.Symbol != null && InSource(result.Symbol))
                 {
@@ -148,7 +148,7 @@ namespace Microsoft.CodeAnalysis.FindSymbols
         /// No symbols may be returned if the compilation does not define or have access to a similar symbol.
         /// </summary>
         /// <param name="symbol">The symbol to find corresponding matches for.</param>
-        /// <param name="compilation">A compilation to find the corresponding symbol within. The complilation may or may not be the origin of the symbol.</param>
+        /// <param name="compilation">A compilation to find the corresponding symbol within. The compilation may or may not be the origin of the symbol.</param>
         /// <param name="cancellationToken">A CancellationToken.</param>
         /// <returns></returns>
         public static IEnumerable<TSymbol> FindSimilarSymbols<TSymbol>(TSymbol symbol, Compilation compilation, CancellationToken cancellationToken = default(CancellationToken))

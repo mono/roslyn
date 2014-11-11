@@ -13,13 +13,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
     Module EmitHelpers
 
         Friend Function EmitDifference(
-            compilation As VBCompilation,
+            compilation As VisualBasicCompilation,
             baseline As EmitBaseline,
             edits As IEnumerable(Of SemanticEdit),
             metadataStream As Stream,
             ilStream As Stream,
             pdbStream As Stream,
-            updatedMethods As ICollection(Of MethodHandle),
+            updatedMethods As ICollection(Of MethodDefinitionHandle),
             testData As CompilationTestData,
             cancellationToken As CancellationToken) As EmitDifferenceResult
 
@@ -77,10 +77,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
                     Dim encId = Guid.NewGuid()
 
                     Try
-                        Dim writer = New DeltaPeWriter(
+                        Dim writer = New DeltaMetadataWriter(
                             context,
                             compilation.MessageProvider,
-                            pdbWriter,
                             baseline,
                             encId,
                             definitionMap,
@@ -88,7 +87,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
                             cancellationToken)
 
                         Dim metadataSizes As Cci.MetadataSizes = Nothing
-                        writer.WriteMetadataAndIL(metadataStream, ilStream, metadataSizes)
+                        writer.WriteMetadataAndIL(pdbWriter, metadataStream, ilStream, metadataSizes)
                         writer.GetMethodTokens(updatedMethods)
 
                         Return New EmitDifferenceResult(
@@ -108,7 +107,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
         End Function
 
         Friend Function MapToCompilation(
-            compilation As VBCompilation,
+            compilation As VisualBasicCompilation,
             moduleBeingBuilt As PEDeltaAssemblyBuilder) As EmitBaseline
 
             Dim previousGeneration = moduleBeingBuilt.PreviousGeneration
@@ -123,7 +122,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
 
             Dim map = New VisualBasicSymbolMatcher(
                 moduleBeingBuilt.GetAnonymousTypeMap(),
-                (DirectCast(previousGeneration.Compilation, VBCompilation)).SourceAssembly,
+                (DirectCast(previousGeneration.Compilation, VisualBasicCompilation)).SourceAssembly,
                 New EmitContext(DirectCast(previousGeneration.PEModuleBuilder, PEModuleBuilder), Nothing, New DiagnosticBag()),
                 compilation.SourceAssembly,
                 New EmitContext(DirectCast(moduleBeingBuilt, Cci.IModule), Nothing, New DiagnosticBag()))

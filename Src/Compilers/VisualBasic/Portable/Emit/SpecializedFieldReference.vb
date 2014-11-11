@@ -54,7 +54,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
 
         Private Function IFieldReferenceGetType(context As EmitContext) As Cci.ITypeReference Implements Cci.IFieldReference.GetType
             Dim customModifiers = m_UnderlyingField.CustomModifiers
-            Dim type = DirectCast(context.Module, PEModuleBuilder).Translate(m_UnderlyingField.Type, syntaxNodeOpt:=DirectCast(context.SyntaxNodeOpt, VBSyntaxNode), diagnostics:=context.Diagnostics)
+            Dim type = DirectCast(context.Module, PEModuleBuilder).Translate(m_UnderlyingField.Type, syntaxNodeOpt:=DirectCast(context.SyntaxNodeOpt, VisualBasicSyntaxNode), diagnostics:=context.Diagnostics)
 
             If customModifiers.Length = 0 Then
                 Return type
@@ -67,8 +67,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             Return Nothing
         End Function
 
-        Private Sub AssociateWithPeWriter(peWriter As Cci.PeWriter) Implements Cci.IContextualNamedEntity.AssociateWithPeWriter
-            DirectCast(m_UnderlyingField, Cci.IContextualNamedEntity).AssociateWithPeWriter(peWriter)
+        Private Sub AssociateWithMetadataWriter(metadataWriter As Cci.MetadataWriter) Implements Cci.IContextualNamedEntity.AssociateWithMetadataWriter
+            DirectCast(m_UnderlyingField, Cci.IContextualNamedEntity).AssociateWithMetadataWriter(metadataWriter)
         End Sub
 
         Private ReadOnly Property IsContextualNamedEntity As Boolean Implements Cci.IFieldReference.IsContextualNamedEntity

@@ -1,13 +1,7 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-Imports System.Collections.Generic
 Imports System.Collections.Immutable
-Imports System.Diagnostics
-Imports System.Threading
-Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
-Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
-Imports Roslyn.Utilities
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
     ''' <summary>
@@ -53,7 +47,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         '     new {ThisScriptClass}();
         ' }
         Private Function CreateScriptBody() As BoundBlock
-            Dim syntax = VBSyntaxTree.Dummy.GetRoot()
+            Dim syntax = VisualBasicSyntaxTree.Dummy.GetRoot()
 
             Debug.Assert(ContainingType.IsScriptClass)
             Return New BoundBlock(syntax, Nothing,
@@ -78,7 +72,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ' }
         Private Function CreateSubmissionFactoryBody() As BoundBlock
             Debug.Assert(_containingType.TypeKind = TypeKind.Submission)
-            Dim syntax = VBSyntaxTree.Dummy.GetRoot()
+            Dim syntax = VisualBasicSyntaxTree.Dummy.GetRoot()
 
             Dim interactiveSessionParam = New BoundParameter(syntax, Parameters(0), Parameters(0).Type)
 
@@ -125,7 +119,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend Overrides ReadOnly Property Syntax As VBSyntaxNode
+        Friend Overrides ReadOnly Property Syntax As VisualBasicSyntaxNode
             Get
                 Return Nothing
             End Get
@@ -236,6 +230,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Return False
         End Function
 
+        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
+            Get
+                Return False
+            End Get
+        End Property
+
+        Friend Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+            Throw ExceptionUtilities.Unreachable
+        End Function
     End Class
 End Namespace
 

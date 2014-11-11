@@ -230,41 +230,41 @@ End Class
 }
 ]]>).VerifyIL("Program..ctor(Integer)", <![CDATA[
 {
-  // Code size       45 (0x2d)
+  // Code size       49 (0x31)
   .maxstack  3
   IL_0000:  ldarg.0
   IL_0001:  call       "Sub Object..ctor()"
   IL_0006:  ldarg.0
-  IL_0007:  ldsfld     "Program._ClosureCache$__2 As Program.E1EventHandler"
+  IL_0007:  ldsfld     "Program._Closure$__1._ClosureCache$__3 As Program.E1EventHandler"
   IL_000c:  brfalse.s  IL_0015
-  IL_000e:  ldsfld     "Program._ClosureCache$__2 As Program.E1EventHandler"
-  IL_0013:  br.s       IL_0027
-  IL_0015:  ldnull
-  IL_0016:  ldftn      "Sub Program._Lambda$__1(Object, Integer)"
-  IL_001c:  newobj     "Sub Program.E1EventHandler..ctor(Object, System.IntPtr)"
-  IL_0021:  dup
-  IL_0022:  stsfld     "Program._ClosureCache$__2 As Program.E1EventHandler"
-  IL_0027:  call       "Sub Program.add_E1(Program.E1EventHandler)"
-  IL_002c:  ret
+  IL_000e:  ldsfld     "Program._Closure$__1._ClosureCache$__3 As Program.E1EventHandler"
+  IL_0013:  br.s       IL_002b
+  IL_0015:  ldsfld     "Program._Closure$__1.$Inst As Program._Closure$__1"
+  IL_001a:  ldftn      "Sub Program._Closure$__1._Lambda$__2(Integer)"
+  IL_0020:  newobj     "Sub Program.E1EventHandler..ctor(Object, System.IntPtr)"
+  IL_0025:  dup
+  IL_0026:  stsfld     "Program._Closure$__1._ClosureCache$__3 As Program.E1EventHandler"
+  IL_002b:  call       "Sub Program.add_E1(Program.E1EventHandler)"
+  IL_0030:  ret
 }
 ]]>).VerifyIL("Program..ctor(Long)", <![CDATA[
 {
-  // Code size       45 (0x2d)
+  // Code size       49 (0x31)
   .maxstack  3
   IL_0000:  ldarg.0
   IL_0001:  call       "Sub Object..ctor()"
   IL_0006:  ldarg.0
-  IL_0007:  ldsfld     "Program._ClosureCache$__4 As Program.E1EventHandler"
+  IL_0007:  ldsfld     "Program._Closure$__1._ClosureCache$__5 As Program.E1EventHandler"
   IL_000c:  brfalse.s  IL_0015
-  IL_000e:  ldsfld     "Program._ClosureCache$__4 As Program.E1EventHandler"
-  IL_0013:  br.s       IL_0027
-  IL_0015:  ldnull
-  IL_0016:  ldftn      "Sub Program._Lambda$__3(Object, Integer)"
-  IL_001c:  newobj     "Sub Program.E1EventHandler..ctor(Object, System.IntPtr)"
-  IL_0021:  dup
-  IL_0022:  stsfld     "Program._ClosureCache$__4 As Program.E1EventHandler"
-  IL_0027:  call       "Sub Program.add_E1(Program.E1EventHandler)"
-  IL_002c:  ret
+  IL_000e:  ldsfld     "Program._Closure$__1._ClosureCache$__5 As Program.E1EventHandler"
+  IL_0013:  br.s       IL_002b
+  IL_0015:  ldsfld     "Program._Closure$__1.$Inst As Program._Closure$__1"
+  IL_001a:  ldftn      "Sub Program._Closure$__1._Lambda$__4(Integer)"
+  IL_0020:  newobj     "Sub Program.E1EventHandler..ctor(Object, System.IntPtr)"
+  IL_0025:  dup
+  IL_0026:  stsfld     "Program._Closure$__1._ClosureCache$__5 As Program.E1EventHandler"
+  IL_002b:  call       "Sub Program.add_E1(Program.E1EventHandler)"
+  IL_0030:  ret
 }
 ]]>).Compilation
 
@@ -314,7 +314,7 @@ End Class
 handled2
 ]]>).VerifyIL("Program..ctor", <![CDATA[
 {
-  // Code size       62 (0x3e)
+  // Code size       66 (0x42)
   .maxstack  3
   IL_0000:  ldarg.0
   IL_0001:  call       "Sub base..ctor()"
@@ -323,17 +323,17 @@ handled2
   IL_000d:  newobj     "Sub Program.E1EventHandler..ctor(Object, System.IntPtr)"
   IL_0012:  call       "Sub Program.add_E1(Program.E1EventHandler)"
   IL_0017:  ldarg.0
-  IL_0018:  ldsfld     "Program._ClosureCache$__3 As base.E2EventHandler"
+  IL_0018:  ldsfld     "Program._Closure$__2._ClosureCache$__4 As base.E2EventHandler"
   IL_001d:  brfalse.s  IL_0026
-  IL_001f:  ldsfld     "Program._ClosureCache$__3 As base.E2EventHandler"
-  IL_0024:  br.s       IL_0038
-  IL_0026:  ldnull
-  IL_0027:  ldftn      "Sub Program._Lambda$__2(Object, ByRef Integer)"
-  IL_002d:  newobj     "Sub base.E2EventHandler..ctor(Object, System.IntPtr)"
-  IL_0032:  dup
-  IL_0033:  stsfld     "Program._ClosureCache$__3 As base.E2EventHandler"
-  IL_0038:  call       "Sub base.add_E2(base.E2EventHandler)"
-  IL_003d:  ret
+  IL_001f:  ldsfld     "Program._Closure$__2._ClosureCache$__4 As base.E2EventHandler"
+  IL_0024:  br.s       IL_003c
+  IL_0026:  ldsfld     "Program._Closure$__2.$Inst As Program._Closure$__2"
+  IL_002b:  ldftn      "Sub Program._Closure$__2._Lambda$__3(ByRef Integer)"
+  IL_0031:  newobj     "Sub base.E2EventHandler..ctor(Object, System.IntPtr)"
+  IL_0036:  dup
+  IL_0037:  stsfld     "Program._Closure$__2._ClosureCache$__4 As base.E2EventHandler"
+  IL_003c:  call       "Sub base.add_E2(base.E2EventHandler)"
+  IL_0041:  ret
 }
 ]]>).Compilation
 
@@ -389,7 +389,7 @@ handled1
   IL_0000:  ldarg.0
   IL_0001:  call       "Sub base..ctor()"
   IL_0006:  ldarg.0
-  IL_0007:  ldftn      "Sub Program._Lambda$__2(Integer)"
+  IL_0007:  ldftn      "Sub Program._Lambda$__3(Integer)"
   IL_000d:  newobj     "Sub Program.E1EventHandler..ctor(Object, System.IntPtr)"
   IL_0012:  call       "Sub Program.add_E1(Program.E1EventHandler)"
   IL_0017:  ret
@@ -608,13 +608,13 @@ handledS
 handledS
 ]]>).VerifyIL("cls2.set_w", <![CDATA[
 {
-  // Code size      188 (0xbc)
+  // Code size      196 (0xc4)
   .maxstack  2
   .locals init (cls1.E1EventHandler V_0,
-  cls1.E1EventHandler V_1,
-  cls1.E1EventHandler V_2,
-  cls1.E1EventHandler V_3,
-  cls1 V_4)
+                cls1.E1EventHandler V_1,
+                cls1.E1EventHandler V_2,
+                cls1.E1EventHandler V_3,
+                cls1 V_4)
   IL_0000:  ldarg.0
   IL_0001:  ldftn      "Sub cls2._Lambda$__1(Integer)"
   IL_0007:  newobj     "Sub cls1.E1EventHandler..ctor(Object, System.IntPtr)"
@@ -623,64 +623,64 @@ handledS
   IL_000e:  ldftn      "Sub cls2._Lambda$__2(Integer)"
   IL_0014:  newobj     "Sub cls1.E1EventHandler..ctor(Object, System.IntPtr)"
   IL_0019:  stloc.1
-  IL_001a:  ldsfld     "cls2._ClosureCache$__4 As cls1.E1EventHandler"
+  IL_001a:  ldsfld     "cls2._Closure$__3._ClosureCache$__5 As cls1.E1EventHandler"
   IL_001f:  brfalse.s  IL_0028
-  IL_0021:  ldsfld     "cls2._ClosureCache$__4 As cls1.E1EventHandler"
-  IL_0026:  br.s       IL_003a
-  IL_0028:  ldnull
-  IL_0029:  ldftn      "Sub cls2._Lambda$__3(Object, Integer)"
-  IL_002f:  newobj     "Sub cls1.E1EventHandler..ctor(Object, System.IntPtr)"
-  IL_0034:  dup
-  IL_0035:  stsfld     "cls2._ClosureCache$__4 As cls1.E1EventHandler"
-  IL_003a:  stloc.2
-  IL_003b:  ldsfld     "cls2._ClosureCache$__6 As cls1.E1EventHandler"
-  IL_0040:  brfalse.s  IL_0049
-  IL_0042:  ldsfld     "cls2._ClosureCache$__6 As cls1.E1EventHandler"
-  IL_0047:  br.s       IL_005b
-  IL_0049:  ldnull
-  IL_004a:  ldftn      "Sub cls2._Lambda$__5(Object, Integer)"
-  IL_0050:  newobj     "Sub cls1.E1EventHandler..ctor(Object, System.IntPtr)"
-  IL_0055:  dup
-  IL_0056:  stsfld     "cls2._ClosureCache$__6 As cls1.E1EventHandler"
-  IL_005b:  stloc.3
-  IL_005c:  ldarg.0
-  IL_005d:  call       "Function base.get_w() As cls1"
-  IL_0062:  stloc.s    V_4
-  IL_0064:  ldloc.s    V_4
-  IL_0066:  brfalse.s  IL_0088
-  IL_0068:  ldloc.s    V_4
-  IL_006a:  ldloc.0
-  IL_006b:  callvirt   "Sub cls1.remove_E1(cls1.E1EventHandler)"
+  IL_0021:  ldsfld     "cls2._Closure$__3._ClosureCache$__5 As cls1.E1EventHandler"
+  IL_0026:  br.s       IL_003e
+  IL_0028:  ldsfld     "cls2._Closure$__3.$Inst As cls2._Closure$__3"
+  IL_002d:  ldftn      "Sub cls2._Closure$__3._Lambda$__4(Integer)"
+  IL_0033:  newobj     "Sub cls1.E1EventHandler..ctor(Object, System.IntPtr)"
+  IL_0038:  dup
+  IL_0039:  stsfld     "cls2._Closure$__3._ClosureCache$__5 As cls1.E1EventHandler"
+  IL_003e:  stloc.2
+  IL_003f:  ldsfld     "cls2._Closure$__3._ClosureCache$__7 As cls1.E1EventHandler"
+  IL_0044:  brfalse.s  IL_004d
+  IL_0046:  ldsfld     "cls2._Closure$__3._ClosureCache$__7 As cls1.E1EventHandler"
+  IL_004b:  br.s       IL_0063
+  IL_004d:  ldsfld     "cls2._Closure$__3.$Inst As cls2._Closure$__3"
+  IL_0052:  ldftn      "Sub cls2._Closure$__3._Lambda$__6(Integer)"
+  IL_0058:  newobj     "Sub cls1.E1EventHandler..ctor(Object, System.IntPtr)"
+  IL_005d:  dup
+  IL_005e:  stsfld     "cls2._Closure$__3._ClosureCache$__7 As cls1.E1EventHandler"
+  IL_0063:  stloc.3
+  IL_0064:  ldarg.0
+  IL_0065:  call       "Function base.get_w() As cls1"
+  IL_006a:  stloc.s    V_4
+  IL_006c:  ldloc.s    V_4
+  IL_006e:  brfalse.s  IL_0090
   IL_0070:  ldloc.s    V_4
-  IL_0072:  ldloc.1
+  IL_0072:  ldloc.0
   IL_0073:  callvirt   "Sub cls1.remove_E1(cls1.E1EventHandler)"
   IL_0078:  ldloc.s    V_4
-  IL_007a:  ldloc.2
+  IL_007a:  ldloc.1
   IL_007b:  callvirt   "Sub cls1.remove_E1(cls1.E1EventHandler)"
   IL_0080:  ldloc.s    V_4
-  IL_0082:  ldloc.3
+  IL_0082:  ldloc.2
   IL_0083:  callvirt   "Sub cls1.remove_E1(cls1.E1EventHandler)"
-  IL_0088:  ldarg.0
-  IL_0089:  ldarg.1
-  IL_008a:  call       "Sub base.set_w(cls1)"
-  IL_008f:  ldarg.0
-  IL_0090:  call       "Function base.get_w() As cls1"
-  IL_0095:  stloc.s    V_4
-  IL_0097:  ldloc.s    V_4
-  IL_0099:  brfalse.s  IL_00bb
-  IL_009b:  ldloc.s    V_4
-  IL_009d:  ldloc.0
-  IL_009e:  callvirt   "Sub cls1.add_E1(cls1.E1EventHandler)"
+  IL_0088:  ldloc.s    V_4
+  IL_008a:  ldloc.3
+  IL_008b:  callvirt   "Sub cls1.remove_E1(cls1.E1EventHandler)"
+  IL_0090:  ldarg.0
+  IL_0091:  ldarg.1
+  IL_0092:  call       "Sub base.set_w(cls1)"
+  IL_0097:  ldarg.0
+  IL_0098:  call       "Function base.get_w() As cls1"
+  IL_009d:  stloc.s    V_4
+  IL_009f:  ldloc.s    V_4
+  IL_00a1:  brfalse.s  IL_00c3
   IL_00a3:  ldloc.s    V_4
-  IL_00a5:  ldloc.1
+  IL_00a5:  ldloc.0
   IL_00a6:  callvirt   "Sub cls1.add_E1(cls1.E1EventHandler)"
   IL_00ab:  ldloc.s    V_4
-  IL_00ad:  ldloc.2
+  IL_00ad:  ldloc.1
   IL_00ae:  callvirt   "Sub cls1.add_E1(cls1.E1EventHandler)"
   IL_00b3:  ldloc.s    V_4
-  IL_00b5:  ldloc.3
+  IL_00b5:  ldloc.2
   IL_00b6:  callvirt   "Sub cls1.add_E1(cls1.E1EventHandler)"
-  IL_00bb:  ret
+  IL_00bb:  ldloc.s    V_4
+  IL_00bd:  ldloc.3
+  IL_00be:  callvirt   "Sub cls1.add_E1(cls1.E1EventHandler)"
+  IL_00c3:  ret
 }
 ]]>).Compilation
 
@@ -965,13 +965,13 @@ End Interface
   // Code size       75 (0x4b)
   .maxstack  2
   .locals init (iTest.Event2EventHandler V_0,
-  T V_1)
+                T V_1)
   IL_0000:  ldarg.0
-  IL_0001:  ldftn      "Public Sub EventHandler2()"
+  IL_0001:  ldftn      "Sub C1(Of T).EventHandler2()"
   IL_0007:  newobj     "Sub iTest.Event2EventHandler..ctor(Object, System.IntPtr)"
   IL_000c:  stloc.0
   IL_000d:  ldarg.0
-  IL_000e:  ldfld      "Private _o As T"
+  IL_000e:  ldfld      "C1(Of T)._o As T"
   IL_0013:  stloc.1
   IL_0014:  ldloc.1
   IL_0015:  box        "T"
@@ -982,9 +982,9 @@ End Interface
   IL_0023:  callvirt   "Sub iTest.remove_Event2(iTest.Event2EventHandler)"
   IL_0028:  ldarg.0
   IL_0029:  ldarg.1
-  IL_002a:  stfld      "Private _o As T"
+  IL_002a:  stfld      "C1(Of T)._o As T"
   IL_002f:  ldarg.0
-  IL_0030:  ldfld      "Private _o As T"
+  IL_0030:  ldfld      "C1(Of T)._o As T"
   IL_0035:  stloc.1
   IL_0036:  ldloc.1
   IL_0037:  box        "T"
@@ -1054,11 +1054,11 @@ End Interface
   .locals init (iTest.Event2EventHandler V_0,
                 T V_1)
   IL_0000:  ldarg.0
-  IL_0001:  ldftn      "Public Sub EventHandler2()"
+  IL_0001:  ldftn      "Sub C1(Of T).EventHandler2()"
   IL_0007:  newobj     "Sub iTest.Event2EventHandler..ctor(Object, System.IntPtr)"
   IL_000c:  stloc.0
   IL_000d:  ldarg.0
-  IL_000e:  ldfld      "Private _o As T"
+  IL_000e:  ldfld      "C1(Of T)._o As T"
   IL_0013:  stloc.1
   IL_0014:  ldloc.1
   IL_0015:  box        "T"
@@ -1069,9 +1069,9 @@ End Interface
   IL_0023:  callvirt   "Sub iTest.remove_Event2(iTest.Event2EventHandler)"
   IL_0028:  ldarg.0
   IL_0029:  ldarg.1
-  IL_002a:  stfld      "Private _o As T"
+  IL_002a:  stfld      "C1(Of T)._o As T"
   IL_002f:  ldarg.0
-  IL_0030:  ldfld      "Private _o As T"
+  IL_0030:  ldfld      "C1(Of T)._o As T"
   IL_0035:  stloc.1
   IL_0036:  ldloc.1
   IL_0037:  box        "T"
@@ -1144,7 +1144,7 @@ End Module]]>,
     End Sub
     Public WithEvents foo As c1
 End Class]]>,
-                compilationOptions:=New VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                compilationOptions:=New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
             Dim verifier = CompileAndVerify(comp, expectedSignatures:=
             {
@@ -1178,7 +1178,7 @@ Class C1(Of T As {Exception, I1(Of T)})
         AddHandler x.E1, AddressOf foo 'AddHandler should also work
     End Sub
 End Class]]>,
-                compilationOptions:=New VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                compilationOptions:=New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
             Dim verifier = CompileAndVerify(comp)
             verifier.VerifyDiagnostics()
         End Sub
@@ -1571,7 +1571,7 @@ Public Module Program
         x.Raise3()
     End Sub
 End Module]]>,
-                compilationOptions:=New VBCompilationOptions(OutputKind.ConsoleApplication))
+                compilationOptions:=New VisualBasicCompilationOptions(OutputKind.ConsoleApplication))
 
             'Breaking Change: Dev11 processes event handlers in a different order than Roslyn.
             Dim vbVerifier = CompileAndVerify(vbCompilation,
@@ -1616,7 +1616,7 @@ End Class
 
 Public Class Base2 : Inherits Base
 End Class]]>,
-                compilationOptions:=New VBCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                compilationOptions:=New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
             Dim assembly1Verifier = CompileAndVerify(assembly1Compilation)
             assembly1Verifier.VerifyDiagnostics()
 
@@ -1645,7 +1645,7 @@ Public Module Program
         x.Raise()
     End Sub
 End Module]]>,
-                compilationOptions:=New VBCompilationOptions(OutputKind.ConsoleApplication),
+                compilationOptions:=New VisualBasicCompilationOptions(OutputKind.ConsoleApplication),
                 referencedCompilations:={assembly1Compilation})
 
             'Breaking Change: Dev11 processes event handlers in a different order than Roslyn.
@@ -1728,7 +1728,7 @@ Public Module Program
         x.w.raise()
     End Sub
 End Module]]>,
-                compilationOptions:=New VBCompilationOptions(OutputKind.ConsoleApplication),
+                compilationOptions:=New VisualBasicCompilationOptions(OutputKind.ConsoleApplication),
                 referencedCompilations:={csCompilation})
 
             'Breaking Change: Dev11 processes event handlers in a different order than Roslyn.
@@ -1808,7 +1808,7 @@ Public Module Program
         x.w.Raise()
     End Sub
 End Module]]>,
-                compilationOptions:=New VBCompilationOptions(OutputKind.ConsoleApplication),
+                compilationOptions:=New VisualBasicCompilationOptions(OutputKind.ConsoleApplication),
                 referencedCompilations:={csCompilation})
             Dim vbVerifier = CompileAndVerify(vbCompilation,
                 expectedOutput:=<![CDATA[System.Int32[]
@@ -1862,7 +1862,7 @@ Public Module Program
         x.w.Raise()
     End Sub
 End Module]]>,
-                compilationOptions:=New VBCompilationOptions(OutputKind.ConsoleApplication),
+                compilationOptions:=New VisualBasicCompilationOptions(OutputKind.ConsoleApplication),
                 referencedCompilations:={csCompilation})
 
             vbCompilation.VerifyDiagnostics(
@@ -1905,7 +1905,7 @@ Public Module Program
         x.w.Raise()
     End Sub
 End Module]]>,
-                compilationOptions:=New VBCompilationOptions(OutputKind.ConsoleApplication),
+                compilationOptions:=New VisualBasicCompilationOptions(OutputKind.ConsoleApplication),
                 referencedCompilations:={csCompilation})
             vbCompilation.VerifyDiagnostics(
                 Diagnostic(ERRID.ERR_EventHandlerSignatureIncompatible2, "ev").WithArguments("Foo", "ev"),

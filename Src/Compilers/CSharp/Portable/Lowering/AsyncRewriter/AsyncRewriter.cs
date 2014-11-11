@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.CodeGen;
@@ -18,10 +19,10 @@ namespace Microsoft.CodeAnalysis.CSharp
             BoundStatement body,
             SourceMethodSymbol method,
             AsyncStateMachine stateMachineType,
-            VariableSlotAllocator variableSlotAllocatorOpt,
+            VariableSlotAllocator slotAllocatorOpt,
             TypeCompilationState compilationState,
             DiagnosticBag diagnostics)
-            : base(body, method, stateMachineType, variableSlotAllocatorOpt, compilationState, diagnostics)
+            : base(body, method, stateMachineType, slotAllocatorOpt, compilationState, diagnostics)
         {
             try
             {
@@ -56,7 +57,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             var bodyWithAwaitLifted = AwaitExpressionSpiller.Rewrite(body, method, compilationState, diagnostics);
 
-            stateMachineType = new AsyncStateMachine(method, typeKind);
+            stateMachineType = new AsyncStateMachine(slotAllocatorOpt, method, typeKind);
             compilationState.ModuleBuilderOpt.CompilationState.SetStateMachineType(method, stateMachineType);
             var rewriter = new AsyncRewriter(bodyWithAwaitLifted, (SourceMethodSymbol)method, stateMachineType, slotAllocatorOpt, compilationState, diagnostics);
             if (!rewriter.constructedSuccessfully)
@@ -74,9 +75,10 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         protected override void GenerateControlFields()
         {
-            base.GenerateControlFields();
+            // the fields are initialized from async method, so they need to be public:
 
-            builderField = F.StateMachineField(asyncMethodBuilderMemberCollection.BuilderType, GeneratedNames.AsyncBuilderFieldName(), isPublic: true);
+            this.stateField = F.StateMachineField(F.SpecialType(SpecialType.System_Int32), GeneratedNames.MakeStateMachineStateName(), isPublic: true);
+            this.builderField = F.StateMachineField(asyncMethodBuilderMemberCollection.BuilderType, GeneratedNames.AsyncBuilderFieldName(), isPublic: true);
         }
 
         protected override void GenerateMethodImplementations()
@@ -132,11 +134,6 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        protected override bool IsStateFieldPublic
-        {
-            get { return true; }
-        }
-
         protected override void InitializeStateMachine(ArrayBuilder<BoundStatement> bodyBuilder, NamedTypeSymbol frameType, LocalSymbol stateMachineLocal)
         {
             if (frameType.TypeKind == TypeKind.Class)
@@ -149,7 +146,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        protected override BoundStatement GenerateReplacementBody(LocalSymbol stateMachineVariable, NamedTypeSymbol frameType)
+        protected override BoundStatement GenerateStateMachineCreation(LocalSymbol stateMachineVariable, NamedTypeSymbol frameType)
         {
             try
             {
@@ -215,8 +212,11 @@ namespace Microsoft.CodeAnalysis.CSharp
                 F: F,
                 state: stateField,
                 builder: builderField,
-                variablesCaptured: variablesCaptured,
+                hoistedVariables: hoistedVariables,
                 nonReusableLocalProxies: nonReusableLocalProxies,
+                synthesizedLocalOrdinals: synthesizedLocalOrdinals,
+                slotAllocatorOpt: slotAllocatorOpt,
+                nextFreeHoistedLocalSlot: nextFreeHoistedLocalSlot,
                 diagnostics: diagnostics);
 
             rewriter.GenerateMoveNext(body, moveNextMethod);

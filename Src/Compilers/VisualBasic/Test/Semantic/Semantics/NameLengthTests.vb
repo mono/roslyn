@@ -12,11 +12,11 @@ Imports System.Xml.Linq
 Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
     Public Class NameLengthTests : Inherits BasicTestBase
         ' Longest legal symbol name.
-        Private Shared ReadOnly LongSymbolName As New String("A"c, PeWriter.NameLengthLimit)
+        Private Shared ReadOnly LongSymbolName As New String("A"c, MetadataWriter.NameLengthLimit)
         ' Longest legal path name.
-        Private Shared ReadOnly LongPathName As New String("A"c, PeWriter.PathLengthLimit)
+        Private Shared ReadOnly LongPathName As New String("A"c, MetadataWriter.PathLengthLimit)
         ' Longest legal local name.
-        Private Shared ReadOnly LongLocalName As New String("A"c, PeWriter.PdbLengthLimit)
+        Private Shared ReadOnly LongLocalName As New String("A"c, MetadataWriter.PdbLengthLimit)
 
         <Fact>
         Public Sub UnmangledMemberNames()
@@ -511,7 +511,7 @@ End Class
             comp.AssertNoDiagnostics()
             comp.AssertTheseEmitDiagnostics(<errors>
 BC37220: Name 'VB$StateMachine_1_<%= longName %>1' exceeds the maximum length allowed in metadata.
-BC37220: Name 'VB$StateMachine_2_<%= longName %>1' exceeds the maximum length allowed in metadata.
+BC37220: Name 'VB$StateMachine_1_<%= longName %>1' exceeds the maximum length allowed in metadata.
                                             </errors>)
         End Sub
 
@@ -545,13 +545,13 @@ BC37220: Name '<%= LongSymbolName %>3' exceeds the maximum length allowed in met
             Return String.Format(sourceTemplate.Value.Replace(vbCr, vbCrLf), args)
         End Function
 
-        Private Function CreateCompilationWithMscorlib(source As String) As VBCompilation
+        Private Function CreateCompilationWithMscorlib(source As String) As VisualBasicCompilation
             Return CompilationUtils.CreateCompilationWithMscorlib({source}, {}, TestOptions.ReleaseDll)
         End Function
 
-        Private Function CreateCompilationWithMscorlib45(source As String) As VBCompilation
-            Return VBCompilation.Create(GetUniqueName(),
-                                                 {VBSyntaxTree.ParseText(source)},
+        Private Function CreateCompilationWithMscorlib45(source As String) As VisualBasicCompilation
+            Return VisualBasicCompilation.Create(GetUniqueName(),
+                                                 {VisualBasicSyntaxTree.ParseText(source)},
                                                  {MscorlibRef_v4_0_30316_17626, MsvbRef_v4_0_30319_17929},
                                                  TestOptions.ReleaseDll)
         End Function

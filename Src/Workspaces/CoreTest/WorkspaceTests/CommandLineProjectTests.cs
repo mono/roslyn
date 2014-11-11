@@ -3,6 +3,7 @@
 using System;
 using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Host.Mef;
 using Roslyn.Test.Utilities;
 using Xunit;
 
@@ -11,11 +12,30 @@ namespace Microsoft.CodeAnalysis.UnitTests
     public partial class CommandLineProjectTests : TestBase
     {
         [Fact]
+        public void TestCreateWithoutRequiredServices()
+        {
+            string commandLine = @"foo.cs";
+
+            Assert.Throws<InvalidOperationException>(delegate
+            {
+                var ws = new CustomWorkspace(); // only includes portable services
+                var info = CommandLineProject.CreateProjectInfo("TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory", ws);
+            });
+        }
+
+        [Fact]
+        public void TestCreateWithRequiredServices()
+        {
+            string commandLine = @"foo.cs";
+            var ws = new CustomWorkspace(DesktopMefHostServices.DefaultServices); // includes non-portable services too
+            var info = CommandLineProject.CreateProjectInfo("TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory", ws);
+        }
+
+        [Fact]
         public void TestUnrootedPathInsideProjectCone()
         {
             string commandLine = @"foo.cs";
-            var ws = new CustomWorkspace();
-            var info = CommandLineProject.CreateProjectInfo(ws, "TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
+            var info = CommandLineProject.CreateProjectInfo("TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
 
             var docInfo = info.Documents.First();
             Assert.Equal(0, docInfo.Folders.Count);
@@ -26,8 +46,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
         public void TestUnrootedSubPathInsideProjectCone()
         {
             string commandLine = @"subdir\foo.cs";
-            var ws = new CustomWorkspace();
-            var info = CommandLineProject.CreateProjectInfo(ws, "TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
+            var info = CommandLineProject.CreateProjectInfo("TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
 
             var docInfo = info.Documents.First();
             Assert.Equal(1, docInfo.Folders.Count);
@@ -39,8 +58,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
         public void TestRootedPathInsideProjectCone()
         {
             string commandLine = @"c:\ProjectDirectory\foo.cs";
-            var ws = new CustomWorkspace();
-            var info = CommandLineProject.CreateProjectInfo(ws, "TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
+            var info = CommandLineProject.CreateProjectInfo("TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
 
             var docInfo = info.Documents.First();
             Assert.Equal(0, docInfo.Folders.Count);
@@ -51,8 +69,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
         public void TestRootedSubPathInsideProjectCone()
         {
             string commandLine = @"c:\projectDirectory\subdir\foo.cs";
-            var ws = new CustomWorkspace();
-            var info = CommandLineProject.CreateProjectInfo(ws, "TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
+            var info = CommandLineProject.CreateProjectInfo("TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
 
             var docInfo = info.Documents.First();
             Assert.Equal(1, docInfo.Folders.Count);
@@ -64,8 +81,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
         public void TestRootedPathOutsideProjectCone()
         {
             string commandLine = @"C:\SomeDirectory\foo.cs";
-            var ws = new CustomWorkspace();
-            var info = CommandLineProject.CreateProjectInfo(ws, "TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
+            var info = CommandLineProject.CreateProjectInfo("TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
 
             var docInfo = info.Documents.First();
             Assert.Equal(0, docInfo.Folders.Count);
@@ -76,8 +92,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
         public void TestUnrootedPathOutsideProjectCone()
         {
             string commandLine = @"..\foo.cs";
-            var ws = new CustomWorkspace();
-            var info = CommandLineProject.CreateProjectInfo(ws, "TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
+            var info = CommandLineProject.CreateProjectInfo("TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
 
             var docInfo = info.Documents.First();
             Assert.Equal(0, docInfo.Folders.Count);
@@ -88,8 +103,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
         public void TestAdditionalFiles()
         {
             string commandLine = @"foo.cs /additionalfile:bar.cs";
-            var ws = new CustomWorkspace();
-            var info = CommandLineProject.CreateProjectInfo(ws, "TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
+            var info = CommandLineProject.CreateProjectInfo("TestProject", LanguageNames.CSharp, commandLine, @"C:\ProjectDirectory");
 
             var firstDoc = info.Documents.Single();
             var secondDoc = info.AdditionalDocuments.Single();

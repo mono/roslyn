@@ -1,26 +1,5 @@
-﻿// *********************************************************
-//
-// Copyright © Microsoft Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the
-// "License"); you may not use this file except in
-// compliance with the License. You may obtain a copy of
-// the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0 
-//
-// THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES
-// OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-// INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES
-// OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR
-// PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
-//
-// See the Apache 2 License for the specific language
-// governing permissions and limitations under the License.
-//
-// *********************************************************
+﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
@@ -32,14 +11,13 @@ using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Simplification;
-using Microsoft.CodeAnalysis.Text;
 
 namespace ImplementNotifyPropertyChangedCS
 {
     [ExportCodeRefactoringProvider("ImplementNotifyPropertyChangedCS", LanguageNames.CSharp), Shared]
     internal partial class ImplementNotifyPropertyChangedCodeRefactoringProvider : CodeRefactoringProvider
     {
-        public sealed override async Task<IEnumerable<CodeAction>> GetRefactoringsAsync(CodeRefactoringContext context)
+        public sealed override async Task ComputeRefactoringsAsync(CodeRefactoringContext context)
         {
             var document = context.Document;
             var textSpan = context.Span;
@@ -60,11 +38,14 @@ namespace ImplementNotifyPropertyChangedCS
 
             var properties = ExpansionChecker.GetExpandableProperties(textSpan, root, model);
 
-#pragma warning disable RS005
-            return properties.Any()
-                ? new[] { CodeAction.Create("Apply INotifyPropertyChanged pattern", (c) => ImplementNotifyPropertyChangedAsync(document, root, model, properties, c)) }
-                : null;
-#pragma warning restore RS005
+            if (properties.Any())
+            {
+#pragma warning disable RS0005
+                context.RegisterRefactoring(
+                   CodeAction.Create("Apply INotifyPropertyChanged pattern", (c) =>
+                                     ImplementNotifyPropertyChangedAsync(document, root, model, properties, c)));
+#pragma warning restore RS0005
+            }
         }
 
         private async Task<Document> ImplementNotifyPropertyChangedAsync(Document document, CompilationUnitSyntax root, SemanticModel model, IEnumerable<ExpandablePropertyInfo> properties, CancellationToken cancellationToken)

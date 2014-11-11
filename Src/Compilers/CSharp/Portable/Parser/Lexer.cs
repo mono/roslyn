@@ -939,10 +939,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                 if (this.ModeIs(LexerMode.DebuggerSyntax) && TextWindow.PeekChar() == '#')
                 {
-                    // In DebuggerSyntax mode, "123#" is an identifier.
+                    // Previously, in DebuggerSyntax mode, "123#" was a valid identifier.
                     TextWindow.AdvanceChar();
                     info.StringValue = info.Text = TextWindow.GetText(intern: true);
                     info.Kind = SyntaxKind.IdentifierToken;
+                    this.AddError(MakeError(ErrorCode.ERR_LegacyObjectIdSyntax));
                     return true;
                 }
 

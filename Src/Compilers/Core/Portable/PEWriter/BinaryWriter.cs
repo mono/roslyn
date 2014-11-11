@@ -380,47 +380,67 @@ namespace Microsoft.Cci
             }
         }
 
-        internal void WriteCompressedInt(int val)
+        /// <summary>
+        /// Implements compressed signed integer encoding as defined by ECMA-335-II chapter 23.2: Blobs and signatures.
+        /// </summary>
+        /// <remarks>
+        /// If the value lies between -64 (0xFFFFFFC0) and 63 (0x3F), inclusive, encode as a one-byte integer: 
+        /// bit 7 clear, value bits 5 through 0 held in bits 6 through 1, sign bit (value bit 31) in bit 0.
+        /// 
+        /// If the value lies between -8192 (0xFFFFE000) and 8191 (0x1FFF), inclusive, encode as a two-byte integer: 
+        /// 15 set, bit 14 clear, value bits 12 through 0 held in bits 13 through 1, sign bit(value bit 31) in bit 0.
+        /// 
+        /// If the value lies between -268435456 (0xF000000) and 268435455 (0x0FFFFFFF), inclusive, encode as a four-byte integer: 
+        /// 31 set, 30 set, bit 29 clear, value bits 27 through 0 held in bits 28 through 1, sign bit(value bit 31) in bit 0.
+        /// </remarks>
+        internal void WriteCompressedSignedInteger(int value)
         {
             unchecked
             {
-                if (val >= 0)
+                const int b6 = (1 << 6) - 1;
+                const int b13 = (1 << 13) - 1;
+                const int b28 = (1 << 28) - 1;
+
+                // 0xffffffff for negative value
+                // 0x00000000 for non-negative
+                int signMask = value >> 31;
+
+                if ((value & ~b6) == (signMask & ~b6))
                 {
-                    val = val << 1;
-                    this.WriteCompressedUInt((uint)val);
+                    int n = ((value & b6) << 1) | (signMask & 1);
+                    this.WriteByte((byte)n);
                 }
-                else
+                else if ((value & ~b13) == (signMask & ~b13))
                 {
-                    if (val > -0x40)
-                    {
-                        val = 0x40 + val;
-                        val = (val << 1) | 1;
-                        this.WriteByte((byte)val);
-                    }
-                    else if (val >= -0x2000)
-                    {
-                        val = 0x2000 - val;
-                        val = (val << 1) | 1;
-                        this.WriteByte((byte)((val >> 8) | 0x80));
-                        this.WriteByte((byte)(val & 0xff));
-                    }
-                    else if (val >= -0x20000000)
-                    {
-                        val = 0x20000000 - val;
-                        val = (val << 1) | 1;
-                        this.WriteByte((byte)((val >> 24) | 0xc0));
-                        this.WriteByte((byte)((val & 0xff0000) >> 16));
-                        this.WriteByte((byte)((val & 0xff00) >> 8));
-                        this.WriteByte((byte)(val & 0xff));
-                    }
-                    else
-                    {
-                        // ^ assume false;
-                    }
+                    int n = ((value & b13) << 1) | (signMask & 1);
+                    this.WriteByte((byte)(0x80 | (n >> 8)));
+                    this.WriteByte((byte)n);
+                }
+                else 
+                {
+                    Debug.Assert((value & ~b28) == (signMask & ~b28));
+
+                    int n = ((value & b28) << 1) | (signMask & 1);
+                    this.WriteByte((byte)(0xc0 | (n >> 24)));
+                    this.WriteByte((byte)(n >> 16));
+                    this.WriteByte((byte)(n >> 8));
+                    this.WriteByte((byte)n);
                 }
             }
         }
 
+        /// <summary>
+        /// Implements compressed unsigned integer encoding as defined by ECMA-335-II chapter 23.2: Blobs and signatures.
+        /// </summary>
+        /// <remarks>
+        /// If the value lies between 0 (0x00) and 127 (0x7F), inclusive, 
+        /// encode as a one-byte integer (bit 7 is clear, value held in bits 6 through 0).
+        /// 
+        /// If the value lies between 28 (0x80) and 214 – 1 (0x3FFF), inclusive, 
+        /// encode as a 2-byte integer with bit 15 set, bit 14 clear(value held in bits 13 through 0).
+        /// 
+        /// Otherwise, encode as a 4-byte integer, with bit 31 set, bit 30 set, bit 29 clear (value held in bits 28 through 0).
+        /// </remarks>
         internal void WriteCompressedUInt(uint val)
         {
             unchecked
@@ -431,19 +451,17 @@ namespace Microsoft.Cci
                 }
                 else if (val <= 0x3fff)
                 {
-                    this.WriteByte((byte)((val >> 8) | 0x80));
-                    this.WriteByte((byte)(val & 0xff));
-                }
-                else if (val <= 0x1fffffff)
-                {
-                    this.WriteByte((byte)((val >> 24) | 0xc0));
-                    this.WriteByte((byte)((val & 0xff0000) >> 16));
-                    this.WriteByte((byte)((val & 0xff00) >> 8));
-                    this.WriteByte((byte)(val & 0xff));
+                    this.WriteByte((byte)(0x80 | (val >> 8)));
+                    this.WriteByte((byte)val);
                 }
                 else
                 {
-                    // ^ assume false;
+                    Debug.Assert(val <= 0x1fffffff);
+
+                    this.WriteByte((byte)(0xc0 | (val >> 24)));
+                    this.WriteByte((byte)(val >> 16));
+                    this.WriteByte((byte)(val >> 8));
+                    this.WriteByte((byte)val);
                 }
             }
         }

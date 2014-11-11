@@ -1,21 +1,15 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-Imports System.Globalization
-Imports System.Text
-Imports System.Xml.Linq
+Imports Microsoft.CodeAnalysis.Emit
 Imports Microsoft.CodeAnalysis.Test.Utilities
-Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE
 Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
-Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
-Imports Microsoft.CodeAnalysis.VisualBasic.UnitTests.Symbols.Metadata
 Imports Roslyn.Test.Utilities
-Imports Microsoft.CodeAnalysis.Emit
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
+
     Public Class BaseClassTests
         Inherits BasicTestBase
-
 
         <Fact>
         Public Sub DirectCircularInheritance()
@@ -332,8 +326,6 @@ BC30907: This inheritance causes circular dependencies between class 'A(Of T)' a
 
             CompilationUtils.AssertTheseDeclarationDiagnostics(compilation, expectedErrors)
         End Sub
-
-
 
         <Fact>
         Public Sub DirectCircularInheritanceInInterface1()
@@ -1673,12 +1665,6 @@ End Class
     </file>
 </compilation>)
 
-            Dim expectedErrors = <errors>
-BC30685: 'c1' is ambiguous across the inherited interfaces 'Base1' and 'Base2'.
-    Inherits Foo.c1
-             ~~~~~~
-                                 </errors>
-
             CompilationUtils.AssertNoErrors(compilation)
         End Sub
 
@@ -1888,10 +1874,12 @@ End Module
 </compilation>)
 
             Dim expectedErrors = <errors>
-BC30685: 'Foo' is ambiguous across the inherited interfaces 'IA(Of String)' and 'IA(Of Integer)'.
+BC30521: Overload resolution failed because no accessible 'Foo' is most specific for these arguments:
+    'Function Foo() As String': Not most specific.
+    'Function Foo() As Integer': Not most specific.
         Dim s As Integer = x.Foo()
-                           ~~~~~                                             
-</errors>
+                             ~~~
+                                 </errors>
 
             CompilationUtils.AssertTheseDiagnostics(compilation, expectedErrors)
         End Sub
@@ -1930,7 +1918,7 @@ BC42104: Variable 'x' is used before it has been assigned a value. A null refere
                           ~
 BC30685: 'Foo' is ambiguous across the inherited interfaces 'IB' and 'IA(Of String)'.
         Dim s As String = x.Foo().ToLower()
-                          ~~~~~                                 
+                          ~~~~~
               </errors>
 
             CompilationUtils.AssertTheseDiagnostics(compilation, expectedErrors)
@@ -1958,7 +1946,7 @@ BC30685: 'Foo' is ambiguous across the inherited interfaces 'IB' and 'IA(Of Stri
 BC30685: 'B' is ambiguous across the inherited interfaces 'A(Of A(Of T).B)' and 'A(Of A(Of T).B())'.
                     Inherits B
                              ~
-              </errors>
+                                 </errors>
 
             CompilationUtils.AssertTheseDiagnostics(compilation, expectedErrors)
         End Sub
@@ -1988,10 +1976,7 @@ End Class
 </compilation>)
 
             Dim expectedErrors = <errors>
-BC30685: 'Foo' is ambiguous across the inherited interfaces 'IA(Of Date)' and 'IA(Of Integer)'.
-    c.Foo()
-    ~~~~~
-              </errors>
+                                 </errors>
 
             CompilationUtils.AssertTheseDiagnostics(compilation, expectedErrors)
         End Sub
@@ -2416,6 +2401,29 @@ Interface B : Inherits C(Of Integer).NotFound
             Dim model = comp.GetSemanticModel(comp.SyntaxTrees.Single())
             Dim typeC = comp.GlobalNamespace.GetMember(Of NamedTypeSymbol)("C").Construct(comp.GetSpecialType(SpecialType.System_Int32))
             Assert.Equal(0, model.LookupSymbols(0, typeC, "NotFound").Length)
+        End Sub
+
+        <WorkItem(1036374)>
+        <Fact(Skip:="1036374")>
+        Public Sub InterfaceCircularInheritance()
+            Dim source =
+                <compilation>
+                    <file name="a.vb">
+Interface A(Of T)
+    Inherits A(Of A(Of T))
+    Interface B
+        Inherits A(Of B)
+    End Interface
+End Interface
+    </file>
+                </compilation>
+            Dim comp = CreateCompilationWithMscorlib(source)
+            comp.AssertTheseDiagnostics(<errors><![CDATA[
+BC30296: Interface 'A(Of T)' cannot inherit from itself: 
+    'A(Of T)' inherits from 'A(Of T)'.
+    Inherits A(Of A(Of T))
+             ~~~~~~~~~~~~~
+]]></errors>)
         End Sub
 
     End Class

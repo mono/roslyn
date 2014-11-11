@@ -596,7 +596,7 @@ Class MockMethodSymbol
         End Get
     End Property
 
-    Friend Overrides ReadOnly Property Syntax As VBSyntaxNode
+    Friend Overrides ReadOnly Property Syntax As VisualBasicSyntaxNode
         Get
             Return Nothing
         End Get
@@ -607,6 +607,10 @@ Class MockMethodSymbol
             Return Nothing
         End Get
     End Property
+
+    Friend Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+        Throw ExceptionUtilities.Unreachable
+    End Function
 End Class
 
 Class MockModuleSymbol

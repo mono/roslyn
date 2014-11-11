@@ -1,27 +1,6 @@
-// *********************************************************
-//
-// Copyright © Microsoft Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the
-// "License"); you may not use this file except in
-// compliance with the License. You may obtain a copy of
-// the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0 
-//
-// THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES
-// OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-// INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES
-// OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR
-// PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
-//
-// See the Apache 2 License for the specific language
-// governing permissions and limitations under the License.
-//
-// *********************************************************
+// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
 using System.Threading;
@@ -31,14 +10,13 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
 
 namespace ConvertToAutoPropertyCS
 {
     [ExportCodeRefactoringProvider("ConvertToAutoPropertyCS", LanguageNames.CSharp), Shared]
     internal class ConvertToAutoPropertyCodeRefactoringProvider : CodeRefactoringProvider
     {
-        public sealed override async Task<IEnumerable<CodeAction>> GetRefactoringsAsync(CodeRefactoringContext context)
+        public sealed override async Task ComputeRefactoringsAsync(CodeRefactoringContext context)
         {
             var document = context.Document;
             var textSpan = context.Span;
@@ -48,7 +26,7 @@ namespace ConvertToAutoPropertyCS
             var token = root.FindToken(textSpan.Start);
             if (token.Parent == null)
             {
-                return null;
+                return;
             }
 
             var propertyDeclaration = token.Parent.FirstAncestorOrSelf<PropertyDeclarationSyntax>();
@@ -58,10 +36,12 @@ namespace ConvertToAutoPropertyCS
                 !HasBothAccessors(propertyDeclaration) ||
                 !propertyDeclaration.Identifier.Span.IntersectsWith(textSpan.Start))
             {
-                return null;
+                return;
             }
 
-            return new[] { new ConvertToAutoPropertyCodeAction("Convert to auto property", (c) => ConvertToAutoPropertyAsync(document, propertyDeclaration, c)) };
+            context.RegisterRefactoring(
+                new ConvertToAutoPropertyCodeAction("Convert to auto property",
+                                                    (c) => ConvertToAutoPropertyAsync(document, propertyDeclaration, c)));
         }
 
         /// <summary>

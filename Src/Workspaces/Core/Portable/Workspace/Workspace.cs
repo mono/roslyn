@@ -31,10 +31,12 @@ namespace Microsoft.CodeAnalysis
         private readonly BranchId primaryBranchId;
 
         // forces serialization of mutation calls from host (OnXXX methods). Must take this lock before taking stateLock.
-        private readonly NonReentrantLock serializationLock = new NonReentrantLock();
+        private readonly NonReentrantLock serializationLock = new NonReentrantLock(useThisInstanceForSynchronization: true);
 
         // this lock guards all the mutable fields (do not share lock with derived classes)
-        private readonly ReaderWriterLockSlim stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+        private readonly NonReentrantLock stateLock = new NonReentrantLock(useThisInstanceForSynchronization: true);
+
+        // Current solution.
         private Solution latestSolution;
 
         private readonly IWorkspaceTaskScheduler taskQueue;
@@ -120,33 +122,39 @@ namespace Microsoft.CodeAnalysis
         /// The solution is an immutable model of the current set of projects and source documents.
         /// It provides access to source text, syntax trees and semantics.
         /// 
-        /// This property may change as the workspace reacts to changes in the environment or 
+        /// This property may change as the workspace reacts to changes in the environment or
         /// after <see cref="TryApplyChanges"/> is called.
         /// </summary>
-        public virtual Solution CurrentSolution
+        public Solution CurrentSolution
         {
             get
             {
-                using (this.stateLock.DisposableRead())
-                {
-                    return this.latestSolution;
-                }
+                return Volatile.Read(ref this.latestSolution);
             }
         }
 
         /// <summary>
-        /// Set's the <see cref="CurrentSolution"/> of this workspace. This method does not raise a workspace change event.
+        /// Sets the <see cref="CurrentSolution"/> of this workspace. This method does not raise a <see cref="WorkspaceChanged"/> event.
         /// </summary>
         protected Solution SetCurrentSolution(Solution solution)
         {
-            using (this.stateLock.DisposableWrite())
+            var currentSolution = Volatile.Read(ref this.latestSolution);
+            if (solution == currentSolution)
             {
-                if (solution != this.latestSolution)
+                // No change
+                return solution;
+            }
+
+            while (true)
+            {
+                var newSolution = solution.WithNewWorkspace(this, currentSolution.WorkspaceVersion + 1);
+                var replacedSolution = Interlocked.CompareExchange(ref this.latestSolution, newSolution, currentSolution);
+                if (replacedSolution == currentSolution)
                 {
-                    this.latestSolution = solution.WithNewWorkspace(this, this.latestSolution.WorkspaceVersion + 1);
+                    return newSolution;
                 }
 
-                return this.latestSolution;
+                currentSolution = replacedSolution;
             }
         }
 
@@ -825,28 +833,21 @@ namespace Microsoft.CodeAnalysis
         {
             using (Logger.LogBlock(FunctionId.Workspace_ApplyChanges, CancellationToken.None))
             {
-                Solution oldSolution;
+                // If solution did not originate from this workspace then fail
+                if (newSolution.Workspace != this)
+                {
+                    return false;
+                }
+
+                Solution oldSolution = this.CurrentSolution;
+
+                // If the workspace has already accepted an update, then fail
+                if (newSolution.WorkspaceVersion != oldSolution.WorkspaceVersion)
+                {
+                    return false;
+                }
 
                 // make sure that newSolution is a branch of the current solution
-                using (this.stateLock.DisposableRead())
-                {
-                    var curSol = this.latestSolution;
-                    var newSol = newSolution;
-
-                    // if solution did not original from this workspace then fail
-                    if (newSolution.Workspace != this)
-                    {
-                        return false;
-                    }
-
-                    // if the workspace has already accepted an update, then fail
-                    if (newSol.WorkspaceVersion != curSol.WorkspaceVersion)
-                    {
-                        return false;
-                    }
-
-                    oldSolution = this.latestSolution;
-                }
 
                 // the given solution must be a branched one.
                 // otherwise, there should be no change to apply.
@@ -857,16 +858,7 @@ namespace Microsoft.CodeAnalysis
                 }
 
                 var solutionChanges = newSolution.GetChanges(oldSolution);
-
-                if (solutionChanges.GetRemovedProjects().Any() && !this.CanApplyChange(ApplyChangesKind.RemoveProject))
-                {
-                    throw new NotSupportedException(WorkspacesResources.RemovingProjectsNotSupported);
-                }
-
-                if (solutionChanges.GetAddedProjects().Any() && !this.CanApplyChange(ApplyChangesKind.AddProject))
-                {
-                    throw new NotSupportedException(WorkspacesResources.AddingProjectsNotSupported);
-                }
+                this.CheckAllowedSolutionChanges(solutionChanges);
 
                 var solutionWithLinkedFileChangesMerged = newSolution.WithMergedLinkedFileChangesAsync(oldSolution, solutionChanges, CancellationToken.None).Result;
                 solutionChanges = solutionWithLinkedFileChangesMerged.GetChanges(oldSolution);
@@ -878,6 +870,87 @@ namespace Microsoft.CodeAnalysis
                 }
 
                 return true;
+            }
+        }
+
+        private void CheckAllowedSolutionChanges(SolutionChanges solutionChanges)
+        {
+            if (solutionChanges.GetRemovedProjects().Any() && !this.CanApplyChange(ApplyChangesKind.RemoveProject))
+            {
+                throw new NotSupportedException(WorkspacesResources.RemovingProjectsNotSupported);
+            }
+
+            if (solutionChanges.GetAddedProjects().Any() && !this.CanApplyChange(ApplyChangesKind.AddProject))
+            {
+                throw new NotSupportedException(WorkspacesResources.AddingProjectsNotSupported);
+            }
+
+            foreach (var projectChanges in solutionChanges.GetProjectChanges())
+            {
+                this.CheckAllowedProjectChanges(projectChanges);
+            }
+        }
+
+        private void CheckAllowedProjectChanges(ProjectChanges projectChanges)
+        {
+            if (projectChanges.GetAddedDocuments().Any() && !this.CanApplyChange(ApplyChangesKind.AddDocument))
+            {
+                throw new NotSupportedException(WorkspacesResources.AddingDocumentsNotSupported);
+            }
+
+            if (projectChanges.GetRemovedDocuments().Any() && !this.CanApplyChange(ApplyChangesKind.RemoveDocument))
+            {
+                throw new NotSupportedException(WorkspacesResources.RemovingDocumentsNotSupported);
+            }
+
+            if (projectChanges.GetChangedDocuments().Any() && !this.CanApplyChange(ApplyChangesKind.ChangeDocument))
+            {
+                throw new NotSupportedException(WorkspacesResources.ChangingDocumentsNotSupported);
+            }
+
+            if (projectChanges.GetAddedAdditionalDocuments().Any() && !this.CanApplyChange(ApplyChangesKind.AddAdditionalDocument))
+            {
+                throw new NotSupportedException(WorkspacesResources.AddingAdditionalDocumentsNotSupported);
+            }
+
+            if (projectChanges.GetRemovedAdditionalDocuments().Any() && !this.CanApplyChange(ApplyChangesKind.RemoveAdditionalDocument))
+            {
+                throw new NotSupportedException(WorkspacesResources.RemovingAdditionalDocumentsIsNotSupported);
+            }
+
+            if (projectChanges.GetChangedAdditionalDocuments().Any() && !this.CanApplyChange(ApplyChangesKind.ChangeAdditionalDocument))
+            {
+                throw new NotSupportedException(WorkspacesResources.ChangingAdditionalDocumentsIsNotSupported);
+            }
+
+            if (projectChanges.GetAddedProjectReferences().Any() && !this.CanApplyChange(ApplyChangesKind.AddProjectReference))
+            {
+                throw new NotSupportedException(WorkspacesResources.AddingProjectReferencesNotSupported);
+            }
+
+            if (projectChanges.GetRemovedProjectReferences().Any() && !this.CanApplyChange(ApplyChangesKind.RemoveProjectReference))
+            {
+                throw new NotSupportedException(WorkspacesResources.RemovingProjectReferencesNotSupported);
+            }
+
+            if (projectChanges.GetAddedMetadataReferences().Any() && !this.CanApplyChange(ApplyChangesKind.AddMetadataReference))
+            {
+                throw new NotSupportedException(WorkspacesResources.AddingProjectReferencesNotSupported);
+            }
+
+            if (projectChanges.GetRemovedMetadataReferences().Any() && !this.CanApplyChange(ApplyChangesKind.RemoveMetadataReference))
+            {
+                throw new NotSupportedException(WorkspacesResources.RemovingProjectReferencesNotSupported);
+            }
+
+            if (projectChanges.GetAddedAnalyzerReferences().Any() && !this.CanApplyChange(ApplyChangesKind.AddAnalyzerReference))
+            {
+                throw new NotSupportedException(WorkspacesResources.AddingAnalyzerReferencesNotSupported);
+            }
+
+            if (projectChanges.GetRemovedAnalyzerReferences().Any() && !this.CanApplyChange(ApplyChangesKind.RemoveAnalyzerReference))
+            {
+                throw new NotSupportedException(WorkspacesResources.RemovingAnalyzerReferencesNotSupported);
             }
         }
 
@@ -941,7 +1014,13 @@ namespace Microsoft.CodeAnalysis
             {
                 var doc = projectChanges.NewProject.GetDocument(documentId);
                 var text = doc.GetTextAsync(CancellationToken.None).WaitAndGetResult(CancellationToken.None); // needs wait
-                this.AddDocument(documentId, doc.Folders, doc.Name, text, doc.SourceCodeKind);
+                var info = DocumentInfo.Create(
+                    documentId, 
+                    doc.Name, 
+                    doc.Folders, 
+                    doc.SourceCodeKind, 
+                    defaultEncoding: text.Encoding);
+                this.AddDocument(info, text);
             }
 
             // added documents
@@ -949,7 +1028,12 @@ namespace Microsoft.CodeAnalysis
             {
                 var doc = projectChanges.NewProject.GetAdditionalDocument(documentId);
                 var text = doc.GetTextAsync(CancellationToken.None).WaitAndGetResult(CancellationToken.None); // needs wait
-                this.AddAdditionalDocument(documentId, doc.Folders, doc.Name, text);
+                var info = DocumentInfo.Create(
+                    documentId, 
+                    doc.Name, 
+                    doc.Folders, 
+                    defaultEncoding: text.Encoding);
+                this.AddAdditionalDocument(info, text);
             }
 
             // changed documents
@@ -972,7 +1056,7 @@ namespace Microsoft.CodeAnalysis
                 SourceText newText;
                 if (!newDoc.TryGetText(out newText))
                 {
-                    // okay, we have old text, but no new text. let document to determine text changes
+                    // okay, we have old text, but no new text. let document determine text changes
                     var textChanges = newDoc.GetTextChangesAsync(oldDoc, CancellationToken.None).WaitAndGetResult(CancellationToken.None); // needs wait
                     this.ChangedDocumentText(documentId, oldText.WithChanges(textChanges));
                     continue;
@@ -1010,7 +1094,8 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         protected virtual void AddProjectReference(ProjectId projectId, ProjectReference projectReference)
         {
-            throw new NotSupportedException();
+            Debug.Assert(CanApplyChange(ApplyChangesKind.AddProjectReference));
+            this.OnProjectReferenceAdded(projectId, projectReference);
         }
 
         /// <summary>
@@ -1020,7 +1105,8 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         protected virtual void RemoveProjectReference(ProjectId projectId, ProjectReference projectReference)
         {
-            throw new NotSupportedException();
+            Debug.Assert(CanApplyChange(ApplyChangesKind.RemoveProjectReference));
+            this.OnProjectReferenceRemoved(projectId, projectReference);
         }
 
         /// <summary>
@@ -1030,7 +1116,8 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         protected virtual void AddMetadataReference(ProjectId projectId, MetadataReference metadataReference)
         {
-            throw new NotSupportedException();
+            Debug.Assert(CanApplyChange(ApplyChangesKind.AddMetadataReference));
+            this.OnMetadataReferenceAdded(projectId, metadataReference);
         }
 
         /// <summary>
@@ -1040,7 +1127,8 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         protected virtual void RemoveMetadataReference(ProjectId projectId, MetadataReference metadataReference)
         {
-            throw new NotSupportedException();
+            Debug.Assert(CanApplyChange(ApplyChangesKind.RemoveMetadataReference));
+            this.OnMetadataReferenceRemoved(projectId, metadataReference);
         }
 
         /// <summary>
@@ -1050,7 +1138,8 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         protected virtual void AddAnalyzerReference(ProjectId projectId, AnalyzerReference analyzerReference)
         {
-            throw new NotSupportedException();
+            Debug.Assert(CanApplyChange(ApplyChangesKind.AddAnalyzerReference));
+            this.OnAnalyzerReferenceAdded(projectId, analyzerReference);
         }
 
         /// <summary>
@@ -1060,7 +1149,8 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         protected virtual void RemoveAnalyzerReference(ProjectId projectId, AnalyzerReference analyzerReference)
         {
-            throw new NotSupportedException();
+            Debug.Assert(CanApplyChange(ApplyChangesKind.RemoveAnalyzerReference));
+            this.OnAnalyzerReferenceRemoved(projectId, analyzerReference);
         }
 
         /// <summary>
@@ -1068,9 +1158,10 @@ namespace Microsoft.CodeAnalysis
         /// 
         /// Override this method to implement the capability of adding documents.
         /// </summary>
-        protected virtual void AddDocument(DocumentId documentId, IEnumerable<string> folders, string name, SourceText text = null, SourceCodeKind sourceCodeKind = SourceCodeKind.Regular)
+        protected virtual void AddDocument(DocumentInfo info, SourceText text)
         {
-            throw new NotSupportedException();
+            Debug.Assert(CanApplyChange(ApplyChangesKind.AddDocument));
+            this.OnDocumentAdded(info.WithTextLoader(TextLoader.From(TextAndVersion.Create(text, VersionStamp.Create()))));
         }
 
         /// <summary>
@@ -1080,7 +1171,8 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         protected virtual void RemoveDocument(DocumentId documentId)
         {
-            throw new NotSupportedException();
+            Debug.Assert(CanApplyChange(ApplyChangesKind.RemoveDocument));
+            this.OnDocumentRemoved(documentId);
         }
 
         /// <summary>
@@ -1090,7 +1182,8 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         protected virtual void ChangedDocumentText(DocumentId id, SourceText text)
         {
-            throw new NotSupportedException();
+            Debug.Assert(CanApplyChange(ApplyChangesKind.ChangeDocument));
+            this.OnDocumentTextChanged(id, text, PreservationMode.PreserveValue);
         }
 
         /// <summary>
@@ -1098,9 +1191,10 @@ namespace Microsoft.CodeAnalysis
         /// 
         /// Override this method to implement the capability of adding additional documents.
         /// </summary>
-        protected virtual void AddAdditionalDocument(DocumentId documentId, IEnumerable<string> folders, string name, SourceText text = null)
+        protected virtual void AddAdditionalDocument(DocumentInfo info, SourceText text)
         {
-            throw new NotSupportedException();
+            Debug.Assert(CanApplyChange(ApplyChangesKind.AddAdditionalDocument));
+            this.OnAdditionalDocumentAdded(info.WithTextLoader(TextLoader.From(TextAndVersion.Create(text, VersionStamp.Create()))));
         }
 
         /// <summary>
@@ -1110,7 +1204,8 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         protected virtual void RemoveAdditionalDocument(DocumentId documentId)
         {
-            throw new NotSupportedException();
+            Debug.Assert(CanApplyChange(ApplyChangesKind.RemoveAdditionalDocument));
+            this.OnAdditionalDocumentRemoved(documentId);
         }
 
         /// <summary>
@@ -1120,7 +1215,8 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         protected virtual void ChangedAdditionalDocumentText(DocumentId id, SourceText text)
         {
-            throw new NotSupportedException();
+            Debug.Assert(CanApplyChange(ApplyChangesKind.ChangeAdditionalDocument));
+            this.OnAdditionalDocumentTextChanged(id, text, PreservationMode.PreserveValue);
         }
 
         #endregion

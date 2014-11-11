@@ -256,13 +256,11 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        [DebuggerHidden]
         public override BoundNode Visit(BoundNode node)
         {
             return VisitAlways(node);
         }
 
-        [DebuggerHidden]
         protected BoundNode VisitAlways(BoundNode node)
         {
             BoundNode result = null;
@@ -2239,6 +2237,10 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         public override BoundNode VisitNameOfOperator(BoundNameOfOperator node)
         {
+            var savedState = this.State;
+            SetState(UnreachableState());
+            Visit(node.Argument);
+            SetState(savedState);
             return null;
         }
 

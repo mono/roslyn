@@ -23,6 +23,10 @@ namespace Microsoft.CodeAnalysis
         public const int MaxStringLengthForIntToStringConversion = 22;
         public const string SystemString = "System";
 
+        // These can appear in the interface name that precedes an explicit interface implementation member.
+        public const char MangledNameRegionStartChar = '<';
+        public const char MangledNameRegionEndChar = '>';
+
         internal struct AssemblyQualifiedTypeName
         {
             internal readonly string TopLevelType;
@@ -510,6 +514,7 @@ namespace Microsoft.CodeAnalysis
               string name)
         {
             Debug.Assert(name != null);
+            Debug.Assert(name.IndexOf(MangledNameRegionStartChar) < 0);
 
             if (name.Length == 0)
             {
@@ -566,7 +571,33 @@ namespace Microsoft.CodeAnalysis
         {
             Debug.Assert(pstrName != null);
 
-            int delimiter = pstrName.LastIndexOf(DotDelimiter);
+            // In mangled names, the original unmangled name is frequently included,
+            // surrounded by angle brackets.  The unmangled name may contain dots
+            // (e.g. if it is an explicit interface implementation) or paired angle
+            // brackets (e.g. if the explicitly implemented interface is generic).
+            var angleBracketDepth = 0;
+            var delimiter = -1;
+            for (int i = 0; i < pstrName.Length; i++)
+            {
+                switch (pstrName[i])
+                {
+                case MangledNameRegionStartChar:
+                    angleBracketDepth++;
+                    break;
+                case MangledNameRegionEndChar:
+                    angleBracketDepth--;
+                    break;
+                case DotDelimiter:
+                    // If we see consecutive dots, the second is part of the method name
+                    // (i.e. ".ctor" or ".cctor").
+                    if (angleBracketDepth == 0 && (i == 0 || delimiter < i - 1))
+                    {
+                        delimiter = i;
+                    }
+                    break;
+                }
+            }
+            Debug.Assert(angleBracketDepth == 0);
 
             if (delimiter < 0)
             {
@@ -635,23 +666,23 @@ namespace Microsoft.CodeAnalysis
         /// <remarks></remarks>
         public static void GetInfoForImmediateNamespaceMembers(
             int namespaceNameLength,
-            IEnumerable<IGrouping<string, TypeHandle>> typesByNS,
+            IEnumerable<IGrouping<string, TypeDefinitionHandle>> typesByNS,
             StringComparer nameComparer,
-            out IEnumerable<IGrouping<string, TypeHandle>> types,
-            out IEnumerable<KeyValuePair<string, IEnumerable<IGrouping<string, TypeHandle>>>> namespaces)
+            out IEnumerable<IGrouping<string, TypeDefinitionHandle>> types,
+            out IEnumerable<KeyValuePair<string, IEnumerable<IGrouping<string, TypeDefinitionHandle>>>> namespaces)
         {
             Debug.Assert(typesByNS != null);
             Debug.Assert(namespaceNameLength >= 0);
 
             // A list of groups of TypeDef row ids for types immediately contained within this namespace.
-            var nestedTypes = new List<IGrouping<string, TypeHandle>>();
+            var nestedTypes = new List<IGrouping<string, TypeDefinitionHandle>>();
 
             // A list accumulating information about namespaces immediately contained within this namespace.
             // For each pair:
             //   Key - contains simple name of a child namespace.
             //   Value – contains a sequence similar to the one passed to this function, but
             //           calculated for the child namespace. 
-            var nestedNamespaces = new List<KeyValuePair<string, IEnumerable<IGrouping<string, TypeHandle>>>>();
+            var nestedNamespaces = new List<KeyValuePair<string, IEnumerable<IGrouping<string, TypeDefinitionHandle>>>>();
 
             var enumerator = typesByNS.GetEnumerator();
 
@@ -666,7 +697,7 @@ namespace Microsoft.CodeAnalysis
 
                     // A list accumulating information about types within the last encountered child namespace.
                     // The list is similar to the sequence passed to this function.
-                    List<IGrouping<string, TypeHandle>> typesInLastChildNamespace = null;
+                    List<IGrouping<string, TypeDefinitionHandle>> typesInLastChildNamespace = null;
 
                     // if there are any types in this namespace,
                     // they will be in the first several groups if if their key length 
@@ -709,11 +740,11 @@ namespace Microsoft.CodeAnalysis
                             {
                                 Debug.Assert(typesInLastChildNamespace.Count != 0);
                                 nestedNamespaces.Add(
-                                    new KeyValuePair<string, IEnumerable<IGrouping<string, TypeHandle>>>(
+                                    new KeyValuePair<string, IEnumerable<IGrouping<string, TypeDefinitionHandle>>>(
                                         lastChildNamespaceName, typesInLastChildNamespace));
                             }
 
-                            typesInLastChildNamespace = new List<IGrouping<string, TypeHandle>>();
+                            typesInLastChildNamespace = new List<IGrouping<string, TypeDefinitionHandle>>();
                             lastChildNamespaceName = childNamespaceName;
 
                             typesInLastChildNamespace.Add(pair);
@@ -726,7 +757,7 @@ namespace Microsoft.CodeAnalysis
                     {
                         Debug.Assert(typesInLastChildNamespace.Count != 0);
                         nestedNamespaces.Add(
-                            new KeyValuePair<string, IEnumerable<IGrouping<string, TypeHandle>>>(
+                            new KeyValuePair<string, IEnumerable<IGrouping<string, TypeDefinitionHandle>>>(
                                 lastChildNamespaceName, typesInLastChildNamespace));
                     }
 

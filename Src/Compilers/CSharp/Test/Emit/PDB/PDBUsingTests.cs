@@ -465,6 +465,77 @@ namespace X
         }
 
         [Fact]
+        public void TestExternAliases_ExplicitAndGlobal()
+        {
+            var dummySource = @"
+namespace N
+{
+    public class C { }
+}
+";
+
+            CSharpCompilation dummyCompilation1 = CreateCompilationWithMscorlib(dummySource, assemblyName: "A", options: TestOptions.DebugDll);
+            CSharpCompilation dummyCompilation2 = CreateCompilationWithMscorlib(dummySource, assemblyName: "B", options: TestOptions.DebugDll);
+
+            var text = @"
+extern alias A;
+extern alias B;
+using X = A::N;
+using Y = B::N;
+using Z = global::N;
+
+class C { void M() { } }
+";
+            var compilation = CreateCompilationWithMscorlib(text,
+                assemblyName: GetUniqueName(),
+                options: TestOptions.DebugDll,
+                references: new[]
+                {
+                    new CSharpCompilationReference(dummyCompilation1, ImmutableArray.Create("global", "A")),
+                    new CSharpCompilationReference(dummyCompilation2, ImmutableArray.Create("B", "global"))
+                });
+            compilation.VerifyDiagnostics(
+                // (5,1): hidden CS8019: Unnecessary using directive.
+                // using Y = B::N;
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using Y = B::N;").WithLocation(5, 1),
+                // (4,1): hidden CS8019: Unnecessary using directive.
+                // using X = A::N;
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using X = A::N;").WithLocation(4, 1),
+                // (6,1): hidden CS8019: Unnecessary using directive.
+                // using Z = global::N;
+                Diagnostic(ErrorCode.HDN_UnusedUsingDirective, "using Z = global::N;").WithLocation(6, 1));
+
+            string actual = GetPdbXml(compilation);
+            string expected = @"
+<symbols>
+    <methods>
+        <method containingType=""C"" name=""M"" parameterNames="""">
+            <customDebugInfo version=""4"" count=""1"">
+                <using version=""4"" kind=""UsingInfo"" size=""12"" namespaceCount=""1"">
+                    <namespace usingCount=""5""/>
+                </using>
+            </customDebugInfo>
+            <sequencepoints total=""2"">
+                <entry il_offset=""0x0"" start_row=""8"" start_column=""20"" end_row=""8"" end_column=""21"" file_ref=""0""/>
+                <entry il_offset=""0x1"" start_row=""8"" start_column=""22"" end_row=""8"" end_column=""23"" file_ref=""0""/>
+            </sequencepoints>
+            <locals/>
+            <scope startOffset=""0x0"" endOffset=""0x2"">
+                <extern alias=""A""/>
+                <extern alias=""B""/>
+                <alias name=""X"" target=""N"" kind=""namespace""/>
+                <alias name=""Y"" qualifier=""B"" target=""N"" kind=""namespace""/>
+                <alias name=""Z"" target=""N"" kind=""namespace""/>
+                <externinfo alias=""A"" assembly=""A, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null""/>
+                <externinfo alias=""B"" assembly=""B, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null""/>
+            </scope>
+        </method>
+    </methods>
+</symbols>";
+            AssertXmlEqual(expected, actual);
+        }
+
+        [Fact]
         public void TestExternAliasesInUsing()
         {
             CSharpCompilation libComp = CreateCompilationWithMscorlib(@"
@@ -691,7 +762,7 @@ namespace X
             AssertXmlEqual(expected, actual);
         }
 
-        [Fact(Skip = "913022"), WorkItem(913022, "DevDiv")]
+        [Fact, WorkItem(913022, "DevDiv")]
         public void ReferenceWithMultipleAliases()
         {
             var source1 = @"
@@ -732,32 +803,34 @@ public class C
             string actual = GetPdbXml(compilation2);
             string expected = @"
 <symbols>
-  <methods>
-    <method containingType=""C"" name=""Main"" parameterNames="""">
-      <customDebugInfo version=""4"" count=""1"">
-        <using version=""4"" kind=""UsingInfo"" size=""12"" namespaceCount=""1"">
-          <namespace usingCount=""4"" />
-        </using>
-      </customDebugInfo>
-      <sequencepoints total=""4"">
-        <entry il_offset=""0x0"" start_row=""11"" start_column=""5"" end_row=""11"" end_column=""6"" file_ref=""0"" />
-        <entry il_offset=""0x1"" start_row=""12"" start_column=""9"" end_row=""12"" end_column=""43"" file_ref=""0"" />
-        <entry il_offset=""0xc"" start_row=""13"" start_column=""9"" end_row=""13"" end_column=""43"" file_ref=""0"" />
-        <entry il_offset=""0x17"" start_row=""14"" start_column=""5"" end_row=""14"" end_column=""6"" file_ref=""0"" />
-      </sequencepoints>
-      <locals />
-      <scope startOffset=""0x0"" endOffset=""0x18"">
-        <extern alias=""A"" />
-        <extern alias=""B"" />
-        <namespace qualifier=""A"" name=""N"" />
-        <namespace qualifier=""B"" name=""M"" />
-        <alias name = ""X"" qualifier=""A"" target=""N"" kind=""namespace"" />
-        <alias name = ""Y"" qualifier=""B"" target=""N"" kind=""namespace"" />
-        <externinfo alias = ""A"" assembly=""" + compilation1.AssemblyName + @", Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"" />
-        <externinfo alias = ""B"" assembly=""" + compilation1.AssemblyName + @", Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"" />
-      </scope>
-    </method>
-  </methods>
+    <methods>
+        <method containingType=""C"" name=""Main"" parameterNames="""">
+            <customDebugInfo version=""4"" count=""1"">
+                <using version=""4"" kind=""UsingInfo"" size=""12"" namespaceCount=""1"">
+                    <namespace usingCount=""6""/>
+                </using>
+            </customDebugInfo>
+            <sequencepoints total=""6"">
+                <entry il_offset=""0x0"" start_row=""13"" start_column=""5"" end_row=""13"" end_column=""6"" file_ref=""0""/>
+                <entry il_offset=""0x1"" start_row=""14"" start_column=""9"" end_row=""14"" end_column=""43"" file_ref=""0""/>
+                <entry il_offset=""0xc"" start_row=""15"" start_column=""9"" end_row=""15"" end_column=""43"" file_ref=""0""/>
+                <entry il_offset=""0x17"" start_row=""16"" start_column=""9"" end_row=""16"" end_column=""45"" file_ref=""0""/>
+                <entry il_offset=""0x22"" start_row=""17"" start_column=""9"" end_row=""17"" end_column=""45"" file_ref=""0""/>
+                <entry il_offset=""0x2d"" start_row=""18"" start_column=""5"" end_row=""18"" end_column=""6"" file_ref=""0""/>
+            </sequencepoints>
+            <locals/>
+            <scope startOffset=""0x0"" endOffset=""0x2e"">
+                <extern alias=""A""/>
+                <extern alias=""B""/>
+                <namespace qualifier=""A"" name=""N""/>
+                <namespace qualifier=""A"" name=""M""/>
+                <alias name=""X"" qualifier=""A"" target=""N"" kind=""namespace""/>
+                <alias name=""Y"" qualifier=""A"" target=""N"" kind=""namespace""/>
+                <externinfo alias = ""A"" assembly=""" + compilation1.AssemblyName + @", Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"" />
+                <externinfo alias = ""B"" assembly=""" + compilation1.AssemblyName + @", Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"" />
+            </scope>
+        </method>
+    </methods>
 </symbols>
 ";
             AssertXmlEqual(expected, actual);
@@ -1271,53 +1344,53 @@ class C
             string actual = GetPdbXml(text, TestOptions.DebugDll);
             string expected = @"
 <symbols>
-  <methods>
-    <method containingType=""C"" name=""&lt;.cctor&gt;b__0"" parameterNames=""x"">
-      <customDebugInfo version=""4"" count=""1"">
-        <forward version=""4"" kind=""ForwardInfo"" size=""12"" declaringType=""C"" methodName="".cctor"" parameterNames="""" />
-      </customDebugInfo>
-      <sequencepoints total=""3"">
-        <entry il_offset=""0x0"" start_row=""8"" start_column=""5"" end_row=""8"" end_column=""6"" file_ref=""0"" />
-        <entry il_offset=""0x1"" start_row=""9"" start_column=""9"" end_row=""9"" end_column=""27"" file_ref=""0"" />
-        <entry il_offset=""0xa"" start_row=""10"" start_column=""5"" end_row=""10"" end_column=""6"" file_ref=""0"" />
-      </sequencepoints>
-      <locals />
-    </method>
-    <method containingType=""C"" name=""&lt;.ctor&gt;b__1"" parameterNames=""x"">
-      <customDebugInfo version=""4"" count=""1"">
-        <forward version=""4"" kind=""ForwardInfo"" size=""12"" declaringType=""C"" methodName="".cctor"" parameterNames="""" />
-      </customDebugInfo>
-      <sequencepoints total=""3"">
-        <entry il_offset=""0x0"" start_row=""6"" start_column=""35"" end_row=""6"" end_column=""36"" file_ref=""0"" />
-        <entry il_offset=""0x1"" start_row=""6"" start_column=""37"" end_row=""6"" end_column=""55"" file_ref=""0"" />
-        <entry il_offset=""0xa"" start_row=""6"" start_column=""56"" end_row=""6"" end_column=""57"" file_ref=""0"" />
-      </sequencepoints>
-      <locals />
-    </method>
-    <method containingType=""C"" name="".cctor"" parameterNames="""">
-      <customDebugInfo version=""4"" count=""1"">
-        <using version=""4"" kind=""UsingInfo"" size=""12"" namespaceCount=""1"">
-          <namespace usingCount=""1"" />
-        </using>
-      </customDebugInfo>
-      <sequencepoints total=""1"">
-        <entry il_offset=""0x0"" start_row=""7"" start_column=""5"" end_row=""10"" end_column=""8"" file_ref=""0"" />
-      </sequencepoints>
-      <locals />
-      <scope startOffset=""0x0"" endOffset=""0x1d"">
-        <namespace name=""System.Linq"" />
-      </scope>
-    </method>
-    <method containingType=""C"" name="".ctor"" parameterNames="""">
-      <customDebugInfo version=""4"" count=""1"">
-        <forward version=""4"" kind=""ForwardInfo"" size=""12"" declaringType=""C"" methodName="".cctor"" parameterNames="""" />
-      </customDebugInfo>
-      <sequencepoints total=""1"">
-        <entry il_offset=""0x0"" start_row=""6"" start_column=""5"" end_row=""6"" end_column=""59"" file_ref=""0"" />
-      </sequencepoints>
-      <locals />
-    </method>
-  </methods>
+    <methods>
+        <method containingType=""C"" name="".cctor"" parameterNames="""">
+            <customDebugInfo version=""4"" count=""1"">
+                <using version=""4"" kind=""UsingInfo"" size=""12"" namespaceCount=""1"">
+                    <namespace usingCount=""1""/>
+                </using>
+            </customDebugInfo>
+            <sequencepoints total=""1"">
+                <entry il_offset=""0x0"" start_row=""7"" start_column=""5"" end_row=""10"" end_column=""8"" file_ref=""0""/>
+            </sequencepoints>
+            <locals/>
+            <scope startOffset=""0x0"" endOffset=""0x21"">
+                <namespace name=""System.Linq""/>
+            </scope>
+        </method>
+        <method containingType=""C"" name="".ctor"" parameterNames="""">
+            <customDebugInfo version=""4"" count=""1"">
+                <forward version=""4"" kind=""ForwardInfo"" size=""12"" declaringType=""C"" methodName="".cctor"" parameterNames=""""/>
+            </customDebugInfo>
+            <sequencepoints total=""1"">
+                <entry il_offset=""0x0"" start_row=""6"" start_column=""5"" end_row=""6"" end_column=""59"" file_ref=""0""/>
+            </sequencepoints>
+            <locals/>
+        </method>
+        <method containingType=""C+&lt;&gt;c__DisplayClass0"" name=""&lt;_cctor&gt;b__1"" parameterNames=""x"">
+            <customDebugInfo version=""4"" count=""1"">
+                <forward version=""4"" kind=""ForwardInfo"" size=""12"" declaringType=""C"" methodName="".cctor"" parameterNames=""""/>
+            </customDebugInfo>
+            <sequencepoints total=""3"">
+                <entry il_offset=""0x0"" start_row=""8"" start_column=""5"" end_row=""8"" end_column=""6"" file_ref=""0""/>
+                <entry il_offset=""0x1"" start_row=""9"" start_column=""9"" end_row=""9"" end_column=""27"" file_ref=""0""/>
+                <entry il_offset=""0xa"" start_row=""10"" start_column=""5"" end_row=""10"" end_column=""6"" file_ref=""0""/>
+            </sequencepoints>
+            <locals/>
+        </method>
+        <method containingType=""C+&lt;&gt;c__DisplayClass2"" name=""&lt;_ctor&gt;b__3"" parameterNames=""x"">
+            <customDebugInfo version=""4"" count=""1"">
+                <forward version=""4"" kind=""ForwardInfo"" size=""12"" declaringType=""C"" methodName="".cctor"" parameterNames=""""/>
+            </customDebugInfo>
+            <sequencepoints total=""3"">
+                <entry il_offset=""0x0"" start_row=""6"" start_column=""35"" end_row=""6"" end_column=""36"" file_ref=""0""/>
+                <entry il_offset=""0x1"" start_row=""6"" start_column=""37"" end_row=""6"" end_column=""55"" file_ref=""0""/>
+                <entry il_offset=""0xa"" start_row=""6"" start_column=""56"" end_row=""6"" end_column=""57"" file_ref=""0""/>
+            </sequencepoints>
+            <locals/>
+        </method>
+    </methods>
 </symbols>";
             AssertXmlEqual(expected, actual);
         }

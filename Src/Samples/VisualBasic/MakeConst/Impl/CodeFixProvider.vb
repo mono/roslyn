@@ -1,24 +1,4 @@
-' *********************************************************
-'
-' Copyright © Microsoft Corporation
-'
-' Licensed under the Apache License, Version 2.0 (the
-' "License"); you may not use this file except in
-' compliance with the License. You may obtain a copy of
-' the License at
-'
-' http://www.apache.org/licenses/LICENSE-2.0 
-'
-' THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES
-' OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-' INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES
-' OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR
-' PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
-'
-' See the Apache 2 License for the specific language
-' governing permissions and limitations under the License.
-'
-' *********************************************************
+' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports System.Collections.Immutable
 Imports System.Composition
@@ -28,7 +8,6 @@ Imports Microsoft.CodeAnalysis
 Imports Microsoft.CodeAnalysis.CodeActions
 Imports Microsoft.CodeAnalysis.CodeFixes
 Imports Microsoft.CodeAnalysis.Formatting
-Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
@@ -44,15 +23,16 @@ Class MakeConstCodeFixProvider
         Return Nothing
     End Function
 
-    Public NotOverridable Overrides Async Function GetFixesAsync(context As CodeFixContext) As Task(Of IEnumerable(Of CodeAction))
-        Dim diagnosticSpan = context.Diagnostics.First().Location.SourceSpan
+    Public NotOverridable Overrides Async Function ComputeFixesAsync(context As CodeFixContext) As Task
+        Dim diagnostic = context.Diagnostics.First()
+        Dim diagnosticSpan = diagnostic.Location.SourceSpan
         Dim root = Await context.Document.GetSyntaxRootAsync(context.CancellationToken)
 
         ' Find the local declaration identified by the diagnostic.
         Dim declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType(Of LocalDeclarationStatementSyntax)().First()
 
-        ' return a code action that will invoke the fix
-        Return {CodeAction.Create("Make constant", Function(c) MakeConstAsync(context.Document, declaration, c))}
+        ' Register a code action that will invoke the fix.
+        context.RegisterFix(CodeAction.Create("Make constant", Function(c) MakeConstAsync(context.Document, declaration, c)), diagnostic)
     End Function
 
     Private Async Function MakeConstAsync(document As Document, localDeclaration As LocalDeclarationStatementSyntax, cancellationToken As CancellationToken) As Task(Of Document)

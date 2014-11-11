@@ -19,7 +19,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     Friend NotInheritable Class MethodCompiler
         Inherits VisualBasicSymbolVisitor
 
-        Private ReadOnly _compilation As VBCompilation
+        Private ReadOnly _compilation As VisualBasicCompilation
         Private ReadOnly _cancellationToken As CancellationToken
         Private ReadOnly _generateDebugInfo As Boolean
         Private ReadOnly _diagnostics As DiagnosticBag
@@ -77,7 +77,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
 
         ' moduleBeingBuilt can be Nothing in order to just analyze methods for errors.
-        Private Sub New(compilation As VBCompilation,
+        Private Sub New(compilation As VisualBasicCompilation,
                        moduleBeingBuiltOpt As PEModuleBuilder,
                        generateDebugInfo As Boolean,
                        doEmitPhase As Boolean,
@@ -134,7 +134,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         '''       and immediately lost after diagnostics of a particular tree is done.
         '''       
         ''' </summary>
-        Public Shared Sub GetCompileDiagnostics(compilation As VBCompilation,
+        Public Shared Sub GetCompileDiagnostics(compilation As VisualBasicCompilation,
                                                 root As NamespaceSymbol,
                                                 tree As SyntaxTree,
                                                 filterSpanWithinTree As TextSpan?,
@@ -181,7 +181,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         '''       immediately lost after obtaining method bodies and diagnostics for a particular
         '''       tree.
         ''' </summary>
-        Friend Shared Sub CompileMethodBodies(compilation As VBCompilation,
+        Friend Shared Sub CompileMethodBodies(compilation As VisualBasicCompilation,
                                               moduleBeingBuiltOpt As PEModuleBuilder,
                                               generateDebugInfo As Boolean,
                                               hasDeclarationErrors As Boolean,
@@ -252,12 +252,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End Using
         End Sub
 
-        Friend Shared Function GetEntryPoint(compilation As VBCompilation,
+        Friend Shared Function GetEntryPoint(compilation As VisualBasicCompilation,
                                              moduleBeingBuilt As PEModuleBuilder,
                                              diagnostics As DiagnosticBag,
                                              cancellationToken As CancellationToken) As MethodSymbol
 
-            Dim options As VBCompilationOptions = compilation.Options
+            Dim options As VisualBasicCompilationOptions = compilation.Options
             If Not options.OutputKind.IsApplication() Then
                 Debug.Assert(compilation.GetEntryPointAndDiagnostics(Nothing) Is Nothing)
 
@@ -287,7 +287,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return entryPointAndDiagnostics.MethodSymbol
         End Function
 
-        Friend Shared Function DefineScriptEntryPoint(compilation As VBCompilation, moduleBeingBuilt As PEModuleBuilder, returnType As TypeSymbol, diagnostics As DiagnosticBag) As MethodSymbol
+        Friend Shared Function DefineScriptEntryPoint(compilation As VisualBasicCompilation, moduleBeingBuilt As PEModuleBuilder, returnType As TypeSymbol, diagnostics As DiagnosticBag) As MethodSymbol
             Dim scriptEntryPoint = New SynthesizedEntryPointSymbol(compilation.ScriptClass, returnType)
             If moduleBeingBuilt IsNot Nothing AndAlso Not diagnostics.HasAnyErrors Then
                 Dim compilationState = New TypeCompilationState(compilation, moduleBeingBuilt, initializeComponentOpt:=Nothing)
@@ -296,6 +296,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim emittedBody = GenerateMethodBody(moduleBeingBuilt,
                                                      scriptEntryPoint,
                                                      body,
+                                                     stateMachineTypeOpt:=Nothing,
                                                      variableSlotAllocatorOpt:=Nothing,
                                                      debugDocumentProvider:=Nothing,
                                                      diagnostics:=diagnostics,
@@ -770,11 +771,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                 Dim boundBody = method.GetBoundMethodBody(diagnosticsThisMethod)
 
-                Dim variableSlotAllocatorOpt = _moduleBeingBuiltOpt.TryCreateVariableSlotAllocator(method)
                 Dim emittedBody = GenerateMethodBody(_moduleBeingBuiltOpt,
                                                      method,
                                                      boundBody,
-                                                     variableSlotAllocatorOpt:=variableSlotAllocatorOpt,
+                                                     stateMachineTypeOpt:=Nothing,
+                                                     variableSlotAllocatorOpt:=Nothing,
                                                      debugDocumentProvider:=Nothing,
                                                      diagnostics:=diagnosticsThisMethod,
                                                      namespaceScopes:=Nothing)
@@ -804,13 +805,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Dim emittedBody As MethodBody = Nothing
 
                     If Not diagnosticsThisMethod.HasAnyErrors Then
-                        Dim variableSlotAllocatorOpt = _moduleBeingBuiltOpt.TryCreateVariableSlotAllocator(method)
+                        Dim variableSlotAllocatorOpt As VariableSlotAllocator = Nothing
+                        Dim statemachineTypeOpt As StateMachineTypeSymbol = Nothing
+
                         Dim rewrittenBody = Rewriter.LowerBodyOrInitializer(
                             method,
                             boundBody,
                             previousSubmissionFields:=Nothing,
                             compilationState:=compilationState,
                             diagnostics:=diagnosticsThisMethod,
+                            statemachineTypeOpt:=statemachineTypeOpt,
                             variableSlotAllocatorOpt:=variableSlotAllocatorOpt,
                             isBodySynthesized:=True)
 
@@ -818,7 +822,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                             emittedBody = GenerateMethodBody(_moduleBeingBuiltOpt,
                                                              method,
                                                              rewrittenBody,
-                                                             variableSlotAllocatorOpt:=variableSlotAllocatorOpt,
+                                                             statemachineTypeOpt,
+                                                             variableSlotAllocatorOpt,
                                                              debugDocumentProvider:=Nothing,
                                                              diagnostics:=diagnosticsThisMethod,
                                                              namespaceScopes:=Nothing)
@@ -852,28 +857,29 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             For Each methodWithBody In compilationState.SynthesizedMethods
-                Dim method = methodWithBody.Method
+                If Not methodWithBody.Body.HasErrors Then
+                    Dim method = methodWithBody.Method
+                    Dim diagnosticsThisMethod As DiagnosticBag = DiagnosticBag.GetInstance()
 
-                Dim diagnosticsThisMethod As DiagnosticBag = DiagnosticBag.GetInstance()
-                Debug.Assert(_moduleBeingBuiltOpt.TryCreateVariableSlotAllocator(method) Is Nothing)
+                    Dim emittedBody = GenerateMethodBody(_moduleBeingBuiltOpt,
+                                                         method,
+                                                         methodWithBody.Body,
+                                                         stateMachineTypeOpt:=Nothing,
+                                                         variableSlotAllocatorOpt:=Nothing,
+                                                         debugDocumentProvider:=_debugDocumentProvider,
+                                                         diagnostics:=diagnosticsThisMethod,
+                                                         namespaceScopes:=GetNamespaceScopes(methodWithBody.Method))
 
-                Dim emittedBody = GenerateMethodBody(_moduleBeingBuiltOpt,
-                                                     method,
-                                                     methodWithBody.Body,
-                                                     variableSlotAllocatorOpt:=Nothing,
-                                                     debugDocumentProvider:=_debugDocumentProvider,
-                                                     diagnostics:=diagnosticsThisMethod,
-                                                     namespaceScopes:=GetNamespaceScopes(methodWithBody.Method))
+                    _diagnostics.AddRange(diagnosticsThisMethod)
+                    diagnosticsThisMethod.Free()
 
-                _diagnostics.AddRange(diagnosticsThisMethod)
-                diagnosticsThisMethod.Free()
+                    ' error while generating IL
+                    If emittedBody Is Nothing Then
+                        Exit For
+                    End If
 
-                ' error while generating IL
-                If emittedBody Is Nothing Then
-                    Exit For
+                    _moduleBeingBuiltOpt.SetMethodBody(method, emittedBody)
                 End If
-
-                _moduleBeingBuiltOpt.SetMethodBody(method, emittedBody)
             Next
         End Sub
 
@@ -1121,7 +1127,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                 ' if method happen to handle events of a base WithEvents, ensure that we have an overriding WithEvents property
                 Dim handledEvents = method.HandledEvents
-                If _moduleBeingBuiltOpt IsNot Nothing AndAlso Not handledEvents.IsEmpty Then
+                If Not handledEvents.IsEmpty Then
                     CreateSyntheticWithEventOverridesIfNeeded(handledEvents,
                                                               compilationState,
                                                               containingTypeBinder,
@@ -1151,10 +1157,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' property/accessors symbol into the emit module and assign bodies to the accessors.
         ''' </summary>
         Private Sub CreateSyntheticWithEventOverridesIfNeeded(handledEvents As ImmutableArray(Of HandledEvent),
-                                      compilationState As TypeCompilationState,
-                                      containingTypeBinder As Binder,
-                                      diagsForCurrentMethod As DiagnosticBag,
-                                      previousSubmissionFields As SynthesizedSubmissionFields)
+                                                              compilationState As TypeCompilationState,
+                                                              containingTypeBinder As Binder,
+                                                              diagsForCurrentMethod As DiagnosticBag,
+                                                              previousSubmissionFields As SynthesizedSubmissionFields)
 
             For Each handledEvent In handledEvents
                 If handledEvent.HandlesKind = HandledEventKind.WithEvents Then
@@ -1179,6 +1185,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                                    previousSubmissionFields,
                                                                    compilationState,
                                                                    diagsForCurrentMethod,
+                                                                   statemachineTypeOpt:=Nothing,
                                                                    variableSlotAllocatorOpt:=Nothing,
                                                                    isBodySynthesized:=True)
 
@@ -1258,12 +1265,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 diagnostics = DiagnosticBag.GetInstance()
             End If
 
-            Dim variableSlotAllocatorOpt = If(_moduleBeingBuiltOpt Is Nothing, Nothing, _moduleBeingBuiltOpt.TryCreateVariableSlotAllocator(method))
+            Dim variableSlotAllocatorOpt As VariableSlotAllocator = Nothing
+            Dim stateMachineTypeOpt As StateMachineTypeSymbol = Nothing
+
             body = Rewriter.LowerBodyOrInitializer(method,
                                                    body,
                                                    previousSubmissionFields,
                                                    compilationState,
                                                    diagnostics,
+                                                   stateMachineTypeOpt,
                                                    variableSlotAllocatorOpt,
                                                    isBodySynthesized:=False)
 
@@ -1303,6 +1313,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim methodBody As MethodBody = GenerateMethodBody(_moduleBeingBuiltOpt,
                                                               method,
                                                               body,
+                                                              stateMachineTypeOpt,
                                                               variableSlotAllocatorOpt,
                                                               _debugDocumentProvider,
                                                               diagnostics,
@@ -1319,6 +1330,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend Shared Function GenerateMethodBody(moduleBuilder As PEModuleBuilder,
                                                   method As MethodSymbol,
                                                   block As BoundStatement,
+                                                  stateMachineTypeOpt As StateMachineTypeSymbol,
                                                   variableSlotAllocatorOpt As VariableSlotAllocator,
                                                   debugDocumentProvider As DebugDocumentProvider,
                                                   diagnostics As DiagnosticBag,
@@ -1404,8 +1416,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                       hasDynamicLocalVariables:=False,
                                       namespaceScopes:=namespaceScopes,
                                       namespaceScopeEncoding:=Cci.NamespaceScopeEncoding.Forwarding,
-                                      iteratorClassName:=Nothing,
-                                      iteratorScopes:=Nothing,
+                                      stateMachineTypeNameOpt:=Nothing,
+                                      stateMachineHoistedLocalScopes:=Nothing,
+                                      stateMachineHoistedLocalSlots:=Nothing, ' TODO
                                       asyncMethodDebugInfo:=asyncDebugInfo)
             Finally
                 ' Free resources used by the basic blocks in the builder.
@@ -1687,7 +1700,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             ' NOTE: we can ignore use site errors in this place because they should have already be reported 
             '       either in real or synthesized constructor
 
-            Dim syntaxNode As VBSyntaxNode = constructor.Syntax
+            Dim syntaxNode As VisualBasicSyntaxNode = constructor.Syntax
 
             Dim thisRef As New BoundMeReference(syntaxNode, constructor.ContainingType)
             thisRef.SetWasCompilerGenerated()

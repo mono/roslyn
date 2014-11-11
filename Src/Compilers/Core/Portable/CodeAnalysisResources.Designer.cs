@@ -71,6 +71,24 @@ namespace Microsoft.CodeAnalysis {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Argument cannot be empty..
+        /// </summary>
+        internal static string ArgumentCannotBeEmpty {
+            get {
+                return ResourceManager.GetString("ArgumentCannotBeEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Argument cannot have a null element..
+        /// </summary>
+        internal static string ArgumentElementCannotBeNull {
+            get {
+                return ResourceManager.GetString("ArgumentElementCannotBeNull", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Arrays with more than one dimension cannot be serialized..
         /// </summary>
         internal static string ArraysWithMoreThanOneDimensionCannotBeSerialized {
@@ -715,6 +733,42 @@ namespace Microsoft.CodeAnalysis {
         internal static string RuleSetSchemaViolation {
             get {
                 return ResourceManager.GetString("RuleSetSchemaViolation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to error.
+        /// </summary>
+        internal static string SeverityError {
+            get {
+                return ResourceManager.GetString("SeverityError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to hidden.
+        /// </summary>
+        internal static string SeverityHidden {
+            get {
+                return ResourceManager.GetString("SeverityHidden", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to info.
+        /// </summary>
+        internal static string SeverityInfo {
+            get {
+                return ResourceManager.GetString("SeverityInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to warning.
+        /// </summary>
+        internal static string SeverityWarning {
+            get {
+                return ResourceManager.GetString("SeverityWarning", resourceCulture);
             }
         }
         

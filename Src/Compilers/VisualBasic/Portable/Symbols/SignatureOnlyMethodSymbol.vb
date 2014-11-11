@@ -50,7 +50,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         Public Overrides ReadOnly Property IsVararg() As Boolean
             Get
-                Return SignatureHeader.IsVarArgCallSignature(CByte(m_callingConvention))
+                Return New SignatureHeader(CByte(m_callingConvention)).CallingConvention = SignatureCallingConvention.VarArgs
             End Get
         End Property
 
@@ -146,12 +146,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
 #Region "Not used by MethodSignatureComparer"
 
-        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
-            Get
-                Throw ExceptionUtilities.Unreachable
-            End Get
-        End Property
-
         Friend Overrides ReadOnly Property HasSpecialName As Boolean
             Get
                 Throw ExceptionUtilities.Unreachable
@@ -218,7 +212,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend Overrides ReadOnly Property Syntax As VBSyntaxNode
+        Friend Overrides ReadOnly Property Syntax As VisualBasicSyntaxNode
             Get
                 Throw ExceptionUtilities.Unreachable
             End Get
@@ -293,6 +287,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 Throw ExceptionUtilities.Unreachable
             End Get
         End Property
+
+        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
+            Get
+                Throw ExceptionUtilities.Unreachable
+            End Get
+        End Property
+
+        Friend Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+            Throw ExceptionUtilities.Unreachable
+        End Function
 #End Region
     End Class
 End Namespace

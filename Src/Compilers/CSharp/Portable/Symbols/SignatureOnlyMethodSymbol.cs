@@ -48,7 +48,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         internal override Cci.CallingConvention CallingConvention { get { return callingConvention; } }
 
-        public override bool IsVararg { get { return SignatureHeader.IsVarArgCallSignature((byte)callingConvention); } }
+        public override bool IsVararg { get { return new SignatureHeader((byte)callingConvention).CallingConvention == SignatureCallingConvention.VarArgs; } }
 
         public override bool IsGenericMethod { get { return Arity > 0; } }
 
@@ -131,6 +131,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         internal sealed override bool IsMetadataVirtual(bool ignoreInterfaceImplementationChanges = false) { throw ExceptionUtilities.Unreachable; }
 
         internal sealed override bool IsMetadataFinal() { throw ExceptionUtilities.Unreachable; }
+
+        internal override int CalculateLocalSyntaxOffset(int localPosition, SyntaxTree localTree) { throw ExceptionUtilities.Unreachable; }
 
         #endregion
     }

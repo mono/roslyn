@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -46,7 +47,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             return this.mapToPrevious.TryGetAnonymousTypeName(template, out name, out index);
         }
 
-        internal override bool TryGetTypeHandle(Cci.ITypeDefinition def, out TypeHandle handle)
+        internal override bool TryGetTypeHandle(Cci.ITypeDefinition def, out TypeDefinitionHandle handle)
         {
             var other = this.mapToMetadata.MapDefinition(def) as PENamedTypeSymbol;
             if ((object)other != null)
@@ -56,12 +57,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             }
             else
             {
-                handle = default(TypeHandle);
+                handle = default(TypeDefinitionHandle);
                 return false;
             }
         }
 
-        internal override bool TryGetEventHandle(Cci.IEventDefinition def, out EventHandle handle)
+        internal override bool TryGetEventHandle(Cci.IEventDefinition def, out EventDefinitionHandle handle)
         {
             var other = this.mapToMetadata.MapDefinition(def) as PEEventSymbol;
             if ((object)other != null)
@@ -71,12 +72,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             }
             else
             {
-                handle = default(EventHandle);
+                handle = default(EventDefinitionHandle);
                 return false;
             }
         }
 
-        internal override bool TryGetFieldHandle(Cci.IFieldDefinition def, out FieldHandle handle)
+        internal override bool TryGetFieldHandle(Cci.IFieldDefinition def, out FieldDefinitionHandle handle)
         {
             var other = this.mapToMetadata.MapDefinition(def) as PEFieldSymbol;
             if ((object)other != null)
@@ -86,12 +87,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             }
             else
             {
-                handle = default(FieldHandle);
+                handle = default(FieldDefinitionHandle);
                 return false;
             }
         }
 
-        internal override bool TryGetMethodHandle(Cci.IMethodDefinition def, out MethodHandle handle)
+        internal override bool TryGetMethodHandle(Cci.IMethodDefinition def, out MethodDefinitionHandle handle)
         {
             var other = this.mapToMetadata.MapDefinition(def) as PEMethodSymbol;
             if ((object)other != null)
@@ -101,12 +102,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             }
             else
             {
-                handle = default(MethodHandle);
+                handle = default(MethodDefinitionHandle);
                 return false;
             }
         }
 
-        private bool TryGetMethodHandle(EmitBaseline baseline, Cci.IMethodDefinition def, out MethodHandle handle)
+        private bool TryGetMethodHandle(EmitBaseline baseline, Cci.IMethodDefinition def, out MethodDefinitionHandle handle)
         {
             if (this.TryGetMethodHandle(def, out handle))
             {
@@ -119,16 +120,16 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
                 uint methodIndex;
                 if (baseline.MethodsAdded.TryGetValue(def, out methodIndex))
                 {
-                    handle = MetadataTokens.MethodHandle((int)methodIndex);
+                    handle = MetadataTokens.MethodDefinitionHandle((int)methodIndex);
                     return true;
                 }
             }
 
-            handle = default(MethodHandle);
+            handle = default(MethodDefinitionHandle);
             return false;
         }
 
-        internal override bool TryGetPropertyHandle(Cci.IPropertyDefinition def, out PropertyHandle handle)
+        internal override bool TryGetPropertyHandle(Cci.IPropertyDefinition def, out PropertyDefinitionHandle handle)
         {
             var other = this.mapToMetadata.MapDefinition(def) as PEPropertySymbol;
             if ((object)other != null)
@@ -138,7 +139,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             }
             else
             {
-                handle = default(PropertyHandle);
+                handle = default(PropertyDefinitionHandle);
                 return false;
             }
         }
@@ -151,7 +152,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
 
         internal override VariableSlotAllocator TryCreateVariableSlotAllocator(EmitBaseline baseline, IMethodSymbol method)
         {
-            MethodHandle handle;
+            MethodDefinitionHandle handle;
             if (!this.TryGetMethodHandle(baseline, (Cci.IMethodDefinition)method, out handle))
             {
                 // Unrecognized method. Must have been added in the current compilation.
@@ -167,12 +168,21 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
 
             if (!methodEntry.PreserveLocalVariables)
             {
-                // Not necessary to preserve locals.
+                // We should always "preserve locals" of iterator and async methods since the state machine 
+                // might be active without MoveNext method being on stack. We don't enforce this requirement here,
+                // since a method may be incorrectly marked by Iterator/AsyncStateMachine attribute by the user, 
+                // in which case we can't reliably figure out that it's an error in semantic edit set. 
+
                 return null;
             }
 
             CSharpSymbolMatcher symbolMap;
             ImmutableArray<EncLocalInfo> previousLocals;
+            IReadOnlyDictionary<EncLocalInfo, string> previousHoistedLocalMap;
+            IReadOnlyDictionary<Cci.ITypeReference, string> awaiterMap;
+            int hoistedLocalSlotCount;
+            int awaiterSlotCount;
+            string previousStateMachineTypeNameOpt;
 
             uint methodIndex = (uint)MetadataTokens.GetRowNumber(handle);
 
@@ -180,27 +190,147 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             if (baseline.LocalsForMethodsAddedOrChanged.TryGetValue(methodIndex, out previousLocals))
             {
                 symbolMap = this.mapToPrevious;
+
+                // TODO:
+                previousHoistedLocalMap = null;
+                awaiterMap = null;
+                hoistedLocalSlotCount = 0;
+                awaiterSlotCount = 0;
+                previousStateMachineTypeNameOpt = null;
             }
             else
             {
                 // Method has not changed since initial generation. Generate a map
                 // using the local names provided with the initial metadata.
 
-                ImmutableArray<MetadataDecoder.LocalInfo> slotMetadata;
-                if (!metadataDecoder.TryGetLocals(handle, out slotMetadata))
+                var debugInfo = baseline.DebugInformationProvider(handle);
+                TypeSymbol stateMachineType = TryGetStateMachineType(handle);
+                if (stateMachineType != null)
                 {
-                    // TODO: Report error that metadata is not supported.
-                    return null;
+                    var localSlotDebugInfo = debugInfo.LocalSlots.NullToEmpty();
+
+                    // method is async/iterator kickoff method
+                    GetStateMachineFieldMap(stateMachineType, localSlotDebugInfo, out previousHoistedLocalMap, out awaiterMap, out awaiterSlotCount);
+
+                    // Kickoff method has no interesting locals on its own. 
+                    // We use the EnC method debug infromation for hoisted locals.
+                    previousLocals = ImmutableArray<EncLocalInfo>.Empty;
+
+                    hoistedLocalSlotCount = localSlotDebugInfo.Length;
+                    previousStateMachineTypeNameOpt = stateMachineType.Name;
+                }
+                else
+                {
+                    ImmutableArray<MetadataDecoder.LocalInfo> slotMetadata;
+                    if (!metadataDecoder.TryGetLocals(handle, out slotMetadata))
+                    {
+                        // TODO: Report error that metadata is not supported.
+                        return null;
+                    }
+
+                    previousLocals = CreateLocalSlotMap(debugInfo, slotMetadata);
+                    Debug.Assert(previousLocals.Length == slotMetadata.Length);
+
+                    hoistedLocalSlotCount = 0;
+                    previousHoistedLocalMap = null;
+                    awaiterMap = null;
+                    awaiterSlotCount = 0;
+                    previousStateMachineTypeNameOpt = null;
                 }
 
-                var debugInfo = baseline.DebugInformationProvider(handle);
-
-                previousLocals = CreateLocalSlotMap(debugInfo, slotMetadata);
-                Debug.Assert(previousLocals.Length == slotMetadata.Length);
                 symbolMap = this.mapToMetadata;
             }
 
-            return new EncVariableSlotAllocator(symbolMap, methodEntry.SyntaxMap, methodEntry.PreviousMethod, previousLocals);
+            return new EncVariableSlotAllocator(
+                symbolMap,
+                methodEntry.SyntaxMap, 
+                methodEntry.PreviousMethod, 
+                previousLocals, 
+                previousStateMachineTypeNameOpt,
+                hoistedLocalSlotCount, 
+                previousHoistedLocalMap, 
+                awaiterSlotCount,
+                awaiterMap);
+        }
+
+        private void GetStateMachineFieldMap(
+            TypeSymbol stateMachineType,
+            ImmutableArray<LocalSlotDebugInfo> localSlotDebugInfo,
+            out IReadOnlyDictionary<EncLocalInfo, string> hoistedLocalMap,
+            out IReadOnlyDictionary<Cci.ITypeReference, string> awaiterMap,
+            out int awaiterSlotCount)
+        {
+            var hoistedLocals = new Dictionary<EncLocalInfo, string>();
+            var awaiters = new Dictionary<Cci.ITypeReference, string>();
+            int maxAwaiterSlotIndex = -1;
+
+            foreach (var member in stateMachineType.GetMembers())
+            {
+                if (member.Kind == SymbolKind.Field)
+                {
+                    string name = member.Name;
+                    int slotIndex;
+
+                    switch (GeneratedNames.GetKind(name))
+                    {
+                        case GeneratedNameKind.AwaiterField:
+                            if (GeneratedNames.TryParseSlotIndex(name, out slotIndex))
+                            {
+                                var field = (FieldSymbol)member;
+
+                                // correct metadata won't contain duplicates, but malformed might, ignore the duplicate:
+                                awaiters[(Cci.ITypeReference)field.Type] = name;
+
+                                if (slotIndex > maxAwaiterSlotIndex)
+                                {
+                                    maxAwaiterSlotIndex = slotIndex;
+                                }
+                            }
+
+                            break;
+
+                        case GeneratedNameKind.HoistedLocalField:
+                        case GeneratedNameKind.HoistedSynthesizedLocalField:
+                            if (GeneratedNames.TryParseSlotIndex(name, out slotIndex))
+                            {
+                                var field = (FieldSymbol)member;
+                                if (slotIndex >= localSlotDebugInfo.Length)
+                                {
+                                    // invalid or missing metadata
+                                    continue;
+                                }
+
+                                var key = new EncLocalInfo(
+                                    localSlotDebugInfo[slotIndex].Id,
+                                    (Cci.ITypeReference)field.Type,
+                                    LocalSlotConstraints.None,
+                                    localSlotDebugInfo[slotIndex].SynthesizedKind,
+                                    signature: null);
+
+                                // correct metadata won't contain duplicate ids, but malformed might, ignore the duplicate:
+                                hoistedLocals[key] = name;
+                            }
+
+                            break;
+                    }
+                }
+            }
+
+            hoistedLocalMap = hoistedLocals;
+            awaiterMap = awaiters;
+            awaiterSlotCount = maxAwaiterSlotIndex + 1;
+        }
+
+        private TypeSymbol TryGetStateMachineType(Handle methodHandle)
+        {
+            string typeName;
+            if (metadataDecoder.Module.HasStringValuedAttribute(methodHandle, AttributeDescription.AsyncStateMachineAttribute, out typeName) ||
+                metadataDecoder.Module.HasStringValuedAttribute(methodHandle, AttributeDescription.IteratorStateMachineAttribute, out typeName))
+            {
+                return metadataDecoder.GetTypeSymbolForSerializedType(typeName);
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -213,7 +343,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             ImmutableArray<MetadataDecoder.LocalInfo> slotMetadata)
         {
             var result = new EncLocalInfo[slotMetadata.Length];
-            
+
             var localSlots = methodEncInfo.LocalSlots;
             if (!localSlots.IsDefault)
             {
@@ -225,8 +355,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
 
                 for (int slotIndex = 0; slotIndex < slotCount; slotIndex++)
                 {
-                    ValueTuple<SynthesizedLocalKind, LocalDebugId> slot = localSlots[slotIndex];
-                    if (slot.Item1.IsLongLived())
+                    var slot = localSlots[slotIndex];
+                    if (slot.SynthesizedKind.IsLongLived())
                     {
                         var metadata = slotMetadata[slotIndex];
 
@@ -234,7 +364,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
                         // previous version of the local if it had custom modifiers.
                         if (metadata.CustomModifiers.IsDefaultOrEmpty)
                         {
-                            var local = new EncLocalInfo(slot.Item2, (Cci.ITypeReference)metadata.Type, metadata.Constraints, slot.Item1, metadata.SignatureOpt);
+                            var local = new EncLocalInfo(slot.Id, (Cci.ITypeReference)metadata.Type, metadata.Constraints, slot.SynthesizedKind, metadata.SignatureOpt);
                             map.Add(local, slotIndex);
                         }
                     }

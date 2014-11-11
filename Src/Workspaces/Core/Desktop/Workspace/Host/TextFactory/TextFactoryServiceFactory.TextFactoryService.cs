@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace Microsoft.CodeAnalysis.Host
 {
-    internal partial class TextFactoryServiceFactory
+    internal partial class DesktopTextFactoryServiceFactory
     {
         public class TextFactoryService : ITextFactoryService
         {

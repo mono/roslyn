@@ -334,6 +334,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                 Case SyntaxKind.GetTypeKeyword
                     term = ParseGetType()
 
+                Case SyntaxKind.NameOfKeyword
+                    term = ParseNameOf()
+
                 Case SyntaxKind.GetXmlNamespaceKeyword
                     term = ParseGetXmlNamespace()
 
@@ -578,12 +581,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                         ' Wrong arg count
                         Debug.Assert(Args.Count > 3)
 
-                        Dim withSeparators As SyntaxList(Of VBSyntaxNode) = Args.GetWithSeparators()
+                        Dim withSeparators As SyntaxList(Of VisualBasicSyntaxNode) = Args.GetWithSeparators()
                         Const firstNotUsedIndex As Integer = 5
 
                         Debug.Assert(withSeparators.Count > firstNotUsedIndex)
 
-                        Dim leading(withSeparators.Count - firstNotUsedIndex - 1) As VBSyntaxNode
+                        Dim leading(withSeparators.Count - firstNotUsedIndex - 1) As VisualBasicSyntaxNode
 
                         For i As Integer = firstNotUsedIndex To withSeparators.Count - 1
                             leading(i - firstNotUsedIndex) = withSeparators(i)
@@ -597,7 +600,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                             GetArgumentAsExpression(Args(1)),
                             DirectCast(withSeparators(3), PunctuationSyntax),
                             GetArgumentAsExpression(Args(2)),
-                            Arguments.CloseParenToken.AddLeadingSyntax(SyntaxList.List(ArrayElement(Of VBSyntaxNode).MakeElementArray(leading)), ERRID.ERR_IllegalOperandInIIFCount))
+                            Arguments.CloseParenToken.AddLeadingSyntax(SyntaxList.List(ArrayElement(Of VisualBasicSyntaxNode).MakeElementArray(leading)), ERRID.ERR_IllegalOperandInIIFCount))
                 End Select
 
             Else
@@ -641,6 +644,69 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             TryEatNewLineAndGetToken(SyntaxKind.CloseParenToken, closeParen, createIfMissing:=True)
 
             Return SyntaxFactory.GetTypeExpression([getType], openParen, getTypeTypeName, closeParen)
+        End Function
+
+        ''' <summary>
+        ''' Parse NameOf, 
+        ''' NameOfExpression -> NameOf OpenParenthesis Name CloseParenthesis 
+        ''' </summary>
+        ''' <returns></returns>
+        ''' <remarks></remarks>
+        Private Function ParseNameOf() As NameOfExpressionSyntax
+            Debug.Assert(CurrentToken.Kind = SyntaxKind.NameOfKeyword, "should be at NameOf.")
+
+            Dim [nameOf] As KeywordSyntax = DirectCast(CurrentToken, KeywordSyntax)
+            [nameOf] = AssertLanguageFeature(ERRID.FEATUREID_NameOfOperator, [nameOf])
+
+            GetNextToken()
+
+            Dim openParen As PunctuationSyntax = Nothing
+            TryGetTokenAndEatNewLine(SyntaxKind.OpenParenToken, openParen, createIfMissing:=True)
+
+            Dim nameOfName = ValidateNameOfArgument(ParseExpression(), isTopLevel:=True)
+
+            Dim closeParen As PunctuationSyntax = Nothing
+            TryEatNewLineAndGetToken(SyntaxKind.CloseParenToken, closeParen, createIfMissing:=True)
+
+            Return SyntaxFactory.NameOfExpression([nameOf], openParen, nameOfName, closeParen)
+        End Function
+
+        Private Function ValidateNameOfArgument(argument As ExpressionSyntax, isTopLevel As Boolean) As ExpressionSyntax
+
+            Select Case argument.Kind
+                Case SyntaxKind.IdentifierName,
+                     SyntaxKind.GenericName
+                    Return argument
+
+                Case SyntaxKind.MeExpression,
+                     SyntaxKind.MyClassExpression,
+                     SyntaxKind.MyBaseExpression,
+                     SyntaxKind.PredefinedType,
+                     SyntaxKind.NullableType,
+                     SyntaxKind.GlobalName
+
+                    If isTopLevel Then
+                        Return ReportSyntaxError(argument, ERRID.ERR_ExpressionDoesntHaveName)
+                    End If
+
+                    Return argument
+
+                Case SyntaxKind.SimpleMemberAccessExpression
+                    Dim access = DirectCast(argument, MemberAccessExpressionSyntax)
+
+                    If access.Expression IsNot Nothing Then
+                        Dim expression = ValidateNameOfArgument(access.Expression, isTopLevel:=False)
+
+                        If expression IsNot access.Expression Then
+                            access = SyntaxFactory.SimpleMemberAccessExpression(expression, access.OperatorToken, access.Name)
+                        End If
+                    End If
+
+                    Return access
+
+                Case Else
+                    Return ReportSyntaxError(argument, If(isTopLevel, ERRID.ERR_ExpressionDoesntHaveName, ERRID.ERR_InvalidNameOfSubExpression))
+            End Select
         End Function
 
         ' File: Parser.cpp
@@ -1059,11 +1125,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' any single line trivia is consumed and appended to the token
         ''' which is assumed to be the token at the transition point.
         ''' </summary>
-        Private Function TransitionFromXmlToVB(Of T As VBSyntaxNode)(node As T) As T
+        Private Function TransitionFromXmlToVB(Of T As VisualBasicSyntaxNode)(node As T) As T
             node = LastTokenReplacer.Replace(node, Function(token)
-                                                       Dim trivia = New SyntaxList(Of VBSyntaxNode)(token.GetTrailingTrivia())
-                                                       Dim toRemove As SyntaxList(Of VBSyntaxNode) = Nothing
-                                                       Dim toAdd As SyntaxList(Of VBSyntaxNode) = Nothing
+                                                       Dim trivia = New SyntaxList(Of VisualBasicSyntaxNode)(token.GetTrailingTrivia())
+                                                       Dim toRemove As SyntaxList(Of VisualBasicSyntaxNode) = Nothing
+                                                       Dim toAdd As SyntaxList(Of VisualBasicSyntaxNode) = Nothing
                                                        _scanner.TransitionFromXmlToVB(trivia, toRemove, toAdd)
                                                        trivia = trivia.GetStartOfTrivia(trivia.Count - toRemove.Count)
                                                        token = DirectCast(token.WithTrailingTrivia(trivia.Node), SyntaxToken)
@@ -1074,11 +1140,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return node
         End Function
 
-        Private Function TransitionFromVBToXml(Of T As VBSyntaxNode)(state As ScannerState, node As T) As T
+        Private Function TransitionFromVBToXml(Of T As VisualBasicSyntaxNode)(state As ScannerState, node As T) As T
             node = LastTokenReplacer.Replace(node, Function(token)
-                                                       Dim trivia = New SyntaxList(Of VBSyntaxNode)(token.GetTrailingTrivia())
-                                                       Dim toRemove As SyntaxList(Of VBSyntaxNode) = Nothing
-                                                       Dim toAdd As SyntaxList(Of VBSyntaxNode) = Nothing
+                                                       Dim trivia = New SyntaxList(Of VisualBasicSyntaxNode)(token.GetTrailingTrivia())
+                                                       Dim toRemove As SyntaxList(Of VisualBasicSyntaxNode) = Nothing
+                                                       Dim toAdd As SyntaxList(Of VisualBasicSyntaxNode) = Nothing
                                                        _scanner.TransitionFromVBToXml(state, trivia, toRemove, toAdd)
                                                        trivia = trivia.GetStartOfTrivia(trivia.Count - toRemove.Count)
                                                        token = DirectCast(token.WithTrailingTrivia(trivia.Node), SyntaxToken)
@@ -1168,7 +1234,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Debug.Assert(CurrentToken.Kind = SyntaxKind.OpenParenToken)
             TryGetTokenAndEatNewLine(SyntaxKind.OpenParenToken, openParen)
 
-            Dim unexpected As VBSyntaxNode = Nothing
+            Dim unexpected As VisualBasicSyntaxNode = Nothing
             arguments = ParseArguments(unexpected, RedimOrNewParent)
 
             If Not TryEatNewLineAndGetToken(SyntaxKind.CloseParenToken, closeParen, createIfMissing:=False) Then
@@ -1238,7 +1304,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ' Lines: 16425 - 16425
         ' .Parser::ParseArguments( [ _In_ ParseTree::ArgumentList** Target ] [ _Inout_ bool& ErrorInConstruct ] )
 
-        Private Function ParseArguments(ByRef unexpected As VBSyntaxNode, Optional RedimOrNewParent As Boolean = False) As SeparatedSyntaxList(Of ArgumentSyntax)
+        Private Function ParseArguments(ByRef unexpected As VisualBasicSyntaxNode, Optional RedimOrNewParent As Boolean = False) As SeparatedSyntaxList(Of ArgumentSyntax)
             Dim arguments = _pool.AllocateSeparated(Of ArgumentSyntax)()
 
             Do

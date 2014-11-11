@@ -3,6 +3,7 @@
 Imports System.Collections.Generic
 Imports System.Collections.Immutable
 Imports System.Runtime.CompilerServices
+Imports System.Runtime.InteropServices
 Imports System.Threading
 Imports Microsoft.Cci
 Imports Microsoft.CodeAnalysis
@@ -15,35 +16,34 @@ Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 Namespace Microsoft.CodeAnalysis.VisualBasic
 
     Partial Friend NotInheritable Class AsyncRewriter
-        Inherits StateMachineRewriter(Of AsyncStateMachine, CapturedSymbolOrExpression)
+        Inherits StateMachineRewriter(Of CapturedSymbolOrExpression)
 
         Private ReadOnly _binder As Binder
         Private ReadOnly _asyncMethodKind As AsyncMethodKind
         Private ReadOnly _builderType As NamedTypeSymbol
         Private ReadOnly _resultType As TypeSymbol
-        Private ReadOnly _stateMachineType As AsyncStateMachine
 
         Private _builderField As FieldSymbol
         Private _lastExpressionCaptureNumber As Integer = 0
 
         Public Sub New(body As BoundStatement,
                        method As MethodSymbol,
+                       stateMachineType As AsyncStateMachine,
                        slotAllocatorOpt As VariableSlotAllocator,
                        asyncKind As AsyncMethodKind,
                        compilationState As TypeCompilationState,
                        diagnostics As DiagnosticBag)
 
-            MyBase.New(body, method, slotAllocatorOpt, compilationState, diagnostics)
+            MyBase.New(body, method, stateMachineType, slotAllocatorOpt, compilationState, diagnostics)
 
             Me._binder = CreateMethodBinder(method)
-            Me._stateMachineType = DirectCast(Me.Method.GetAsyncStateMachineType(), AsyncStateMachine)
 
             Debug.Assert(asyncKind <> AsyncMethodKind.None)
             Debug.Assert(asyncKind = GetAsyncMethodKind(method))
             Me._asyncMethodKind = asyncKind
 
             Select Case Me._asyncMethodKind
-                Case AsyncMethodKind.[Sub]
+                Case AsyncMethodKind.Sub
                     Me._resultType = Me.F.SpecialType(SpecialType.System_Void)
                     Me._builderType = Me.F.WellKnownType(WellKnownType.System_Runtime_CompilerServices_AsyncVoidMethodBuilder)
 
@@ -58,8 +58,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Case Else
                     Throw ExceptionUtilities.UnexpectedValue(Me._asyncMethodKind)
             End Select
-
-            Debug.Assert(Me._stateMachineType IsNot Nothing)
         End Sub
 
         ''' <summary>
@@ -69,7 +67,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                  method As MethodSymbol,
                                                  slotAllocatorOpt As VariableSlotAllocator,
                                                  compilationState As TypeCompilationState,
-                                                 diagnostics As DiagnosticBag) As BoundBlock
+                                                 diagnostics As DiagnosticBag,
+                                                 <Out> ByRef stateMachineType As AsyncStateMachine) As BoundBlock
 
             If body.HasErrors Then
                 Return body
@@ -80,7 +79,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return body
             End If
 
-            Dim rewriter As New AsyncRewriter(body, method, slotAllocatorOpt, asyncMethodKind, compilationState, diagnostics)
+            ' The CLR doesn't support adding fields to structs, so in order to enable EnC in an async method we need to generate a class.
+            Dim kind = If(compilationState.Compilation.Options.EnableEditAndContinue, TypeKind.Class, TypeKind.Struct)
+
+            stateMachineType = New AsyncStateMachine(slotAllocatorOpt, method, kind)
+
+            If compilationState.ModuleBuilderOpt IsNot Nothing Then
+                compilationState.ModuleBuilderOpt.CompilationState.SetStateMachineType(method, stateMachineType)
+            End If
+
+            Dim rewriter As New AsyncRewriter(body, method, stateMachineType, slotAllocatorOpt, asyncMethodKind, compilationState, diagnostics)
 
             ' check if we have all the types we need
             If rewriter.EnsureAllSymbolsAndSignature() Then
@@ -88,15 +96,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Return rewriter.Rewrite()
-        End Function
-
-        Friend Shared Function CreateAsyncStateMachine(method As MethodSymbol,
-                                                       typeIndex As Integer,
-                                                       typeKind As TypeKind,
-                                                       valueTypeSymbol As NamedTypeSymbol,
-                                                       iAsyncStateMachine As NamedTypeSymbol) As NamedTypeSymbol
-
-            Return New AsyncStateMachine(method, typeIndex, typeKind, valueTypeSymbol, iAsyncStateMachine)
         End Function
 
         Private Shared Function CreateMethodBinder(method As MethodSymbol) As Binder
@@ -135,7 +134,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 bodyBuilder.Add(
                     Me.F.Assignment(
                         Me.F.Local(stateMachineLocal, True),
-                        Me.F.[New](StateMachineClass.Constructor.AsMember(frameType))))
+                        Me.F.[New](StateMachineType.Constructor.AsMember(frameType))))
             Else
                 ' STAT:   localStateMachine = Nothing ' Initialization
                 bodyBuilder.Add(
@@ -153,13 +152,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Friend Overrides ReadOnly Property TypeMap As TypeSubstitution
             Get
-                Return Me.StateMachineClass.TypeSubstitution
-            End Get
-        End Property
-
-        Protected Overrides ReadOnly Property StateMachineClass As AsyncStateMachine
-            Get
-                Return Me._stateMachineType
+                Return Me.StateMachineType.TypeSubstitution
             End Get
         End Property
 
@@ -197,8 +190,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             ' Constructor
-            If StateMachineClass.TypeKind = TypeKind.Class Then
-                Me.F.CurrentMethod = StateMachineClass.Constructor
+            If StateMachineType.TypeKind = TypeKind.Class Then
+                Me.F.CurrentMethod = StateMachineType.Constructor
                 Me.F.CloseMethod(F.Block(ImmutableArray.Create(F.BaseInitialization(), F.Return())))
             End If
 
@@ -210,7 +203,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             ' STAT:   localStateMachine.$stateField = NotStartedStateMachine
             Dim stateFieldAsLValue As BoundExpression =
                 Me.F.Field(
-                    Me.F.Local(stateMachineVariable, False),
+                    Me.F.Local(stateMachineVariable, True),
                     Me.StateField.AsMember(frameType), True)
 
             bodyBuilder.Add(
@@ -283,7 +276,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             Return LocalRewriter.Rewrite(DirectCast(body, BoundBlock),
                                          topMethod,
-                                         Me.CompilationState,
+                                         F.CompilationState,
                                          previousSubmissionFields:=Nothing,
                                          diagnostics:=Me.Diagnostics,
                                          rewrittenNodes:=rewrittenNodes,
@@ -357,7 +350,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return AsyncMethodKind.[Sub]
             End If
 
-            Dim compilation As VBCompilation = method.DeclaringCompilation
+            Dim compilation As VisualBasicCompilation = method.DeclaringCompilation
             Debug.Assert(compilation IsNot Nothing)
 
             Dim returnType As TypeSymbol = method.ReturnType
@@ -462,8 +455,8 @@ lCaptureRValue:
             Dim field As FieldSymbol = DirectCast(proxy, CapturedParameterSymbol).Field
 
             Dim frameType As NamedTypeSymbol = If(Me.Method.IsGenericMethod,
-                                                  Me.StateMachineClass.Construct(Me.Method.TypeArguments),
-                                                  Me.StateMachineClass)
+                                                  Me.StateMachineType.Construct(Me.Method.TypeArguments),
+                                                  Me.StateMachineType)
 
             Dim expression As BoundExpression = If(parameter.IsMe,
                                                    DirectCast(Me.F.[Me](), BoundExpression),
@@ -471,7 +464,7 @@ lCaptureRValue:
             initializers.Add(
                 Me.F.AssignmentExpression(
                     Me.F.Field(
-                        Me.F.Local(stateMachineVariable, False),
+                        Me.F.Local(stateMachineVariable, True),
                         field.AsMember(frameType),
                         True),
                     expression))

@@ -86,7 +86,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         End Property
 
         ''' <summary>
-        ''' Gets the <see cref="T:ISymbol" /> for the immediately containing symbol.
+        ''' Gets the <see cref="ISymbol" /> for the immediately containing symbol.
         ''' </summary>
         Public Overrides ReadOnly Property ContainingSymbol As Symbol
             Get
@@ -101,7 +101,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         End Property
 
         ''' <summary>
-        ''' Gets a <see cref="T:Accessibility" /> indicating the declared accessibility for the symbol.
+        ''' Gets a <see cref="Accessibility" /> indicating the declared accessibility for the symbol.
         ''' Returns NotApplicable if no accessibility is declared.
         ''' </summary>
         Public Overrides ReadOnly Property DeclaredAccessibility As Accessibility
@@ -379,12 +379,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
-            Get
-                Return False
-            End Get
-        End Property
-
         ''' <summary>
         ''' Gets the symbol name. Returns the empty string if unnamed.
         ''' </summary>
@@ -404,7 +398,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Return ImmutableArray(Of String).Empty
         End Function
 
-        Friend Overrides ReadOnly Property Syntax As VBSyntaxNode
+        Friend Overrides ReadOnly Property Syntax As VisualBasicSyntaxNode
             Get
                 Return Nothing ' The methods are runtime implemented
             End Get
@@ -416,12 +410,22 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend Overrides Sub AddSynthesizedAttributes(ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
-            MyBase.AddSynthesizedAttributes(attributes)
+        Friend Overrides Sub AddSynthesizedAttributes(compilationState As ModuleCompilationState, ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
+            MyBase.AddSynthesizedAttributes(compilationState, attributes)
 
             ' Dev11 emits DebuggerNonUserCodeAttribute on methods of anon delegates but not of user defined delegates.
             ' In both cases the debugger hides these methods so no attribute is necessary.
             ' We expect other tools to also special case delegate methods.
         End Sub
+
+        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
+            Get
+                Return False
+            End Get
+        End Property
+
+        Friend Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+            Throw ExceptionUtilities.Unreachable
+        End Function
     End Class
 End Namespace

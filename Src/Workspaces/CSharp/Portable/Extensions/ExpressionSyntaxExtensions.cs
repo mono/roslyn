@@ -393,7 +393,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
 
         public static bool IsInsideNameOf(this ExpressionSyntax expression)
         {
-            return expression.Ancestors().Any(a => a.IsKind(SyntaxKind.NameOfExpression));
+            return false; // TODO: not sure what the desired semantics of this method are
         }
 
         private static bool CanReplace(ISymbol symbol)
@@ -499,7 +499,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                 expression.IsParentKind(SyntaxKind.WhileStatement) ||
                 expression.IsParentKind(SyntaxKind.DoStatement) ||
                 expression.IsParentKind(SyntaxKind.ThrowStatement) ||
-                expression.IsParentKind(SyntaxKind.SwitchStatement))
+                expression.IsParentKind(SyntaxKind.SwitchStatement) ||
+                expression.IsParentKind(SyntaxKind.InterpolatedStringInsert))
             {
                 return true;
             }
@@ -769,8 +770,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
 
         private static bool InsideNameOfExpression(ExpressionSyntax expr)
         {
-            var nameOfExpression = expr.FirstAncestorOrSelf<NameOfExpressionSyntax>();
-            return nameOfExpression != null;
+            return false; // TODO: not sure what the desired semantics of this method are.
         }
 
         private static bool PreferPredefinedTypeKeywordInDeclarations(NameSyntax name, OptionSet optionSet)

@@ -1459,7 +1459,7 @@
 
       <Field Name="Binder" Type="Binder" Null="disallow"/>
       <Field Name="Parameters" Type="ImmutableArray(Of ParameterSymbol)" Null="disallow"/>
-      <Field Name="Compilation" Type="VBCompilation" Null="disallow"/>
+      <Field Name="Compilation" Type="VisualBasicCompilation" Null="disallow"/>
     </Node>
 
     <!-- Corresponds to AggregateClauseSyntax. -->
@@ -1733,5 +1733,18 @@
     <Field Name="PlaceholderId" Type="Integer"/>
     <Field Name="WhenNotNull" Type="BoundExpression"/>
     <Field Name="WhenNullOpt" Type="BoundExpression" Null="allow"/>
+  </Node>
+
+  <Node Name="BoundNameOfOperator" Base="BoundExpression" HasValidate="true">
+    <!-- Type is required for this node type; may not be null -->
+    <Field Name="Type" Type="TypeSymbol" Override="true" Null="disallow"/>
+    <Field Name="Argument" Type="BoundExpression" Null="disallow"/>
+    <Field Name="ConstantValueOpt" PropertyOverrides="true" Type="ConstantValue" Null="allow"/>
+  </Node>
+
+  <Node Name="BoundTypeAsValueExpression" Base="BoundExpression" HasValidate="true">
+    <!-- Type is required for this node type; may not be null -->
+    <Field Name="Type" Type="TypeSymbol" Override="true" Null="disallow"/>
+    <Field Name="Expression" Type="BoundTypeExpression" Null="disallow"/>
   </Node>
 </Tree>

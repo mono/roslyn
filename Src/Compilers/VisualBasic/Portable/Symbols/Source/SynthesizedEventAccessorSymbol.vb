@@ -111,7 +111,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         Protected Shared Function ConstructFieldLikeEventAccessorBody(eventSymbol As SourceEventSymbol,
                                                            isAddMethod As Boolean,
-                                                           compilation As VBCompilation,
+                                                           compilation As VisualBasicCompilation,
                                                            diagnostics As DiagnosticBag) As BoundBlock
             Debug.Assert(eventSymbol.HasAssociatedField)
             Dim result As BoundBlock = If(eventSymbol.IsWindowsRuntimeEvent,
@@ -121,7 +121,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             ' Contract guarantees non-nothing return.
             Return If(result,
                       New BoundBlock(
-                        DirectCast(eventSymbol.SyntaxReference.GetSyntax(), VBSyntaxNode),
+                        DirectCast(eventSymbol.SyntaxReference.GetSyntax(), VisualBasicSyntaxNode),
                         Nothing,
                         ImmutableArray(Of LocalSymbol).Empty,
                         ImmutableArray(Of BoundStatement).Empty,
@@ -130,7 +130,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         Private Shared Function ConstructFieldLikeEventAccessorBody_WinRT(eventSymbol As SourceEventSymbol,
                                                            isAddMethod As Boolean,
-                                                           compilation As VBCompilation,
+                                                           compilation As VisualBasicCompilation,
                                                            diagnostics As DiagnosticBag) As BoundBlock
             Dim syntax = eventSymbol.SyntaxReference.GetVisualBasicSyntax()
 
@@ -265,7 +265,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' </summary>
         Private Shared Function ConstructFieldLikeEventAccessorBody_Regular(eventSymbol As SourceEventSymbol,
                                                                    isAddMethod As Boolean,
-                                                                   compilation As VBCompilation,
+                                                                   compilation As VisualBasicCompilation,
                                                                    diagnostics As DiagnosticBag) As BoundBlock
 
 
@@ -422,7 +422,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' <summary>
         ''' Get the MethodSymbol for System.Threading.Interlocked.CompareExchange&lt; T&gt;  for a given T.
         ''' </summary>
-        Private Shared Function GetConstructedCompareExchangeMethod(typeArg As TypeSymbol, compilation As VBCompilation, errorLocation As Location, diagnostics As DiagnosticBag) As MethodSymbol
+        Private Shared Function GetConstructedCompareExchangeMethod(typeArg As TypeSymbol, compilation As VisualBasicCompilation, errorLocation As Location, diagnostics As DiagnosticBag) As MethodSymbol
             Dim compareExchangeDefinition As MethodSymbol = DirectCast(compilation.GetWellKnownTypeMember(WellKnownMember.System_Threading_Interlocked__CompareExchange_T), MethodSymbol)
             If compareExchangeDefinition Is Nothing Then
                 Dim memberDescriptor As MemberDescriptor = WellKnownMembers.GetDescriptor(WellKnownMember.System_Threading_Interlocked__CompareExchange_T)
@@ -435,8 +435,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Return compareExchangeDefinition.Construct(ImmutableArray.Create(Of TypeSymbol)(typeArg))
         End Function
 
-        Friend Overrides Sub AddSynthesizedAttributes(ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
-            MyBase.AddSynthesizedAttributes(attributes)
+        Friend Overrides Sub GenerateDeclarationErrors(cancellationToken As CancellationToken)
+            MyBase.GenerateDeclarationErrors(cancellationToken)
+
+            cancellationToken.ThrowIfCancellationRequested()
+            Dim unusedParameters = Me.Parameters
+            Dim unusedReturnType = Me.ReturnType
+        End Sub
+
+        Friend Overrides Sub AddSynthesizedAttributes(compilationState As ModuleCompilationState, ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
+            MyBase.AddSynthesizedAttributes(compilationState, attributes)
 
             Debug.Assert(Not ContainingType.IsImplicitlyDeclared)
             Dim compilation = Me.DeclaringCompilation
@@ -451,13 +459,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             ' C# also doesn't add DebuggerHidden nor DebuggerNonUserCode attributes.
         End Sub
 
-        Friend Overrides Sub GenerateDeclarationErrors(cancellationToken As CancellationToken)
-            MyBase.GenerateDeclarationErrors(cancellationToken)
+        Friend NotOverridable Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
+            Get
+                Return False
+            End Get
+        End Property
 
-            cancellationToken.ThrowIfCancellationRequested()
-            Dim unusedParameters = Me.Parameters
-            Dim unusedReturnType = Me.ReturnType
-        End Sub
+        Friend NotOverridable Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+            Throw ExceptionUtilities.Unreachable
+        End Function
     End Class
 
     Friend NotInheritable Class SynthesizedAddAccessorSymbol

@@ -1,9 +1,6 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports System.Collections.Immutable
-Imports Microsoft.CodeAnalysis.Text
-Imports Microsoft.CodeAnalysis.VisualBasic.Symbols
-Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
@@ -21,7 +18,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' <param name="container">The containing type for the synthesized constructor.</param>
         ''' <param name="isShared">if set to <c>true</c> if this is a shared constructor.</param>
         Friend Sub New(
-            syntaxNode As VBSyntaxNode,
+            syntaxNode As VisualBasicSyntaxNode,
             container As NamedTypeSymbol,
             isShared As Boolean,
             binder As Binder,
@@ -60,10 +57,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         End Function
 
         Friend Shared Function MakeSubmissionInitialization(
-            syntax As VBSyntaxNode,
+            syntax As VisualBasicSyntaxNode,
             constructor As MethodSymbol,
             synthesizedFields As SynthesizedSubmissionFields,
-            compilation As VBCompilation,
+            compilation As VisualBasicCompilation,
             diagnostics As DiagnosticBag) As ImmutableArray(Of BoundStatement)
 
             Debug.Assert(constructor.ParameterCount = 2)
@@ -128,5 +125,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Return result.AsImmutableOrNull()
         End Function
 
+        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
+            Get
+                Return False
+            End Get
+        End Property
+
+        Friend Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+            Throw ExceptionUtilities.Unreachable
+        End Function
     End Class
 End Namespace

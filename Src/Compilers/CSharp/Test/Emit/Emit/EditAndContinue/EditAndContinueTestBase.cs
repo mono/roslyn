@@ -1,5 +1,4 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
-
 using System;
 using System.Collections.Immutable;
 using System.IO;
@@ -10,8 +9,10 @@ using Microsoft.CodeAnalysis.CodeGen;
 using Microsoft.CodeAnalysis.CSharp.Emit;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
 using Microsoft.CodeAnalysis.CSharp.UnitTests;
 using Microsoft.CodeAnalysis.Emit;
+using Roslyn.Test.MetadataUtilities;
 using Roslyn.Test.PdbUtilities;
 using Roslyn.Test.Utilities;
 using Roslyn.Utilities.Pdb;
@@ -21,7 +22,17 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
 {
     public abstract class EditAndContinueTestBase : EmitMetadataTestBase
     {
-        internal static readonly Func<MethodHandle, EditAndContinueMethodDebugInformation> EmptyLocalsProvider = handle => default(EditAndContinueMethodDebugInformation);
+        // PDB reader can only be accessed from a single thread, so avoid concurrent compilation:
+        protected readonly CSharpCompilationOptions ComSafeDebugDll = TestOptions.DebugDll.WithConcurrentBuild(false);
+
+        internal static readonly Func<MethodDefinitionHandle, EditAndContinueMethodDebugInformation> EmptyLocalsProvider = handle => default(EditAndContinueMethodDebugInformation);
+
+        internal static string Visualize(ModuleMetadata baseline, PinnedMetadata delta)
+        {
+            var result = new StringWriter();
+            new MetadataVisualizer(new[] { baseline.MetadataReader, delta.Reader }, result).VisualizeAllGenerations();
+            return result.ToString();
+        }
 
         internal static ImmutableArray<SyntaxNode> GetAllLocals(MethodSymbol method)
         {
@@ -127,7 +138,7 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
         private static bool IsDefinition(EditAndContinueLogEntry entry)
         {
             TableIndex index;
-            Assert.True(MetadataTokens.TryGetTableIndex(entry.Handle.HandleType, out index));
+            Assert.True(MetadataTokens.TryGetTableIndex(entry.Handle.Kind, out index));
 
             switch (index)
             {
@@ -188,7 +199,7 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
         internal static string EncLogRowToString(EditAndContinueLogEntry row)
         {
             TableIndex tableIndex;
-            MetadataTokens.TryGetTableIndex(row.Handle.HandleType, out tableIndex);
+            MetadataTokens.TryGetTableIndex(row.Handle.Kind, out tableIndex);
 
             return string.Format(
                 "Row({0}, TableIndex.{1}, EditAndContinueOperation.{2})",
@@ -200,7 +211,7 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
         internal static string EncMapRowToString(Handle handle)
         {
             TableIndex tableIndex;
-            MetadataTokens.TryGetTableIndex(handle.HandleType, out tableIndex);
+            MetadataTokens.TryGetTableIndex(handle.Kind, out tableIndex);
 
             return string.Format(
                 "Handle({0}, TableIndex.{1})",
@@ -211,8 +222,8 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
         internal static string AttributeRowToString(CustomAttributeRow row)
         {
             TableIndex parentTableIndex, constructorTableIndex;
-            MetadataTokens.TryGetTableIndex(row.ParentToken.HandleType, out parentTableIndex);
-            MetadataTokens.TryGetTableIndex(row.ConstructorToken.HandleType, out constructorTableIndex);
+            MetadataTokens.TryGetTableIndex(row.ParentToken.Kind, out parentTableIndex);
+            MetadataTokens.TryGetTableIndex(row.ConstructorToken.Kind, out constructorTableIndex);
 
             return string.Format(
                 "new CustomAttributeRow(Handle({0}, TableIndex.{1}), Handle({2}, TableIndex.{3}))",

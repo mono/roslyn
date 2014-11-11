@@ -128,16 +128,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         Public MustOverride ReadOnly Property ReturnTypeCustomModifiers As ImmutableArray(Of CustomModifier)
 
         ''' <summary>
-        ''' If the method is async we should emit AsyncStateMachineAttribute for this method providing information 
-        ''' about the synthesized state machine class. This method is called by async rewriter on the methods it builds 
-        ''' state machines for. This method should only be overriden by method symbols that can be defined 'async'.
-        ''' The method's state machine type should already be assigned!
-        ''' </summary>
-        Friend Overridable Function GetAsyncStateMachineType() As NamedTypeSymbol
-            Throw ExceptionUtilities.Unreachable
-        End Function
-
-        ''' <summary>
         ''' Returns the list of attributes, if any, associated with the return type.
         ''' </summary>
         Public Overridable Function GetReturnTypeAttributes() As ImmutableArray(Of VisualBasicAttributeData)
@@ -166,7 +156,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' <summary>
         ''' Should return syntax node that originated the method. 
         ''' </summary>
-        Friend MustOverride ReadOnly Property Syntax As VBSyntaxNode
+        Friend MustOverride ReadOnly Property Syntax As VisualBasicSyntaxNode
 
         ''' <summary>
         ''' Returns true if calls to this method are omitted in the given syntax tree at the given syntax node location.
@@ -215,7 +205,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         End Function
 
         ''' <summary>
-        ''' Returns a sequence of preprocessor symbols specified in <see cref="T:ConditionalAttribute"/> applied on this symbol, or null if there are none.
+        ''' Returns a sequence of preprocessor symbols specified in <see cref="ConditionalAttribute"/> applied on this symbol, or null if there are none.
         ''' </summary>
         Friend MustOverride Function GetAppliedConditionalSymbols() As ImmutableArray(Of String)
 
@@ -238,7 +228,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' <remarks>
         ''' This is set for methods with special semantics such as constructors or accessors
         ''' as well as in special synthetic methods such as lambdas.
-        ''' Also set for methods marked with <see cref="T:System.Runtime.CompilerServices.SpecialNameAttribute"/>.
+        ''' Also set for methods marked with System.Runtime.CompilerServices.SpecialNameAttribute.
         ''' </remarks>
         Friend MustOverride ReadOnly Property HasSpecialName As Boolean
 
@@ -307,6 +297,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' </summary>
         Public MustOverride ReadOnly Property ExplicitInterfaceImplementations As ImmutableArray(Of MethodSymbol)
 
+#Disable Warning RS0010
         ''' <summary>
         ''' Returns true if this method is not implemented in IL of the assembly it is defined in.
         ''' </summary>
@@ -319,6 +310,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         '''    <see cref="T:System.Runtime.CompilerServices.MethodCodeType.Runtime"/> flags.
         ''' 4) Synthesized constructors of ComImport types
         ''' </remarks>
+#Enable Warning RS0010
         Public MustOverride ReadOnly Property IsExternalMethod As Boolean
 
         ''' <summary>
@@ -707,6 +699,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
+        Friend Overrides ReadOnly Property EmbeddedSymbolKind As EmbeddedSymbolKind
+            Get
+                Return If(Me.ContainingSymbol Is Nothing, EmbeddedSymbolKind.None, Me.ContainingSymbol.EmbeddedSymbolKind)
+            End Get
+        End Property
+
         ''' <summary> 
         ''' Returns bound block representing method's body. This method is called 
         ''' by 'method compiler' when it is ready to emit IL code for the method.
@@ -735,14 +733,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend Overrides ReadOnly Property EmbeddedSymbolKind As EmbeddedSymbolKind
-            Get
-                Return If(Me.ContainingSymbol Is Nothing, EmbeddedSymbolKind.None, Me.ContainingSymbol.EmbeddedSymbolKind)
-            End Get
-        End Property
-
         ''' <summary>
         ''' Calculates a syntax offset for a local (user-defined or long-lived synthesized) declared at <paramref name="localPosition"/>.
+        ''' Must be implemented by all methods that may contain user code.
         ''' </summary>
         ''' <remarks>
         ''' Syntax offset is a unique identifier for the local within the emitted method body.
@@ -752,10 +745,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' as if all source these parts were concatenated together and prepended to the constructor body.
         ''' The resulting syntax offset is then negative for locals defined outside of the constructor body.
         ''' </remarks>
-        Friend Overridable Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
-            ' Method body doesn't contain any user-defined or long-lived synthesized locals.
-            Throw ExceptionUtilities.Unreachable
-        End Function
+        Friend MustOverride Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
 
 #Region "IMethodSymbol"
 

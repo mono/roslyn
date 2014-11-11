@@ -5,8 +5,8 @@ using Microsoft.CodeAnalysis.Host.Mef;
 
 namespace Microsoft.CodeAnalysis.Host
 {
-    [ExportWorkspaceServiceFactory(typeof(ITextFactoryService), ServiceLayer.Default), Shared]
-    internal partial class TextFactoryServiceFactory : IWorkspaceServiceFactory
+    [ExportWorkspaceServiceFactory(typeof(ITextFactoryService), ServiceLayer.Desktop), Shared]
+    internal partial class DesktopTextFactoryServiceFactory : IWorkspaceServiceFactory
     {
         private readonly TextFactoryService singleton = new TextFactoryService();
 

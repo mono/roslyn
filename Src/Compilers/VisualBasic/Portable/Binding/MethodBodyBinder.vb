@@ -24,7 +24,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' <summary>
         ''' Create binder for binding the body of a method. 
         ''' </summary>
-        Public Sub New(methodSymbol As MethodSymbol, root As VBSyntaxNode, containingBinder As Binder)
+        Public Sub New(methodSymbol As MethodSymbol, root As VisualBasicSyntaxNode, containingBinder As Binder)
             MyBase.New(methodSymbol, root, containingBinder)
 
             ' this could be a synthetic method that does not have syntax for the method body
@@ -40,7 +40,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
         End Sub
 
-        Private Function CreateFunctionValueLocal(methodSymbol As MethodSymbol, root As VBSyntaxNode) As LocalSymbol
+        Private Function CreateFunctionValueLocal(methodSymbol As MethodSymbol, root As VisualBasicSyntaxNode) As LocalSymbol
             Dim methodBlock = TryCast(root, MethodBlockBaseSyntax)
 
             Debug.Assert(Not TypeOf methodSymbol Is SourceMethodSymbol OrElse
@@ -57,22 +57,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Case SyntaxKind.FunctionBlock
                     Dim begin As MethodStatementSyntax = DirectCast(methodBlock, MethodBlockSyntax).Begin
 
-                    If methodSymbol.ReturnType.IsVoidType() Then
-                        Return Nothing
-                    End If
-
-                    Dim isAsync = methodSymbol.IsAsync
-                    If isAsync AndAlso methodSymbol.ReturnType.Equals(Compilation.GetWellKnownType(WellKnownType.System_Threading_Tasks_Task)) Then
-                        Return Nothing
-                    End If
-
-                    If isAsync OrElse methodSymbol.IsIterator Then
-                        ' Function Return Value variable isn't accessible within a body of an async/iterator function
-                        Return New SynthesizedLocal(methodSymbol, methodSymbol.ReturnType, SynthesizedLocalKind.FunctionReturnValue, begin)
-                    End If
-
                     ' Note, it is an error if a parameter has the same name as the function.  
-                    Return LocalSymbol.Create(methodSymbol, Me, begin.Identifier, LocalDeclarationKind.FunctionValue, methodSymbol.ReturnType)
+                    Return LocalSymbol.Create(methodSymbol, Me, begin.Identifier, LocalDeclarationKind.FunctionValue,
+                                              If(methodSymbol.ReturnType.IsVoidType(), ErrorTypeSymbol.UnknownResultType, methodSymbol.ReturnType))
 
                 Case SyntaxKind.GetAccessorBlock
                     If methodBlock.Parent IsNot Nothing AndAlso

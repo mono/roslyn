@@ -13,23 +13,20 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
     ''' <summary>
     ''' </summary>
-    ''' <typeparam name="TStateMachineState">
-    ''' Type for representing State Machine type symbol 
-    ''' </typeparam>
     ''' <typeparam name="TProxy">
     ''' Type used by State Machine rewriter to represent symbol proxy. Lambda rewriter as 
     ''' well as iterator rewriter use simplified form of proxy as they only capture 
     ''' locals as r-values in fields, async rewriter uses a different structure as a proxy
     ''' because it has to capture l-values on stack as well
     ''' </typeparam>
-    Partial Friend MustInherit Class StateMachineRewriter(Of TStateMachineState As SynthesizedContainer, TProxy)
+    Partial Friend MustInherit Class StateMachineRewriter(Of TProxy)
 
         Protected ReadOnly Body As BoundStatement
         Protected ReadOnly Method As MethodSymbol
-        Protected ReadOnly SlotAllocatorOpt As VariableSlotAllocator
-        Protected ReadOnly CompilationState As TypeCompilationState
         Protected ReadOnly Diagnostics As DiagnosticBag
         Protected ReadOnly F As SyntheticBoundNodeFactory
+        Protected ReadOnly StateMachineType As SynthesizedContainer
+        Protected ReadOnly SlotAllocatorOpt As VariableSlotAllocator
 
         Protected StateField As FieldSymbol
         Protected variableProxies As Dictionary(Of Symbol, TProxy)
@@ -40,6 +37,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Protected Sub New(body As BoundStatement,
                           method As MethodSymbol,
+                          stateMachineType As StateMachineTypeSymbol,
                           slotAllocatorOpt As VariableSlotAllocator,
                           compilationState As TypeCompilationState,
                           diagnostics As DiagnosticBag)
@@ -48,11 +46,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Debug.Assert(method IsNot Nothing)
             Debug.Assert(compilationState IsNot Nothing)
             Debug.Assert(diagnostics IsNot Nothing)
+            Debug.Assert(stateMachineType IsNot Nothing)
 
             Me.Body = body
             Me.Method = method
+            Me.StateMachineType = stateMachineType
             Me.SlotAllocatorOpt = slotAllocatorOpt
-            Me.CompilationState = compilationState
             Me.Diagnostics = diagnostics
 
             Me.F = New SyntheticBoundNodeFactory(method, method, method.ContainingType, body.Syntax, compilationState, diagnostics)
@@ -62,11 +61,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' True if the initial values of locals in the rewritten method need to be preserved. (e.g. enumerable iterator methods)
         ''' </summary>
         Protected MustOverride ReadOnly Property PreserveInitialParameterValues As Boolean
-
-        ''' <summary>
-        ''' State machine type
-        ''' </summary>
-        Protected MustOverride ReadOnly Property StateMachineClass As TStateMachineState
 
         ''' <summary>
         ''' Type substitution if applicable or Nothing
@@ -96,8 +90,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Protected Function Rewrite() As BoundBlock
             Debug.Assert(Not Me.PreserveInitialParameterValues OrElse Method.IsIterator)
 
-            Me.F.OpenNestedType(Me.StateMachineClass)
-            Me.F.CompilationState.StateMachineImplementationClass(Me.Method) = Me.StateMachineClass
+            Me.F.OpenNestedType(Me.StateMachineType)
+            Me.F.CompilationState.StateMachineImplementationClass(Me.Method) = Me.StateMachineType
 
             ' Add a field: int _state
             Dim intType = Me.F.SpecialType(SpecialType.System_Int32)
@@ -111,7 +105,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             ' add fields for the captured variables of the method
-            Dim captured = IteratorAndAsyncCaptureWalker.Analyze(New FlowAnalysisInfo(Me.CompilationState.Compilation, Me.Method, Me.Body))
+            Dim captured = IteratorAndAsyncCaptureWalker.Analyze(New FlowAnalysisInfo(F.CompilationState.Compilation, Me.Method, Me.Body))
 
             Me.variableProxies = New Dictionary(Of Symbol, TProxy)()
 
@@ -128,7 +122,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim bodyBuilder = ArrayBuilder(Of BoundStatement).GetInstance()
             bodyBuilder.Add(Me.F.HiddenSequencePoint())
 
-            Dim frameType As NamedTypeSymbol = SubstituteTypeIfNeeded(Me.StateMachineClass)
+            Dim frameType As NamedTypeSymbol = SubstituteTypeIfNeeded(Me.StateMachineType)
 
             Dim stateMachineVariable As LocalSymbol = F.SynthesizedLocal(frameType)
 
@@ -182,7 +176,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Private Sub CreateInitialProxies(captured As IteratorAndAsyncCaptureWalker.Result)
 
-            Dim typeMap As TypeSubstitution = StateMachineClass.TypeSubstitution
+            Dim typeMap As TypeSubstitution = StateMachineType.TypeSubstitution
 
             Dim orderedCaptured As IEnumerable(Of Symbol) =
                                 From local In captured.CapturedLocals
@@ -372,29 +366,29 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
         End Sub
 
-        Friend Function OpenMethodImplementation(interfaceMethod As WellKnownMember, name As String, dbgAttrs As DebugAttributes, accessibility As Accessibility, enableDebugInfo As Boolean, Optional hasMethodBodyDependency As Boolean = False, Optional associatedProperty As PropertySymbol = Nothing) As SynthesizedStateMachineMethod
+        Friend Function OpenMethodImplementation(interfaceMethod As WellKnownMember, name As String, dbgAttrs As DebugAttributes, accessibility As Accessibility, generateDebugInfo As Boolean, Optional hasMethodBodyDependency As Boolean = False, Optional associatedProperty As PropertySymbol = Nothing) As SynthesizedStateMachineMethod
             Dim methodToImplement As MethodSymbol = Me.F.WellKnownMember(Of MethodSymbol)(interfaceMethod)
 
-            Return OpenMethodImplementation(methodToImplement, name, dbgAttrs, accessibility, enableDebugInfo, hasMethodBodyDependency, associatedProperty)
+            Return OpenMethodImplementation(methodToImplement, name, dbgAttrs, accessibility, generateDebugInfo, hasMethodBodyDependency, associatedProperty)
         End Function
 
-        Friend Function OpenMethodImplementation(interfaceMethod As SpecialMember, name As String, dbgAttrs As DebugAttributes, accessibility As Accessibility, enableDebugInfo As Boolean, Optional hasMethodBodyDependency As Boolean = False, Optional associatedProperty As PropertySymbol = Nothing) As SynthesizedStateMachineMethod
+        Friend Function OpenMethodImplementation(interfaceMethod As SpecialMember, name As String, dbgAttrs As DebugAttributes, accessibility As Accessibility, generateDebugInfo As Boolean, Optional hasMethodBodyDependency As Boolean = False, Optional associatedProperty As PropertySymbol = Nothing) As SynthesizedStateMachineMethod
             Dim methodToImplement As MethodSymbol = DirectCast(Me.F.SpecialMember(interfaceMethod), MethodSymbol)
 
-            Return OpenMethodImplementation(methodToImplement, name, dbgAttrs, accessibility, enableDebugInfo, hasMethodBodyDependency, associatedProperty)
+            Return OpenMethodImplementation(methodToImplement, name, dbgAttrs, accessibility, generateDebugInfo, hasMethodBodyDependency, associatedProperty)
         End Function
 
-        Friend Function OpenMethodImplementation(interfaceType As NamedTypeSymbol, interfaceMethod As SpecialMember, name As String, dbgAttrs As DebugAttributes, accessibility As Accessibility, enableDebugInfo As Boolean, Optional hasMethodBodyDependency As Boolean = False, Optional associatedProperty As PropertySymbol = Nothing) As SynthesizedStateMachineMethod
+        Friend Function OpenMethodImplementation(interfaceType As NamedTypeSymbol, interfaceMethod As SpecialMember, name As String, dbgAttrs As DebugAttributes, accessibility As Accessibility, generateDebugInfo As Boolean, Optional hasMethodBodyDependency As Boolean = False, Optional associatedProperty As PropertySymbol = Nothing) As SynthesizedStateMachineMethod
             Dim methodToImplement As MethodSymbol = DirectCast(Me.F.SpecialMember(interfaceMethod), MethodSymbol).AsMember(interfaceType)
 
-            Return OpenMethodImplementation(methodToImplement, name, dbgAttrs, accessibility, enableDebugInfo, hasMethodBodyDependency, associatedProperty)
+            Return OpenMethodImplementation(methodToImplement, name, dbgAttrs, accessibility, generateDebugInfo, hasMethodBodyDependency, associatedProperty)
         End Function
 
         Private Function OpenMethodImplementation(methodToImplement As MethodSymbol,
                                                   methodName As String,
                                                   debugAttributes As DebugAttributes,
                                                   accessibility As Accessibility,
-                                                  enableDebugInfo As Boolean,
+                                                  generateDebugInfo As Boolean,
                                                   Optional hasMethodBodyDependency As Boolean = False,
                                                   Optional associatedProperty As PropertySymbol = Nothing) As SynthesizedStateMachineMethod
 
@@ -407,7 +401,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                             Me.F.Syntax,
                                                             debugAttributes,
                                                             accessibility,
-                                                            enableDebugInfo,
+                                                            generateDebugInfo,
                                                             hasMethodBodyDependency,
                                                             associatedProperty)
 
@@ -416,23 +410,23 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return result
         End Function
 
-        Friend Function OpenPropertyImplementation(interfaceProperty As SpecialMember, name As String, dbgAttrs As DebugAttributes, accessibility As Accessibility, enableDebugInfo As Boolean) As MethodSymbol
+        Friend Function OpenPropertyImplementation(interfaceProperty As SpecialMember, name As String, dbgAttrs As DebugAttributes, accessibility As Accessibility, generateDebugInfo As Boolean) As MethodSymbol
             Dim methodToImplement As MethodSymbol = DirectCast(Me.F.SpecialMember(interfaceProperty), PropertySymbol).GetMethod
 
-            Return OpenPropertyImplementation(methodToImplement, name, dbgAttrs, accessibility, enableDebugInfo)
+            Return OpenPropertyImplementation(methodToImplement, name, dbgAttrs, accessibility, generateDebugInfo)
         End Function
 
-        Friend Function OpenPropertyImplementation(interfaceType As NamedTypeSymbol, interfaceMethod As SpecialMember, name As String, dbgAttrs As DebugAttributes, accessibility As Accessibility, enableDebugInfo As Boolean) As MethodSymbol
+        Friend Function OpenPropertyImplementation(interfaceType As NamedTypeSymbol, interfaceMethod As SpecialMember, name As String, dbgAttrs As DebugAttributes, accessibility As Accessibility, generateDebugInfo As Boolean) As MethodSymbol
             Dim methodToImplement As MethodSymbol = DirectCast(Me.F.SpecialMember(interfaceMethod), PropertySymbol).GetMethod.AsMember(interfaceType)
 
-            Return OpenPropertyImplementation(methodToImplement, name, dbgAttrs, accessibility, enableDebugInfo)
+            Return OpenPropertyImplementation(methodToImplement, name, dbgAttrs, accessibility, generateDebugInfo)
         End Function
 
         Private Function OpenPropertyImplementation(getterToImplement As MethodSymbol,
                                                     name As String,
                                                     debugAttributes As DebugAttributes,
                                                     accessibility As Accessibility,
-                                                    enableDebugInfo As Boolean,
+                                                    generateDebugInfo As Boolean,
                                                     Optional hasMethodBodyDependency As Boolean = False) As MethodSymbol
 
             Dim prop As New SynthesizedStateMachineProperty(DirectCast(Me.F.CurrentType, StateMachineTypeSymbol),
@@ -441,7 +435,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                             Me.F.Syntax,
                                                             debugAttributes,
                                                             accessibility,
-                                                            enableDebugInfo,
+                                                            generateDebugInfo,
                                                             hasMethodBodyDependency)
 
             Me.F.AddProperty(Me.F.CurrentType, prop)
@@ -462,7 +456,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Protected Function IsDebuggerHidden(method As MethodSymbol) As Boolean
-            Dim debuggerHiddenAttribute = Me.CompilationState.Compilation.GetWellKnownType(WellKnownType.System_Diagnostics_DebuggerHiddenAttribute)
+            Dim debuggerHiddenAttribute = F.CompilationState.Compilation.GetWellKnownType(WellKnownType.System_Diagnostics_DebuggerHiddenAttribute)
             For Each a In Me.Method.GetAttributes()
                 If a.AttributeClass = debuggerHiddenAttribute Then Return True
             Next

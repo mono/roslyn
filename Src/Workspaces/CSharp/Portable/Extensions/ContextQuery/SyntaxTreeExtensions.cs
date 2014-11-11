@@ -1796,12 +1796,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions.ContextQuery
                 {
                     return false;
                 }
-
-                // nameof(
-                if (token.Parent.IsKind(SyntaxKind.NameOfExpression))
-                {
-                    return true;
-                }
             }
 
             // Foo(|
@@ -2121,22 +2115,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions.ContextQuery
                     {
                         token = ((ArgumentListSyntax)parentQualifiedName.Parent.Parent).OpenParenToken;
                     }
-                    else if (parentQualifiedName.IsParentKind(SyntaxKind.NameOfExpression))
-                    {
-                        token = ((NameOfExpressionSyntax)parentQualifiedName.Parent).OpenParenToken;
-                    }
                 }
             }
 
             ExpressionSyntax parentExpression = null;
-
-            // simple case
-            // nameof(|
-            if (token.IsKind(SyntaxKind.OpenParenToken) &&
-                token.Parent.IsKind(SyntaxKind.NameOfExpression))
-            {
-                parentExpression = (ExpressionSyntax)token.Parent;
-            }
 
             // if the nameof expression has a missing close paren, it is parsed as an invocation expression.
             if (token.Parent.IsKind(SyntaxKind.ArgumentList) &&
@@ -2182,6 +2164,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions.ContextQuery
             // is/as are valid after expressions.
             if (token.IsLastTokenOfNode<ExpressionSyntax>())
             {
+                // InterpolatedStringSyntax is an ExpressionSyntax, but
+                // we shouldn't suggest is/as after a string hole.
+                if (token.IsKind(SyntaxKind.InterpolatedStringEndToken))
+                {
+                    return false;
+                }
+
                 // However, many names look like expressions.  For example:
                 //    foreach (var |
                 // ('var' is a TypeSyntax which is an expression syntax.

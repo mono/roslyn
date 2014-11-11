@@ -137,7 +137,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' When performing a lookup in interface do NOT lookup in System.Object 
         ''' </summary>
         NoSystemObjectLookupForInterfaces = 1 << 16
-
     End Enum
 
     Friend Module LookupOptionExtensions

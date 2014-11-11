@@ -2453,6 +2453,10 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal("0xffff0000ffff0000ffff0000", token.Value);
         }
 
+        /// <summary>
+        /// Earlier identifier syntax "[0-9]+#" not supported.
+        /// </summary>
+        [WorkItem(1071347)]
         [Fact]
         public void TestDebuggerAliasIdentifiers()
         {
@@ -2462,7 +2466,9 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(token);
             Assert.Equal(SyntaxKind.IdentifierToken, token.CSharpKind());
             var errors = token.Errors();
-            Assert.Equal(0, errors.Length);
+            Assert.Equal(1, errors.Length);
+            Assert.Equal((int)ErrorCode.ERR_LegacyObjectIdSyntax, errors[0].Code);
+            Assert.Equal("error CS2043: 'id#' syntax is no longer supported. Use '$id' instead.", errors[0].ToString());
             Assert.Equal(text, token.Text);
             Assert.Equal(text, token.Value);
 
@@ -2472,7 +2478,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.NotNull(token);
             Assert.Equal(SyntaxKind.IdentifierToken, token.CSharpKind());
-            Assert.Equal(0, errors.Length);
+            Assert.Equal(1, errors.Length);
             Assert.Equal(text, token.Text);
             Assert.Equal(text, token.Value);
 
@@ -2495,6 +2501,17 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(1, errors.Length);
             Assert.Equal(text.Substring(0, text.Length - 1), token.Text);
             Assert.Equal(123L, token.Value);
+
+            // Current syntax.
+            text = "$123";
+            token = DebuggerLexToken(text);
+            errors = token.Errors();
+
+            Assert.NotNull(token);
+            Assert.Equal(SyntaxKind.IdentifierToken, token.CSharpKind());
+            Assert.Equal(0, errors.Length);
+            Assert.Equal(text, token.Text);
+            Assert.Equal("$123", token.Value);
         }
 
         [Fact]

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using Microsoft.CodeAnalysis.Collections;
-using Microsoft.CodeAnalysis.Diagnostics.Internal;
 using Roslyn.Utilities;
 using System;
 using System.Collections.Generic;
@@ -29,9 +28,11 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         private ImmutableArray<Task> workers;
         private ImmutableArray<Task> syntaxAnalyzers;
 
-        protected HostCompilationStartAnalysisScope compilationAnalysisScope;
+        internal HostCompilationStartAnalysisScope compilationAnalysisScope;
+
         // TODO: should these be made lazy?
         private ImmutableArray<ImmutableArray<SymbolAnalyzerAction>> declarationAnalyzerActionsByKind;
+        private static readonly Task EmptyTask = Task.FromResult(false);
 
         private readonly Task initialWorker;
         protected AnalyzerOptions analyzerOptions;
@@ -67,6 +68,22 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         /// </remarks>
         public static AnalyzerDriver Create(Compilation compilation, ImmutableArray<DiagnosticAnalyzer> analyzers, AnalyzerOptions options, out Compilation newCompilation, CancellationToken cancellationToken)
         {
+            if (compilation == null)
+            {
+                throw new ArgumentNullException(nameof(compilation));
+            }
+
+            if (analyzers.IsDefaultOrEmpty)
+            {
+                throw new ArgumentException(CodeAnalysisResources.ArgumentCannotBeEmpty, nameof(analyzers));
+            }
+
+            if (analyzers.Any(a => a == null))
+            {
+                throw new ArgumentException(CodeAnalysisResources.ArgumentElementCannotBeNull, nameof(analyzers));
+            }
+
+            options = options ?? AnalyzerOptions.Empty;
             AnalyzerDriver analyzerDriver = compilation.AnalyzerForLanguage(analyzers, options, cancellationToken);
             newCompilation = compilation.WithEventQueue(analyzerDriver.CompilationEventQueue);
             return analyzerDriver;
@@ -183,9 +200,13 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                     var runningAsynchronously = Task.Run(() =>
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        var syntaxTreeContext = new SyntaxTreeAnalysisContext(tree, analyzerOptions, addDiagnostic, cancellationToken);
+                        
                         // Catch Exception from executing the action
-                        ExecuteAndCatchIfThrows(a.Analyzer, addDiagnostic, continueOnAnalyzerException, cancellationToken, () => { a.Action(syntaxTreeContext); });
+                        ExecuteAndCatchIfThrows(a.Analyzer, addDiagnostic, continueOnAnalyzerException, cancellationToken, () =>
+                        {
+                            var context = new SyntaxTreeAnalysisContext(tree, analyzerOptions, addDiagnostic, cancellationToken);
+                            a.Action(context);
+                        });
                     });
 
                     syntaxAnalyzers.Add(runningAsynchronously);
@@ -200,7 +221,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             var workers = ArrayBuilder<Task>.GetInstance();
             for (int i = 0; i < nTasks; i++)
             {
-                workers.Add(Task.Run(() => ProcessCompilationEventsAsync(cancellationToken)));
+                workers.Add(Task.Run(async () => await ProcessCompilationEventsAsync(cancellationToken).ConfigureAwait(false), cancellationToken));
             }
 
             ImmutableInterlocked.InterlockedInitialize(ref this.workers, workers.ToImmutableAndFree());
@@ -319,12 +340,21 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         private Task AnalyzeSymbol(SymbolDeclaredCompilationEvent symbolEvent, CancellationToken cancellationToken)
         {
             var symbol = symbolEvent.Symbol;
+            var isGlobalNamespace = symbol.Kind == SymbolKind.Namespace && ((INamespaceSymbol)symbol).IsGlobalNamespace;
+
+            // Skip implicitly declared symbols.
+            // For global namespace, we don't want to execute symbol actions, but do want to execute syntax actions for global syntax nodes.
+            if (symbol.IsImplicitlyDeclared && !isGlobalNamespace)
+            {
+                return EmptyTask;
+            }
+
             Action<Diagnostic> addDiagnosticForSymbol = GetDiagnosticSinkWithSuppression(symbol);
             var tasks = ArrayBuilder<Task>.GetInstance();
 
             // Invoke symbol analyzers only for source symbols.
             var declaringSyntaxRefs = symbol.DeclaringSyntaxReferences;
-            if ((int)symbol.Kind < declarationAnalyzerActionsByKind.Length && declaringSyntaxRefs.Any(s => s.SyntaxTree != null))
+            if (!isGlobalNamespace && (int)symbol.Kind < declarationAnalyzerActionsByKind.Length && declaringSyntaxRefs.Any(s => s.SyntaxTree != null))
             {
                 foreach (var da in declarationAnalyzerActionsByKind[(int)symbol.Kind])
                 {
@@ -434,12 +464,12 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         {
             if (diagnostics == null)
             {
-                throw new ArgumentNullException("diagnostics");
+                throw new ArgumentNullException(nameof(diagnostics));
             }
 
             if (compilation == null)
             {
-                throw new ArgumentNullException("compilation");
+                throw new ArgumentNullException(nameof(compilation));
             }
 
             var suppressMessageState = suppressMessageStateByCompilation.GetValue(compilation, (c) => new SuppressMessageAttributeState(c));
@@ -464,12 +494,17 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         {
             if (analyzer == null)
             {
-                throw new ArgumentNullException("analyzer");
+                throw new ArgumentNullException(nameof(analyzer));
             }
 
             if (options == null)
             {
-                throw new ArgumentNullException("options");
+                throw new ArgumentNullException(nameof(options));
+            }
+
+            if (continueOnAnalyzerException == null)
+            {
+                throw new ArgumentNullException(nameof(continueOnAnalyzerException));
             }
 
             Action<Diagnostic> dummy = _ => { };
@@ -507,15 +542,351 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             return GetSessionAnalysisScope(analyzers, compilationOptions, IsDiagnosticAnalyzerSuppressed, addDiagnostic, continueOnAnalyzerException, cancellationToken);
         }
 
-        // ToDo: This method is public only to make it available to the IDE analyzer driver. Figure out how to make it internal.
-        /// <summary>
-        /// Create the initial analysis scope from a set of available analyzers.
-        /// </summary>
-        /// <param name="analyzers"></param>
-        /// <returns></returns>
-        public static HostSessionStartAnalysisScope GetSessionAnalysisScope(IEnumerable<DiagnosticAnalyzer> analyzers)
+        private static void VerifyArguments(
+            IEnumerable<ISymbol> symbols,
+            Compilation compilation,
+            AnalyzerActions actions,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException)
         {
-            return GetSessionAnalysisScope(analyzers, null, (analyzer, options, add, continueOn, cancellation) => false, (d) => { }, (exception, analyzer) => true, CancellationToken.None);
+            if (symbols == null)
+            {
+                throw new ArgumentNullException(nameof(symbols));
+            }
+
+            if (symbols.Any(s => s == null))
+            {
+                throw new ArgumentException(CodeAnalysisResources.ArgumentElementCannotBeNull, nameof(symbols));
+            }
+
+            VerifyArguments(compilation, actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+        }
+
+        private static void VerifyArguments(
+            Compilation compilation,
+            AnalyzerActions actions,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException)
+        {
+            if (compilation == null)
+            {
+                throw new ArgumentNullException(nameof(compilation));
+            }
+
+            VerifyArguments(actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+        }
+
+        internal protected static void VerifyArguments(
+            SemanticModel semanticModel,
+            AnalyzerActions actions,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException)
+        {
+            if (semanticModel == null)
+            {
+                throw new ArgumentNullException(nameof(semanticModel));
+            }
+
+            VerifyArguments(actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+        }
+
+        private static void VerifyArguments(
+            SyntaxTree syntaxTree,
+            AnalyzerActions actions,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException)
+        {
+            if (syntaxTree == null)
+            {
+                throw new ArgumentNullException(nameof(syntaxTree));
+            }
+
+            VerifyArguments(actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+        }
+
+        private static void VerifyArguments(
+            Compilation compilation,
+            AnalyzerActions actions,
+            AnalyzerOptions analyzerOptions,
+            DiagnosticAnalyzer analyzer,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException)
+        {
+            if (compilation == null)
+            {
+                throw new ArgumentNullException(nameof(compilation));
+            }
+
+            if (analyzer == null)
+            {
+                throw new ArgumentNullException(nameof(analyzer));
+            }
+
+            VerifyArguments(actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+        }
+
+        internal protected static void VerifyArguments(
+            AnalyzerActions actions,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException)
+        {
+            if (actions == null)
+            {
+                throw new ArgumentNullException(nameof(actions));
+            }
+
+            VerifyArguments(analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+        }
+
+        internal protected static void VerifyArguments(
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException)
+        {
+            if (analyzerOptions == null)
+            {
+                throw new ArgumentNullException(nameof(analyzerOptions));
+            }
+
+            if (addDiagnostic == null)
+            {
+                throw new ArgumentNullException(nameof(addDiagnostic));
+            }
+
+            if (continueOnAnalyzerException == null)
+            {
+                throw new ArgumentNullException(nameof(continueOnAnalyzerException));
+            }
+        }
+
+        internal protected static void VerifyArguments(
+            DiagnosticAnalyzer analyzer,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException)
+        {
+            if (analyzer == null)
+            {
+                throw new ArgumentNullException(nameof(analyzer));
+            }
+
+            if (addDiagnostic == null)
+            {
+                throw new ArgumentNullException(nameof(addDiagnostic));
+            }
+
+            if (continueOnAnalyzerException == null)
+            {
+                throw new ArgumentNullException(nameof(continueOnAnalyzerException));
+            }
+        }
+
+        /// <summary>
+        /// Executes the <see cref="DiagnosticAnalyzer.Initialize(AnalysisContext)"/> for the given analyzer and returns the set of registered sessions.
+        /// </summary>
+        /// <param name="analyzer">Analyzer to get session wide analyzer actions.</param>
+        /// <param name="addDiagnostic">Delegate to add diagnostics.</param>
+        /// <param name="continueOnAnalyzerException">Predicate to decide if exceptions from the action should be handled or not.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <remarks>
+        /// Note that this API doesn't execute any <see cref="CompilationStartAnalyzerAction"/> registered by the Initialize invocation.
+        /// Use <see cref="ExecuteCompilationStartActions(AnalyzerActions, DiagnosticAnalyzer, Compilation, AnalyzerOptions, Action{Diagnostic}, Func{Exception, DiagnosticAnalyzer, bool}, CancellationToken)"/> API
+        /// to get execute these actions to get the per-compilation analyzer actions.
+        /// </remarks>
+        public static AnalyzerActions GetSessionAnalyzerActions(
+            DiagnosticAnalyzer analyzer, 
+            Action<Diagnostic> addDiagnostic, 
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException, 
+            CancellationToken cancellationToken)
+        {
+            VerifyArguments(analyzer, addDiagnostic, continueOnAnalyzerException);
+            
+            HostSessionStartAnalysisScope sessionScope = new HostSessionStartAnalysisScope();
+
+            ExecuteAndCatchIfThrows(analyzer, addDiagnostic, continueOnAnalyzerException, cancellationToken, () =>
+            {
+                // The Initialize method should be run asynchronously in case it is not well behaved, e.g. does not terminate.
+                analyzer.Initialize(new AnalysisContext(new AnalyzerSessionStartAnalysisScope(analyzer, sessionScope)));
+            });
+
+            return sessionScope.GetAnalyzerActions(analyzer);
+        }
+
+        /// <summary>
+        /// Executes the compilation start actions and returns the per-compilation analyzer actions added by these actions.
+        /// </summary>
+        /// <param name="actions"><see cref="AnalyzerActions"/> whose compilation start actions are to be executed.</param>
+        /// <param name="analyzer">Analyzer on which compilation start actions have to be executed.</param>
+        /// <param name="compilation">Compilation to be used in the analysis.</param>
+        /// <param name="analyzerOptions">Analyzer options.</param>
+        /// <param name="addDiagnostic">Delegate to add diagnostics.</param>
+        /// <param name="continueOnAnalyzerException">Predicate to decide if exceptions from the action should be handled or not.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public static AnalyzerActions ExecuteCompilationStartActions(
+            AnalyzerActions actions,
+            DiagnosticAnalyzer analyzer,
+            Compilation compilation, 
+            AnalyzerOptions analyzerOptions, 
+            Action<Diagnostic> addDiagnostic, 
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException, 
+            CancellationToken cancellationToken)
+        {
+            VerifyArguments(compilation, actions, analyzerOptions, analyzer, addDiagnostic, continueOnAnalyzerException);
+
+            HostCompilationStartAnalysisScope compilationScope = new HostCompilationStartAnalysisScope(new HostSessionStartAnalysisScope());
+
+            foreach (var startAction in actions.CompilationStartActions)
+            {
+                if (startAction.Analyzer == analyzer)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    ExecuteAndCatchIfThrows(analyzer, addDiagnostic, continueOnAnalyzerException, cancellationToken, () =>
+                    {
+                        startAction.Action(new CompilationStartAnalysisContext(new AnalyzerCompilationStartAnalysisScope(analyzer, compilationScope), compilation, analyzerOptions, cancellationToken));
+                    });
+                }
+            }
+
+            return compilationScope.GetAnalyzerActions(analyzer);
+        }
+
+        /// <summary>
+        /// Executes the compilation end actions.
+        /// </summary>
+        /// <param name="actions"><see cref="AnalyzerActions"/> whose compilation end actions are to be executed.</param>
+        /// <param name="compilation">Compilation to be used in the analysis.</param>
+        /// <param name="analyzerOptions">Analyzer options.</param>
+        /// <param name="addDiagnostic">Delegate to add diagnostics.</param>
+        /// <param name="continueOnAnalyzerException">Predicate to decide if exceptions from the action should be handled or not.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public static void ExecuteCompilationEndActions(
+            AnalyzerActions actions,
+            Compilation compilation,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException,
+            CancellationToken cancellationToken)
+        {
+            VerifyArguments(compilation, actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+
+            HostCompilationStartAnalysisScope compilationScope = new HostCompilationStartAnalysisScope(new HostSessionStartAnalysisScope());
+
+            foreach (var endAction in actions.CompilationEndActions)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                ExecuteAndCatchIfThrows(endAction.Analyzer, addDiagnostic, continueOnAnalyzerException, cancellationToken, () =>
+                {
+                    var context = new CompilationEndAnalysisContext(compilation, analyzerOptions, addDiagnostic, cancellationToken);
+                    endAction.Action(context);
+                });
+            }
+        }
+
+        /// <summary>
+        /// Executes the symbol actions on the given symbols.
+        /// </summary>
+        /// <param name="actions"><see cref="AnalyzerActions"/> whose symbol actions are to be executed.</param>
+        /// <param name="symbols">Symbols to be analyzed.</param>
+        /// <param name="compilation">Compilation to be used in the analysis.</param>
+        /// <param name="analyzerOptions">Analyzer options.</param>
+        /// <param name="addDiagnostic">Delegate to add diagnostics.</param>
+        /// <param name="continueOnAnalyzerException">Predicate to decide if exceptions from the action should be handled or not.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public static void ExecuteSymbolActions(
+            AnalyzerActions actions,
+            IEnumerable<ISymbol> symbols,
+            Compilation compilation,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException,
+            CancellationToken cancellationToken)
+        {
+            VerifyArguments(symbols, compilation, actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+
+            foreach (var symbol in symbols)
+            {
+                foreach (var symbolAction in actions.SymbolActions)
+                {
+                    var action = symbolAction.Action;
+                    var kinds = symbolAction.Kinds;
+                    if (kinds.Contains(symbol.Kind))
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        var symbolContext = new SymbolAnalysisContext(symbol, compilation, analyzerOptions, addDiagnostic, cancellationToken);
+
+                        // Catch Exception from action.
+                        ExecuteAndCatchIfThrows(symbolAction.Analyzer, addDiagnostic, continueOnAnalyzerException, cancellationToken, () => action(symbolContext));
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Executes the semantic model actions on the given semantic model.
+        /// </summary>
+        /// <param name="actions"><see cref="AnalyzerActions"/> whose semantic model actions are to be executed.</param>
+        /// <param name="semanticModel">Semantic model to analyze.</param>
+        /// <param name="analyzerOptions">Analyzer options.</param>
+        /// <param name="addDiagnostic">Delegate to add diagnostics.</param>
+        /// <param name="continueOnAnalyzerException">Predicate to decide if exceptions from the action should be handled or not.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public static void ExecuteSemanticModelActions(
+            AnalyzerActions actions,
+            SemanticModel semanticModel,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException,
+            CancellationToken cancellationToken)
+        {
+            VerifyArguments(semanticModel, actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+
+            foreach (var semanticModelAction in actions.SemanticModelActions)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                
+                // Catch Exception from action.
+                ExecuteAndCatchIfThrows(semanticModelAction.Analyzer, addDiagnostic, continueOnAnalyzerException, cancellationToken, () =>
+                {
+                    var context = new SemanticModelAnalysisContext(semanticModel, analyzerOptions, addDiagnostic, cancellationToken);
+                    semanticModelAction.Action(context);
+                });
+            }
+        }
+
+        /// <summary>
+        /// Executes the syntax tree actions on the given tree.
+        /// </summary>
+        /// <param name="actions"><see cref="AnalyzerActions"/> whose syntax tree actions are to be executed.</param>
+        /// <param name="syntaxTree">Syntax tree to analyze.</param>
+        /// <param name="analyzerOptions">Analyzer options.</param>
+        /// <param name="addDiagnostic">Delegate to add diagnostics.</param>
+        /// <param name="continueOnAnalyzerException">Predicate to decide if exceptions from the action should be handled or not.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public static void ExecuteSyntaxTreeActions(
+            AnalyzerActions actions,
+            SyntaxTree syntaxTree,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException,
+            CancellationToken cancellationToken)
+        {
+            VerifyArguments(syntaxTree, actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+
+            foreach (var syntaxTreeAction in actions.SyntaxTreeActions)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                
+                // Catch Exception from action.
+                ExecuteAndCatchIfThrows(syntaxTreeAction.Analyzer, addDiagnostic, continueOnAnalyzerException, cancellationToken, () =>
+                {
+                    var context = new SyntaxTreeAnalysisContext(syntaxTree, analyzerOptions, addDiagnostic, cancellationToken);
+                    syntaxTreeAction.Action(context);
+                });
+            }
         }
 
         private static HostCompilationStartAnalysisScope GetCompilationAnalysisScope(HostSessionStartAnalysisScope session, Compilation compilation, AnalyzerOptions analyzerOptions, Action<Diagnostic> addDiagnostic, Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException, CancellationToken cancellationToken)
@@ -626,7 +997,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
     public class AnalyzerDriver<TLanguageKindEnum> : AnalyzerDriver where TLanguageKindEnum : struct
     {
         private Func<SyntaxNode, TLanguageKindEnum> GetKind;
-        private ImmutableDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>> lazyNodeAnalyzersByKind = null;
+        private ImmutableDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>> lazyNodeActionsByKind = null;
 
         /// <summary>
         /// Create an analyzer driver.
@@ -645,31 +1016,31 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             GetKind = getKind;
         }
 
-        private ImmutableDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>> NodeAnalyzersByKind
+        private ImmutableDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>> NodeActionsByKind
         {
             get
             {
-                if (lazyNodeAnalyzersByKind == null)
+                if (lazyNodeActionsByKind == null)
                 {
-                    var nodeAnalyzers = this.compilationAnalysisScope.GetSyntaxNodeActions<TLanguageKindEnum>();
+                    var nodeActions = this.compilationAnalysisScope.GetSyntaxNodeActions<TLanguageKindEnum>();
                     ImmutableDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>> analyzersByKind;
-                    if (nodeAnalyzers.Any())
+                    if (nodeActions.Any())
                     {
                         var addDiagnostic = GetDiagnosticSinkWithSuppression();
-                        var pooledAnalyzersByKind = PooledDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>>.GetInstance();
-                        GetNodeAnalyzersByKind(nodeAnalyzers, pooledAnalyzersByKind, addDiagnostic);
-                        analyzersByKind = pooledAnalyzersByKind.ToImmutableDictionary();
-                        pooledAnalyzersByKind.Free();
+                        var pooledAnalyzerActionsByKind = PooledDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>>.GetInstance();
+                        GetNodeActionsByKind(nodeActions, pooledAnalyzerActionsByKind, addDiagnostic);
+                        analyzersByKind = pooledAnalyzerActionsByKind.ToImmutableDictionary();
+                        pooledAnalyzerActionsByKind.Free();
                     }
                     else
                     {
                         analyzersByKind = ImmutableDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>>.Empty;
                     }
 
-                    lazyNodeAnalyzersByKind = analyzersByKind;
+                    lazyNodeActionsByKind = analyzersByKind;
                 }
 
-                return lazyNodeAnalyzersByKind;
+                return lazyNodeActionsByKind;
             }
         }
 
@@ -684,8 +1055,8 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                     return true;
 
                 case SymbolKind.Field:
-                    // Check if this is not a compiler generated backing field.
-                    return ((IFieldSymbol)symbol).AssociatedSymbol == null;
+                    Debug.Assert(((IFieldSymbol)symbol).AssociatedSymbol == null);
+                    return true;
 
                 default:
                     return false;
@@ -699,26 +1070,26 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             var declaringReferenceSyntax = await decl.GetSyntaxAsync().ConfigureAwait(false);
             var syntax = semanticModel.GetTopmostNodeForDiagnosticAnalysis(symbol, declaringReferenceSyntax);
 
-            var statelessNodeAnalyzersByKind = this.NodeAnalyzersByKind;
-            var executeSyntaxNodeAnalyzers = statelessNodeAnalyzersByKind.Any();
-            var executeCodeBlockAnalyzers = CanHaveExecutableCodeBlock(symbol) && (this.compilationAnalysisScope.HasCodeBlockStartActions<TLanguageKindEnum>() || this.compilationAnalysisScope.HasCodeBlockEndActions<TLanguageKindEnum>());
+            var statelessNodeActionsByKind = this.NodeActionsByKind;
+            var executeSyntaxNodeActions = statelessNodeActionsByKind.Any();
+            var executeCodeBlockActions = CanHaveExecutableCodeBlock(symbol) && (this.compilationAnalysisScope.HasCodeBlockStartActions<TLanguageKindEnum>() || this.compilationAnalysisScope.HasCodeBlockEndActions<TLanguageKindEnum>());
 
-            if (executeSyntaxNodeAnalyzers || executeCodeBlockAnalyzers)
+            if (executeSyntaxNodeActions || executeCodeBlockActions)
             {
                 // We only care about the top level symbol declaration and its immediate member declarations.
                 int? levelsToCompute = 2;
 
                 var declarationsInNode = semanticModel.GetDeclarationsInNode(syntax, getSymbol: syntax != declaringReferenceSyntax, cancellationToken: cancellationToken, levelsToCompute: levelsToCompute);
 
-                // Execute stateless syntax node analyzers.
-                if (executeSyntaxNodeAnalyzers)
+                // Execute stateless syntax node actions.
+                if (executeSyntaxNodeActions)
                 {
-                    ExecuteStatelessNodeAnalyzers(statelessNodeAnalyzersByKind, syntax, symbol, declarationsInNode, semanticModel,
+                    ExecuteStatelessNodeActions(statelessNodeActionsByKind, syntax, symbol, declarationsInNode, semanticModel,
                         reportDiagnostic, this.continueOnAnalyzerException, this.analyzerOptions, this.GetKind, cancellationToken);
                 }
 
-                // Execute code block analyzers.
-                if (executeCodeBlockAnalyzers)
+                // Execute code block actions.
+                if (executeCodeBlockActions)
                 {
                     // Compute the executable code blocks of interest.
                     var executableCodeBlocks = ImmutableArray<SyntaxNode>.Empty;
@@ -733,7 +1104,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
 
                     if (executableCodeBlocks.Any())
                     {
-                        ExecuteCodeBlockAnalyzers(this.compilationAnalysisScope,
+                        ExecuteCodeBlockActions(this.compilationAnalysisScope,
                             syntax, symbol, executableCodeBlocks, this.analyzerOptions,
                             semanticModel, reportDiagnostic, this.continueOnAnalyzerException, this.GetKind, cancellationToken);
                     }
@@ -741,8 +1112,8 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             }
         }
 
-        private static void ExecuteStatelessNodeAnalyzers(
-            IDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>> analyzersByKind,
+        private static void ExecuteStatelessNodeActions(
+            IDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>> actionsByKind,
             SyntaxNode declaredNode,
             ISymbol declaredSymbol,
             IEnumerable<DeclarationInfo> declarationsInNode,
@@ -784,23 +1155,109 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                 declaredNode.DescendantNodesAndSelf(descendIntoTrivia: true) :
                 declaredNode.DescendantNodesAndSelf(n => !descendantDeclsToSkip.Contains(n), descendIntoTrivia: true).Except(descendantDeclsToSkip);
 
-            ExecuteSyntaxNodeActions(nodesToAnalyze, analyzersByKind, semanticModel,
+            ExecuteSyntaxNodeActions(nodesToAnalyze, actionsByKind, semanticModel,
                 analyzerOptions, addDiagnostic, continueOnAnalyzerException, getKind, cancellationToken);
         }
 
+        private static void VerifyArguments(
+            IEnumerable<DeclarationInfo> declarationsInNode,
+            Func<SyntaxNode, TLanguageKindEnum> getKind,
+            SemanticModel semanticModel,
+            AnalyzerActions actions,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException)
+        {
+            if (declarationsInNode == null)
+            {
+                throw new ArgumentNullException(nameof(declarationsInNode));
+            }
+
+            VerifyArguments(getKind, semanticModel, actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+        }
+
+        private static void VerifyArguments(
+            IEnumerable<SyntaxNode> nodes,
+            Func<SyntaxNode, TLanguageKindEnum> getKind,
+            SemanticModel semanticModel,
+            AnalyzerActions actions,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException)
+        {
+            if (nodes == null)
+            {
+                throw new ArgumentNullException(nameof(nodes));
+            }
+            
+            if (nodes.Any(n => n == null))
+            {
+                throw new ArgumentException(CodeAnalysisResources.ArgumentElementCannotBeNull, nameof(nodes));
+            }
+
+            VerifyArguments(getKind, semanticModel, actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+        }
+
+        private static void VerifyArguments(
+            Func<SyntaxNode, TLanguageKindEnum> getKind,
+            SemanticModel semanticModel,
+            AnalyzerActions actions,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException)
+        {
+            if (getKind == null)
+            {
+                throw new ArgumentNullException(nameof(getKind));
+            }
+
+            VerifyArguments(semanticModel, actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+        }
+
         /// <summary>
-        /// Executes the given syntax node action on the given syntax node.
+        /// Executes the syntax node actions on the given syntax nodes.
         /// </summary>
-        /// <param name="syntaxNodeAction">Action to execute.</param>
-        /// <param name="node">Syntax node to be analyzed.</param>
+        /// <param name="actions"><see cref="AnalyzerActions"/> whose code block start actions and end actions are to be executed.</param>
+        /// <param name="nodes">Syntax nodes to be analyzed.</param>
         /// <param name="semanticModel">SemanticModel to be used in the analysis.</param>
         /// <param name="analyzerOptions">Analyzer options.</param>
         /// <param name="addDiagnostic">Delegate to add diagnostics.</param>
         /// <param name="continueOnAnalyzerException">Predicate to decide if exceptions from the action should be handled or not.</param>
+        /// <param name="getKind">Delegate to compute language specific syntax kind for a syntax node.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        public static void ExecuteSyntaxNodeAction(
-            SyntaxNodeAnalyzerAction<TLanguageKindEnum> syntaxNodeAction,
+        public static void ExecuteSyntaxNodeActions(
+            AnalyzerActions actions,
+            IEnumerable<SyntaxNode> nodes,
+            SemanticModel semanticModel,
+            AnalyzerOptions analyzerOptions,
+            Action<Diagnostic> addDiagnostic,
+            Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException,
+            Func<SyntaxNode, TLanguageKindEnum> getKind,
+            CancellationToken cancellationToken)
+        {
+            VerifyArguments(nodes, getKind, semanticModel, actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+
+            var syntaxNodeActions = actions.GetSyntaxNodeActions<TLanguageKindEnum>();
+
+            foreach (var syntaxNodeAction in syntaxNodeActions)
+            {
+                var action = syntaxNodeAction.Action;
+                var kinds = syntaxNodeAction.Kinds;
+
+                foreach (var node in nodes)
+                {
+                    if (kinds.Contains(getKind(node)))
+                    {
+                        ExecuteSyntaxNodeAction(action, node, syntaxNodeAction.Analyzer, semanticModel, analyzerOptions, addDiagnostic, continueOnAnalyzerException, cancellationToken);
+                    }
+                }
+            }
+        }
+
+        private static void ExecuteSyntaxNodeAction(
+            Action<SyntaxNodeAnalysisContext> syntaxNodeAction,
             SyntaxNode node,
+            DiagnosticAnalyzer analyzer,
             SemanticModel semanticModel,
             AnalyzerOptions analyzerOptions,
             Action<Diagnostic> addDiagnostic,
@@ -808,15 +1265,15 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             CancellationToken cancellationToken)
         {
             var syntaxNodeContext = new SyntaxNodeAnalysisContext(node, semanticModel, analyzerOptions, addDiagnostic, cancellationToken);
+            
             // Catch Exception from action.
-            ExecuteAndCatchIfThrows(syntaxNodeAction.Analyzer, addDiagnostic, continueOnAnalyzerException, cancellationToken, () => syntaxNodeAction.Action(syntaxNodeContext));
+            ExecuteAndCatchIfThrows(analyzer, addDiagnostic, continueOnAnalyzerException, cancellationToken, () => syntaxNodeAction(syntaxNodeContext));
         }
 
         /// <summary>
         /// Executes the given code block actions on all the executable code blocks for each declaration info in <paramref name="declarationsInNode"/>.
         /// </summary>
-        /// <param name="codeBlockStartedAnalyzers">Code block analyzer factories.</param>
-        /// <param name="codeBlockEndedAnalyzers">Stateless code block analyzers.</param>
+        /// <param name="actions"><see cref="AnalyzerActions"/> whose code block start actions and end actions are to be executed.</param>
         /// <param name="declarationsInNode">Declarations to be analyzed.</param>
         /// <param name="semanticModel">SemanticModel to be shared amongst all actions.</param>
         /// <param name="analyzerOptions">Analyzer options.</param>
@@ -824,21 +1281,22 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         /// <param name="continueOnAnalyzerException">Predicate to decide if exceptions from any action should be handled or not.</param>
         /// <param name="getKind">Delegate to compute language specific syntax kind for a syntax node.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <param name="getAnalyzerKindsOfInterest">Optional delegate to return cached syntax kinds.
-        /// If null, then this property is explicitly invoked by the driver to compute syntax kinds of interest.</param>
         public static void ExecuteCodeBlockActions(
-            IEnumerable<CodeBlockStartAnalyzerAction<TLanguageKindEnum>> codeBlockStartedAnalyzers,
-            IEnumerable<CodeBlockEndAnalyzerAction<TLanguageKindEnum>> codeBlockEndedAnalyzers,
+            AnalyzerActions actions,
             IEnumerable<DeclarationInfo> declarationsInNode,
             SemanticModel semanticModel,
             AnalyzerOptions analyzerOptions,
             Action<Diagnostic> addDiagnostic,
             Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException,
             Func<SyntaxNode, TLanguageKindEnum> getKind,
-            CancellationToken cancellationToken,
-            Func<SyntaxNodeAnalyzerAction<TLanguageKindEnum>, IEnumerable<TLanguageKindEnum>> getAnalyzerKindsOfInterest = null)
+            CancellationToken cancellationToken)
         {
-            if (!codeBlockStartedAnalyzers.Any() && !codeBlockEndedAnalyzers.Any())
+            VerifyArguments(declarationsInNode, getKind, semanticModel, actions, analyzerOptions, addDiagnostic, continueOnAnalyzerException);
+
+            var codeBlockStartActions = actions.GetCodeBlockStartActions<TLanguageKindEnum>();
+            var codeBlockEndActions = actions.GetCodeBlockEndActions<TLanguageKindEnum>();
+
+            if (!codeBlockStartActions.Any() && !codeBlockEndActions.Any())
             {
                 return;
             }
@@ -851,15 +1309,15 @@ namespace Microsoft.CodeAnalysis.Diagnostics
 
                 if (declaredSymbol != null && declInfo.ExecutableCodeBlocks.Any())
                 {
-                    ExecuteCodeBlockAnalyzers(codeBlockStartedAnalyzers, codeBlockEndedAnalyzers, declaredNode, declaredSymbol,
-                        executableCodeBlocks, analyzerOptions, semanticModel, addDiagnostic, continueOnAnalyzerException, getKind, cancellationToken, getAnalyzerKindsOfInterest);
+                    ExecuteCodeBlockActions(codeBlockStartActions, codeBlockEndActions, declaredNode, declaredSymbol,
+                        executableCodeBlocks, analyzerOptions, semanticModel, addDiagnostic, continueOnAnalyzerException, getKind, cancellationToken);
                 }
             }
         }
 
-        private static void ExecuteCodeBlockAnalyzers(
-            IEnumerable<CodeBlockStartAnalyzerAction<TLanguageKindEnum>> codeBlockStartedAnalyzers,
-            IEnumerable<CodeBlockEndAnalyzerAction<TLanguageKindEnum>> codeBlockEndedAnalyzers,
+        private static void ExecuteCodeBlockActions(
+            IEnumerable<CodeBlockStartAnalyzerAction<TLanguageKindEnum>> codeBlockStartActions,
+            IEnumerable<CodeBlockEndAnalyzerAction<TLanguageKindEnum>> codeBlockEndActions,
             SyntaxNode declaredNode,
             ISymbol declaredSymbol,
             ImmutableArray<SyntaxNode> executableCodeBlocks,
@@ -868,24 +1326,23 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             Action<Diagnostic> addDiagnostic,
             Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException,
             Func<SyntaxNode, TLanguageKindEnum> getKind,
-            CancellationToken cancellationToken,
-            Func<SyntaxNodeAnalyzerAction<TLanguageKindEnum>, IEnumerable<TLanguageKindEnum>> getAnalyzerKindsOfInterest = null)
+            CancellationToken cancellationToken)
         {
             Debug.Assert(declaredNode != null);
             Debug.Assert(declaredSymbol != null);
             Debug.Assert(CanHaveExecutableCodeBlock(declaredSymbol));
-            Debug.Assert(codeBlockStartedAnalyzers.Any() || codeBlockEndedAnalyzers.Any());
+            Debug.Assert(codeBlockStartActions.Any() || codeBlockEndActions.Any());
             Debug.Assert(executableCodeBlocks.Any());
 
             // Compute the sets of code block end and stateful syntax node actions.
-            var endedAnalyzers = PooledHashSet<CodeBlockEndAnalyzerAction<TLanguageKindEnum>>.GetInstance();
-            var executableNodeAnalyzers = ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>.GetInstance();
+            var endedActions = PooledHashSet<CodeBlockEndAnalyzerAction<TLanguageKindEnum>>.GetInstance();
+            var executableNodeActions = ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>.GetInstance();
 
             // Include the stateless code block actions.
-            endedAnalyzers.AddAll(codeBlockEndedAnalyzers);
+            endedActions.AddAll(codeBlockEndActions);
 
             // Include the stateful actions.
-            foreach (var da in codeBlockStartedAnalyzers)
+            foreach (var da in codeBlockStartActions)
             {
                 // Catch Exception from the start action.
                 ExecuteAndCatchIfThrows(da.Analyzer, addDiagnostic, continueOnAnalyzerException, cancellationToken, () =>
@@ -894,41 +1351,41 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                     AnalyzerCodeBlockStartAnalysisScope<TLanguageKindEnum> analyzerBlockScope = new AnalyzerCodeBlockStartAnalysisScope<TLanguageKindEnum>(da.Analyzer, codeBlockScope);
                     CodeBlockStartAnalysisContext<TLanguageKindEnum> blockStartContext = new CodeBlockStartAnalysisContext<TLanguageKindEnum>(analyzerBlockScope, declaredNode, declaredSymbol, semanticModel, analyzerOptions, cancellationToken);
                     da.Action(blockStartContext);
-                    endedAnalyzers.AddAll(codeBlockScope.CodeBlockEndActions);
-                    executableNodeAnalyzers.AddRange(codeBlockScope.SyntaxNodeActions);
+                    endedActions.AddAll(codeBlockScope.CodeBlockEndActions);
+                    executableNodeActions.AddRange(codeBlockScope.SyntaxNodeActions);
                 });
             }
 
             // Execute stateful executable node analyzers, if any.
-            if (executableNodeAnalyzers.Any())
+            if (executableNodeActions.Any())
             {
-                var executableNodeAnalyzersByKind = PooledDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>>.GetInstance();
-                GetNodeAnalyzersByKind(executableNodeAnalyzers, executableNodeAnalyzersByKind, addDiagnostic, getAnalyzerKindsOfInterest);
+                var executableNodeActionsByKind = PooledDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>>.GetInstance();
+                GetNodeActionsByKind(executableNodeActions, executableNodeActionsByKind, addDiagnostic);
 
                 var nodesToAnalyze = executableCodeBlocks.SelectMany(cb => cb.DescendantNodesAndSelf());
-                ExecuteSyntaxNodeActions(nodesToAnalyze, executableNodeAnalyzersByKind, semanticModel,
+                ExecuteSyntaxNodeActions(nodesToAnalyze, executableNodeActionsByKind, semanticModel,
                     analyzerOptions, addDiagnostic, continueOnAnalyzerException, getKind, cancellationToken);
 
-                foreach (var b in executableNodeAnalyzersByKind.Values)
+                foreach (var b in executableNodeActionsByKind.Values)
                 {
                     b.Free();
                 }
 
-                executableNodeAnalyzersByKind.Free();
+                executableNodeActionsByKind.Free();
             }
 
             // Execute code block end actions.
-            foreach (var a in endedAnalyzers)
+            foreach (var a in endedActions)
             {
                 // Catch Exception from a.OnCodeBlockEnded
                 ExecuteAndCatchIfThrows(a.Analyzer, addDiagnostic, continueOnAnalyzerException, cancellationToken, () => a.Action(new CodeBlockEndAnalysisContext(declaredNode, declaredSymbol, semanticModel, analyzerOptions, addDiagnostic, cancellationToken)));
             }
 
-            endedAnalyzers.Free();
-            executableNodeAnalyzers.Free();
+            endedActions.Free();
+            executableNodeActions.Free();
         }
 
-        private static void ExecuteCodeBlockAnalyzers(
+        private static void ExecuteCodeBlockActions(
             HostCompilationStartAnalysisScope compilationScope,
             SyntaxNode declaredNode,
             ISymbol declaredSymbol,
@@ -938,10 +1395,9 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             Action<Diagnostic> addDiagnostic,
             Func<Exception, DiagnosticAnalyzer, bool> continueOnAnalyzerException,
             Func<SyntaxNode, TLanguageKindEnum> getKind,
-            CancellationToken cancellationToken,
-            Func<SyntaxNodeAnalyzerAction<TLanguageKindEnum>, IEnumerable<TLanguageKindEnum>> getAnalyzerKindsOfInterest = null)
+            CancellationToken cancellationToken)
         {
-            ExecuteCodeBlockAnalyzers(
+            ExecuteCodeBlockActions(
                 compilationScope.GetCodeBlockStartActions<TLanguageKindEnum>(),
                 compilationScope.GetCodeBlockEndActions<TLanguageKindEnum>(),
                 declaredNode,
@@ -952,43 +1408,37 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                 addDiagnostic,
                 continueOnAnalyzerException,
                 getKind,
-                cancellationToken,
-                getAnalyzerKindsOfInterest);
+                cancellationToken);
         }
 
-        private static void GetNodeAnalyzersByKind(
-            IEnumerable<SyntaxNodeAnalyzerAction<TLanguageKindEnum>> nodeAnalyzers,
-            PooledDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>> nodeAnalyzersByKind,
-            Action<Diagnostic> addDiagnostic,
-            Func<SyntaxNodeAnalyzerAction<TLanguageKindEnum>, IEnumerable<TLanguageKindEnum>> getAnalyzerKindsOfInterest = null)
+        private static void GetNodeActionsByKind(
+            IEnumerable<SyntaxNodeAnalyzerAction<TLanguageKindEnum>> nodeActions,
+            PooledDictionary<TLanguageKindEnum, ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>> nodeActionsByKind,
+            Action<Diagnostic> addDiagnostic)
         {
-            Debug.Assert(nodeAnalyzers != null && nodeAnalyzers.Any());
-            Debug.Assert(nodeAnalyzersByKind != null && !nodeAnalyzersByKind.Any());
+            Debug.Assert(nodeActions != null && nodeActions.Any());
+            Debug.Assert(nodeActionsByKind != null && !nodeActionsByKind.Any());
 
-            foreach (var nodeAnalyzer in nodeAnalyzers)
+            foreach (var nodeAction in nodeActions)
             {
                 // Catch Exception from  nodeAnalyzer.Kinds
                 try
                 {
-                    var kindsOfInterest = getAnalyzerKindsOfInterest != null ?
-                        getAnalyzerKindsOfInterest(nodeAnalyzer) :
-                        nodeAnalyzer.Kinds;
-
-                    foreach (var kind in kindsOfInterest)
+                    foreach (var kind in nodeAction.Kinds)
                     {
-                        ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>> analyzersForKind;
-                        if (!nodeAnalyzersByKind.TryGetValue(kind, out analyzersForKind))
+                        ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>> actionsForKind;
+                        if (!nodeActionsByKind.TryGetValue(kind, out actionsForKind))
                         {
-                            nodeAnalyzersByKind.Add(kind, analyzersForKind = ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>.GetInstance());
+                            nodeActionsByKind.Add(kind, actionsForKind = ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>>.GetInstance());
                         }
 
-                        analyzersForKind.Add(nodeAnalyzer);
+                        actionsForKind.Add(nodeAction);
                     }
                 }
                 catch (Exception e)
                 {
                     // Create a diagnostic saying that the analyzer failed.
-                    addDiagnostic(GetAnalyzerDiagnostic(nodeAnalyzer.Analyzer, e));
+                    addDiagnostic(GetAnalyzerDiagnostic(nodeAction.Analyzer, e));
                 }
             }
         }
@@ -1011,9 +1461,9 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                 ArrayBuilder<SyntaxNodeAnalyzerAction<TLanguageKindEnum>> actionsForKind;
                 if (nodeActionsByKind.TryGetValue(getKind(child), out actionsForKind))
                 {
-                    foreach (var analyzer in actionsForKind)
+                    foreach (var action in actionsForKind)
                     {
-                        ExecuteSyntaxNodeAction(analyzer, child, model, analyzerOptions, addDiagnostic, continueOnException, cancellationToken);
+                        ExecuteSyntaxNodeAction(action.Action, child, action.Analyzer, model, analyzerOptions, addDiagnostic, continueOnException, cancellationToken);
                     }
                 }
             }
@@ -1022,7 +1472,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         public new void Dispose()
         {
             base.Dispose();
-            foreach (var kvp in this.NodeAnalyzersByKind)
+            foreach (var kvp in this.NodeActionsByKind)
             {
                 kvp.Value.Free();
             }

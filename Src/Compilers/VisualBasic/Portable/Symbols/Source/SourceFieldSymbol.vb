@@ -61,19 +61,19 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend ReadOnly Property Syntax As VBSyntaxNode
+        Friend ReadOnly Property Syntax As VisualBasicSyntaxNode
             Get
                 Return m_syntaxRef.GetVisualBasicSyntax()
             End Get
         End Property
 
-        Friend MustOverride ReadOnly Property DeclarationSyntax As VBSyntaxNode
+        Friend MustOverride ReadOnly Property DeclarationSyntax As VisualBasicSyntaxNode
 
         ''' <summary> 
         ''' Field initializer's declaration syntax node. 
         ''' It can be a EqualsValueSyntax or AsNewClauseSyntax.
         ''' </summary>
-        Friend Overridable ReadOnly Property EqualsValueOrAsNewInitOpt As VBSyntaxNode
+        Friend Overridable ReadOnly Property EqualsValueOrAsNewInitOpt As VisualBasicSyntaxNode
             Get
                 Return Nothing
             End Get
@@ -246,8 +246,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             m_lazyCustomAttributesBag = attributeData
         End Sub
 
-        Friend Overrides Sub AddSynthesizedAttributes(ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
-            MyBase.AddSynthesizedAttributes(attributes)
+        Friend Overrides Sub AddSynthesizedAttributes(compilationState as ModuleCompilationState, ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
+            MyBase.AddSynthesizedAttributes(compilationState, attributes)
 
             If Me.IsConst Then
                 If Me.GetConstantValue(SymbolsInProgress(Of FieldSymbol).Empty) IsNot Nothing Then

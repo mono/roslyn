@@ -169,20 +169,16 @@ namespace Roslyn.Utilities.Pdb
         }
 
         /// <summary>
-        /// Appears when iterator locals have to lifted into fields.  Contains a list of buckets with
-        /// start and end offsets (presumably, into IL).
+        /// Scopes of state machine hoisted local variables.
         /// </summary>
-        /// <remarks>
-        /// Appears when there are locals in iterator methods.
-        /// </remarks>
-        public static void ReadIteratorLocalsRecord(byte[] bytes, ref int offset, int size, out ImmutableArray<IteratorLocalScope> buckets)
+        public static void ReadStateMachineHoistedLocalScopesRecord(byte[] bytes, ref int offset, int size, out ImmutableArray<StateMachineHoistedLocalScope> scopes)
         {
             int tempOffset = offset;
 
             var bucketCount = BitConverter.ToInt32(bytes, tempOffset);
             tempOffset += 4;
 
-            var builder = ArrayBuilder<IteratorLocalScope>.GetInstance(bucketCount);
+            var builder = ArrayBuilder<StateMachineHoistedLocalScope>.GetInstance(bucketCount);
             for (int i = 0; i < bucketCount; i++)
             {
                 int startOffset = BitConverter.ToInt32(bytes, tempOffset);
@@ -190,10 +186,10 @@ namespace Roslyn.Utilities.Pdb
                 int endOffset = BitConverter.ToInt32(bytes, tempOffset);
                 tempOffset += 4;
 
-                builder.Add(new IteratorLocalScope(startOffset, endOffset));
+                builder.Add(new StateMachineHoistedLocalScope(startOffset, endOffset));
             }
 
-            buckets = builder.ToImmutableAndFree();
+            scopes = builder.ToImmutableAndFree();
 
             offset += size - CdiRecordHeaderSize;
             Debug.Assert(offset >= tempOffset);
@@ -409,7 +405,14 @@ namespace Roslyn.Utilities.Pdb
                 return default(ImmutableArray<ImmutableArray<string>>);
             }
 
-            ImmutableArray<string> importStrings = reader.GetMethodByVersion(methodToken, methodVersion).GetImportStrings();
+            var method = reader.GetMethodByVersion(methodToken, methodVersion);
+            if (method == null)
+            {
+                // TODO: remove this workaround for DevDiv #1060879.
+                return default(ImmutableArray<ImmutableArray<string>>);
+            }
+
+            ImmutableArray<string> importStrings = method.GetImportStrings();
             int numImportStrings = importStrings.Length;
 
             ArrayBuilder<ImmutableArray<string>> resultBuilder = ArrayBuilder<ImmutableArray<string>>.GetInstance(groupSizes.Length);
@@ -516,13 +519,25 @@ namespace Roslyn.Utilities.Pdb
         /// </summary>
         /// <remarks>
         /// Doesn't consider forwarding.
-        /// TODO (acasey): VB doesn't just check the root scope - it digs around to find the best
+        /// 
+        /// CONSIDER: Dev12 doesn't just check the root scope - it digs around to find the best
         /// match based on the IL offset and then walks up to the root scope (see PdbUtil::GetScopeFromOffset).
         /// However, it's not clear that this matters, since imports can't be scoped in VB.  This is probably
         /// just based on the way they were extracting locals and constants based on a specific scope.
         /// </remarks>
         private static ImmutableArray<string> GetImportStrings(this ISymUnmanagedMethod method)
         {
+            if (method == null)
+            {
+                // TODO: remove this workaround for DevDiv #1060879.
+                // If methodToken was updated (because the method we started with forwards to another method),
+                // we have no way to know what version the new method is on.  If it's not the same as the
+                // version we stared with (e.g. because it has been changed less frequently), then we may not
+                // find a corresponding ISymUnmanagedMethod.
+                // Note: The real fix is to not use CDI forwarding in EnC PDBs.
+                return ImmutableArray<string>.Empty;
+            }
+
             ISymUnmanagedScope rootScope = method.GetRootScope();
             if (rootScope == null)
             {
@@ -692,12 +707,20 @@ namespace Roslyn.Utilities.Pdb
                 return true;
             }
 
-            // TODO (acasey): looks like we missed some cases (e.g. '$', '#', '&')
-            // See ProcedureContext::LoadImportsAndDefaultNamespaceNormal.
-
             int pos = 0;
             switch (import[pos])
             {
+                case '&':
+                    // Indicates the presence of embedded PIA types from a given assembly.  No longer required (as of Roslyn).
+                case '$':
+                case '#':
+                    // From ProcedureContext::LoadImportsAndDefaultNamespaceNormal:
+                    //   "Module Imports and extension types are no longer needed since we are not doing custom name lookup"
+                    alias = null;
+                    target = import;
+                    kind = ImportTargetKind.Defunct;
+                    scope = ImportScope.Unspecified;
+                    return true;
                 case '*': // VB default namespace
                     // see PEBuilder.cpp in vb\language\CodeGen
                     pos++;
@@ -876,6 +899,11 @@ namespace Roslyn.Utilities.Pdb
         /// VB root namespace (not an import).
         /// </summary>
         DefaultNamespace,
+
+        /// <summary>
+        /// A kind that is no longer used.
+        /// </summary>
+        Defunct,
     }
 
     internal enum ImportScope
@@ -885,12 +913,12 @@ namespace Roslyn.Utilities.Pdb
         Project,
     }
 
-    internal struct IteratorLocalScope
+    internal struct StateMachineHoistedLocalScope
     {
         public readonly int StartOffset;
         public readonly int EndOffset;
 
-        public IteratorLocalScope(int startoffset, int endOffset)
+        public StateMachineHoistedLocalScope(int startoffset, int endOffset)
         {
             this.StartOffset = startoffset;
             this.EndOffset = endOffset;
@@ -923,7 +951,7 @@ namespace Roslyn.Utilities.Pdb
         UsingInfo = 0,
         ForwardInfo = 1,
         ForwardToModuleInfo = 2,
-        IteratorLocals = 3,
+        StateMachineHoistedLocalScopes = 3,
         ForwardIterator = 4,
         DynamicLocals = 5,
         EditAndContinueLocalSlotMap = 6,

@@ -85,7 +85,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim isMyBase As Boolean = Not methodContainingType.Equals(containingType)
             Debug.Assert(isMyBase OrElse receiver.Kind = BoundKind.MyClassReference)
 
-            Dim syntax As VBSyntaxNode = Me.CurrentMethod.Syntax
+            Dim syntax As VisualBasicSyntaxNode = Me.CurrentMethod.Syntax
 
 
             ' generate and register wrapper method
@@ -170,7 +170,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Friend Sub New(containingType As InstanceTypeSymbol,
                            methodToWrap As MethodSymbol,
                            wrapperName As String,
-                           syntax As VBSyntaxNode)
+                           syntax As VisualBasicSyntaxNode)
 
                 MyBase.New(syntax, containingType, wrapperName, False)
 
@@ -214,8 +214,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End Get
             End Property
 
-            Friend Overrides Sub AddSynthesizedAttributes(ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
-                MyBase.AddSynthesizedAttributes(attributes)
+            Friend Overrides Sub AddSynthesizedAttributes(compilationState as ModuleCompilationState, ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
+                MyBase.AddSynthesizedAttributes(compilationState, attributes)
 
                 Dim compilation = Me.DeclaringCompilation
 
@@ -308,16 +308,19 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End Get
             End Property
 
+            Friend Overrides Function IsMetadataNewSlot(Optional ignoreInterfaceImplementationChanges As Boolean = False) As Boolean
+                Return False
+            End Function
+
             Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
                 Get
                     Return False
                 End Get
             End Property
 
-            Friend Overrides Function IsMetadataNewSlot(Optional ignoreInterfaceImplementationChanges As Boolean = False) As Boolean
-                Return False
+            Friend Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+                Throw ExceptionUtilities.Unreachable
             End Function
-
         End Class
     End Class
 End Namespace

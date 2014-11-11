@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
@@ -139,24 +140,23 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         private static ImmutableArray<string> SplitMemberName(string name)
         {
             var builder = ArrayBuilder<string>.GetInstance();
-            int separator;
-            while ((separator = name.IndexOf('.')) > 0)
+            var curr = name;
+            while (curr.Length > 0)
             {
-                builder.Add(name.Substring(0, separator));
-                name = name.Substring(separator + 1);
+                builder.Add(MetadataHelpers.SplitQualifiedName(curr, out curr));
             }
-            builder.Add(name);
+            builder.ReverseContents();
             return builder.ToImmutableAndFree();
         }
 
-        public static Symbol GetMember(this Compilation compilation, string name)
+        public static Symbol GetMember(this Compilation compilation, string qualifiedName)
         {
-            return ((CSharpCompilation)compilation).GlobalNamespace.GetMember(name);
+            return ((CSharpCompilation)compilation).GlobalNamespace.GetMember(qualifiedName);
         }
 
-        public static T GetMember<T>(this Compilation compilation, string name) where T : Symbol
+        public static T GetMember<T>(this Compilation compilation, string qualifiedName) where T : Symbol
         {
-            return (T)((CSharpCompilation)compilation).GlobalNamespace.GetMember(name);
+            return (T)((CSharpCompilation)compilation).GlobalNamespace.GetMember(qualifiedName);
         }
 
         public static ImmutableArray<Symbol> GetMembers(this Compilation compilation, string name)
@@ -210,6 +210,12 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var type = (NamedTypeSymbol)module.GlobalNamespace.GetMember(qualifiedTypeName);
             return type.GetMembers().OfType<FieldSymbol>().Select(f => f.Name).ToArray();
+        }
+
+        public static string[] GetFieldNamesAndTypes(this ModuleSymbol module, string qualifiedTypeName)
+        {
+            var type = (NamedTypeSymbol)module.GlobalNamespace.GetMember(qualifiedTypeName);
+            return type.GetMembers().OfType<FieldSymbol>().Select(f => f.Name + ": " + f.Type).ToArray();
         }
 
         public static IEnumerable<CSharpAttributeData> GetAttributes(this Symbol @this, NamedTypeSymbol c)

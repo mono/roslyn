@@ -1,24 +1,4 @@
-' *********************************************************
-'
-' Copyright © Microsoft Corporation
-'
-' Licensed under the Apache License, Version 2.0 (the
-' "License"); you may not use this file except in
-' compliance with the License. You may obtain a copy of
-' the License at
-'
-' http://www.apache.org/licenses/LICENSE-2.0 
-'
-' THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES
-' OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-' INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES
-' OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR
-' PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
-'
-' See the Apache 2 License for the specific language
-' governing permissions and limitations under the License.
-'
-' *********************************************************
+' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 Imports System.Composition
 Imports System.Threading
@@ -36,7 +16,7 @@ Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 Class ConvertToAutoPropertyCodeRefactoringProvider
     Inherits CodeRefactoringProvider
 
-    Public NotOverridable Overrides Async Function GetRefactoringsAsync(context As CodeRefactoringContext) As Task(Of IEnumerable(Of CodeAction))
+    Public NotOverridable Overrides Async Function ComputeRefactoringsAsync(context As CodeRefactoringContext) As Task
         Dim document = context.Document
         Dim textSpan = context.Span
         Dim cancellationToken = context.CancellationToken
@@ -44,19 +24,21 @@ Class ConvertToAutoPropertyCodeRefactoringProvider
         Dim root = Await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(False)
         Dim token = root.FindToken(textSpan.Start)
         If token.Parent Is Nothing Then
-            Return Nothing
+            Return
         End If
 
         Dim propertyBlock = token.Parent.FirstAncestorOrSelf(Of PropertyBlockSyntax)()
         If propertyBlock Is Nothing OrElse Not HasBothAccessors(propertyBlock) OrElse Not propertyBlock.Span.IntersectsWith(textSpan.Start) Then
-            Return Nothing
+            Return
         End If
 
         ' TODO: Check that the property can be converted to an auto-property.
         ' It should be a simple property with a getter and setter that simply retrieves
         ' and assigns a backing field. In addition, the backing field should be private.
 
-        Return {New ConvertToAutopropertyCodeAction("Convert to auto property", Function(c) ConvertToAutoAsync(document, propertyBlock, c))}
+        context.RegisterRefactoring(
+            New ConvertToAutopropertyCodeAction("Convert to auto property",
+                                                Function(c) ConvertToAutoAsync(document, propertyBlock, c)))
     End Function
 
     ''' <summary> 
@@ -135,7 +117,7 @@ Class ConvertToAutoPropertyCodeRefactoringProvider
         Dim oldRoot = DirectCast(Await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(False), SyntaxNode)
         Dim semanticModel = Await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(False)
 
-        Dim referenceRewriter = New referenceRewriter(propertyName, backingField, semanticModel)
+        Dim referenceRewriter = New ReferenceRewriter(propertyName, backingField, semanticModel)
         Dim newRoot = referenceRewriter.Visit(oldRoot)
 
         Return document.WithSyntaxRoot(newRoot)

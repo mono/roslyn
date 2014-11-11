@@ -11,9 +11,6 @@ using System.Threading;
 
 namespace Microsoft.CodeAnalysis.Text
 {
-    /// <summary>
-    /// Implementation of SourceText based on a <see cref="T:System.String"/> input
-    /// </summary>
     internal sealed partial class EncodedStringText : SourceText
     {
         /// <summary>
@@ -33,12 +30,12 @@ namespace Microsoft.CodeAnalysis.Text
         }
 
         /// <summary>
-        /// Initializes an instance of <see cref="T:StringText"/> with provided bytes.
+        /// Initializes an instance of <see cref="EncodedStringText"/> with provided bytes.
         /// </summary>
         /// <param name="stream"></param>
         /// <param name="defaultEncoding">
         /// Specifies an encoding to be used if the actual encoding can't be determined from the stream content (the stream doesn't start with Byte Order Mark).
-        /// If not specified auto-detect heristics are used to determine the encoding. If these heristics fail the decoding is assumed to be <see cref="Encoding.Default"/>.
+        /// If not specified auto-detect heuristics are used to determine the encoding. If these heuristics fail the decoding is assumed to be <see cref="Encoding.Default"/>.
         /// Note that if the stream starts with Byte Order Mark the value of <paramref name="defaultEncoding"/> is ignored.
         /// </param>
         /// <param name="checksumAlgorithm">Hash algorithm used to calculate document checksum.</param>
@@ -117,7 +114,7 @@ namespace Microsoft.CodeAnalysis.Text
         }
 
         /// <summary>
-        /// The length of the text represented by <see cref="T:StringText"/>.
+        /// The length of the text represented by <see cref="EncodedStringText"/>.
         /// </summary>
         public override int Length
         {
@@ -129,8 +126,8 @@ namespace Microsoft.CodeAnalysis.Text
         /// </summary>
         /// <param name="position">The position to get the character from.</param>
         /// <returns>The character.</returns>
-        /// <exception cref="T:ArgumentOutOfRangeException">When position is negative or 
-        /// greater than <see cref="T:"/> length.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">When position is negative or 
+        /// greater than <see cref="Length"/>.</exception>
         public override char this[int position]
         {
             get
@@ -145,7 +142,7 @@ namespace Microsoft.CodeAnalysis.Text
         /// <summary>
         /// Provides a string representation of the StringText located within given span.
         /// </summary>
-        /// <exception cref="T:ArgumentOutOfRangeException">When given span is outside of the text range.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">When given span is outside of the text range.</exception>
         public override string ToString(TextSpan span)
         {
             if (span.End > this.Source.Length)
@@ -317,53 +314,52 @@ namespace Microsoft.CodeAnalysis.Text
             return true;
         }
 
-        private static bool StartsWith(byte[] bytes, byte[] prefix)
-        {
-            if (bytes.Length < prefix.Length)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < prefix.Length; i++)
-            {
-                if (bytes[i] != prefix[i])
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
+        [ThreadStatic]
+        private static byte[] bomBytes;
 
         internal static Encoding TryReadByteOrderMark(Stream data)
         {
+            // PERF: Avoid repeated calls to Stream.ReadByte since that method allocates a 1-byte array on each call.
+            // Instead, using a thread local byte array.
+            if (bomBytes == null)
+            {
+                bomBytes = new byte[2];
+            }
+
             data.Seek(0, SeekOrigin.Begin);
 
-            switch (data.ReadByte())
+            int bytesRead = data.Read(bomBytes, 0, 2);
+            if (bytesRead == 2)
             {
-                case 0xFE:
-                    if (data.ReadByte() == 0xFF)
-                    {
-                        return Encoding.BigEndianUnicode;
-                    }
+                switch (bomBytes[0])
+                {
+                    case 0xFE:
+                        if (bomBytes[1] == 0xFF)
+                        {
+                            return Encoding.BigEndianUnicode;
+                        }
 
-                    break;
+                        break;
 
-                case 0xFF:
-                    if (data.ReadByte() == 0xFE)
-                    {
-                        return Encoding.Unicode;
-                    }
+                    case 0xFF:
+                        if (bomBytes[1] == 0xFE)
+                        {
+                            return Encoding.Unicode;
+                        }
 
-                    break;
+                        break;
 
-                case 0xEF:
-                    if (data.ReadByte() == 0xBB && data.ReadByte() == 0xBF)
-                    {
-                        return Encoding.UTF8;
-                    }
+                    case 0xEF:
+                        if (bomBytes[1] == 0xBB)
+                        {
+                            if (data.Read(bomBytes, 0, 1) == 1 && bomBytes[0] == 0xBF)
+                            {
+                                return Encoding.UTF8;
+                            }
+                        }
 
-                    break;
+                        break;
+                }
             }
 
             data.Seek(0, SeekOrigin.Begin);

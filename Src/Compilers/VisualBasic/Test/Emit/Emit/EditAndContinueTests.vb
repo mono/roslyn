@@ -1,5 +1,4 @@
 ﻿' Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
-
 Imports System.Collections.Immutable
 Imports System.IO
 Imports System.Reflection.Metadata
@@ -898,7 +897,7 @@ BC37230: Cannot continue since the edit includes a reference to an embedded type
   [unchanged] V_1)
   IL_0000:  nop
   IL_0001:  ldnull
-  IL_0002:  call       "Public Shared Sub M2(o As Object)"
+  IL_0002:  call       "Sub C(Of T).M2(Object)"
   IL_0007:  nop
   IL_0008:  ret
 }
@@ -969,11 +968,11 @@ BC37230: Cannot continue since the edit includes a reference to an embedded type
   IL_0000:  nop
   IL_0001:  ldc.i4.0
   IL_0002:  box        "C(Of N.IA).E"
-  IL_0007:  call       "Public Shared Sub M(o As Object)"
+  IL_0007:  call       "Sub C(Of T).M(Object)"
   IL_000c:  nop
   IL_000d:  ldc.i4.0
   IL_000e:  box        "C(Of IB).E"
-  IL_0013:  call       "Public Shared Sub M(o As Object)"
+  IL_0013:  call       "Sub C(Of T).M(Object)"
   IL_0018:  nop
   IL_0019:  ret
 }
@@ -1611,9 +1610,9 @@ End Class
 {
   // Code size       10 (0xa)
   .maxstack  1
-  .locals init ([unchanged] V_0,
-  String V_1, //b
-  Integer V_2) //a
+  .locals init ([object] V_0,
+                String V_1, //b
+                Integer V_2) //a
   IL_0000:  nop
   IL_0001:  ldc.i4.1
   IL_0002:  stloc.2
@@ -3362,7 +3361,7 @@ End Namespace
             End Using
         End Sub
 
-        <Fact()>
+        <Fact(Skip:="1067140")>
         Public Sub AnonymousDelegates()
             Dim sources0 = <compilation>
                                <file name="a.vb"><![CDATA[
@@ -3408,7 +3407,7 @@ End Class
 
                 Dim method0 = compilation0.GetMember(Of MethodSymbol)("C.N")
                 Dim reader0 = md0.MetadataReader
-                CheckNamesSorted({reader0}, reader0.GetTypeDefNames(), "<Module>", "C", "VB$AnonymousType_0`1", "VB$AnonymousDelegate_0", "VB$AnonymousDelegate_1`1", "VB$AnonymousDelegate_2`2", "VB$AnonymousDelegate_3`1")
+                CheckNamesSorted({reader0}, reader0.GetTypeDefNames(), "_Closure$__1", "_Closure$__6", "<Module>", "C", "VB$AnonymousType_0`1", "VB$AnonymousDelegate_0", "VB$AnonymousDelegate_1`1", "VB$AnonymousDelegate_2`2", "VB$AnonymousDelegate_3`1")
                 Dim method1 = compilation1.GetMember(Of MethodSymbol)("C.N")
                 Dim diff1 = compilation1.EmitDifference(
                     generation0,
@@ -3552,7 +3551,7 @@ End Class
                 Dim generation0 = EmitBaseline.CreateInitialBaseline(
                     ModuleMetadata.CreateFromImage(bytes0),
                     Function(m)
-                        Select Case md0.MetadataReader.GetString(md0.MetadataReader.GetMethod(m).Name)
+                        Select Case md0.MetadataReader.GetString(md0.MetadataReader.GetMethodDefinition(m).Name)
                             Case "F" : Return testData0.GetMethodData("B.F").GetEncDebugInfo()
                             Case "G" : Return testData0.GetMethodData("B.G").GetEncDebugInfo()
                         End Select
@@ -3602,7 +3601,7 @@ End Class
   // Code size       30 (0x1e)
   .maxstack  1
   .locals init (Object V_0, //G
-                [unchanged] V_1,
+                [int] V_1,
                 VB$AnonymousType_0(Of A) V_2, //x
                 VB$AnonymousType_1(Of Integer) V_3) //y
   IL_0000:  nop
@@ -3633,7 +3632,7 @@ End Class
   // Code size       35 (0x23)
   .maxstack  1
   .locals init (Object V_0, //G
-                [unchanged] V_1,
+                [int] V_1,
                 VB$AnonymousType_0(Of A) V_2, //x
                 VB$AnonymousType_1(Of Integer) V_3) //y
   IL_0000:  nop
@@ -3733,7 +3732,7 @@ End Class
                 Dim generation0 = EmitBaseline.CreateInitialBaseline(
                     ModuleMetadata.CreateFromImage(bytes0),
                     Function(m)
-                        Select Case md0.MetadataReader.GetString(md0.MetadataReader.GetMethod(m).Name)
+                        Select Case md0.MetadataReader.GetString(md0.MetadataReader.GetMethodDefinition(m).Name)
                             Case "F" : Return testData0.GetMethodData("C.F").GetEncDebugInfo()
                             Case "G" : Return testData0.GetMethodData("C.G").GetEncDebugInfo()
                         End Select
@@ -4009,9 +4008,9 @@ End Module
         End Sub
 
 #Region "Helpers"
-        Private Shared ReadOnly EmptyLocalsProvider As Func(Of MethodHandle, EditAndContinueMethodDebugInformation) = Function(token) Nothing
+        Private Shared ReadOnly EmptyLocalsProvider As Func(Of MethodDefinitionHandle, EditAndContinueMethodDebugInformation) = Function(token) Nothing
 
-        Private Shared Function GetAllLocals(compilation As VBCompilation, method As MethodSymbol) As ImmutableArray(Of LocalSymbol)
+        Private Shared Function GetAllLocals(compilation As VisualBasicCompilation, method As MethodSymbol) As ImmutableArray(Of LocalSymbol)
             Dim methodSyntax = method.DeclaringSyntaxReferences(0).GetSyntax().Parent
             Dim model = compilation.GetSemanticModel(methodSyntax.SyntaxTree)
             Dim locals = ArrayBuilder(Of LocalSymbol).GetInstance()
@@ -4028,14 +4027,14 @@ End Module
             Return locals.ToImmutableAndFree()
         End Function
 
-        Private Shared Function GetAllLocals(compilation As VBCompilation, method As IMethodSymbol) As ImmutableArray(Of KeyValuePair(Of ILocalSymbol, Integer))
+        Private Shared Function GetAllLocals(compilation As VisualBasicCompilation, method As IMethodSymbol) As ImmutableArray(Of KeyValuePair(Of ILocalSymbol, Integer))
             Dim locals = GetAllLocals(compilation, DirectCast(method, MethodSymbol))
             Return locals.SelectAsArray(Function(local, index, arg) New KeyValuePair(Of ILocalSymbol, Integer)(local, index), DirectCast(Nothing, Object))
         End Function
 
-        Private Shared Function GetAllLocals(method As SourceMethodSymbol) As ImmutableArray(Of VBSyntaxNode)
+        Private Shared Function GetAllLocals(method As SourceMethodSymbol) As ImmutableArray(Of VisualBasicSyntaxNode)
             Dim names = From name In LocalVariableDeclaratorsCollector.GetDeclarators(method).OfType(Of ModifiedIdentifierSyntax)
-                        Select DirectCast(name, VBSyntaxNode)
+                        Select DirectCast(name, VisualBasicSyntaxNode)
 
             Return names.AsImmutableOrEmpty
         End Function
@@ -4130,7 +4129,7 @@ End Module
 
         Private Shared Function EncLogRowToString(row As EditAndContinueLogEntry) As String
             Dim index As TableIndex = 0
-            MetadataTokens.TryGetTableIndex(row.Handle.HandleType, index)
+            MetadataTokens.TryGetTableIndex(row.Handle.Kind, index)
             Return String.Format(
                 "Row({0}, TableIndex.{1}, EditAndContinueOperation.{2})",
                 MetadataTokens.GetRowNumber(row.Handle),
@@ -4140,7 +4139,7 @@ End Module
 
         Private Shared Function EncMapRowToString(handle As Handle) As String
             Dim index As TableIndex = 0
-            MetadataTokens.TryGetTableIndex(handle.HandleType, index)
+            MetadataTokens.TryGetTableIndex(handle.Kind, index)
             Return String.Format(
                 "Handle({0}, TableIndex.{1})",
                 MetadataTokens.GetRowNumber(handle),

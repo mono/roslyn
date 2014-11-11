@@ -255,7 +255,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// the resulting bound node. May return null in some error cases.
         /// </summary>
         /// <remarks>
-        /// Keep in sync with <see cref="M:Binder.BindCrefParameterOrReturnType()"/>.
+        /// Keep in sync with Binder.BindCrefParameterOrReturnType.
         /// </remarks>
         private BoundExpression GetSpeculativelyBoundExpression(int position, ExpressionSyntax expression, SpeculativeBindingOption bindingOption, out Binder binder, out ImmutableArray<Symbol> crefSymbols)
         {
@@ -2081,7 +2081,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <returns>Flag indicating whether a speculative semantic model was created.</returns>
         /// <exception cref="ArgumentException">Throws this exception if the <paramref name="method"/> node is contained any SyntaxTree in the current Compilation</exception>
         /// <exception cref="ArgumentNullException">Throws this exception if <paramref name="method"/> is null.</exception>
-        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is true.
+        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="SemanticModel.IsSpeculativeSemanticModel"/> is true.
         /// Chaining of speculative semantic model is not supported.</exception>
         public bool TryGetSpeculativeSemanticModelForMethodBody(int position, BaseMethodDeclarationSyntax method, out SemanticModel speculativeModel)
         {
@@ -2106,7 +2106,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <returns>Flag indicating whether a speculative semantic model was created.</returns>
         /// <exception cref="ArgumentException">Throws this exception if the <paramref name="accessor"/> node is contained any SyntaxTree in the current Compilation</exception>
         /// <exception cref="ArgumentNullException">Throws this exception if <paramref name="accessor"/> is null.</exception>
-        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is true.
+        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="SemanticModel.IsSpeculativeSemanticModel"/> is true.
         /// Chaining of speculative semantic model is not supported.</exception>
         public bool TryGetSpeculativeSemanticModelForMethodBody(int position, AccessorDeclarationSyntax accessor, out SemanticModel speculativeModel)
         {
@@ -2133,7 +2133,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <returns>Flag indicating whether a speculative semantic model was created.</returns>
         /// <exception cref="ArgumentException">Throws this exception if the <paramref name="type"/> node is contained any SyntaxTree in the current Compilation</exception>
         /// <exception cref="ArgumentNullException">Throws this exception if <paramref name="type"/> is null.</exception>
-        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is true.
+        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="SemanticModel.IsSpeculativeSemanticModel"/> is true.
         /// Chaining of speculative semantic model is not supported.</exception>
         public bool TryGetSpeculativeSemanticModel(int position, TypeSyntax type, out SemanticModel speculativeModel, SpeculativeBindingOption bindingOption = SpeculativeBindingOption.BindAsExpression)
         {
@@ -2157,7 +2157,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <returns>Flag indicating whether a speculative semantic model was created.</returns>
         /// <exception cref="ArgumentException">Throws this exception if the <paramref name="statement"/> node is contained any SyntaxTree in the current Compilation</exception>
         /// <exception cref="ArgumentNullException">Throws this exception if <paramref name="statement"/> is null.</exception>
-        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is true.
+        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="SemanticModel.IsSpeculativeSemanticModel"/> is true.
         /// Chaining of speculative semantic model is not supported.</exception>
         public bool TryGetSpeculativeSemanticModel(int position, StatementSyntax statement, out SemanticModel speculativeModel)
         {
@@ -2182,7 +2182,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <returns>Flag indicating whether a speculative semantic model was created.</returns>
         /// <exception cref="ArgumentException">Throws this exception if the <paramref name="initializer"/> node is contained any SyntaxTree in the current Compilation.</exception>
         /// <exception cref="ArgumentNullException">Throws this exception if <paramref name="initializer"/> is null.</exception>
-        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is true.
+        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="SemanticModel.IsSpeculativeSemanticModel"/> is true.
         /// Chaining of speculative semantic model is not supported.</exception>
         public bool TryGetSpeculativeSemanticModel(int position, EqualsValueClauseSyntax initializer, out SemanticModel speculativeModel)
         {
@@ -2191,6 +2191,31 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
 
         internal abstract bool TryGetSpeculativeSemanticModelCore(SyntaxTreeSemanticModel parentModel, int position, EqualsValueClauseSyntax initializer, out SemanticModel speculativeModel);
+
+        /// <summary>
+        /// Get a SemanticModel object that is associated with an expression body that did not appear in
+        /// this source code. This can be used to get detailed semantic information about sub-parts
+        /// of an expression body that did not appear in source code.
+        /// </summary>
+        /// <param name="position">A character position used to identify a declaration scope and accessibility. This
+        /// character position must be within the FullSpan of the Root syntax node in this SemanticModel.
+        /// </param>
+        /// <param name="expressionBody">A syntax node that represents a parsed expression body. This node should not be
+        /// present in the syntax tree associated with this object.</param>
+        /// <param name="speculativeModel">A SemanticModel object that can be used to inquire about the semantic
+        /// information associated with syntax nodes within <paramref name="expressionBody"/>.</param>
+        /// <returns>Flag indicating whether a speculative semantic model was created.</returns>
+        /// <exception cref="ArgumentException">Throws this exception if the <paramref name="expressionBody"/> node is contained any SyntaxTree in the current Compilation.</exception>
+        /// <exception cref="ArgumentNullException">Throws this exception if <paramref name="expressionBody"/> is null.</exception>
+        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="SemanticModel.IsSpeculativeSemanticModel"/> is true.
+        /// Chaining of speculative semantic model is not supported.</exception>
+        public bool TryGetSpeculativeSemanticModel(int position, ArrowExpressionClauseSyntax expressionBody, out SemanticModel speculativeModel)
+        {
+            CheckModelAndSyntaxNodeToSpeculate(expressionBody);
+            return TryGetSpeculativeSemanticModelCore((SyntaxTreeSemanticModel)this, position, expressionBody, out speculativeModel);
+        }
+
+        internal abstract bool TryGetSpeculativeSemanticModelCore(SyntaxTreeSemanticModel parentModel, int position, ArrowExpressionClauseSyntax expressionBody, out SemanticModel speculativeModel);
 
         /// <summary>
         /// Get a SemanticModel object that is associated with a constructor initializer that did not appear in
@@ -2210,7 +2235,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <returns>Flag indicating whether a speculative semantic model was created.</returns>
         /// <exception cref="ArgumentException">Throws this exception if the <paramref name="constructorInitializer"/> node is contained any SyntaxTree in the current Compilation.</exception>
         /// <exception cref="ArgumentNullException">Throws this exception if <paramref name="constructorInitializer"/> is null.</exception>
-        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is true.
+        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="SemanticModel.IsSpeculativeSemanticModel"/> is true.
         /// Chaining of speculative semantic model is not supported.</exception>
         public bool TryGetSpeculativeSemanticModel(int position, ConstructorInitializerSyntax constructorInitializer, out SemanticModel speculativeModel)
         {
@@ -2238,7 +2263,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <returns>Flag indicating whether a speculative semantic model was created.</returns>
         /// <exception cref="ArgumentException">Throws this exception if the <paramref name="crefSyntax"/> node is contained any SyntaxTree in the current Compilation.</exception>
         /// <exception cref="ArgumentNullException">Throws this exception if <paramref name="crefSyntax"/> is null.</exception>
-        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is true.
+        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="SemanticModel.IsSpeculativeSemanticModel"/> is true.
         /// Chaining of speculative semantic model is not supported.</exception>
         public bool TryGetSpeculativeSemanticModel(int position, CrefSyntax crefSyntax, out SemanticModel speculativeModel)
         {
@@ -2262,7 +2287,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <returns>Flag indicating whether a speculative semantic model was created.</returns>
         /// <exception cref="ArgumentException">Throws this exception if the <paramref name="attribute"/> node is contained any SyntaxTree in the current Compilation.</exception>
         /// <exception cref="ArgumentNullException">Throws this exception if <paramref name="attribute"/> is null.</exception>
-        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is true.
+        /// <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="SemanticModel.IsSpeculativeSemanticModel"/> is true.
         /// Chaining of speculative semantic model is not supported.</exception>
         public bool TryGetSpeculativeSemanticModel(int position, AttributeSyntax attribute, out SemanticModel speculativeModel)
         {
@@ -3088,50 +3113,62 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         private static ParameterSymbol GetThisParameter(TypeSymbol typeOfThis, NamedTypeSymbol containingType, Symbol containingMember, out LookupResultKind resultKind)
         {
-            ParameterSymbol thisParam;
-
             if ((object)containingMember == null || (object)containingType == null)
             {
                 // not in a member of a type (can happen when speculating)
-                thisParam = new ThisParameterSymbol(containingMember as MethodSymbol, typeOfThis);
                 resultKind = LookupResultKind.NotReferencable;
+                return new ThisParameterSymbol(containingMember as MethodSymbol, typeOfThis);
             }
 
-            if (containingMember.IsStatic)
+            ParameterSymbol thisParam;
+
+            switch (containingMember.Kind)
             {
-                // in a static member
-                resultKind = LookupResultKind.StaticInstanceMismatch;
-                thisParam = new ThisParameterSymbol(containingMember as MethodSymbol, containingType);
-            }
-            else
-            {
-                if (typeOfThis == ErrorTypeSymbol.UnknownResultType)
-                {
-                    // in an instance member, but binder considered this/base unreferencable
-                    thisParam = new ThisParameterSymbol(containingMember as MethodSymbol, containingType);
-                    resultKind = LookupResultKind.NotReferencable;
-                }
-                else
-                {
-                    switch (containingMember.Kind)
+                case SymbolKind.Method:
+                case SymbolKind.Field:
+                case SymbolKind.Property:
+                    if (containingMember.IsStatic)
                     {
-                        case SymbolKind.Method:
-                            resultKind = LookupResultKind.Viable;
-                            thisParam = containingMember.EnclosingThisSymbol();
-                            break;
-
-                        // Fields and properties can't access 'this' since
-                        // initializers are run in the constructor    
-                        case SymbolKind.Field:
-                        case SymbolKind.Property:
-                            resultKind = LookupResultKind.NotReferencable;
-                            thisParam = containingMember.EnclosingThisSymbol() ?? new ThisParameterSymbol(null, containingType);
-                            break;
-
-                        default:
-                            throw ExceptionUtilities.UnexpectedValue(containingMember.Kind);
+                        // in a static member
+                        resultKind = LookupResultKind.StaticInstanceMismatch;
+                        thisParam = new ThisParameterSymbol(containingMember as MethodSymbol, containingType);
                     }
-                }
+                    else
+                    {
+                        if (typeOfThis == ErrorTypeSymbol.UnknownResultType)
+                        {
+                            // in an instance member, but binder considered this/base unreferencable
+                            thisParam = new ThisParameterSymbol(containingMember as MethodSymbol, containingType);
+                            resultKind = LookupResultKind.NotReferencable;
+                        }
+                        else
+                        {
+                            switch (containingMember.Kind)
+                            {
+                                case SymbolKind.Method:
+                                    resultKind = LookupResultKind.Viable;
+                                    thisParam = containingMember.EnclosingThisSymbol();
+                                    break;
+
+                                // Fields and properties can't access 'this' since
+                                // initializers are run in the constructor    
+                                case SymbolKind.Field:
+                                case SymbolKind.Property:
+                                    resultKind = LookupResultKind.NotReferencable;
+                                    thisParam = containingMember.EnclosingThisSymbol() ?? new ThisParameterSymbol(null, containingType);
+                                    break;
+
+                                default:
+                                    throw ExceptionUtilities.UnexpectedValue(containingMember.Kind);
+                            }
+                        }
+                    }
+                    break;
+
+                default:
+                    thisParam = new ThisParameterSymbol(containingMember as MethodSymbol, typeOfThis);
+                    resultKind = LookupResultKind.NotReferencable;
+                    break;
             }
 
             return thisParam;
@@ -3657,13 +3694,17 @@ namespace Microsoft.CodeAnalysis.CSharp
                         }
                         break;
 
+                    case BoundKind.NameOfOperator:
+                        symbols = methodGroup;
+                        resultKind = resultKind.WorseResultKind(LookupResultKind.MemberGroup);
+                        break;
+
                     default:
                         symbols = methodGroup;
                         if (symbols.Length > 0)
                         {
                             resultKind = resultKind.WorseResultKind(LookupResultKind.OverloadResolutionFailure);
                         }
-
                         break;
                 }
             }
@@ -4622,9 +4663,21 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.IndexerDeclaration:
                     {
                         var t = (IndexerDeclarationSyntax)node;
-                        foreach (var decl in t.AccessorList.Accessors) ComputeDeclarationsCore(decl, shouldSkip, getSymbol, builder, newLevel, cancellationToken);
-                        var parameterInitializers = t.ParameterList != null ? t.ParameterList.Parameters.Select(p => p.Default) : null;
-                        builder.Add(GetDeclarationInfo(node, getSymbol, cancellationToken, parameterInitializers));
+                        if (t.AccessorList != null)
+                        {
+                            foreach (var decl in t.AccessorList.Accessors)
+                            {
+                                ComputeDeclarationsCore(decl, shouldSkip, getSymbol, builder, newLevel, cancellationToken);
+                            }
+                        }
+
+                        var codeBlocks = t.ParameterList != null ? t.ParameterList.Parameters.Select(p => p.Default) : SpecializedCollections.EmptyEnumerable<SyntaxNode>();
+                        if (t.ExpressionBody != null)
+                        {
+                            codeBlocks = codeBlocks.Concat(t.ExpressionBody);
+                        }
+
+                        builder.Add(GetDeclarationInfo(node, getSymbol, cancellationToken, codeBlocks));
                         return;
                     }
 
@@ -4652,6 +4705,12 @@ namespace Microsoft.CodeAnalysis.CSharp
                         if (ctorDecl != null && ctorDecl.Initializer != null)
                         {
                             codeBlocks = codeBlocks.Concat(ctorDecl.Initializer);
+                        }
+
+                        var expressionBody = t.GetExpressionBodySyntax();
+                        if (expressionBody != null)
+                        {
+                            codeBlocks = codeBlocks.Concat(expressionBody);
                         }
 
                         builder.Add(GetDeclarationInfo(node, getSymbol, cancellationToken, codeBlocks));

@@ -15,6 +15,7 @@ using Microsoft.Build.Construction;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Host;
+using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 
@@ -61,17 +62,17 @@ namespace Microsoft.CodeAnalysis.MSBuild
         /// <summary>
         /// Create a new instance of a workspace that can be populated by opening solution and project files.
         /// </summary>
-        /// <param name="properties">An optional set of MSBuild properties used when interpretting project files.
+        /// <param name="properties">An optional set of MSBuild properties used when interpreting project files.
         /// These are the same properties that are passed to msbuild via the /property:&lt;n&gt;=&lt;v&gt; command line argument.</param>
         public static MSBuildWorkspace Create(IDictionary<string, string> properties)
         {
-            return Create(properties, Host.Mef.MefHostServices.DefaultHost);
+            return Create(properties, DesktopMefHostServices.DefaultServices);
         }
 
         /// <summary>
         /// Create a new instance of a workspace that can be populated by opening solution and project files.
         /// </summary>
-        /// <param name="properties">The MSBuild properties used when interpretting project files.
+        /// <param name="properties">The MSBuild properties used when interpreting project files.
         /// These are the same properties that are passed to msbuild via the /property:&lt;n&gt;=&lt;v&gt; command line argument.</param>
         /// <param name="hostServices">The <see cref="HostServices"/> used to configure this workspace.</param>
         public static MSBuildWorkspace Create(IDictionary<string, string> properties, HostServices hostServices)
@@ -90,7 +91,7 @@ namespace Microsoft.CodeAnalysis.MSBuild
         }
 
         /// <summary>
-        /// The MSBuild properties used when interpretting project files.
+        /// The MSBuild properties used when interpreting project files.
         /// These are the same properties that are passed to msbuild via the /property:&lt;n&gt;=&lt;v&gt; command line argument.
         /// </summary>
         public ImmutableDictionary<string, string> Properties
@@ -245,7 +246,7 @@ namespace Microsoft.CodeAnalysis.MSBuild
                             return false;
                         }
                     }
-                    else 
+                    else
                     {
                         loader = ProjectFileLoader.GetLoaderForProjectFileExtension(this, extension);
 
@@ -773,7 +774,7 @@ namespace Microsoft.CodeAnalysis.MSBuild
 
         private async Task<ResolvedReferences> ResolveProjectReferencesAsync(
             string thisProjectPath,
-            IReadOnlyList<ProjectFileReference> projectFileReferences, 
+            IReadOnlyList<ProjectFileReference> projectFileReferences,
             bool preferMetadata,
             List<ProjectInfo> loadedProjects,
             CancellationToken cancellationToken)
@@ -861,9 +862,9 @@ namespace Microsoft.CodeAnalysis.MSBuild
 
             return null;
         }
-#endregion
+        #endregion
 
-#region Apply Changes
+        #region Apply Changes
         public override bool CanApplyChange(ApplyChangesKind feature)
         {
             switch (feature)
@@ -902,7 +903,7 @@ namespace Microsoft.CodeAnalysis.MSBuild
                     var projectPath = project.FilePath;
                     IProjectFileLoader loader;
                     if (this.TryGetLoaderFromProjectPath(projectPath, ReportMode.Ignore, out loader))
-                    { 
+                    {
                         try
                         {
                             this.applyChangesProjectFile = loader.LoadProjectFileAsync(projectPath, this.properties, CancellationToken.None).Result;
@@ -946,6 +947,7 @@ namespace Microsoft.CodeAnalysis.MSBuild
             }
         }
 
+#if false
         protected override void ChangedAdditionalDocumentText(DocumentId documentId, SourceText text)
         {
             var document = this.CurrentSolution.GetAdditionalDocument(documentId);
@@ -955,55 +957,42 @@ namespace Microsoft.CodeAnalysis.MSBuild
                 this.OnAdditionalDocumentTextChanged(documentId, text, PreservationMode.PreserveValue);
             }
         }
+#endif
 
-        private void AddDocumentCore(DocumentId documentId, IEnumerable<string> folders, string name, SourceText text = null, SourceCodeKind sourceCodeKind = SourceCodeKind.Regular, bool isAdditionalDocument = false)
+        protected override void AddDocument(DocumentInfo info, SourceText text)
         {
             System.Diagnostics.Debug.Assert(this.applyChangesProjectFile != null);
 
-            var project = this.CurrentSolution.GetProject(documentId.ProjectId);
+            var project = this.CurrentSolution.GetProject(info.Id.ProjectId);
 
             IProjectFileLoader loader;
             if (this.TryGetLoaderFromProjectPath(project.FilePath, ReportMode.Ignore, out loader))
             {
-                var extension = isAdditionalDocument ? Path.GetExtension(name) : this.applyChangesProjectFile.GetDocumentExtension(sourceCodeKind);
-                var fileName = Path.ChangeExtension(name, extension);
+                var extension = this.applyChangesProjectFile.GetDocumentExtension(info.SourceCodeKind);
+                var fileName = Path.ChangeExtension(info.Name, extension);
 
-                var relativePath = folders != null ? Path.Combine(Path.Combine(folders.ToArray()), fileName) : fileName;
+                var relativePath = (info.Folders != null && info.Folders.Count > 0) 
+                    ? Path.Combine(Path.Combine(info.Folders.ToArray()), fileName) 
+                    : fileName;
 
                 var fullPath = GetAbsolutePath(relativePath, Path.GetDirectoryName(project.FilePath));
-                var encoding = (text != null) ? text.Encoding : null;
 
-                var documentInfo = DocumentInfo.Create(documentId, fileName, folders, sourceCodeKind, new FileTextLoader(fullPath, encoding), fullPath, encoding, isGenerated: false);
+                var newDocumentInfo = info.WithName(fileName)
+                    .WithFilePath(fullPath)
+                    .WithTextLoader(new FileTextLoader(fullPath, text.Encoding));
 
                 // add document to project file
                 this.applyChangesProjectFile.AddDocument(relativePath);
 
                 // add to solution
-                if (isAdditionalDocument)
-                {
-                    this.OnAdditionalDocumentAdded(documentInfo);
-                }
-                else
-                {
-                    this.OnDocumentAdded(documentInfo);
-                }
+                this.OnDocumentAdded(newDocumentInfo);
 
                 // save text to disk
                 if (text != null)
                 {
-                    this.SaveDocumentText(documentId, fullPath, text);
+                    this.SaveDocumentText(info.Id, fullPath, text);
                 }
             }
-        }
-
-        protected override void AddDocument(DocumentId documentId, IEnumerable<string> folders, string name, SourceText text = null, SourceCodeKind sourceCodeKind = SourceCodeKind.Regular)
-        {
-            AddDocumentCore(documentId, folders, name, text, sourceCodeKind, isAdditionalDocument: false);
-        }
-
-        protected override void AddAdditionalDocument(DocumentId documentId, IEnumerable<string> folders, string name, SourceText text = null)
-        {
-            AddDocumentCore(documentId, folders, name, text, SourceCodeKind.Regular, isAdditionalDocument: true);
         }
 
         private void SaveDocumentText(DocumentId id, string fullPath, SourceText newText)
@@ -1076,5 +1065,5 @@ namespace Microsoft.CodeAnalysis.MSBuild
             }
         }
     }
-#endregion
+    #endregion
 }

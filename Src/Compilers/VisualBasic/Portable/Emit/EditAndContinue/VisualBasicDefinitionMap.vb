@@ -42,7 +42,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             Return Me.mapToPrevious.TryGetAnonymousTypeName(template, name, index)
         End Function
 
-        Friend Overrides Function TryGetTypeHandle(def As Cci.ITypeDefinition, <Out> ByRef handle As TypeHandle) As Boolean
+        Friend Overrides Function TryGetTypeHandle(def As Cci.ITypeDefinition, <Out> ByRef handle As TypeDefinitionHandle) As Boolean
             Dim other = TryCast(Me.mapToMetadata.MapDefinition(def), PENamedTypeSymbol)
             If other IsNot Nothing Then
                 handle = other.Handle
@@ -53,7 +53,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             End If
         End Function
 
-        Friend Overrides Function TryGetEventHandle(def As Cci.IEventDefinition, <Out> ByRef handle As EventHandle) As Boolean
+        Friend Overrides Function TryGetEventHandle(def As Cci.IEventDefinition, <Out> ByRef handle As EventDefinitionHandle) As Boolean
             Dim other = TryCast(Me.mapToMetadata.MapDefinition(def), PEEventSymbol)
             If other IsNot Nothing Then
                 handle = other.Handle
@@ -64,7 +64,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             End If
         End Function
 
-        Friend Overrides Function TryGetFieldHandle(def As Cci.IFieldDefinition, <Out> ByRef handle As FieldHandle) As Boolean
+        Friend Overrides Function TryGetFieldHandle(def As Cci.IFieldDefinition, <Out> ByRef handle As FieldDefinitionHandle) As Boolean
             Dim other = TryCast(Me.mapToMetadata.MapDefinition(def), PEFieldSymbol)
             If other IsNot Nothing Then
                 handle = other.Handle
@@ -75,7 +75,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             End If
         End Function
 
-        Friend Overrides Function TryGetMethodHandle(def As Cci.IMethodDefinition, <Out> ByRef handle As MethodHandle) As Boolean
+        Friend Overrides Function TryGetMethodHandle(def As Cci.IMethodDefinition, <Out> ByRef handle As MethodDefinitionHandle) As Boolean
             Dim other = TryCast(Me.mapToMetadata.MapDefinition(def), PEMethodSymbol)
             If other IsNot Nothing Then
                 handle = other.Handle
@@ -86,7 +86,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             End If
         End Function
 
-        Private Overloads Function TryGetMethodHandle(baseline As EmitBaseline, def As Cci.IMethodDefinition, <Out> ByRef handle As MethodHandle) As Boolean
+        Private Overloads Function TryGetMethodHandle(baseline As EmitBaseline, def As Cci.IMethodDefinition, <Out> ByRef handle As MethodDefinitionHandle) As Boolean
             If Me.TryGetMethodHandle(def, handle) Then
                 Return True
             End If
@@ -95,7 +95,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             If def IsNot Nothing Then
                 Dim methodIndex As UInteger = 0
                 If baseline.MethodsAdded.TryGetValue(def, methodIndex) Then
-                    handle = MetadataTokens.MethodHandle(CInt(methodIndex))
+                    handle = MetadataTokens.MethodDefinitionHandle(CInt(methodIndex))
                     Return True
                 End If
             End If
@@ -104,7 +104,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             Return False
         End Function
 
-        Friend Overrides Function TryGetPropertyHandle(def As Cci.IPropertyDefinition, <Out> ByRef handle As PropertyHandle) As Boolean
+        Friend Overrides Function TryGetPropertyHandle(def As Cci.IPropertyDefinition, <Out> ByRef handle As PropertyDefinitionHandle) As Boolean
             Dim other = TryCast(Me.mapToMetadata.MapDefinition(def), PEPropertySymbol)
             If other IsNot Nothing Then
                 handle = other.Handle
@@ -121,7 +121,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
         End Function
 
         Friend Overrides Function TryCreateVariableSlotAllocator(baseline As EmitBaseline, method As IMethodSymbol) As VariableSlotAllocator
-            Dim handle As MethodHandle = Nothing
+            Dim handle As MethodDefinitionHandle = Nothing
             If Not Me.TryGetMethodHandle(baseline, CType(method, Cci.IMethodDefinition), handle) Then
                 ' Unrecognized method. Must have been added in the current compilation.
                 Return Nothing
@@ -134,12 +134,21 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             End If
 
             If Not methodEntry.PreserveLocalVariables Then
-                ' Not necessary to preserve locals.
+                ' We should always "preserve locals" of iterator And async methods since the state machine 
+                ' might be active without MoveNext method being on stack. We don't enforce this requirement here,
+                ' since a method may be incorrectly marked by Iterator/AsyncStateMachine attribute by the user, 
+                ' in which case we can't reliably figure out that it's an error in semantic edit set. 
+
                 Return Nothing
             End If
 
             Dim symbolMap As VisualBasicSymbolMatcher
             Dim previousLocals As ImmutableArray(Of EncLocalInfo) = Nothing
+            Dim previousHoistedLocalMap As IReadOnlyDictionary(Of EncLocalInfo, String) = Nothing
+            Dim awaiterMap As IReadOnlyDictionary(Of Cci.ITypeReference, String) = Nothing
+            Dim hoistedLocalSlotCount As Integer = 0
+            Dim awaiterSlotCount As Integer = 0
+            Dim previousStateMachineTypeNameOpt As String = Nothing
 
             Dim methodIndex As UInteger = CUInt(MetadataTokens.GetRowNumber(handle))
 
@@ -164,7 +173,17 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
                 symbolMap = Me.mapToMetadata
             End If
 
-            Return New EncVariableSlotAllocator(symbolMap, methodEntry.SyntaxMap, methodEntry.PreviousMethod, previousLocals)
+            ' TODO
+            Return New EncVariableSlotAllocator(
+                symbolMap,
+                methodEntry.SyntaxMap,
+                methodEntry.PreviousMethod,
+                previousLocals,
+                previousStateMachineTypeNameOpt,
+                hoistedLocalSlotCount,
+                previousHoistedLocalMap,
+                awaiterSlotCount,
+                awaiterMap)
         End Function
 
         ''' <summary>
@@ -181,7 +200,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             Dim localSlots = methodEncInfo.LocalSlots
             If Not localSlots.IsDefault Then
 
-                ' In case of corrupted PDB Or metadata, these lengths might Not match.
+                ' In case of corrupted PDB or metadata, these lengths might Not match.
                 ' Let's guard against such case.
                 Dim slotCount = Math.Min(localSlots.Length, slotMetadata.Length)
 
@@ -189,14 +208,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
 
                 For slotIndex = 0 To slotCount - 1
 
-                    Dim slot As ValueTuple(Of SynthesizedLocalKind, LocalDebugId) = localSlots(slotIndex)
-                    If slot.Item1.IsLongLived() Then
+                    Dim slot = localSlots(slotIndex)
+                    If slot.SynthesizedKind.IsLongLived() Then
                         Dim metadata = slotMetadata(slotIndex)
 
                         ' We do Not emit custom modifiers on locals so ignore the
                         ' previous version of the local if it had custom modifiers.
                         If metadata.CustomModifiers.IsDefaultOrEmpty Then
-                            Dim local = New EncLocalInfo(slot.Item2, DirectCast(metadata.Type, Cci.ITypeReference), metadata.Constraints, slot.Item1, metadata.SignatureOpt)
+                            Dim local = New EncLocalInfo(slot.Id, DirectCast(metadata.Type, Cci.ITypeReference), metadata.Constraints, slot.SynthesizedKind, metadata.SignatureOpt)
                             map.Add(local, slotIndex)
                         End If
                     End If

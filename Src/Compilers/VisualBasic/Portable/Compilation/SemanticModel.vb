@@ -37,12 +37,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' <summary> 
         ''' The compilation associated with this binding.
         ''' </summary> 
-        Public MustOverride Shadows ReadOnly Property Compilation As VBCompilation
+        Public MustOverride Shadows ReadOnly Property Compilation As VisualBasicCompilation
 
         ''' <summary> 
         ''' The root node of the syntax tree that this binding is based on.
         ''' </summary> 
-        Friend MustOverride ReadOnly Property Root As VBSyntaxNode
+        Friend MustOverride ReadOnly Property Root As VisualBasicSyntaxNode
 
         ''' <summary>
         ''' Gets symbol information about an expression syntax node. This is the worker
@@ -107,7 +107,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend MustOverride Function GetCrefReferenceSymbolInfo(crefReference As CrefReferenceSyntax, options As SymbolInfoOptions, Optional cancellationToken As CancellationToken = Nothing) As SymbolInfo
 
         ' Is this node one that could be successfully interrogated by GetSymbolInfo/GetTypeInfo/GetMemberGroup/GetConstantValue?
-        Friend Function CanGetSemanticInfo(node As VBSyntaxNode, Optional allowNamedArgumentName As Boolean = False) As Boolean
+        Friend Function CanGetSemanticInfo(node As VisualBasicSyntaxNode, Optional allowNamedArgumentName As Boolean = False) As Boolean
             Debug.Assert(node IsNot Nothing)
 
             ' These aren't really expressions - it's just a manifestation of the SyntaxNode type hierarchy.
@@ -593,7 +593,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Throw New ArgumentException(VBResources.PositionIsNotWithinSyntax)
         End Sub
 
-        Friend Sub CheckSyntaxNode(node As VBSyntaxNode)
+        Friend Sub CheckSyntaxNode(node As VisualBasicSyntaxNode)
             If node Is Nothing Then
                 Throw New ArgumentNullException("node")
             End If
@@ -603,7 +603,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
         End Sub
 
-        Private Sub CheckModelAndSyntaxNodeToSpeculate(node As VBSyntaxNode)
+        Private Sub CheckModelAndSyntaxNodeToSpeculate(node As VisualBasicSyntaxNode)
             If node Is Nothing Then
                 Throw New ArgumentNullException("node")
             End If
@@ -621,7 +621,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ' a position. Just using FindToken doesn't give quite the right results, especially in situations where
         ' end constructs haven't been typed yet. If we are in the trivia between two tokens, we move backward to the previous
         ' token. There are also some special cases around beginning and end of the whole tree.
-        Friend Function FindInitialNodeFromPosition(position As Integer) As VBSyntaxNode
+        Friend Function FindInitialNodeFromPosition(position As Integer) As VisualBasicSyntaxNode
             Dim fullStart As Integer = Root.Position
             Dim fullEnd As Integer = Root.EndPosition
 
@@ -637,8 +637,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     token = Root.FindToken(position, True)
                 End If
 
-                Dim trivia As StructuredTriviaSyntax = DirectCast(token.Parent, VBSyntaxNode).EnclosingStructuredTrivia
-                If trivia Is Nothing OrElse Not IsInCrefOrNameAttributeInterior(DirectCast(token.Parent, VBSyntaxNode)) Then
+                Dim trivia As StructuredTriviaSyntax = DirectCast(token.Parent, VisualBasicSyntaxNode).EnclosingStructuredTrivia
+                If trivia Is Nothing OrElse Not IsInCrefOrNameAttributeInterior(DirectCast(token.Parent, VisualBasicSyntaxNode)) Then
                     If atEOF Then
                         token = SyntaxTree.GetRoot().FindToken(position)
                     Else
@@ -658,7 +658,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Return Root
                 ElseIf token.Parent IsNot Nothing Then
                     Debug.Assert(IsInTree(token.Parent))
-                    Return DirectCast(token.Parent, VBSyntaxNode)
+                    Return DirectCast(token.Parent, VisualBasicSyntaxNode)
                 Else
                     Return Root
                 End If
@@ -673,7 +673,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         ' Is this node in a place where it bind to an implemented member.
-        Friend Shared Function IsInCrefOrNameAttributeInterior(node As VBSyntaxNode) As Boolean
+        Friend Shared Function IsInCrefOrNameAttributeInterior(node As VisualBasicSyntaxNode) As Boolean
             Debug.Assert(node IsNot Nothing)
 
             Select Case node.Kind
@@ -692,7 +692,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Return False
             End Select
 
-            Dim parent As VBSyntaxNode = node.Parent
+            Dim parent As VisualBasicSyntaxNode = node.Parent
             Dim inXmlAttribute As Boolean = False
 
             While parent IsNot Nothing
@@ -999,7 +999,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 ' Special case: overload failure on X in New X(...), where overload resolution failed. 
                 ' Binds to method group which can't have a type.
 
-                Dim parentSyntax As VBSyntaxNode = boundNodes.LowestBoundNodeOfSyntacticParent.Syntax
+                Dim parentSyntax As VisualBasicSyntaxNode = boundNodes.LowestBoundNodeOfSyntacticParent.Syntax
                 If parentSyntax IsNot Nothing AndAlso
                    parentSyntax Is boundNodes.LowestBoundNode.Syntax.Parent AndAlso
                    ((parentSyntax.Kind = SyntaxKind.ObjectCreationExpression AndAlso (DirectCast(parentSyntax, ObjectCreationExpressionSyntax).Type Is boundNodes.LowestBoundNode.Syntax))) Then
@@ -1199,30 +1199,37 @@ _Default:
                                                containingMember As Symbol,
                                                ByRef resultKind As LookupResultKind) As ParameterSymbol
 
-            Dim meParam As ParameterSymbol
-
             If containingMember Is Nothing OrElse containingType Is Nothing Then
                 ' not in a member of a type (can happen when speculating)
-                meParam = New MeParameterSymbol(containingMember, referenceType)
                 resultKind = LookupResultKind.NotReferencable
+                Return New MeParameterSymbol(containingMember, referenceType)
             End If
 
-            If containingMember.IsShared Then
-                ' in a static member
-                resultKind = LookupResultKind.MustNotBeInstance
-                meParam = New MeParameterSymbol(containingMember, containingType)
+            Dim meParam As ParameterSymbol
 
-            Else
-                If referenceType = ErrorTypeSymbol.UnknownResultType Then
-                    ' in an instance member, but binder considered Me/MyBase/MyClass unreferencable
-                    meParam = New MeParameterSymbol(containingMember, containingType)
+            Select Case containingMember.Kind
+                Case SymbolKind.Method, SymbolKind.Field, SymbolKind.Property
+                    If containingMember.IsShared Then
+                        ' in a static member
+                        resultKind = LookupResultKind.MustNotBeInstance
+                        meParam = New MeParameterSymbol(containingMember, containingType)
+
+                    Else
+                        If referenceType = ErrorTypeSymbol.UnknownResultType Then
+                            ' in an instance member, but binder considered Me/MyBase/MyClass unreferencable
+                            meParam = New MeParameterSymbol(containingMember, containingType)
+                            resultKind = LookupResultKind.NotReferencable
+                        Else
+                            ' should be good
+                            resultKind = LookupResultKind.Good
+                            meParam = containingMember.GetMeParameter()
+                        End If
+                    End If
+
+                Case Else
+                    meParam = New MeParameterSymbol(containingMember, referenceType)
                     resultKind = LookupResultKind.NotReferencable
-                Else
-                    ' should be good
-                    resultKind = LookupResultKind.Good
-                    meParam = containingMember.GetMeParameter()
-                End If
-            End If
+            End Select
 
             Return meParam
         End Function
@@ -1307,6 +1314,11 @@ _Default:
                             resultKind = badExpression.ResultKind
                             foundResolution = True
                         End If
+
+                    Case BoundKind.NameOfOperator
+                        symbolsBuilder.AddRange(memberGroupBuilder)
+                        resultKind = LookupResultKind.MemberGroup
+                        foundResolution = True
                 End Select
             End If
 
@@ -1358,6 +1370,11 @@ _Default:
                             resultKind = badExpression.ResultKind
                             foundResolution = True
                         End If
+
+                    Case BoundKind.NameOfOperator
+                        symbolsBuilder.AddRange(memberGroupBuilder)
+                        resultKind = LookupResultKind.MemberGroup
+                        foundResolution = True
                 End Select
             End If
 
@@ -1410,7 +1427,7 @@ _Default:
             Debug.Assert(boundNodeOfSyntacticParent IsNot Nothing)
 
             ' Check if boundNode.Syntax is the type-name child of an ObjectCreationExpression or Attribute.
-            Dim parentSyntax As VBSyntaxNode = boundNodeOfSyntacticParent.Syntax
+            Dim parentSyntax As VisualBasicSyntaxNode = boundNodeOfSyntacticParent.Syntax
             If parentSyntax IsNot Nothing AndAlso
                lowestBoundNode IsNot Nothing AndAlso
                parentSyntax Is lowestBoundNode.Syntax.Parent AndAlso
@@ -1546,7 +1563,7 @@ _Default:
         End Function
 
         ' This is used by other binding API's to invoke the right binder API
-        Friend Overridable Function Bind(binder As Binder, node As VBSyntaxNode, diagnostics As DiagnosticBag) As BoundNode
+        Friend Overridable Function Bind(binder As Binder, node As VisualBasicSyntaxNode, diagnostics As DiagnosticBag) As BoundNode
             Dim expr = TryCast(node, ExpressionSyntax)
             If expr IsNot Nothing Then
                 Return binder.BindNamespaceOrTypeOrExpressionSyntaxForSemanticModel(expr, diagnostics)
@@ -2170,7 +2187,7 @@ _Default:
         ''' <returns>Flag indicating whether a speculative semantic model was created.</returns>
         ''' <exception cref="ArgumentException">Throws this exception if the <paramref name="method"/> node is contained any SyntaxTree in the current Compilation.</exception>
         ''' <exception cref="ArgumentNullException">Throws this exception if <paramref name="method"/> is null.</exception>
-        ''' <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is True.
+        ''' <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="IsSpeculativeSemanticModel"/> is True.
         ''' Chaining of speculative semantic model is not supported.</exception>
         Public Function TryGetSpeculativeSemanticModelForMethodBody(position As Integer, method As MethodBlockBaseSyntax, <Out> ByRef speculativeModel As SemanticModel) As Boolean
             CheckPosition(position)
@@ -2195,7 +2212,7 @@ _Default:
         ''' <returns>Flag indicating whether a speculative semantic model was created.</returns>
         ''' <exception cref="ArgumentException">Throws this exception if the <paramref name="rangeArgument"/> node is contained any SyntaxTree in the current Compilation.</exception>
         ''' <exception cref="ArgumentNullException">Throws this exception if <paramref name="rangeArgument"/> is null.</exception>
-        ''' <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is True.
+        ''' <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="IsSpeculativeSemanticModel"/> is True.
         ''' Chaining of speculative semantic model is not supported.</exception>
         Public Function TryGetSpeculativeSemanticModel(position As Integer, rangeArgument As RangeArgumentSyntax, <Out> ByRef speculativeModel As SemanticModel) As Boolean
             CheckPosition(position)
@@ -2219,7 +2236,7 @@ _Default:
         ''' <returns>Flag indicating whether a speculative semantic model was created.</returns>
         ''' <exception cref="ArgumentException">Throws this exception if the <paramref name="statement"/> node is contained any SyntaxTree in the current Compilation.</exception>
         ''' <exception cref="ArgumentNullException">Throws this exception if <paramref name="statement"/> is null.</exception>
-        ''' <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is True.
+        ''' <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="IsSpeculativeSemanticModel"/> is True.
         ''' Chaining of speculative semantic model is not supported.</exception>
         Public Function TryGetSpeculativeSemanticModel(position As Integer, statement As ExecutableStatementSyntax, <Out> ByRef speculativeModel As SemanticModel) As Boolean
             CheckPosition(position)
@@ -2244,7 +2261,7 @@ _Default:
         ''' <returns>Flag indicating whether a speculative semantic model was created.</returns>
         ''' <exception cref="ArgumentException">Throws this exception if the <paramref name="initializer"/> node is contained any SyntaxTree in the current Compilation.</exception>
         ''' <exception cref="ArgumentNullException">Throws this exception if <paramref name="initializer"/> is null.</exception>
-        ''' <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is True.
+        ''' <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="IsSpeculativeSemanticModel"/> is True.
         ''' Chaining of speculative semantic model is not supported.</exception>
         Public Function TryGetSpeculativeSemanticModel(position As Integer, initializer As EqualsValueSyntax, <Out> ByRef speculativeModel As SemanticModel) As Boolean
             CheckPosition(position)
@@ -2268,7 +2285,7 @@ _Default:
         ''' <returns>Flag indicating whether a speculative semantic model was created.</returns>
         ''' <exception cref="ArgumentException">Throws this exception if the <paramref name="attribute"/> node is contained any SyntaxTree in the current Compilation.</exception>
         ''' <exception cref="ArgumentNullException">Throws this exception if <paramref name="attribute"/> is null.</exception>
-        ''' <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is True.
+        ''' <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="IsSpeculativeSemanticModel"/> is True.
         ''' Chaining of speculative semantic model is not supported.</exception>
         Public Function TryGetSpeculativeSemanticModel(position As Integer, attribute As AttributeSyntax, <Out> ByRef speculativeModel As SemanticModel) As Boolean
             CheckPosition(position)
@@ -2300,7 +2317,7 @@ _Default:
         ''' information associated with syntax nodes within <paramref name="type"/>.</param>
         ''' <returns>Flag indicating whether a speculative semantic model was created.</returns>
         ''' <exception cref="ArgumentException">Throws this exception if the <paramref name="type"/> node is contained any SyntaxTree in the current Compilation.</exception>
-        ''' <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="P:IsSpeculativeSemanticModel"/> is True.
+        ''' <exception cref="InvalidOperationException">Throws this exception if this model is a speculative semantic model, i.e. <see cref="IsSpeculativeSemanticModel"/> is True.
         ''' Chaining of speculative semantic model is not supported.</exception>
         Public Function TryGetSpeculativeSemanticModel(position As Integer, type As TypeSyntax, <Out> ByRef speculativeModel As SemanticModel, Optional bindingOption As SpeculativeBindingOption = SpeculativeBindingOption.BindAsExpression) As Boolean
             CheckPosition(position)
@@ -3239,7 +3256,7 @@ _Default:
         Protected NotOverridable Overrides Function GetDeclaredSymbolCore(declaration As SyntaxNode, Optional cancellationToken As CancellationToken = Nothing) As ISymbol
             cancellationToken.ThrowIfCancellationRequested()
 
-            Dim node = DirectCast(declaration, VBSyntaxNode)
+            Dim node = DirectCast(declaration, VisualBasicSyntaxNode)
 
             Select Case node.Kind
                 Case SyntaxKind.SimpleImportsClause
@@ -3630,12 +3647,12 @@ _Default:
             Return String.Format("{0}: at {1}", Me.SyntaxTree.FilePath, position)
         End Function
 
-        Friend Function GetMessage(node As VBSyntaxNode) As String
+        Friend Function GetMessage(node As VisualBasicSyntaxNode) As String
             If node Is Nothing Then Return Me.SyntaxTree.FilePath
             Return String.Format("{0}: {1} ({2})", Me.SyntaxTree.FilePath, node.Kind.ToString(), node.Position)
         End Function
 
-        Friend Function GetMessage(node As VBSyntaxNode, position As Integer) As String
+        Friend Function GetMessage(node As VisualBasicSyntaxNode, position As Integer) As String
             If node Is Nothing Then Return Me.SyntaxTree.FilePath
             Return String.Format("{0}: {1} ({2}) at {3}", Me.SyntaxTree.FilePath, node.Kind.ToString(), node.Position, position)
         End Function

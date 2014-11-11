@@ -189,12 +189,18 @@ namespace Microsoft.CodeAnalysis
         }
 
         /// <summary>
-        /// Returns the warning level for a warning, 1 through 4. Errors have warning level 0.
+        /// Gets the warning level. This is 0 for diagnostics with severity <see cref="DiagnosticSeverity.Error"/>,
+        /// otherwise an integer between 1 and 4.
         /// </summary>
         public int WarningLevel
         {
             get
             {
+                if (this.effectiveSeverity != this.defaultSeverity)
+                {
+                    return Diagnostic.GetDefaultWarningLevel(this.effectiveSeverity);
+                }
+
                 return messageProvider.GetWarningLevel(errorCode);
             }
         }

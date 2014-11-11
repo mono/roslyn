@@ -1324,7 +1324,7 @@ class C1
 
             var sol = MSBuildWorkspace.Create().OpenSolutionAsync(GetSolutionFileName("TestSolution.sln")).Result;
             var project = sol.GetProjectsByName("VisualBasicProject").FirstOrDefault();
-            var options = (Microsoft.CodeAnalysis.VisualBasic.VBCompilationOptions)project.CompilationOptions;
+            var options = (Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions)project.CompilationOptions;
             var imports = options.GlobalImports;
             AssertEx.Equal(new[]
             {
@@ -1345,7 +1345,7 @@ class C1
 
             var sol = MSBuildWorkspace.Create().OpenSolutionAsync(GetSolutionFileName("TestSolution.sln")).Result;
             var project = sol.GetProjectsByName("VisualBasicProject").FirstOrDefault();
-            var options = (Microsoft.CodeAnalysis.VisualBasic.VBParseOptions)project.ParseOptions;
+            var options = (Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions)project.ParseOptions;
             var defines = new List<KeyValuePair<string, object>>(options.PreprocessorSymbols);
             defines.Sort((x, y) => x.Key.CompareTo(y.Key));
 
@@ -1375,7 +1375,7 @@ class C1
 
             var sol = MSBuildWorkspace.Create().OpenSolutionAsync(GetSolutionFileName("TestSolution.sln")).Result;
             var project = sol.GetProjectsByName("VisualBasicProject").FirstOrDefault();
-            var options = (Microsoft.CodeAnalysis.VisualBasic.VBParseOptions)project.ParseOptions;
+            var options = (Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions)project.ParseOptions;
             Assert.Equal(true, options.PreprocessorSymbolNames.Contains("EnableMyAttribute"));
 
             var compilation = project.GetCompilationAsync().Result;
@@ -1396,7 +1396,7 @@ class C1
 
             var sol = MSBuildWorkspace.Create().OpenSolutionAsync(GetSolutionFileName("TestSolution.sln")).Result;
             var project = sol.GetProjectsByName("VisualBasicProject").FirstOrDefault();
-            var options = (Microsoft.CodeAnalysis.VisualBasic.VBParseOptions)project.ParseOptions;
+            var options = (Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions)project.ParseOptions;
             Assert.Equal(false, options.PreprocessorSymbolNames.Contains("EnableMyAttribute"));
 
             var compilation = project.GetCompilationAsync().Result;
@@ -1620,6 +1620,70 @@ class C1
             // check actual file on disk...
             var textOnDisk = File.ReadAllText(document2.FilePath);
             Assert.Equal(newText.ToString(), textOnDisk);
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
+        public void TestApplyChanges_NotSupportedChangesFail()
+        {
+#if !MSBUILD12
+            var csharpProjPath = @"AnalyzerSolution\CSharpProject_AnalyzerReference.csproj";
+            var vbProjPath = @"AnalyzerSolution\VisualBasicProject_AnalyzerReference.vbproj";
+            CreateFiles(GetAnalyzerReferenceSolutionFiles());
+
+            var ws = MSBuildWorkspace.Create();
+
+            var cspid = ws.OpenProjectAsync(GetSolutionFileName(csharpProjPath)).Result.Id;
+            var vbpid = ws.OpenProjectAsync(GetSolutionFileName(vbProjPath)).Result.Id;
+
+            // adding additional documents not supported.
+            Assert.Equal(false, ws.CanApplyChange(ApplyChangesKind.AddAdditionalDocument));
+            Assert.Throws<NotSupportedException>(delegate
+            {
+                ws.TryApplyChanges(ws.CurrentSolution.AddAdditionalDocument(DocumentId.CreateNewId(cspid), "foo.xaml", SourceText.From("<foo></foo>")));
+            });
+
+            var xaml = ws.CurrentSolution.GetProject(cspid).AdditionalDocuments.FirstOrDefault(d => d.Name == "XamlFile.xaml");
+            Assert.NotNull(xaml);
+
+            // removing additional documents not supported
+            Assert.Equal(false, ws.CanApplyChange(ApplyChangesKind.RemoveAdditionalDocument));
+            Assert.Throws<NotSupportedException>(delegate
+            {
+                ws.TryApplyChanges(ws.CurrentSolution.RemoveAdditionalDocument(xaml.Id));
+            });
+
+#if false // No current text changing API's for additional documents
+            // chanding additional documents not supported
+            Assert.Throws<NotSupportedException>(delegate
+            {
+            });
+#endif
+            // adding analyzer references is not supported.
+            Assert.Equal(false, ws.CanApplyChange(ApplyChangesKind.AddAnalyzerReference));
+            Assert.Throws<NotSupportedException>(delegate
+            {
+                var p = ws.CurrentSolution.GetProject(cspid);
+                var a = new AnalyzerFileReference(GetSolutionFileName("myAnalyzer.dll"));
+                ws.TryApplyChanges(p.AddAnalyzerReference(a).Solution);
+            });
+
+            // removing analyzer references is not supported.
+            Assert.Equal(false, ws.CanApplyChange(ApplyChangesKind.RemoveAnalyzerReference));
+            Assert.Throws<NotSupportedException>(delegate
+            {
+                var p = ws.CurrentSolution.GetProject(cspid);
+                var a = p.AnalyzerReferences.First();
+                ws.TryApplyChanges(p.RemoveAnalyzerReference(a).Solution);
+            });
+
+            // adding project references is not supported
+            Assert.Equal(false, ws.CanApplyChange(ApplyChangesKind.AddProjectReference));
+            Assert.Throws<NotSupportedException>(delegate
+            {
+                var p = ws.CurrentSolution.GetProject(cspid);
+                ws.TryApplyChanges(p.AddProjectReference(new ProjectReference(vbpid)).Solution);
+            });
+#endif
         }
 
         [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
@@ -1995,7 +2059,7 @@ class C1
             {
                 var solution = ws.OpenSolutionAsync(GetSolutionFileName("TestSolution.sln")).Result;
                 var project = solution.Projects.First(p => p.Language == LanguageNames.VisualBasic);
-                var parseOptions = (VB.VBParseOptions)project.ParseOptions;
+                var parseOptions = (VB.VisualBasicParseOptions)project.ParseOptions;
                 Assert.Equal(DocumentationMode.Diagnose, parseOptions.DocumentationMode);
                 var comp = project.GetCompilationAsync().Result;
                 var symbol = comp.GetTypeByMetadataName("VisualBasicProject.VisualBasicClass");
@@ -2022,7 +2086,7 @@ class C1
                 Assert.NotNull(cscomment);
 
                 var vbproject = ws.CurrentSolution.Projects.First(p => p.Language == LanguageNames.VisualBasic);
-                var vboptions = (VB.VBParseOptions)vbproject.ParseOptions;
+                var vboptions = (VB.VisualBasicParseOptions)vbproject.ParseOptions;
                 Assert.Equal(DocumentationMode.Diagnose, vboptions.DocumentationMode);
                 var vbcomp = vbproject.GetCompilationAsync().Result;
                 var vbsymbol = vbcomp.GetTypeByMetadataName("VisualBasicProject.VisualBasicClass");

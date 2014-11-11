@@ -1664,7 +1664,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ERR_NullPropagatingOpInExpressionTree = 37240
         ERR_InsufficientStack = 37241
 
-        ERR_StructParameterlessInstanceCtorMustBePublic = 37241
+        ERR_StructParameterlessInstanceCtorMustBePublic = 37242
+        ERR_AutoPropertyCantBeWriteOnly = 37243
+
+        ERR_ExpressionDoesntHaveName = 37244
+        ERR_InvalidNameOfSubExpression = 37245
+        ERR_MethodTypeArgsUnexpected = 37246
 
         ERR_LastPlusOne
 
@@ -1908,7 +1913,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         FEATUREID_SubLambdas = 55005
         FEATUREID_ArrayLiterals = 55006
         FEATUREID_NullPropagatingOperator = 55007
-        FEATUREID_Last = 55007
+        FEATUREID_NameOfOperator = 55008
+        FEATUREID_Last = 55008
 
         ' Adding diagnostic arguments from resx file
         IDS_ProjectSettingsLocationName = 56000

@@ -564,7 +564,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// and <paramref name="hasValue"/> is <c>False</c> for the former and <c>True</c> for the latter.
         /// </remarks>
         /// <param name="hasValue">True if the submission has value, i.e. if it ends with a statement that is an expression statement.</param>
-        /// <exception cref="InvalidOperationException">The compilation doesn't represent a submission (<see cref="P:IsSubmission"/> return false).</exception>
+        /// <exception cref="InvalidOperationException">The compilation doesn't represent a submission (<see cref="Compilation.IsSubmission"/> return false).</exception>
         internal new TypeSymbol GetSubmissionResultType(out bool hasValue)
         {
             if (!IsSubmission)
@@ -1209,7 +1209,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         /// <summary>
         /// Resolves a symbol that represents script container (Script class). Uses the
-        /// full name of the container class stored in <see cref="P:CompilationOptions.ScriptClassName"/> to find the symbol.
+        /// full name of the container class stored in <see cref="CompilationOptions.ScriptClassName"/> to find the symbol.
         /// </summary>
         /// <returns>The Script class symbol or null if it is not defined.</returns>
         private ImplicitNamedTypeSymbol BindScriptClass()
@@ -2523,7 +2523,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             Stream metadataStream,
             Stream ilStream,
             Stream pdbStream,
-            ICollection<MethodHandle> updatedMethods,
+            ICollection<MethodDefinitionHandle> updatedMethods,
             CompilationTestData testData,
             CancellationToken cancellationToken)
         {

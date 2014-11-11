@@ -3,7 +3,6 @@
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"
           Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props') AND '$(MSBuildProjectExtension)' != '.vcxproj'" />
 
-  <!-- Path settings -->
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
     <VisualStudioReferenceMajorVersion Condition="'$(VisualStudioReferenceMajorVersion)' == ''">$(VisualStudioVersion.Substring(0, $(VisualStudioVersion.IndexOf('.'))))</VisualStudioReferenceMajorVersion>
@@ -82,6 +81,13 @@
     <OutDir>$(OutDir)\Samples\$(MSBuildProjectName)</OutDir>
   </PropertyGroup>
 
+  <PropertyGroup>
+  <!-- Disable AppX packaging for the Roslyn source. Not setting this to false has the side effect
+       that any builds of portable projects end up in a sub folder of $(OutDir). Search for this flag in
+       Microsoft.Common.CurrentVersion.targets to see how it is consumed -->
+    <WindowsAppContainer>false</WindowsAppContainer>
+  </PropertyGroup>	
+
   <Choose>
     <!-- VB specific settings -->
     <When Condition="'$(ProjectLanguage)' == 'VB'">
@@ -158,12 +164,7 @@
   </Choose>
 
   <PropertyGroup>
-    <!-- ILASM is in the Framework  -->
-    <IlasmPath>$(MSBuildFrameworkToolsPath)\ilasm.exe</IlasmPath>
-
-    <!-- ILDASM and SN are in the Framework SDK tools path, but TargetFrameworkSDKToolsDirectory isn't always available  -->
-    <IldasmPath Condition=" '$(TargetFrameworkSDKToolsDirectory)' != '' ">$(TargetFrameworkSDKToolsDirectory)\ildasm.exe</IldasmPath>
-    <IldasmPath Condition=" '$(TargetFrameworkSDKToolsDirectory)' == '' ">$(MSBuildProgramFiles32)\Microsoft SDKs\Windows\v8.0A\bin\NETFX 4.0 Tools\ildasm.exe</IldasmPath>
+    <!-- SN is in the Framework SDK tools path, but TargetFrameworkSDKToolsDirectory isn't always available  -->
     <SnToolPath Condition=" '$(TargetFrameworkSDKToolsDirectory)' != '' ">$(TargetFrameworkSDKToolsDirectory)\sn.exe</SnToolPath>
     <SnToolPath Condition=" '$(TargetFrameworkSDKToolsDirectory)' == '' ">$(MSBuildProgramFiles32)\Microsoft SDKs\Windows\v8.0A\bin\NETFX 4.0 Tools\sn.exe</SnToolPath>
 

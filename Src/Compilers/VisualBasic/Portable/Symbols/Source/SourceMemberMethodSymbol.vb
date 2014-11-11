@@ -178,43 +178,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend Sub AssignAsyncStateMachineType(type As NamedTypeSymbol)
-            Debug.Assert(Me.m_asyncStateMachineType Is Nothing OrElse Me.m_asyncStateMachineType.Name = type.Name)
-            Interlocked.CompareExchange(Of NamedTypeSymbol)(Me.m_asyncStateMachineType, type, Nothing)
-        End Sub
+        Friend Overrides Sub AddSynthesizedAttributes(compilationState As ModuleCompilationState, ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
+            MyBase.AddSynthesizedAttributes(compilationState, attributes)
 
-        Friend Overrides Function GetAsyncStateMachineType() As NamedTypeSymbol
-            Debug.Assert(Me.m_asyncStateMachineType IsNot Nothing)
-            Return Me.m_asyncStateMachineType
-        End Function
-
-        Friend Overrides Sub AddSynthesizedAttributes(ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
-            MyBase.AddSynthesizedAttributes(attributes)
-
-            If Me.m_asyncStateMachineType IsNot Nothing Then
-                Dim compilation = Me.DeclaringCompilation
-
-                Debug.Assert(
-                    WellKnownMembers.IsSynthesizedAttributeOptional(
-                        WellKnownMember.System_Runtime_CompilerServices_AsyncStateMachineAttribute__ctor))
-                AddSynthesizedAttribute(attributes,
-                                        compilation.SynthesizeAttribute(
-                                            WellKnownMember.System_Runtime_CompilerServices_AsyncStateMachineAttribute__ctor,
-                                            ImmutableArray.Create(Of TypedConstant)(
-                                                New TypedConstant(
-                                                    compilation.GetWellKnownType(WellKnownType.System_Type),
-                                                    TypedConstantKind.Type,
-                                                    If(Me.m_asyncStateMachineType.IsGenericType,
-                                                       Me.m_asyncStateMachineType.AsUnboundGenericType,
-                                                       Me.m_asyncStateMachineType)))))
-
-                AddSynthesizedAttribute(attributes, compilation.SynthesizeOptionalDebuggerStepThroughAttribute())
-
-            ElseIf Me.IsIterator Then
-                AddSynthesizedAttribute(attributes, Me.DeclaringCompilation.SynthesizeOptionalDebuggerStepThroughAttribute())
-
+            If Me.IsAsync OrElse Me.IsIterator Then
+                AddSynthesizedAttribute(attributes, Me.DeclaringCompilation.SynthesizeStateMachineAttribute(Me, compilationState))
             End If
-
         End Sub
 
         Friend Overrides ReadOnly Property ObsoleteAttributeData As ObsoleteAttributeData
@@ -297,35 +266,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             ContainingSourceModule.AtomicSetFlagAndStoreDiagnostics(m_lazyState, StateFlags.AllDiagnosticsReported, 0, diagnostics, CompilationStage.Declare)
             diagnostics.Free()
         End Sub
-
-        Friend Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
-            Dim span As TextSpan
-
-            Dim block = BlockSyntax
-            If block IsNot Nothing AndAlso localTree Is block.SyntaxTree Then
-                ' Assign -1 offset to all variables that are associated with the header.
-                ' We can't assign >=0 since user-defined variables defined in the first statement of the body have 0
-                ' and user-defined variables need to have a unique syntax offset.
-                If localPosition = block.Begin.SpanStart Then
-                    Return -1
-                End If
-
-                span = block.Statements.Span
-
-                If span.Contains(localPosition) Then
-                    Return localPosition - span.Start
-                End If
-            End If
-
-            'Dim containingType = DirectCast(Me.ContainingType, SourceNamedTypeSymbol)
-            'Dim initializerStart As Integer = 0
-            'Dim aggregateInitializerLength As Integer = 0
-            'If containingType.TryFindDeclaringInitializerStart(localPosition, localTree, Me.IsShared, initializerStart, aggregateInitializerLength) Then
-            '    Return -aggregateInitializerLength + (localPosition - initializerStart)
-            'End If
-
-            Throw ExceptionUtilities.Unreachable
-        End Function
 
 #Region "Type Parameters"
 
@@ -1035,7 +975,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Return result
         End Function
 
-        Private Shared Function ReturnsEventSource(prop As PropertySymbol, compilation As VBCompilation) As Boolean
+        Private Shared Function ReturnsEventSource(prop As PropertySymbol, compilation As VisualBasicCompilation) As Boolean
             Dim attrs = prop.GetAttributes()
             For Each attr In attrs
                 If attr.AttributeClass Is compilation.GetWellKnownType(WellKnownType.System_ComponentModel_DesignerSerializationVisibilityAttribute) Then

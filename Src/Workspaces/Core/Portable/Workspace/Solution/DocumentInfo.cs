@@ -42,7 +42,7 @@ namespace Microsoft.CodeAnalysis
         /// Specifies an encoding to be used if the actual encoding of the file 
         /// can't be determined from the stream content (the stream doesn't start with Byte Order Mark).
         /// If <c>null</c> auto-detect heristics are used to determine the encoding. 
-        /// If these heristics fail the decoding is assumed to be the system encoding.
+        /// If these heuristics fail the decoding is assumed to be the system encoding.
         /// Note that if the stream starts with Byte Order Mark the value of <see cref="DefaultEncoding"/> is ignored.
         /// </summary>
         internal Encoding DefaultEncoding { get; private set; }
@@ -107,7 +107,6 @@ namespace Microsoft.CodeAnalysis
             string name = null,
             IEnumerable<string> folders = null,
             Optional<SourceCodeKind> sourceCodeKind = default(Optional<SourceCodeKind>),
-            Optional<TextAndVersion> textAndVersion = default(Optional<TextAndVersion>),
             Optional<TextLoader> loader = default(Optional<TextLoader>),
             Optional<string> filePath = default(Optional<string>),
             Optional<Encoding> defaultEncoding = default(Optional<Encoding>))
@@ -134,6 +133,16 @@ namespace Microsoft.CodeAnalysis
             return new DocumentInfo(newId, newName, newFolders, newSourceCodeKind, newLoader, newFilePath, newEncoding, this.IsGenerated);
         }
 
+        public DocumentInfo WithId(DocumentId id)
+        {
+            return this.With(id: id);
+        }
+
+        public DocumentInfo WithName(string name)
+        {
+            return this.With(name: name);
+        }
+
         public DocumentInfo WithFolders(IEnumerable<string> folders)
         {
             return this.With(folders: folders.ToImmutableReadOnlyListOrEmpty());
@@ -152,6 +161,11 @@ namespace Microsoft.CodeAnalysis
         public DocumentInfo WithFilePath(string filePath)
         {
             return this.With(filePath: filePath);
+        }
+
+        public DocumentInfo WithDefaultEncoding(Encoding encoding)
+        {
+            return this.With(defaultEncoding: encoding);
         }
     }
 }

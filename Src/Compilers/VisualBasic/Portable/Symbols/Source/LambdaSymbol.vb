@@ -46,7 +46,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         ''' </summary>
         Friend Shared ReadOnly ErrorRecoveryInferenceError As TypeSymbol = New ErrorTypeSymbol()
 
-        Private ReadOnly m_SyntaxNode As VBSyntaxNode
+        Private ReadOnly m_SyntaxNode As VisualBasicSyntaxNode
         Private ReadOnly m_UnboundLambdaOpt As UnboundLambda
         Private ReadOnly m_Parameters As ImmutableArray(Of ParameterSymbol)
 
@@ -63,7 +63,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         Private m_lazyAnonymousDelegateSymbol As NamedTypeSymbol = ErrorTypeSymbol.UnknownResultType
 
         Public Sub New(
-            syntaxNode As VBSyntaxNode,
+            syntaxNode As VisualBasicSyntaxNode,
             unboundLambdaOpt As UnboundLambda,
             parameters As ImmutableArray(Of BoundLambdaParameterSymbol),
             returnType As TypeSymbol,
@@ -132,13 +132,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         Friend Overrides ReadOnly Property HasSpecialName As Boolean
             Get
                 Return False
-            End Get
-        End Property
-
-        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
-            Get
-                ' lambdas contain user code
-                Return True
             End Get
         End Property
 
@@ -353,7 +346,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend Overrides ReadOnly Property Syntax As VBSyntaxNode
+        Friend Overrides ReadOnly Property Syntax As VisualBasicSyntaxNode
             Get
                 Return m_SyntaxNode
             End Get
@@ -379,6 +372,17 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         Friend Overrides Function IsMetadataNewSlot(Optional ignoreInterfaceImplementationChanges As Boolean = False) As Boolean
             Return False
+        End Function
+
+        Friend Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
+            Get
+                ' lambdas contain user code
+                Return True
+            End Get
+        End Property
+
+        Friend Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+            Throw ExceptionUtilities.Unreachable
         End Function
 
         Public Overrides Function Equals(obj As Object) As Boolean
@@ -409,7 +413,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         Inherits SynthesizedLambdaSymbol
 
         Public Sub New(
-            syntaxNode As VBSyntaxNode,
+            syntaxNode As VisualBasicSyntaxNode,
             parameters As ImmutableArray(Of BoundLambdaParameterSymbol),
             binder As Binder
         )

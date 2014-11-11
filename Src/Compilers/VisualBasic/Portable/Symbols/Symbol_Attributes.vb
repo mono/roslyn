@@ -33,7 +33,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' <summary>
         ''' Build and add synthesized attributes for this symbol.
         ''' </summary>
-        Friend Overridable Sub AddSynthesizedAttributes(ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
+        Friend Overridable Sub AddSynthesizedAttributes(compilationState As ModuleCompilationState, ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
         End Sub
 
         ''' <summary>
@@ -209,8 +209,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' Called even if there are no attributes.
         ''' </summary>
         ''' <remarks>
-        ''' This method is called by the binder from <see cref="M:LoadAndValidateAttributes"/> after it has finished binding attributes on the symbol,
-        ''' has executed <see cref="M:DecodeWellKnownAttributes"/> for attributes applied on the symbol and has stored the decoded data in the
+        ''' This method is called by the binder from <see cref="LoadAndValidateAttributes"/> after it has finished binding attributes on the symbol,
+        ''' has executed <see cref="DecodeWellKnownAttribute"/> for attributes applied on the symbol and has stored the decoded data in the
         ''' lazyCustomAttributesBag on the symbol. Bound attributes haven't been stored on the bag yet.
         ''' 
         ''' Post-validation for attributes that is dependant on other attributes can be done here.
@@ -299,7 +299,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Private Function GetAttributesToBind(attributeDeclarationSyntaxLists As OneOrMany(Of SyntaxList(Of AttributeListSyntax)),
                                              symbolPart As AttributeLocation,
-                                             compilation As VBCompilation,
+                                             compilation As VisualBasicCompilation,
                                              <Out> ByRef binders As ImmutableArray(Of Binder)) As ImmutableArray(Of AttributeSyntax)
 
             Dim attributeTarget = DirectCast(Me, IAttributeTargetSymbol)
@@ -439,7 +439,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         ''' <summary> 
-        ''' This method validates attribute usage for each bound attribute and calls <see cref="M:DecodeWellKnownAttribute"/>
+        ''' This method validates attribute usage for each bound attribute and calls <see cref="DecodeWellKnownAttribute"/>
         ''' on attributes with valid attribute usage.
         ''' This method is called by the binder when it is finished binding a set of attributes on the symbol so that 
         ''' the symbol can extract data from the attribute arguments and potentially perform validation specific to 
@@ -492,7 +492,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Private Function ValidateAttributeUsage(
             attribute As VisualBasicAttributeData,
             node As AttributeSyntax,
-            compilation As VBCompilation,
+            compilation As VisualBasicCompilation,
             symbolPart As AttributeLocation,
             diagnostics As DiagnosticBag,
             uniqueAttributeTypes As HashSet(Of NamedTypeSymbol)) As Boolean
@@ -593,7 +593,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return True
         End Function
 
-        Private Sub ReportExtensionAttributeUseSiteError(attribute As VisualBasicAttributeData, nodeOpt As AttributeSyntax, compilation As VBCompilation, diagnostics As DiagnosticBag)
+        Private Sub ReportExtensionAttributeUseSiteError(attribute As VisualBasicAttributeData, nodeOpt As AttributeSyntax, compilation As VisualBasicCompilation, diagnostics As DiagnosticBag)
             ' report issues with a custom extension attribute everywhere, where the attribute is used in source
             ' (we will not report in location where it's implicitly used (like the containing module or assembly of extension methods)
             Dim useSiteError As DiagnosticInfo = Nothing
@@ -605,7 +605,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
         End Sub
 
-        Private Sub MarkEmbeddedAttributeTypeReference(attribute As VisualBasicAttributeData, nodeOpt As AttributeSyntax, compilation As VBCompilation)
+        Private Sub MarkEmbeddedAttributeTypeReference(attribute As VisualBasicAttributeData, nodeOpt As AttributeSyntax, compilation As VisualBasicCompilation)
             Debug.Assert(Not attribute.HasErrors)
 
             ' Mark embedded attribute type reference only if the owner is itself not

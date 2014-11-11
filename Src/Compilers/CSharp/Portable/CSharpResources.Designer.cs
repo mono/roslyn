@@ -296,6 +296,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to An alias-qualified name is not an expression..
+        /// </summary>
+        internal static string ERR_AliasQualifiedNameNotAnExpression {
+            get {
+                return ResourceManager.GetString("ERR_AliasQualifiedNameNotAnExpression", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Operator &apos;{0}&apos; is ambiguous on operands of type &apos;{1}&apos; and &apos;{2}&apos;.
         /// </summary>
         internal static string ERR_AmbigBinaryOps {
@@ -733,6 +742,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string ERR_AutoPropertyMustHaveGetAccessor {
             get {
                 return ResourceManager.GetString("ERR_AutoPropertyMustHaveGetAccessor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to “Auto-implemented properties must override all accessors of the overridden property.”.
+        /// </summary>
+        internal static string ERR_AutoPropertyMustOverrideSet {
+            get {
+                return ResourceManager.GetString("ERR_AutoPropertyMustOverrideSet", resourceCulture);
             }
         }
         
@@ -3743,6 +3761,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Expression does not have a name..
+        /// </summary>
+        internal static string ERR_ExpressionHasNoName {
+            get {
+                return ResourceManager.GetString("ERR_ExpressionHasNoName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to An expression tree may not contain an anonymous method expression.
         /// </summary>
         internal static string ERR_ExpressionTreeContainsAnonymousMethod {
@@ -5210,6 +5237,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;id#&apos; syntax is no longer supported. Use &apos;$id&apos; instead..
+        /// </summary>
+        internal static string ERR_LegacyObjectIdSyntax {
+            get {
+                return ResourceManager.GetString("ERR_LegacyObjectIdSyntax", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Runtime library method &apos;{0}.{1}&apos; not found..
         /// </summary>
         internal static string ERR_LibraryMethodNotFound {
@@ -5746,6 +5782,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string ERR_NameNotInContextPossibleMissingReference {
             get {
                 return ResourceManager.GetString("ERR_NameNotInContextPossibleMissingReference", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type parameters are not allowed on a method group as an argument to &apos;nameof&apos;..
+        /// </summary>
+        internal static string ERR_NameofMethodGroupWithTypeParameters {
+            get {
+                return ResourceManager.GetString("ERR_NameofMethodGroupWithTypeParameters", resourceCulture);
             }
         }
         
@@ -7753,6 +7798,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string ERR_StructWithBaseConstructorCall {
             get {
                 return ResourceManager.GetString("ERR_StructWithBaseConstructorCall", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sub-expression cannot be used in an argument to nameof..
+        /// </summary>
+        internal static string ERR_SubexpressionNotInNameof {
+            get {
+                return ResourceManager.GetString("ERR_SubexpressionNotInNameof", resourceCulture);
             }
         }
         

@@ -19,7 +19,21 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
     /// </summary>
     internal sealed class PEMethodSymbol : MethodSymbol
     {
-        private readonly MethodHandle handle;
+        private class SignatureData
+        {
+            public readonly SignatureHeader Header;
+            public readonly ImmutableArray<ParameterSymbol> Parameters;
+            public readonly PEParameterSymbol ReturnParam;
+
+            public SignatureData(SignatureHeader header, ImmutableArray<ParameterSymbol> parameters, PEParameterSymbol returnParam)
+            {
+                this.Header = header;
+                this.Parameters = parameters;
+                this.ReturnParam = returnParam;
+            }
+        }
+
+        private readonly MethodDefinitionHandle handle;
         private readonly string name;
         private readonly MethodImplAttributes implFlags;
         private readonly MethodAttributes flags;
@@ -54,6 +68,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
         private const int IsExplicitOverrideIsPopulatedMask = 1 << 9;
 
         private ImmutableArray<TypeParameterSymbol> lazyTypeParameters;
+        private ParameterSymbol lazyThisParameter;
+        private SignatureData lazySignature;
 
         // CONSIDER: Should we use a CustomAttributeBag for PE symbols?
         private ImmutableArray<CSharpAttributeData> lazyCustomAttributes;
@@ -66,30 +82,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
         private DiagnosticInfo lazyUseSiteDiagnostic = CSDiagnosticInfo.EmptyErrorInfo; // Indicates unknown state.
         private OverriddenOrHiddenMembersResult lazyOverriddenOrHiddenMembersResult;
 
-        #region "Signature data"
-
-        private SignatureData lazySignature;
-
-        private class SignatureData
-        {
-            public readonly byte CallingConvention;
-            public readonly ImmutableArray<ParameterSymbol> Parameters;
-            public readonly PEParameterSymbol ReturnParam;
-
-            public SignatureData(byte callingConvention, ImmutableArray<ParameterSymbol> parameters, PEParameterSymbol returnParam)
-            {
-                this.CallingConvention = callingConvention;
-                this.Parameters = parameters;
-                this.ReturnParam = returnParam;
-            }
-        }
-
-        #endregion
-
         internal PEMethodSymbol(
             PEModuleSymbol moduleSymbol,
             PENamedTypeSymbol containingType,
-            MethodHandle methodDef)
+            MethodDefinitionHandle methodDef)
         {
             Debug.Assert((object)moduleSymbol != null);
             Debug.Assert((object)containingType != null);
@@ -118,7 +114,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             this.flags = localflags;
         }
 
-        private ParameterSymbol lazyThisParameter;
         internal sealed override bool TryGetThisParameter(out ParameterSymbol thisParameter)
         {
             thisParameter = lazyThisParameter;
@@ -314,7 +309,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             get
             {
                 EnsureSignatureIsLoaded();
-                return SignatureHeader.IsVarArgCallSignature(lazySignature.CallingConvention);
+                return lazySignature.Header.CallingConvention == SignatureCallingConvention.VarArgs;
             }
         }
 
@@ -359,7 +354,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             }
         }
 
-        internal MethodHandle Handle
+        internal MethodDefinitionHandle Handle
         {
             get
             {
@@ -619,13 +614,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
         {
             var moduleSymbol = this.containingType.ContainingPEModule;
 
-            byte callingConvention;
+            SignatureHeader signatureHeader;
             BadImageFormatException mrEx;
-            MetadataDecoder.ParamInfo[] paramInfo = new MetadataDecoder(moduleSymbol, this).GetSignatureForMethod(this.handle, out callingConvention, out mrEx);
+            MetadataDecoder.ParamInfo[] paramInfo = new MetadataDecoder(moduleSymbol, this).GetSignatureForMethod(this.handle, out signatureHeader, out mrEx);
             bool makeBad = (mrEx != null);
 
             // If method is not generic, let's assign empty list for type parameters
-            if (!SignatureHeader.IsGeneric(callingConvention) &&
+            if (!signatureHeader.IsGeneric &&
                 lazyTypeParameters.IsDefault)
             {
                 ImmutableInterlocked.InterlockedCompareExchange(ref lazyTypeParameters,
@@ -671,7 +666,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
                              ((object)old != null && old.Code == (int)ErrorCode.ERR_BindToBogus && old.Arguments.Length == 1 && old.Arguments[0] == (object)this));
             }
 
-            var signature = new SignatureData(callingConvention, @params, returnParam);
+            var signature = new SignatureData(signatureHeader, @params, returnParam);
 
             Interlocked.CompareExchange(ref lazySignature, signature, null);
         }
@@ -993,7 +988,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             get
             {
                 EnsureSignatureIsLoaded();
-                return (Microsoft.Cci.CallingConvention)lazySignature.CallingConvention;
+                return (Microsoft.Cci.CallingConvention)lazySignature.Header.RawValue;
             }
         }
 
@@ -1092,6 +1087,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             return this.lazyConditionalAttributeSymbols;
         }
 
+        internal override int CalculateLocalSyntaxOffset(int localPosition, SyntaxTree localTree)
+        {
+            throw ExceptionUtilities.Unreachable;
+        }
+
         internal override ObsoleteAttributeData ObsoleteAttributeData
         {
             get
@@ -1114,6 +1114,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
                 {
                     Interlocked.CompareExchange(ref lazyOverriddenOrHiddenMembersResult, base.OverriddenOrHiddenMembers, null);
                 }
+
                 return lazyOverriddenOrHiddenMembersResult;
             }
         }

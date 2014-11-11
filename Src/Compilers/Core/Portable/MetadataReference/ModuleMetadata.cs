@@ -3,11 +3,11 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using Microsoft.CodeAnalysis.InternalUtilities;
-using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis
 {
@@ -27,10 +27,10 @@ namespace Microsoft.CodeAnalysis
             this.module = new PEModule(peReader: peReader, metadataOpt: IntPtr.Zero, metadataSizeOpt: 0);
         }
 
-        private ModuleMetadata(IntPtr metadata, int size)
+        private ModuleMetadata(IntPtr metadata, int size, bool includeEmbeddedInteropTypes)
             : base(isImageOwner: true)
         {
-            this.module = new PEModule(peReader: null, metadataOpt: metadata, metadataSizeOpt: size);
+            this.module = new PEModule(peReader: null, metadataOpt: metadata, metadataSizeOpt: size, includeEmbeddedInteropTypes: includeEmbeddedInteropTypes);
         }
 
         // creates a copy
@@ -60,7 +60,14 @@ namespace Microsoft.CodeAnalysis
                 throw new ArgumentOutOfRangeException(CodeAnalysisResources.SizeHasToBePositive, nameof(size));
             }
 
-            return new ModuleMetadata(metadata, size);
+            return new ModuleMetadata(metadata, size, includeEmbeddedInteropTypes: false);
+        }
+
+        internal static ModuleMetadata CreateFromMetadata(IntPtr metadata, int size, bool includeEmbeddedInteropTypes)
+        {
+            Debug.Assert(metadata != IntPtr.Zero);
+            Debug.Assert(size > 0);
+            return new ModuleMetadata(metadata, size, includeEmbeddedInteropTypes);
         }
 
         /// <summary>
@@ -70,7 +77,7 @@ namespace Microsoft.CodeAnalysis
         /// <param name="size">The size of the image pointed to by <paramref name="peImage"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="peImage"/> is null.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="size"/> is not positive.</exception>
-        public static ModuleMetadata CreateFromImage(IntPtr peImage, int size)
+        public static unsafe ModuleMetadata CreateFromImage(IntPtr peImage, int size)
         {
             if (peImage == IntPtr.Zero)
             {
@@ -82,7 +89,7 @@ namespace Microsoft.CodeAnalysis
                 throw new ArgumentOutOfRangeException(CodeAnalysisResources.SizeHasToBePositive, nameof(size));
             }
 
-            return new ModuleMetadata(new PEReader(peImage, size));
+            return new ModuleMetadata(new PEReader((byte*)peImage, size));
         }
 
         /// <summary>

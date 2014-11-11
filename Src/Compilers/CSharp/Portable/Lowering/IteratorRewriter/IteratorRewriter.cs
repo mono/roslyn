@@ -71,7 +71,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     throw ExceptionUtilities.UnexpectedValue(method.ReturnType.OriginalDefinition.SpecialType);
             }
 
-            stateMachineType = new IteratorStateMachine(method, isEnumerable, elementType, compilationState);
+            stateMachineType = new IteratorStateMachine(slotAllocatorOpt, method, isEnumerable, elementType, compilationState);
             compilationState.ModuleBuilderOpt.CompilationState.SetStateMachineType(method, stateMachineType);
             return new IteratorRewriter(body, method, isEnumerable, stateMachineType, slotAllocatorOpt, compilationState, diagnostics).Rewrite();
         }
@@ -83,15 +83,20 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         protected override void GenerateControlFields()
         {
-            base.GenerateControlFields();
-            
-            // Add a field: T current
-            currentField = F.StateMachineField(elementType, GeneratedNames.MakeIteratorCurrentBackingFieldName(), isPublic: false);
+            this.stateField = F.StateMachineField(F.SpecialType(SpecialType.System_Int32), GeneratedNames.MakeStateMachineStateName());
 
-            // if it is an iterable, add a field: int initialThreadId
-            var threadType = F.Compilation.GetWellKnownType(WellKnownType.System_Threading_Thread);
-            initialThreadIdField = isEnumerable && (object)threadType != null && !threadType.IsErrorType()
-                ? F.StateMachineField(F.SpecialType(SpecialType.System_Int32), GeneratedNames.MakeIteratorCurrentThreadIdName(), isPublic: false)
+            // Add a field: T current
+            currentField = F.StateMachineField(elementType, GeneratedNames.MakeIteratorCurrentBackingFieldName());
+
+            // if it is an enumerable, and either Environment.CurrentManagedThreadId or System.Thread are available
+            // add a field: int initialThreadId
+            bool addInitialThreadId =
+                   isEnumerable &&
+                   ((object)F.WellKnownMember(WellKnownMember.System_Threading_Thread__ManagedThreadId, isOptional: true) != null ||
+                    (object)F.WellKnownMember(WellKnownMember.System_Environment__CurrentManagedThreadId, isOptional: true) != null);
+
+            initialThreadIdField = addInitialThreadId
+                ? F.StateMachineField(F.SpecialType(SpecialType.System_Int32), GeneratedNames.MakeIteratorCurrentThreadIdName())
                 : null;
         }
 
@@ -294,11 +299,6 @@ namespace Microsoft.CodeAnalysis.CSharp
             bodyBuilder = null;
         }
 
-        protected override bool IsStateFieldPublic
-        {
-            get { return false; }
-        }
-
         protected override void InitializeStateMachine(ArrayBuilder<BoundStatement> bodyBuilder, NamedTypeSymbol frameType, LocalSymbol stateMachineLocal)
         {
             // var stateMachineLocal = new IteratorImplementationClass(N)
@@ -310,7 +310,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     F.New(stateMachineType.Constructor.AsMember(frameType), F.Literal(initialState))));
         }
 
-        protected override BoundStatement GenerateReplacementBody(LocalSymbol stateMachineVariable, NamedTypeSymbol frameType)
+        protected override BoundStatement GenerateStateMachineCreation(LocalSymbol stateMachineVariable, NamedTypeSymbol frameType)
         {
             return F.Return(F.Local(stateMachineVariable));
         }
@@ -324,8 +324,11 @@ namespace Microsoft.CodeAnalysis.CSharp
                 method,
                 stateField,
                 currentField,
-                variablesCaptured,
+                hoistedVariables,
                 nonReusableLocalProxies,
+                synthesizedLocalOrdinals,
+                slotAllocatorOpt,
+                nextFreeHoistedLocalSlot,
                 diagnostics);
 
             rewriter.GenerateMoveNextAndDispose(body, moveNextMethod, disposeMethod);

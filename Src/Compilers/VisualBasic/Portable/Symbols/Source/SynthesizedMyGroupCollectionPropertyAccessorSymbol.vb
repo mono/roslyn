@@ -31,8 +31,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
-        Friend Overrides Sub AddSynthesizedAttributes(ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
-            MyBase.AddSynthesizedAttributes(attributes)
+        Friend Overrides Sub AddSynthesizedAttributes(compilationState as ModuleCompilationState, ByRef attributes As ArrayBuilder(Of SynthesizedAttributeData))
+            MyBase.AddSynthesizedAttributes(compilationState, attributes)
 
             ' Note, Dev11 emits DebuggerNonUserCodeAttribute, but we are using DebuggerHiddenAttribute instead.
             AddSynthesizedAttribute(attributes, Me.DeclaringCompilation.SynthesizeDebuggerHiddenAttribute())
@@ -66,7 +66,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 "End Class" & vbCrLf
 
             ' TODO: It looks like Dev11 respects project level conditional compilation here.
-            Dim tree = VBSyntaxTree.ParseText(codeToParse)
+            Dim tree = VisualBasicSyntaxTree.ParseText(codeToParse)
             Dim attributeSyntax = PropertyOrEvent.AttributeSyntax.GetVisualBasicSyntax()
             Dim diagnosticLocation As Location = attributeSyntax.GetLocation()
             Dim root As CompilationUnitSyntax = tree.GetCompilationUnitRoot()
@@ -120,6 +120,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End If
 
             Return New BoundBlock(accessorBlock, Nothing, ImmutableArray(Of LocalSymbol).Empty, ImmutableArray.Create(Of BoundStatement)(boundStatement))
+        End Function
+
+        Friend NotOverridable Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean
+            Get
+                Return False
+            End Get
+        End Property
+
+        Friend NotOverridable Overrides Function CalculateLocalSyntaxOffset(localPosition As Integer, localTree As SyntaxTree) As Integer
+            Throw ExceptionUtilities.Unreachable
         End Function
 
         Protected MustOverride Function GetMethodBlock(fieldName As String, createOrDisposeMethodName As String, targetTypeName As String) As String

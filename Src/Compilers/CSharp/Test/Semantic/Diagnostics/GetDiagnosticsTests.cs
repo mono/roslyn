@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Xunit;
+using Roslyn.Test.Utilities;
 
 namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 {
@@ -83,6 +84,45 @@ class C : Abracadabra
             DiagnosticsHelper.VerifyDiagnostics(model, source, @"C : Abracadabr");
             DiagnosticsHelper.VerifyDiagnostics(model, source, @"Abracadabra[\r\n]+", ErrorId);
             DiagnosticsHelper.VerifyDiagnostics(model, source, @"bracadabra[\r\n]+");
+        }
+
+        [Fact, WorkItem(1066483)]
+        public void TestDiagnosticWithSeverity()
+        {
+            var source = @"
+class C
+{
+    public void Foo()
+    {
+        int x;
+    }
+}
+";
+            var compilation = CreateCompilationWithMscorlib45(source);
+            var diag = compilation.GetDiagnostics().Single();
+
+            Assert.Equal(DiagnosticSeverity.Warning, diag.Severity);
+            Assert.Equal(3, diag.WarningLevel);
+
+            var error = diag.WithSeverity(DiagnosticSeverity.Error);
+            Assert.Equal(DiagnosticSeverity.Error, error.Severity);
+            Assert.Equal(DiagnosticSeverity.Warning, error.DefaultSeverity);
+            Assert.Equal(0, error.WarningLevel);
+
+            var warning = error.WithSeverity(DiagnosticSeverity.Warning);
+            Assert.Equal(DiagnosticSeverity.Warning, warning.Severity);
+            Assert.Equal(DiagnosticSeverity.Warning, warning.DefaultSeverity);
+            Assert.Equal(3, warning.WarningLevel);
+
+            var hidden = diag.WithSeverity(DiagnosticSeverity.Hidden);
+            Assert.Equal(DiagnosticSeverity.Hidden, hidden.Severity);
+            Assert.Equal(DiagnosticSeverity.Warning, hidden.DefaultSeverity);
+            Assert.Equal(4, hidden.WarningLevel);
+
+            var info = diag.WithSeverity(DiagnosticSeverity.Info);
+            Assert.Equal(DiagnosticSeverity.Info, info.Severity);
+            Assert.Equal(DiagnosticSeverity.Warning, info.DefaultSeverity);
+            Assert.Equal(4, info.WarningLevel);
         }
     }
 }

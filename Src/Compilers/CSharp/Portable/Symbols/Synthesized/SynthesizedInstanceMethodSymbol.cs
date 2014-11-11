@@ -1,7 +1,9 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Threading;
+using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.CSharp.Symbols
 {
@@ -30,11 +32,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         internal override bool TryGetThisParameter(out ParameterSymbol thisParameter)
         {
-            if (IsStatic)
-            {
-                thisParameter = null;
-                return true;
-            }
+            Debug.Assert(!IsStatic);
 
             if ((object)lazyThisParameter == null)
             {
@@ -52,6 +50,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         internal sealed override ObsoleteAttributeData ObsoleteAttributeData
         {
             get { return null; }
+        }
+
+        internal override int CalculateLocalSyntaxOffset(int localPosition, SyntaxTree localTree)
+        {
+            throw ExceptionUtilities.Unreachable;
         }
     }
 }
