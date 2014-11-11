@@ -4,7 +4,7 @@ Roslyn
 Mono compatible copy of Roslyn Source Code
 
 The build requires `master` Mono
-`153d104c077aab61c5046ddfd1a63f87612978e9` or newer.
+`b82016bf299af327c943f0e7f1fe2faa0ea3cc3e` or newer.
 
 C# compiler
 ============
@@ -14,7 +14,7 @@ There are a few steps to getting the C# compiler to build on Mono:
 ## Manual changes needed
 
 After succesfull package restore
-`packages/Microsoft.Net.ToolsetCompilers.0.7.4100302-beta/build/Microsoft.Net.ToolsetCompilers.props`
+`packages/Microsoft.Net.ToolsetCompilers.0.7.4101501-beta/build/Microsoft.Net.ToolsetCompilers.props`
 has to be replaced with
 
 ```xml
@@ -37,13 +37,19 @@ and copy the directory `v4.5/Profile/Profile7` into your Mono
 installation as a subdirectory of
 `$PREFIX/lib/mono/xbuild-frameworks/.NETPortable/v4.5/Profile/`.
 
+## Build FakeSign
+
+FakeSign tool is needed during build and needs to be build as first step
+
+	`xbuild Src/Tools/Source/FakeSign/FakeSign.csproj`
+
 ## Run xbuild
 
 The compiler can be build using xbuild with
 
-    xbuild Src/Compilers/CSharp/csc/csc.csproj
+    `xbuild Src/Compilers/CSharp/csc/csc.csproj`
 
-The Roslyn compiler is called `csc.exe` and when built can be found in
+The Roslyn compiler is called `csc.exe` and once built it can be found in
 the top level `Binaries/Debug` directory.
 
 Workspaces
