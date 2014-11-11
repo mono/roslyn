@@ -133,7 +133,8 @@
 
   <PropertyGroup>
     <CompileDependsOn>$(CompileDependsOn);FakeSignAssembly</CompileDependsOn>
-    <FakeSignToolPath>$(OutputPath)FakeSign.exe</FakeSignToolPath>
+    <FakeSignToolPath Condition=" '$(OS)' == 'Windows_NT'">$(OutputPath)FakeSign.exe</FakeSignToolPath>
+    <FakeSignToolPath Condition=" '$(OS)' != 'Windows_NT'">mono $(OutputPath)FakeSign.exe</FakeSignToolPath>
   </PropertyGroup>
   <!-- ====================================================================================
         FakeSign Assembly 
