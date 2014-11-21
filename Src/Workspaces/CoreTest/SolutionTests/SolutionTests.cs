@@ -16,7 +16,6 @@ using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Host.UnitTests;
-using Microsoft.CodeAnalysis.LanguageServices;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Microsoft.CodeAnalysis.Text;
@@ -654,20 +653,11 @@ namespace Microsoft.CodeAnalysis.UnitTests
         private Solution CreateNotKeptAliveSolution()
         {
             var workspace = new CustomWorkspace(TestHost.Services, "NotKeptAlive");
-
-            // prove we have the correct composition & type of workspace service provider
-            var service = workspace.Services.GetService<ICompilationCacheService>();
-            Assert.Equal(true, service is NotKeptAliveCompilationCacheServiceFactory.CacheService);
-
+            workspace.Options = workspace.Options.WithChangedOption(CacheOptions.RecoverableTreeLengthThreshold, 0);
             return workspace.CurrentSolution;
         }
 
-        private static Solution GetDelayedEvictionSolution()
-        {
-            return new CustomWorkspace(TestHost.Services, "DelayedEviction").CurrentSolution;
-        }
-
-        private void StopObservingAndWaitForReferenceToGo(ObjectReference observed)
+        private void StopObservingAndWaitForReferenceToGo(ObjectReference observed, int delay = 0)
         {
             // stop observing it and let GC reclaim it
             observed.Strong = null;
@@ -1012,23 +1002,6 @@ namespace Microsoft.CodeAnalysis.UnitTests
             TestRecoverableSyntaxTree(sol, did);
         }
 
-        private static bool IsReparsedTree(SyntaxTree tree)
-        {
-            var csharpRecoverable = tree as CSharpSyntaxTreeFactoryServiceFactory.CSharpSyntaxTreeFactoryService.RecoverableSyntaxTree;
-            if (csharpRecoverable != null)
-            {
-                return csharpRecoverable.IsReparsed;
-            }
-
-            var vbRecoverable = tree as VisualBasicSyntaxTreeFactoryServiceFactory.VisualBasicSyntaxTreeFactoryService.RecoverableSyntaxTree;
-            if (vbRecoverable != null)
-            {
-                return vbRecoverable.IsReparsed;
-            }
-
-            return false;
-        }
-
         private void TestRecoverableSyntaxTree(Solution sol, DocumentId did)
         {
             // get it async and wait for it to get GC'd
@@ -1039,7 +1012,6 @@ namespace Microsoft.CodeAnalysis.UnitTests
 
             // access the tree & root again (recover it)
             var tree = doc.GetSyntaxTreeAsync().Result;
-            Assert.True(IsReparsedTree(tree));
 
             // this should cause reparsing
             var root = tree.GetRoot();
@@ -1057,7 +1029,6 @@ namespace Microsoft.CodeAnalysis.UnitTests
 
             // access the tree & root again (recovert it)
             var tree2 = doc2.GetSyntaxTreeAsync().Result;
-            Assert.False(IsReparsedTree(tree2));
 
             // this should cause deserialization
             var root2 = tree2.GetRoot();

@@ -4,7 +4,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.Shared.Collections
@@ -15,6 +14,8 @@ namespace Microsoft.CodeAnalysis.Shared.Collections
     /// </summary>
     internal partial class IntervalTree<T> : IEnumerable<T>
     {
+        public static readonly IntervalTree<T> Empty = new IntervalTree<T>();
+
         protected Node root;
 
         private delegate bool TestInterval(T value, int start, int length, IIntervalIntrospector<T> introspector, bool skipZeroLengthIntervals);

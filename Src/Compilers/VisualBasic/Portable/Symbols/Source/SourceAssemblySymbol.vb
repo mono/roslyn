@@ -138,6 +138,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             End Get
         End Property
 
+        Friend Overrides Function GetSpecialTypeMember(member As SpecialMember) As Symbol
+            If m_Compilation.IsMemberMissing(member) Then
+                Return Nothing
+            End If
+
+            Return MyBase.GetSpecialTypeMember(member)
+        End Function
+
         Public Overrides ReadOnly Property Name As String
             Get
                 Return m_AssemblySimpleName
@@ -741,7 +749,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
         Friend ReadOnly Property AssemblyHashAlgorithm As AssemblyHashAlgorithm
             Get
-                Return If(AssemblyAlgorithmIdAttributeSetting, AssemblyHashAlgorithm.SHA1)
+                Return If(AssemblyAlgorithmIdAttributeSetting, AssemblyHashAlgorithm.Sha1)
             End Get
         End Property
 
@@ -986,14 +994,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             ElseIf attrData.IsTargetAttribute(Me, AttributeDescription.AssemblyVersionAttribute) Then
                 Dim verString = DirectCast(attrData.CommonConstructorArguments(0).Value, String)
                 Dim version As Version = Nothing
-                If Not VersionHelper.TryParseWithWildcards(verString, version) Then
+                If Not VersionHelper.TryParseAssemblyVersion(verString, allowWildcard:=True, version:=version )Then
                     arguments.Diagnostics.Add(ERRID.ERR_InvalidVersionFormat, GetAssemblyAttributeFirstArgumentLocation(arguments.AttributeSyntaxOpt))
                 End If
                 arguments.GetOrCreateData(Of CommonAssemblyWellKnownAttributeData)().AssemblyVersionAttributeSetting = version
             ElseIf attrData.IsTargetAttribute(Me, AttributeDescription.AssemblyFileVersionAttribute) Then
                 Dim dummy As Version = Nothing
                 Dim verString = DirectCast(attrData.CommonConstructorArguments(0).Value, String)
-                If Not VersionHelper.TryParse(verString, dummy) OrElse Not VersionHelper.Validate(dummy) Then
+                If Not VersionHelper.TryParseAssemblyVersion(verString, allowWildcard:=False, version:=dummy) Then
                     arguments.Diagnostics.Add(ERRID.WRN_InvalidVersionFormat, GetAssemblyAttributeFirstArgumentLocation(arguments.AttributeSyntaxOpt))
                 End If
 
@@ -1019,8 +1027,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 'just check the format of this one, don't do anything else with it.
                 Dim dummy As Version = Nothing
                 Dim verString = DirectCast(attrData.CommonConstructorArguments(0).Value, String)
-                'Validation here includes checking that the values are < 65535
-                If (Not VersionHelper.TryParse(verString, dummy) OrElse Not VersionHelper.Validate(dummy)) Then
+                If Not VersionHelper.TryParseAssemblyVersion(verString, allowWildcard:=False, version:=dummy) Then
                     arguments.Diagnostics.Add(ERRID.ERR_InvalidVersionFormat2, GetAssemblyAttributeFirstArgumentLocation(arguments.AttributeSyntaxOpt))
                 End If
             ElseIf attrData.IsTargetAttribute(Me, AttributeDescription.AssemblyCopyrightAttribute) Then

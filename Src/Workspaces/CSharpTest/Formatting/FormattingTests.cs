@@ -5395,8 +5395,7 @@ class Program
         System.Console.WriteLine(args?.Length);
     }
 }";
-            var parseOptions = new CSharpParseOptions(languageVersion: LanguageVersion.Experimental);
-
+            var parseOptions = new CSharpParseOptions();
             AssertFormat(expected, code, parseOptions: parseOptions);
         }
 
@@ -5590,6 +5589,30 @@ class C
 }";
 
             AssertFormat(expected, code);
+        }
+
+        [WorkItem(961559)]
+        [Fact, Trait(Traits.Feature, Traits.Features.Formatting)]
+        public void ReconstructWhitespaceStringUsingTabs()
+        {
+            var optionSet = new Dictionary<OptionKey, object> { { new OptionKey(FormattingOptions.UseTabs, LanguageNames.CSharp), true } };
+            AssertFormat(@"using System;
+
+class Program
+{
+	static void Main(string[] args)
+	{
+		Console.WriteLine(""""); // FooBar
+	}
+}", @"using System;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Console.WriteLine(""""); // FooBar
+    }
+}", false, optionSet);
         }
     }
 }

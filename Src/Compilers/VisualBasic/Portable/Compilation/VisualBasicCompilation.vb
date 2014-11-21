@@ -111,6 +111,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Private m_lazyClsComplianceDiagnostics As ImmutableArray(Of Diagnostic)
 
         ''' <summary>
+        ''' Used for test purposes only to emulate missing members.
+        ''' </summary>
+        Private m_lazyMakeMemberMissingMap As SmallDictionary(Of Integer, Boolean)
+
+        ''' <summary>
         ''' A SyntaxTree and the associated RootSingleNamespaceDeclaration for an embedded
         ''' syntax tree in the Compilation. Unlike the entries in m_rootNamespaces, the
         ''' SyntaxTree here is lazy since the tree cannot be evaluated until the references
@@ -1770,6 +1775,38 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return Assembly.GetSpecialTypeMember(memberId)
         End Function
 
+        Friend Sub MakeMemberMissing(member As WellKnownMember)
+            MakeMemberMissing(CInt(member))
+        End Sub
+
+        Friend Sub MakeMemberMissing(member As SpecialMember)
+            MakeMemberMissing(-CInt(member) - 1)
+        End Sub
+
+        Friend Function IsMemberMissing(member As WellKnownMember) As Boolean
+            Return IsMemberMissing(CInt(member))
+        End Function
+
+        Friend Function IsMemberMissing(member As SpecialMember) As Boolean
+            Return IsMemberMissing(-CInt(member) - 1)
+        End Function
+
+        Private Sub MakeMemberMissing(member As Integer)
+            If m_lazyMakeMemberMissingMap Is Nothing Then
+                m_lazyMakeMemberMissingMap = New SmallDictionary(Of Integer, Boolean)()
+            End If
+
+            m_lazyMakeMemberMissingMap(member) = True
+        End Sub
+
+        Private Function IsMemberMissing(member As Integer) As Boolean
+            If m_lazyMakeMemberMissingMap IsNot Nothing Then
+                Return m_lazyMakeMemberMissingMap.ContainsKey(member)
+            End If
+
+            Return False
+        End Function
+
         ''' <summary>
         ''' Lookup a type within the compilation's assembly and all referenced assemblies
         ''' using its canonical CLR metadata name (names are compared case-sensitively).
@@ -2103,28 +2140,28 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             emitOptions As EmitOptions,
             manifestResources As IEnumerable(Of ResourceDescription),
             assemblySymbolMapper As Func(Of IAssemblySymbol, AssemblyIdentity),
-            cancellationToken As CancellationToken,
             testData As CompilationTestData,
-            diagnostics As DiagnosticBag) As CommonPEModuleBuilder
+            diagnostics As DiagnosticBag,
+            cancellationToken As CancellationToken) As CommonPEModuleBuilder
 
             Return CreateModuleBuilder(
                 emitOptions,
                 manifestResources,
                 assemblySymbolMapper,
-                cancellationToken,
                 testData,
                 diagnostics,
-                ImmutableArray(Of NamedTypeSymbol).Empty)
+                ImmutableArray(Of NamedTypeSymbol).Empty,
+                cancellationToken)
         End Function
 
         Friend Overloads Function CreateModuleBuilder(
             emitOptions As EmitOptions,
             manifestResources As IEnumerable(Of ResourceDescription),
             assemblySymbolMapper As Func(Of IAssemblySymbol, AssemblyIdentity),
-            cancellationToken As CancellationToken,
             testData As CompilationTestData,
             diagnostics As DiagnosticBag,
-            additionalTypes As ImmutableArray(Of NamedTypeSymbol)) As CommonPEModuleBuilder
+            additionalTypes As ImmutableArray(Of NamedTypeSymbol),
+            cancellationToken As CancellationToken) As CommonPEModuleBuilder
 
             Debug.Assert(diagnostics.IsEmptyWithoutResolution) ' True, but not required.
 
@@ -2176,10 +2213,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             moduleBuilder As CommonPEModuleBuilder,
             win32Resources As Stream,
             xmlDocStream As Stream,
-            cancellationToken As CancellationToken,
             generateDebugInfo As Boolean,
             diagnostics As DiagnosticBag,
-            filterOpt As Predicate(Of ISymbol)) As Boolean
+            filterOpt As Predicate(Of ISymbol),
+            cancellationToken As CancellationToken) As Boolean
 
             ' The diagnostics should include syntax and declaration errors. We insert these before calling Emitter.Emit, so that we don't emit
             ' metadata if there are declaration errors or method body errors (but we do insert all errors from method body binding...)
@@ -2601,7 +2638,177 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return Me.GetEntryPoint(cancellationToken)
         End Function
 
+        ''' <summary>
+        ''' Return true if there Is a source declaration symbol name that meets given predicate.
+        ''' </summary>
+        Public Overrides Function ContainsSymbolsWithName(predicate As Func(Of String, Boolean), Optional filter As SymbolFilter = SymbolFilter.TypeAndMember, Optional cancellationToken As CancellationToken = Nothing) As Boolean
+            If predicate Is Nothing Then
+                Throw New ArgumentNullException(NameOf (predicate))
+            End If
+
+            If filter = SymbolFilter.None Then
+                Throw New ArgumentException(VBResources.NoNoneSearchCriteria, NameOf (filter))
+            End If
+
+            Return Me.Declarations.ContainsName(predicate, filter, cancellationToken)
+        End Function
+
+        ''' <summary>
+        ''' Return source declaration symbols whose name meets given predicate.
+        ''' </summary>
+        Public Overrides Function GetSymbolsWithName(predicate As Func(Of String, Boolean), Optional filter As SymbolFilter = SymbolFilter.TypeAndMember, Optional cancellationToken As CancellationToken = Nothing) As IEnumerable(Of ISymbol)
+            If predicate Is Nothing Then
+                Throw New ArgumentNullException(NameOf (predicate))
+            End If
+
+            If filter = SymbolFilter.None Then
+                Throw New ArgumentException(VBResources.NoNoneSearchCriteria, NameOf (filter))
+            End If
+
+            Return New SymbolSearcher(Me).GetSymbolsWithName(predicate, filter, cancellationToken)
+        End Function
 #End Region
 
+        Private Class SymbolSearcher
+
+            Private ReadOnly cache As Dictionary(Of Declaration, NamespaceOrTypeSymbol)
+            Private ReadOnly compilation As VisualBasicCompilation
+
+            Public Sub New(compilation As VisualBasicCompilation)
+                Me.cache = New Dictionary(Of Declaration, NamespaceOrTypeSymbol)()
+                Me.compilation = compilation
+            End Sub
+
+            Public Function GetSymbolsWithName(predicate As Func(Of String, Boolean), filter As SymbolFilter, cancellationToken As CancellationToken) As IEnumerable(Of ISymbol)
+                Dim result = New HashSet(Of ISymbol)()
+                Dim spine = New List(Of MergedNamespaceOrTypeDeclaration)()
+
+                AppendSymbolsWithName(spine, Me.compilation.Declarations.MergedRoot, predicate, filter, result, cancellationToken)
+
+                Return result
+            End Function
+
+            Private Sub AppendSymbolsWithName(
+                spine As List(Of MergedNamespaceOrTypeDeclaration), current As MergedNamespaceOrTypeDeclaration, predicate As Func(Of String, Boolean), filter As SymbolFilter, [set] As HashSet(Of ISymbol), cancellationToken As CancellationToken)
+
+                Dim includeNamespace = (filter And SymbolFilter.Namespace) = SymbolFilter.Namespace
+                Dim includeType = (filter And SymbolFilter.Type) = SymbolFilter.Type
+                Dim includeMember = (filter And SymbolFilter.Member) = SymbolFilter.Member
+
+                If current.Kind = DeclarationKind.Namespace Then
+                    If includeNamespace AndAlso predicate(current.Name) Then
+                        Dim container = GetSpineSymbol(spine)
+                        [set].Add(GetSymbol(container, current))
+                    End If
+                Else
+                    If includeType AndAlso predicate(current.Name) Then
+                        Dim container = GetSpineSymbol(spine)
+                        [set].Add(GetSymbol(container, current))
+                    End If
+
+                    If includeMember Then
+                        AppendMemberSymbolsWithName(spine, current, predicate, [set], cancellationToken)
+                    End If
+                End If
+
+                spine.Add(current)
+                For Each child In current.Children.OfType(Of MergedNamespaceOrTypeDeclaration)()
+                    If includeMember OrElse includeType Then
+                        AppendSymbolsWithName(spine, child, predicate, filter, [set], cancellationToken)
+                        Continue For
+                    End If
+
+                    If child.Kind = DeclarationKind.Namespace Then
+                        AppendSymbolsWithName(spine, child, predicate, filter, [set], cancellationToken)
+                    End If
+                Next
+
+                spine.RemoveAt(spine.Count - 1)
+            End Sub
+
+            Private Sub AppendMemberSymbolsWithName(
+                spine As List(Of MergedNamespaceOrTypeDeclaration), current As MergedNamespaceOrTypeDeclaration, predicate As Func(Of String, Boolean), [set] As HashSet(Of ISymbol), cancellationToken As CancellationToken)
+
+                spine.Add(current)
+
+                Dim container As NamespaceOrTypeSymbol = Nothing
+                Dim mergedType = DirectCast(current, MergedTypeDeclaration)
+                For Each name In mergedType.MemberNames
+                    If predicate(name) Then
+                        container = If(container, GetSpineSymbol(spine))
+                        [set].UnionWith(container.GetMembers(name))
+                    End If
+                Next
+
+                spine.RemoveAt(spine.Count - 1)
+            End Sub
+
+            Private Function GetSpineSymbol(spine As List(Of MergedNamespaceOrTypeDeclaration)) As NamespaceOrTypeSymbol
+                If spine.Count = 0 Then
+                    Return Nothing
+                End If
+
+                Dim symbol = GetCachedSymbol(spine(spine.Count - 1))
+                If symbol IsNot Nothing Then
+                    Return symbol
+                End If
+
+                Dim current = TryCast(Me.compilation.GlobalNamespace, NamespaceOrTypeSymbol)
+                For i = 1 To spine.Count - 1
+                    current = GetSymbol(current, spine(i))
+                Next
+
+                Return current
+            End Function
+
+            Private Function GetCachedSymbol(declaration As MergedNamespaceOrTypeDeclaration) As NamespaceOrTypeSymbol
+                Dim symbol As NamespaceOrTypeSymbol = Nothing
+                If Me.cache.TryGetValue(declaration, symbol) Then
+                    Return symbol
+                End If
+
+                Return Nothing
+            End Function
+
+            Private Function GetSymbol(container As NamespaceOrTypeSymbol, declaration As MergedNamespaceOrTypeDeclaration) As NamespaceOrTypeSymbol
+                If container Is Nothing Then
+                    Return Me.compilation.GlobalNamespace
+                End If
+
+                Dim symbol = GetCachedSymbol(declaration)
+                If symbol IsNot Nothing Then
+                    Return symbol
+                End If
+
+                If declaration.Kind = DeclarationKind.Namespace Then
+                    AddCache(container.GetMembers(declaration.Name).OfType(Of NamespaceOrTypeSymbol)())
+                Else
+                    AddCache(container.GetTypeMembers(declaration.Name))
+                End If
+
+                Return GetCachedSymbol(declaration)
+            End Function
+
+            Private Sub AddCache(symbols As IEnumerable(Of NamespaceOrTypeSymbol))
+                For Each symbol In symbols
+                    Dim mergedNamespace = TryCast(symbol, MergedNamespaceSymbol)
+                    If mergedNamespace IsNot Nothing Then
+                        Me.cache(mergedNamespace.ConstituentNamespaces.OfType(Of SourceNamespaceSymbol).First().MergedDeclaration) = symbol
+                        Continue For
+                    End If
+
+                    Dim sourceNamespace = TryCast(symbol, SourceNamespaceSymbol)
+                    If sourceNamespace IsNot Nothing Then
+                        Me.cache(sourceNamespace.MergedDeclaration) = sourceNamespace
+                        Continue For
+                    End If
+
+                    Dim sourceType = TryCast(symbol, SourceMemberContainerTypeSymbol)
+                    If sourceType IsNot Nothing Then
+                        Me.cache(sourceType.TypeDeclaration) = sourceType
+                    End If
+                Next
+            End Sub
+        End Class
     End Class
 End Namespace

@@ -36,6 +36,19 @@ namespace Microsoft.CodeAnalysis.CSharp
             get { return binder.Conversions; }
         }
 
+        // lazily compute if the compiler is in "strict" mode (rather than duplicating bugs for compatibility)
+        private bool? strict = null;
+        bool Strict
+        {
+            get
+            {
+                if (strict.HasValue) return strict.Value;
+                bool value = binder.Compilation.Feature("strict") != null;
+                strict = value;
+                return value;
+            }
+        }
+
         // UNDONE: This List<MethodResolutionResult> deal should probably be its own datastructure.
         // We need an indexable collection of mappings from method candidates to their up-to-date
         // overload resolution status. It must be fast and memory efficient, but it will very often
@@ -1237,8 +1250,56 @@ namespace Microsoft.CodeAnalysis.CSharp
             // following tie-breaking rules are applied, in order, to determine the better function
             // member. 
 
+            int m1ParameterCount;
+            int m2ParameterCount;
+
             if (!allSame)
             {
+                // SPEC VIOLATION: Even when parameter type sequences {P1, P2, …, PN} and {Q1, Q2, …, QN} are
+                //                 not equivalent, native compiler has tie-breaking when optional parameters 
+                //                 are involved. Specifically,
+                //      A candidate that does not use optional parameters and is not applicable in expanded form is
+                //      better than a candidate that is applicable in expanded form or uses optional parameters.
+                // Relevant code in the native compiler is at the end of 
+                //                       BetterTypeEnum ExpressionBinder::WhichMethodIsBetter(
+                //                                           const CandidateFunctionMember &node1,
+                //                                           const CandidateFunctionMember &node2,
+                //                                           Type* pTypeThrough,
+                //                                           ArgInfos*args)
+                m1ParameterCount = m1.Member.GetParameterCount();
+                m2ParameterCount = m2.Member.GetParameterCount();
+
+                if (m1.Result.Kind == MemberResolutionKind.ApplicableInExpandedForm)
+                {
+                    if (m2.Result.Kind != MemberResolutionKind.ApplicableInExpandedForm && m2ParameterCount != arguments.Count)
+                    {
+                        // Optionals used
+                        return BetterResult.Right;
+                    }
+                }
+                else if (m2.Result.Kind == MemberResolutionKind.ApplicableInExpandedForm)
+                {
+                    if (m1.Result.Kind != MemberResolutionKind.ApplicableInExpandedForm && m1ParameterCount != arguments.Count)
+                    {
+                        // Optionals used
+                        return BetterResult.Left;
+                    }
+                }
+                else if (m1ParameterCount == arguments.Count)
+                {
+                    if (m2ParameterCount != arguments.Count)
+                    {
+                        // Optionals used
+                        return BetterResult.Left;
+                    }
+                }
+                else if (m2ParameterCount == arguments.Count)
+                {
+                    Debug.Assert(m1ParameterCount != arguments.Count);
+                    // Optionals used
+                    return BetterResult.Right;
+                }
+
                 return BetterResult.Neither;
             }
 
@@ -1279,8 +1340,8 @@ namespace Microsoft.CodeAnalysis.CSharp
             // Otherwise, if both methods have params arrays and are applicable only in their
             // expanded forms, and if MP has more declared parameters than MQ, then MP is better than MQ. 
 
-            var m1ParameterCount = m1.Member.GetParameterCount();
-            var m2ParameterCount = m2.Member.GetParameterCount();
+            m1ParameterCount = m1.Member.GetParameterCount();
+            m2ParameterCount = m2.Member.GetParameterCount();
 
             if (m1.Result.Kind == MemberResolutionKind.ApplicableInExpandedForm && m2.Result.Kind == MemberResolutionKind.ApplicableInExpandedForm)
             {

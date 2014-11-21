@@ -16,7 +16,6 @@
     <AssemblyName>Microsoft.CodeAnalysis.Workspaces</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">..\..\..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
     <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
     <TargetFrameworkIdentifier>.NETPortable</TargetFrameworkIdentifier>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -92,9 +91,6 @@
       <Link>InternalUtilities\FatalError.cs</Link>
     </Compile>
     <Compile Include="..\..\..\Compilers\Core\Portable\InternalUtilities\FileNameUtilities.cs">
-      <Link>InternalUtilities\PathUtilities.cs</Link>
-    </Compile>
-    <Compile Include="..\..\..\Compilers\Core\Desktop\PathUtilities.cs">
       <Link>InternalUtilities\PathUtilities.cs</Link>
     </Compile>
     <Compile Include="..\..\..\Compilers\Core\Portable\InternalUtilities\Hash.cs">
@@ -232,10 +228,10 @@
     </Compile>
   </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;PORTABLE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <DefineConstants>TRACE;PORTABLE</DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildAssemblyNameFragment)' == 'v12.0'">
     <DefineConstants>$(DefineConstants);MSBUILD12</DefineConstants>
@@ -263,6 +259,9 @@
     <InternalsVisibleTo Include="Microsoft.VisualStudio.LanguageServices.VisualBasic" />
     <InternalsVisibleTo Include="csi" />
     <InternalsVisibleTo Include="Roslyn.CSharp.InteractiveEditorFeatures" />
+    <InternalsVisibleTo Include="Roslyn.Diagnostics.Analyzers" />
+    <InternalsVisibleTo Include="Roslyn.Diagnostics.Analyzers.CSharp" />
+    <InternalsVisibleTo Include="Roslyn.Diagnostics.Analyzers.VisualBasic" />
     <InternalsVisibleTo Include="Roslyn.InteractiveEditorFeatures" />
     <InternalsVisibleTo Include="Roslyn.InteractiveFeatures" />
     <InternalsVisibleTo Include="Roslyn.VisualBasic.InteractiveEditorFeatures" />
@@ -370,6 +369,8 @@
     <Compile Include="Log\LogAggregator.cs" />
     <Compile Include="Log\Logger.LogBlock.cs" />
     <Compile Include="Log\LogMessage.cs" />
+    <Compile Include="Serialization\AssemblySerializationInfoService.cs" />
+    <Compile Include="Serialization\IAssemblySerializationInfoService.cs" />
     <Compile Include="Shared\Extensions\ITypeSymbolExtensions.ReplaceTypeParameterBasedOnTypeConstraintVisitor.cs" />
     <Compile Include="Shared\Utilities\XmlFragmentParser.cs" />
     <Compile Include="Simplification\SimplificationOptionProvider.cs" />
@@ -379,10 +380,10 @@
     <Compile Include="Versions\ISemanticVersionTrackingService.cs" />
     <Compile Include="Versions\PersistedVersionStampLogger.cs" />
     <Compile Include="Workspace\CustomWorkspace.cs" />
-    <Compile Include="Workspace\Host\Caching\AbstractCacheServiceFactory.cs" />
+    <Compile Include="Workspace\Host\Caching\ICachedObjectOwner.cs" />
     <Compile Include="Workspace\Host\Caching\CacheOptions.cs" />
-    <Compile Include="Workspace\Host\Caching\CostBasedCache.Nested.cs" />
-    <Compile Include="Workspace\Host\Caching\CostBasedCache_Logging.cs" />
+    <Compile Include="Workspace\Host\Caching\CacheServiceFactory.cs" />
+    <Compile Include="Workspace\Host\Caching\IProjectCacheService.cs" />
     <Compile Include="Differencing\Edit.cs" />
     <Compile Include="Differencing\EditKind.cs" />
     <Compile Include="Differencing\EditScript.cs">
@@ -596,7 +597,9 @@
     <Compile Include="Rename\ConflictEngine\ConflictingIdentifierTracker.cs" />
     <Compile Include="Rename\ConflictEngine\ConflictResolution.cs" />
     <Compile Include="Rename\ConflictEngine\ConflictResolver.cs" />
-    <Compile Include="Rename\ConflictEngine\ConflictResolver.Session.cs" />
+    <Compile Include="Rename\ConflictEngine\ConflictResolver.Session.cs">
+      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
+    </Compile>
     <Compile Include="Rename\ConflictEngine\DeclarationConflictHelpers.cs" />
     <Compile Include="Rename\ConflictEngine\RelatedLocation.cs" />
     <Compile Include="Rename\ConflictEngine\RelatedLocationType.cs" />
@@ -777,7 +780,6 @@
     <Compile Include="Utilities\EditDistance.cs" />
     <Compile Include="Utilities\EventMap.cs" />
     <Compile Include="Utilities\ExceptionHelpers.cs" />
-    <Compile Include="Utilities\FilePathUtilities.cs" />
     <Compile Include="Utilities\IBidirectionalMap.cs" />
     <Compile Include="Utilities\ICollectionExtensions.cs" />
     <Compile Include="Utilities\IDictionaryExtensions.cs" />
@@ -803,19 +805,7 @@
     <Compile Include="Utilities\Documentation\DeferredDocumentationProvider.cs" />
     <Compile Include="Utilities\Documentation\XmlDocumentationProvider.cs" />
     <Compile Include="Workspace\DocumentEventArgs.cs" />
-    <Compile Include="Workspace\Host\Caching\CachedObjectSource.cs" />
-    <Compile Include="Workspace\Host\Caching\CacheId.cs" />
-    <Compile Include="Workspace\Host\Caching\CompilationCacheServiceFactory.cs" />
-    <Compile Include="Workspace\Host\Caching\CostBasedCache.cs" />
-    <Compile Include="Workspace\Host\Caching\ICompilationCacheService.cs" />
-    <Compile Include="Workspace\Host\Caching\IObjectCache.cs" />
-    <Compile Include="Workspace\Host\Caching\ISyntaxTreeCacheService.cs" />
-    <Compile Include="Workspace\Host\Caching\ITextCacheService.cs" />
-    <Compile Include="Workspace\Host\Caching\IWeakAction.cs" />
     <Compile Include="Workspace\Host\Caching\RecoverableCachedObjectSource.cs" />
-    <Compile Include="Workspace\Host\Caching\SyntaxTreeCacheServiceFactory.cs" />
-    <Compile Include="Workspace\Host\Caching\TextCacheServiceFactory.cs" />
-    <Compile Include="Workspace\Host\Caching\WeakAction.cs" />
     <Compile Include="Workspace\Host\HostLanguageServices.cs" />
     <Compile Include="Workspace\Host\HostServices.cs" />
     <Compile Include="Workspace\Host\Metadata\MetadataServiceFactory.cs" />
@@ -826,8 +816,6 @@
     <Compile Include="Workspace\Host\PersistentStorage\NoOpPersistentStorage.cs" />
     <Compile Include="Workspace\Host\PersistentStorage\PersistentStorageOptions.cs" />
     <Compile Include="Workspace\Host\PersistentStorage\PersistentStorageServiceFactory.cs" />
-    <Compile Include="Workspace\Host\SyntaxTreeStorage\ISyntaxTreeStorageService.cs" />
-    <Compile Include="Workspace\Host\SyntaxTreeStorage\SyntaxTreeStorageService.cs" />
     <Compile Include="Workspace\Host\TaskScheduler\IWorkspaceTaskScheduler.cs" />
     <Compile Include="Workspace\Host\TaskScheduler\IWorkspaceTaskSchedulerFactory.cs" />
     <Compile Include="Workspace\Host\TaskScheduler\WorkspaceTaskSchedulerFactory.cs" />
@@ -843,6 +831,7 @@
     <Compile Include="Workspace\Host\TextFactory\TextFactoryServiceFactory.TextFactoryService.cs" />
     <Compile Include="Workspace\Solution\AbstractLinkedFileMergeConflictCommentAdditionService.cs" />
     <Compile Include="Workspace\Solution\AdditionalDocumentStream.cs" />
+    <Compile Include="Workspace\Solution\MetadataReferenceManager.cs" />
     <Compile Include="Workspace\Solution\TextDocumentState.cs">
       <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
     </Compile>
@@ -947,12 +936,4 @@
     <Import Project="..\..\..\..\packages\StyleCop.MSBuild.4.7.48.2\build\StyleCop.MSBuild.Targets" Condition="Exists('..\..\..\..\packages\StyleCop.MSBuild.4.7.48.2\build\StyleCop.MSBuild.Targets')" />
     <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-    <Error Condition="!Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4101501-beta\build\Microsoft.Net.ToolsetCompilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4101501-beta\build\Microsoft.Net.ToolsetCompilers.props'))" />
-    <Error Condition="!Exists('..\..\..\..\packages\Microsoft.Net.RoslynDiagnostics.0.7.4101501-beta\build\Microsoft.Net.RoslynDiagnostics.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\Microsoft.Net.RoslynDiagnostics.0.7.4101501-beta\build\Microsoft.Net.RoslynDiagnostics.props'))" />
-  </Target>
 </Project>

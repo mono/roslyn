@@ -9,7 +9,8 @@ namespace Roslyn.Utilities
 {
     internal static class PathUtilities
     {
-        internal static readonly char DirectorySeparatorChar = '\\';
+        internal const string DirectorySeparatorStr = "\\";
+        internal const char DirectorySeparatorChar = '\\';
         internal const char AltDirectorySeparatorChar = '/';
         internal const char VolumeSeparatorChar = ':';
 
@@ -117,7 +118,7 @@ namespace Roslyn.Utilities
 
         internal static bool IsAbsolute(string path)
         {
-            if (path == null)
+            if (string.IsNullOrEmpty(path))
             {
                 return false;
             }
@@ -156,7 +157,7 @@ namespace Roslyn.Utilities
         /// </returns>
         internal static string GetPathRoot(string path)
         {
-            if (path == null)
+            if (string.IsNullOrWhiteSpace(path))
             {
                 return null;
             }
@@ -173,6 +174,15 @@ namespace Roslyn.Utilities
             if (IsDriveRootedAbsolutePath(path))
             {
                 return 3;
+            }
+
+            // If this is a Unix system, '/' starts a rooted path
+            var platform = Environment.OSVersion.Platform;
+            if ((platform == PlatformID.MacOSX || platform == PlatformID.Unix)
+                && (IsDirectorySeparator(path[0]) &&
+                    (path.Length == 1 || !IsDirectorySeparator(path[1]))))
+            {
+                return 1;
             }
 
             // "\\machine\share"

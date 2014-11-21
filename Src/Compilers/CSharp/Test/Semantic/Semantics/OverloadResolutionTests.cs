@@ -5537,63 +5537,6 @@ class C
                 Diagnostic(ErrorCode.ERR_BadArgType, "1").WithArguments("1", "int", "string"));
         }
 
-        [WorkItem(544571, "DevDiv")]
-        [Fact]
-        public void TestResolveOverloads()
-        {
-            var source = @"
-using System;
-class Program
-{
-    static void M()
-    {
-    }
-    static void M(long l)
-    {
-    }
-    static void M(short s)
-    {
-    }
-    static void M(int i)
-    {
-    }
-    static void Main()
-    {
-        // Perform overload resolution here.
-    }
-}";
-            var tree = Parse(source);
-            var compilation = CSharpCompilation.Create("MyCompilation",
-                syntaxTrees: new[] { tree }, references: new[] { MscorlibRef });
-            var model = compilation.GetSemanticModel(tree);
-
-            // Get MethodSymbols for all MethodDeclarationSyntax nodes with name 'M'.
-            var methodSymbols = tree.GetCompilationUnitRoot()
-                .DescendantNodes().OfType<MethodDeclarationSyntax>()
-                .Where(m => m.Identifier.ToString() == "M")
-                .Select(m => (MethodSymbol)model.GetDeclaredSymbol(m));
-
-            // Perform overload resolution at the position identified by the comment '// Perform ...' above.
-            var position = source.IndexOf("//");
-            OverloadResolutionResult<MethodSymbol> overloadResults = ((CSharpSemanticModel)model).ResolveOverloads(
-                position,                                              // Position to determine scope and accessibility.
-                ImmutableArray.CreateRange<MethodSymbol>(methodSymbols), // Candidate MethodSymbols.
-                ImmutableArray.Create<TypeSymbol>(),                       // Type Arguments (if any).
-                ImmutableArray.Create<ArgumentSyntax>(              // Arguments.
-                    SyntaxFactory.Argument(
-                        SyntaxFactory.LiteralExpression(                      // OR Syntax.ParseExpression("100")
-                            SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal("100", 100)))));
-            Assert.True(overloadResults.Succeeded);
-
-            var results = string.Join("\r\n", overloadResults.Results
-                .Select(result => string.Format("{0}: {1}{2}",
-                    result.Resolution, result.Member, result.IsValid ? " [Selected Candidate]" : string.Empty)));
-
-            Assert.Equal(@"Worse: Program.M(long)
-Worse: Program.M(short)
-ApplicableInNormalForm: Program.M(int) [Selected Candidate]", results);
-        }
-
         [Fact]
         public void TypeInferenceFailures()
         {
@@ -6172,7 +6115,7 @@ public class C
 ";
             CreateCompilationWithMscorlib(source).VerifyDiagnostics(
                 // (4,20): error CS0115: 'C.Override<T>(T)': no suitable method found to override
-                // 	public override T Override<T>(T t) 
+                //     public override T Override<T>(T t) 
                 Diagnostic(ErrorCode.ERR_OverrideNotExpected, "Override").WithArguments("C.Override<T>(T)"));
         }
 
@@ -7088,5 +7031,596 @@ class C
 1");
         }
 
+        [Fact]
+        [WorkItem(1079899, "DevDiv")]
+        [WorkItem(364, "CodePlex")]
+        public void TestBug1079899()
+        {
+            string source =
+@"
+namespace A.B
+{
+    static class X
+    {
+        public static int Test(this int o)
+        {
+            return 1;
+        }
+    }
+}
+namespace A.C
+{
+    static class X
+    {
+        public static int Test(this int o)
+        {
+            return 2;
+        }
+    }
+}
+namespace C
+{
+    using A.B;
+    using A.C.X;
+    class M
+    {
+        public static int Main()
+        {
+            if (1.Test() != 1)
+                return 1;
+            return 0;
+        }
+    }
+}
+";
+            var comp = CreateCompilationWithMscorlibAndSystemCore(source);
+            comp.VerifyDiagnostics(
+    // (31,19): error CS0121: The call is ambiguous between the following methods or properties: 'X.Test(int)' and 'X.Test(int)'
+    //             if (1.Test() != 1)
+    Diagnostic(ErrorCode.ERR_AmbigCall, "Test").WithArguments("A.B.X.Test(int)", "A.C.X.Test(int)").WithLocation(30, 19)
+                );
+
+            Assert.Equal("(30,19): error CS0121: The call is ambiguous between the following methods or properties: 'A.B.X.Test(int)' and 'A.C.X.Test(int)'", DiagnosticFormatter.Instance.Format(comp.GetDiagnostics()[0], System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        [Fact, WorkItem(1080896, "Devdiv"), WorkItem(367, "Devdiv")]
+        public void Bug1080896_0()
+        {
+
+            string source1 = @"
+using System;
+namespace ConsoleApplication2
+{
+    class Program
+    {
+        public class Foo {
+            public static bool IsThing(Foo t) { return false; }
+        }
+        public class Bar<T, V> where T : class
+        {
+            public static Bar<T, V> Create(Func<T, bool> filter)
+            {
+                System.Console.WriteLine(""Create(Func<T, bool> filter)"");
+                return null;
+            }
+            public static Bar<T, V> Create(Func<T, V> propertyPrev, Func<T, bool> filter = null)
+            {
+                System.Console.WriteLine(""Create(Func<T, V> propertyPrev, Func<T, bool> filter = null)"");
+                return null;
+            }
+        }
+        static void Main(string[] args)
+        {
+            var x = Bar<Foo, double>.Create(Foo.IsThing);
+        }
+    }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugExe);
+
+            CompileAndVerify(compilation, expectedOutput: @"Create(Func<T, bool> filter)");
+        }
+
+        [Fact, WorkItem(1080896, "Devdiv"), WorkItem(367, "Devdiv")]
+        public void Bug1080896_1()
+        {
+
+            string source1 = @"
+using System;
+namespace ConsoleApplication2
+{
+    class Program
+    {
+        public class Foo {
+            public static bool IsThing(Foo t) { return false; }
+        }
+        public class Bar<T, V> where T : class
+        {
+            public static Bar<T, V> Create(Func<T, bool> filter)
+            {
+                System.Console.WriteLine(""Create(Func < T, bool > filter)"");
+                return null;
+            }
+            public static Bar<T, V> Create(Func<T, V> propertyPrev, params Func<T, bool>[] filter)
+            {
+                System.Console.WriteLine(""Create(Func<T, V> propertyPrev, params Func<T, bool>[] filter"");
+                return null;
+            }
+        }
+        static void Main(string[] args)
+        {
+            var x = Bar<Foo, double>.Create(Foo.IsThing);
+        }
+    }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugExe);
+
+            compilation.VerifyDiagnostics(
+    // (25,38): error CS0121: The call is ambiguous between the following methods or properties: 'Program.Bar<T, V>.Create(Func<T, bool>)' and 'Program.Bar<T, V>.Create(Func<T, V>, params Func<T, bool>[])'
+    //             var x = Bar<Foo, double>.Create(Foo.IsThing);
+    Diagnostic(ErrorCode.ERR_AmbigCall, "Create").WithArguments("ConsoleApplication2.Program.Bar<T, V>.Create(System.Func<T, bool>)", "ConsoleApplication2.Program.Bar<T, V>.Create(System.Func<T, V>, params System.Func<T, bool>[])").WithLocation(25, 38)
+                );
+        }
+
+        [Fact, WorkItem(1080896, "Devdiv"), WorkItem(367, "Devdiv")]
+        public void Bug1080896_2()
+        {
+
+            string source1 = @"
+using System;
+namespace ConsoleApplication2
+{
+    class Program
+    {
+        public class Foo {
+            public static double IsThing(Foo t) { return 0; }
+        }
+        public class Bar<T, V> where T : class
+        {
+            public static Bar<T, V> Create(Func<T, bool> filter, params int[] dummy)
+            {
+                System.Console.WriteLine(""Create(Func<T, bool> filter, params int[] dummy)"");
+                return null;
+            }
+            public static Bar<T, V> Create(Func<T, V> propertyPrev, Func<T, bool> filter = null)
+            {
+                System.Console.WriteLine(""Create(Func<T, V> propertyPrev, Func<T, bool> filter = null)"");
+                return null;
+            }
+        }
+        static void Main(string[] args)
+        {
+            var x = Bar<Foo, double>.Create(Foo.IsThing);
+        }
+    }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugExe);
+
+            CompileAndVerify(compilation, expectedOutput: @"Create(Func<T, V> propertyPrev, Func<T, bool> filter = null)");
+        }
+
+        [Fact, WorkItem(1080896, "Devdiv"), WorkItem(367, "Devdiv")]
+        public void Bug1080896_3()
+        {
+
+            string source1 = @"
+using System;
+namespace ConsoleApplication2
+{
+    class Program
+    {
+        public class Foo {
+            public static double IsThing(Foo t) { return 0; }
+        }
+        public class Bar<T, V> where T : class
+        {
+            public static Bar<T, V> Create(Func<T, bool> filter, params int[] dummy)
+            {
+                System.Console.WriteLine(""Create(Func<T, bool> filter, params int[] dummy)"");
+                return null;
+            }
+            public static Bar<T, V> Create(Func<T, V> propertyPrev)
+            {
+                System.Console.WriteLine(""Create(Func<T, V> propertyPrev)"");
+                return null;
+            }
+        }
+        static void Main(string[] args)
+        {
+            var x = Bar<Foo, double>.Create(Foo.IsThing);
+        }
+    }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugExe);
+
+            compilation.VerifyDiagnostics(
+    // (25,38): error CS0121: The call is ambiguous between the following methods or properties: 'Program.Bar<T, V>.Create(Func<T, bool>, params int[])' and 'Program.Bar<T, V>.Create(Func<T, V>)'
+    //             var x = Bar<Foo, double>.Create(Foo.IsThing);
+    Diagnostic(ErrorCode.ERR_AmbigCall, "Create").WithArguments("ConsoleApplication2.Program.Bar<T, V>.Create(System.Func<T, bool>, params int[])", "ConsoleApplication2.Program.Bar<T, V>.Create(System.Func<T, V>)").WithLocation(25, 38)
+                );
+        }
+
+        [Fact, WorkItem(1080896, "Devdiv"), WorkItem(367, "Devdiv")]
+        public void Bug1080896_4()
+        {
+
+            string source1 = @"
+using System;
+namespace ConsoleApplication2
+{
+    class Program
+    {
+        public class Foo {
+            public static double IsThing(Foo t) { return 0; }
+        }
+        public class Bar<T, V> where T : class
+        {
+            public static Bar<T, V> Create(Func<T, V> propertyPrev)
+            {
+                System.Console.WriteLine(""Create(Func<T, V> propertyPrev)"");
+                return null;
+            }
+            public static Bar<T, V> Create(Func<T, bool> filter, params int[] dummy)
+            {
+                System.Console.WriteLine(""Create(Func<T, bool> filter, params int[] dummy)"");
+                return null;
+            }
+        }
+        static void Main(string[] args)
+        {
+            var x = Bar<Foo, double>.Create(Foo.IsThing);
+        }
+    }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugExe);
+
+            compilation.VerifyDiagnostics(
+    // (25,38): error CS0121: The call is ambiguous between the following methods or properties: 'Program.Bar<T, V>.Create(Func<T, V>)' and 'Program.Bar<T, V>.Create(Func<T, bool>, params int[])'
+    //             var x = Bar<Foo, double>.Create(Foo.IsThing);
+    Diagnostic(ErrorCode.ERR_AmbigCall, "Create").WithArguments("ConsoleApplication2.Program.Bar<T, V>.Create(System.Func<T, V>)", "ConsoleApplication2.Program.Bar<T, V>.Create(System.Func<T, bool>, params int[])").WithLocation(25, 38)
+                );
+        }
+
+        [Fact, WorkItem(1080896, "Devdiv"), WorkItem(367, "Devdiv")]
+        public void Bug1080896_5()
+        {
+
+            string source1 = @"
+using System;
+namespace ConsoleApplication2
+{
+    class Program
+    {
+        public class Foo {
+            public static bool IsThing(Foo t) { return false; }
+        }
+        public class Bar<T, V> where T : class
+        {
+            public static Bar<T, V> Create(Func<T, V> propertyPrev, params Func<T, bool>[] filter)
+            {
+                System.Console.WriteLine(""Create(Func<T, V> propertyPrev, params Func<T, bool>[] filter"");
+                return null;
+            }
+            public static Bar<T, V> Create(Func<T, bool> filter)
+            {
+                System.Console.WriteLine(""Create(Func < T, bool > filter)"");
+                return null;
+            }
+        }
+        static void Main(string[] args)
+        {
+            var x = Bar<Foo, double>.Create(Foo.IsThing);
+        }
+    }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugExe);
+
+            compilation.VerifyDiagnostics(
+    // (25,38): error CS0121: The call is ambiguous between the following methods or properties: 'Program.Bar<T, V>.Create(Func<T, V>, params Func<T, bool>[])' and 'Program.Bar<T, V>.Create(Func<T, bool>)'
+    //             var x = Bar<Foo, double>.Create(Foo.IsThing);
+    Diagnostic(ErrorCode.ERR_AmbigCall, "Create").WithArguments("ConsoleApplication2.Program.Bar<T, V>.Create(System.Func<T, V>, params System.Func<T, bool>[])", "ConsoleApplication2.Program.Bar<T, V>.Create(System.Func<T, bool>)").WithLocation(25, 38)
+                );
+        }
+
+        [Fact, WorkItem(1080896, "Devdiv"), WorkItem(367, "Devdiv")]
+        public void Bug1080896_6()
+        {
+
+            string source1 = @"
+using System;
+namespace ConsoleApplication2
+{
+    class Program
+    {
+        public class Foo {
+            public static bool IsThing(Foo t) { return false; }
+        }
+        public class Bar<T, V> where T : class
+        {
+            public static Bar<T, V> Create(Func<T, bool> filter, params int[] extra)
+            {
+                return null;
+            }
+            public static Bar<T, V> Create(Func<T, V> propertyPrev, params int[] extra)
+            {
+                return null;
+            }
+        }
+        static void Main(string[] args)
+        {
+            var x = Bar<Foo, double>.Create(Foo.IsThing);
+        }
+    }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugExe);
+
+            compilation.VerifyDiagnostics(
+    // (23,38): error CS0121: The call is ambiguous between the following methods or properties: 'Program.Bar<T, V>.Create(Func<T, bool>, params int[])' and 'Program.Bar<T, V>.Create(Func<T, V>, params int[])'
+    //             var x = Bar<Foo, double>.Create(Foo.IsThing);
+    Diagnostic(ErrorCode.ERR_AmbigCall, "Create").WithArguments("ConsoleApplication2.Program.Bar<T, V>.Create(System.Func<T, bool>, params int[])", "ConsoleApplication2.Program.Bar<T, V>.Create(System.Func<T, V>, params int[])").WithLocation(23, 38)
+                );
+        }
+
+        [Fact, WorkItem(1081302, "Devdiv"), WorkItem(371, "Devdiv")]
+        public void Bug1081302_0()
+        {
+
+            string source1 = @"
+using System;
+namespace ConsoleApplication2
+{
+    public static class Foo
+    {
+        public static U IfNotNull<T, U>(this T value, Func<T, U> selector, U defaultValue = default(U))
+        {
+            System.Console.WriteLine(""IfNotNull<T, U>(this T value, Func<T, U> selector, U defaultValue = default(U))"");
+            return value != null ? selector(value) : defaultValue;
+        }
+        public static U IfNotNull<T, U>(this T? source, Func<T, U> selector) where T : struct
+        {
+            System.Console.WriteLine(""IfNotNull<T, U>(this T? source, Func<T, U> selector)"");
+            return source.HasValue ? selector(source.Value) : default(U);
+        }
+    }
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            double? val = null;
+            var d1 = val.IfNotNull(v => v / 100);
+            var d2 = Foo.IfNotNull(val, v => v / 100);
+        }
+    }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source1, new[] { SystemCoreRef }, options: TestOptions.DebugExe);
+
+            CompileAndVerify(compilation, expectedOutput:
+@"IfNotNull<T, U>(this T? source, Func<T, U> selector)
+IfNotNull<T, U>(this T? source, Func<T, U> selector)");
+        }
+
+        [Fact, WorkItem(1081302, "Devdiv"), WorkItem(371, "Devdiv")]
+        public void Bug1081302_1()
+        {
+
+            string source1 = @"
+using System;
+namespace ConsoleApplication2
+{
+    public static class Foo
+    {
+        public static U IfNotNull<T, U>(this T value, Func<T, U> selector, params U[] defaultValue)
+        {
+            System.Console.WriteLine(""IfNotNull<T, U>(this T value, Func<T, U> selector, params U[] defaultValue)"");
+            return value != null ? selector(value) : defaultValue[0];
+        }
+        public static U IfNotNull<T, U>(this T? source, Func<T, U> selector) where T : struct
+        {
+            System.Console.WriteLine(""IfNotNull<T, U>(this T? source, Func<T, U> selector)"");
+            return source.HasValue ? selector(source.Value) : default(U);
+        }
+    }
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            double? val = null;
+            var d1 = val.IfNotNull(v => v / 100);
+            var d2 = Foo.IfNotNull(val, v => v / 100);
+        }
+    }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source1, new[] { SystemCoreRef }, options: TestOptions.DebugExe);
+
+            compilation.VerifyDiagnostics(
+    // (23,26): error CS0121: The call is ambiguous between the following methods or properties: 'Foo.IfNotNull<T, U>(T, Func<T, U>, params U[])' and 'Foo.IfNotNull<T, U>(T?, Func<T, U>)'
+    //             var d1 = val.IfNotNull(v => v / 100);
+    Diagnostic(ErrorCode.ERR_AmbigCall, "IfNotNull").WithArguments("ConsoleApplication2.Foo.IfNotNull<T, U>(T, System.Func<T, U>, params U[])", "ConsoleApplication2.Foo.IfNotNull<T, U>(T?, System.Func<T, U>)").WithLocation(23, 26),
+    // (24,26): error CS0121: The call is ambiguous between the following methods or properties: 'Foo.IfNotNull<T, U>(T, Func<T, U>, params U[])' and 'Foo.IfNotNull<T, U>(T?, Func<T, U>)'
+    //             var d2 = Foo.IfNotNull(val, v => v / 100);
+    Diagnostic(ErrorCode.ERR_AmbigCall, "IfNotNull").WithArguments("ConsoleApplication2.Foo.IfNotNull<T, U>(T, System.Func<T, U>, params U[])", "ConsoleApplication2.Foo.IfNotNull<T, U>(T?, System.Func<T, U>)").WithLocation(24, 26)
+                );
+        }
+
+        [Fact, WorkItem(1081302, "Devdiv"), WorkItem(371, "Devdiv")]
+        public void Bug1081302_2()
+        {
+
+            string source1 = @"
+using System;
+namespace ConsoleApplication2
+{
+    public static class Foo
+    {
+        public static U IfNotNull<T, U>(this T? source, Func<T, U> selector) where T : struct
+        {
+            System.Console.WriteLine(""IfNotNull<T, U>(this T? source, Func<T, U> selector)"");
+            return source.HasValue ? selector(source.Value) : default(U);
+        }
+        public static U IfNotNull<T, U>(this T value, Func<T, U> selector, params U[] defaultValue)
+        {
+            System.Console.WriteLine(""IfNotNull<T, U>(this T value, Func<T, U> selector, params U[] defaultValue)"");
+            return value != null ? selector(value) : defaultValue[0];
+        }
+    }
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            double? val = null;
+            var d1 = val.IfNotNull(v => v / 100);
+            var d2 = Foo.IfNotNull(val, v => v / 100);
+        }
+    }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source1, new[] { SystemCoreRef }, options: TestOptions.DebugExe);
+
+            compilation.VerifyDiagnostics(
+    // (23,26): error CS0121: The call is ambiguous between the following methods or properties: 'Foo.IfNotNull<T, U>(T?, Func<T, U>)' and 'Foo.IfNotNull<T, U>(T, Func<T, U>, params U[])'
+    //             var d1 = val.IfNotNull(v => v / 100);
+    Diagnostic(ErrorCode.ERR_AmbigCall, "IfNotNull").WithArguments("ConsoleApplication2.Foo.IfNotNull<T, U>(T?, System.Func<T, U>)", "ConsoleApplication2.Foo.IfNotNull<T, U>(T, System.Func<T, U>, params U[])").WithLocation(23, 26),
+    // (24,26): error CS0121: The call is ambiguous between the following methods or properties: 'Foo.IfNotNull<T, U>(T?, Func<T, U>)' and 'Foo.IfNotNull<T, U>(T, Func<T, U>, params U[])'
+    //             var d2 = Foo.IfNotNull(val, v => v / 100);
+    Diagnostic(ErrorCode.ERR_AmbigCall, "IfNotNull").WithArguments("ConsoleApplication2.Foo.IfNotNull<T, U>(T?, System.Func<T, U>)", "ConsoleApplication2.Foo.IfNotNull<T, U>(T, System.Func<T, U>, params U[])").WithLocation(24, 26)
+                );
+        }
+
+        [Fact]
+        public void ExactParameterMatchAndOptionals()
+        {
+
+            string source1 = @"
+
+class CTest
+{
+    static void Main()
+    {
+        M1(0);
+    }
+
+    static void M1(int x)
+    {
+        System.Console.WriteLine(""M1(int x)"");
+    }
+
+    static void M1(int x, int y = 0)
+    {
+        System.Console.WriteLine(""M1(int x, int y = 0)"");
+    }
+
+    static void M1(int x, params int [] y)
+    {
+        System.Console.WriteLine(""M1(int x, params int [] y)"");
+    }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugExe);
+
+            CompileAndVerify(compilation, expectedOutput: @"M1(int x)");
+        }
+
+        [Fact]
+        [WorkItem(1034429, "DevDiv")]
+        public void TestBug1034429()
+        {
+            string source =
+@"
+using System.Security.Permissions;
+
+class Program
+{
+    [A(SecurityAction.Assert)]
+    [B(p2: SecurityAction.Assert, p1: 0)]
+    [C(p3: ""again"", p2: SecurityAction.Assert, p1: 0)]
+    static void Main()
+    {
+    }
+}
+
+public class A : CodeAccessSecurityAttribute
+{
+    public A(params SecurityAction)
+    {
+    }
+}
+
+public class B : CodeAccessSecurityAttribute
+{
+    public B(int p1, params SecurityAction p2)
+    {
+    }
+}
+
+public class C : CodeAccessSecurityAttribute
+{
+    public C(int p1, params SecurityAction p2, string p3)
+    {
+    }
+}
+
+
+";
+            var comp = CreateCompilationWithMscorlib(source);
+            comp.VerifyDiagnostics(
+                // (16,35): error CS1001: Identifier expected
+                //     public A(params SecurityAction)
+                Diagnostic(ErrorCode.ERR_IdentifierExpected, ")").WithLocation(16, 35),
+                // (30,22): error CS0231: A params parameter must be the last parameter in a formal parameter list
+                //     public C(int p1, params SecurityAction p2, string p3)
+                Diagnostic(ErrorCode.ERR_ParamsLast, "params SecurityAction p2").WithLocation(30, 22),
+                // (14,14): error CS0534: 'A' does not implement inherited abstract member 'SecurityAttribute.CreatePermission()'
+                // public class A : CodeAccessSecurityAttribute
+                Diagnostic(ErrorCode.ERR_UnimplementedAbstractMethod, "A").WithArguments("A", "System.Security.Permissions.SecurityAttribute.CreatePermission()").WithLocation(14, 14),
+                // (28,14): error CS0534: 'C' does not implement inherited abstract member 'SecurityAttribute.CreatePermission()'
+                // public class C : CodeAccessSecurityAttribute
+                Diagnostic(ErrorCode.ERR_UnimplementedAbstractMethod, "C").WithArguments("C", "System.Security.Permissions.SecurityAttribute.CreatePermission()").WithLocation(28, 14),
+                // (21,14): error CS0534: 'B' does not implement inherited abstract member 'SecurityAttribute.CreatePermission()'
+                // public class B : CodeAccessSecurityAttribute
+                Diagnostic(ErrorCode.ERR_UnimplementedAbstractMethod, "B").WithArguments("B", "System.Security.Permissions.SecurityAttribute.CreatePermission()").WithLocation(21, 14),
+                // (16,14): error CS0225: The params parameter must be a single dimensional array
+                //     public A(params SecurityAction)
+                Diagnostic(ErrorCode.ERR_ParamsMustBeArray, "params").WithLocation(16, 14),
+                // (23,22): error CS0225: The params parameter must be a single dimensional array
+                //     public B(int p1, params SecurityAction p2)
+                Diagnostic(ErrorCode.ERR_ParamsMustBeArray, "params").WithLocation(23, 22),
+                // (30,22): error CS0225: The params parameter must be a single dimensional array
+                //     public C(int p1, params SecurityAction p2, string p3)
+                Diagnostic(ErrorCode.ERR_ParamsMustBeArray, "params").WithLocation(30, 22),
+                // (7,6): error CS7048: First argument to a security attribute must be a valid SecurityAction
+                //     [B(p2: SecurityAction.Assert, p1: 0)]
+                Diagnostic(ErrorCode.ERR_SecurityAttributeMissingAction, "B").WithLocation(7, 6),
+                // (8,6): error CS7048: First argument to a security attribute must be a valid SecurityAction
+                //     [C(p3: "again", p2: SecurityAction.Assert, p1: 0)]
+                Diagnostic(ErrorCode.ERR_SecurityAttributeMissingAction, "C").WithLocation(8, 6),
+                // (16,12): error CS7036: There is no argument given that corresponds to the required formal parameter 'action' of 'CodeAccessSecurityAttribute.CodeAccessSecurityAttribute(SecurityAction)'
+                //     public A(params SecurityAction)
+                Diagnostic(ErrorCode.ERR_NoCorrespondingArgument, "A").WithArguments("action", "System.Security.Permissions.CodeAccessSecurityAttribute.CodeAccessSecurityAttribute(System.Security.Permissions.SecurityAction)").WithLocation(16, 12),
+                // (23,12): error CS7036: There is no argument given that corresponds to the required formal parameter 'action' of 'CodeAccessSecurityAttribute.CodeAccessSecurityAttribute(SecurityAction)'
+                //     public B(int p1, params SecurityAction p2)
+                Diagnostic(ErrorCode.ERR_NoCorrespondingArgument, "B").WithArguments("action", "System.Security.Permissions.CodeAccessSecurityAttribute.CodeAccessSecurityAttribute(System.Security.Permissions.SecurityAction)").WithLocation(23, 12),
+                // (30,12): error CS7036: There is no argument given that corresponds to the required formal parameter 'action' of 'CodeAccessSecurityAttribute.CodeAccessSecurityAttribute(SecurityAction)'
+                //     public C(int p1, params SecurityAction p2, string p3)
+                Diagnostic(ErrorCode.ERR_NoCorrespondingArgument, "C").WithArguments("action", "System.Security.Permissions.CodeAccessSecurityAttribute.CodeAccessSecurityAttribute(System.Security.Permissions.SecurityAction)").WithLocation(30, 12));
+        }
     }
 }

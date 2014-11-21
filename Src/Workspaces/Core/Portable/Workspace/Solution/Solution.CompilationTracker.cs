@@ -59,8 +59,14 @@ namespace Microsoft.CodeAnalysis
                 return Volatile.Read(ref this.stateDoNotAccessDirectly);
             }
 
-            private void WriteState(State state)
+            private void WriteState(State state, Solution solution)
             {
+                if (solution.solutionServices.SupportsCachingRecoverableObjects)
+                {
+                    // Allow the cache service to create a strong reference to the compilation
+                    solution.solutionServices.CacheService.CreateStrongReference(this.ProjectState.Id, state, state.Compilation.GetValue());
+                }
+
                 Volatile.Write(ref this.stateDoNotAccessDirectly, state);
             }
 
@@ -93,8 +99,8 @@ namespace Microsoft.CodeAnalysis
             public CompilationTracker Fork(
                 ProjectState newProject,
                 CompilationTranslationAction translate = null,
-                CancellationToken cancellationToken = default(CancellationToken),
-                bool clone = false)
+                bool clone = false,
+                CancellationToken cancellationToken = default(CancellationToken))
             {
                 var state = this.ReadState();
 
@@ -103,9 +109,9 @@ namespace Microsoft.CodeAnalysis
                 if (baseCompilation != null)
                 {
                     // We have some pre-calculated state to incrementally update
-                    var newInProgressCompilationSource = clone
-                        ? new WeakConstantValueSource<Compilation>(baseCompilation.Clone())
-                        : baseCompilationSource;
+                    var newInProgressCompilation = clone
+                        ? baseCompilation.Clone()
+                        : baseCompilation;
 
                     var intermediateProjects = state is InProgressState
                         ? ((InProgressState)state).IntermediateProjects
@@ -115,7 +121,7 @@ namespace Microsoft.CodeAnalysis
                          ? intermediateProjects
                          : intermediateProjects.Add(ValueTuple.Create(this.ProjectState, translate));
 
-                    var newState = State.Create(newInProgressCompilationSource, newIntermediateProjects);
+                    var newState = State.Create(newInProgressCompilation, newIntermediateProjects);
 
                     return new CompilationTracker(newProject, newState);
                 }
@@ -125,14 +131,10 @@ namespace Microsoft.CodeAnalysis
                 {
                     if (translate != null)
                     {
-                        var compilationSource = clone
-                            ? (ValueSource<Compilation>)new WeakConstantValueSource<Compilation>(declarationOnlyCompilation)
-                            : (ValueSource<Compilation>)new ConstantValueSource<Compilation>(declarationOnlyCompilation);
-
                         var intermediateProjects =
                             ImmutableArray.Create<ValueTuple<ProjectState, CompilationTranslationAction>>(ValueTuple.Create(this.ProjectState, translate));
 
-                        return new CompilationTracker(newProject, new InProgressState(compilationSource, intermediateProjects));
+                        return new CompilationTracker(newProject, new InProgressState(declarationOnlyCompilation, intermediateProjects));
                     }
 
                     return new CompilationTracker(newProject, new LightDeclarationState(declarationOnlyCompilation));
@@ -225,7 +227,7 @@ namespace Microsoft.CodeAnalysis
                 if (inProgressCompilation == null)
                 {
                     inProgressProject = inProgressProject.RemoveAllDocuments();
-                    inProgressCompilation = this.CreateEmptyCompilation(solution);
+                    inProgressCompilation = this.CreateEmptyCompilation();
                 }
 
                 // first remove all project from the project and compilation.
@@ -338,8 +340,9 @@ namespace Microsoft.CodeAnalysis
                             {
                                 // okay, move to full declaration state. do this so that declaration only compilation never
                                 // realize symbols.
-                                this.WriteState(new FullDeclarationState(this.Retain(solution, state.DeclarationOnlyCompilation)));
-                                return state.DeclarationOnlyCompilation;
+                                var declarationOnlyCompilation = state.DeclarationOnlyCompilation.Clone();
+                                this.WriteState(new FullDeclarationState(declarationOnlyCompilation), solution);
+                                return declarationOnlyCompilation;
                             }
 
                             // We've got nothing.  Build it from scratch :(
@@ -478,7 +481,7 @@ namespace Microsoft.CodeAnalysis
             {
                 try
                 {
-                    var compilation = CreateEmptyCompilation(solution);
+                    var compilation = CreateEmptyCompilation();
 
                     foreach (var document in this.ProjectState.OrderedDocumentStates)
                     {
@@ -486,7 +489,7 @@ namespace Microsoft.CodeAnalysis
                         compilation = compilation.AddSyntaxTrees(await document.GetSyntaxTreeAsync(cancellationToken).ConfigureAwait(false));
                     }
 
-                    this.WriteState(new FullDeclarationState(this.Retain(solution, compilation)));
+                    this.WriteState(new FullDeclarationState(compilation), solution);
                     return compilation;
                 }
                 catch (Exception e) if (FatalError.ReportUnlessCanceled(e))
@@ -495,7 +498,7 @@ namespace Microsoft.CodeAnalysis
                 }
             }
 
-            private Compilation CreateEmptyCompilation(Solution solution)
+            private Compilation CreateEmptyCompilation()
             {
                 var compilationFactory = this.ProjectState.LanguageServices.GetService<ICompilationFactoryService>();
 
@@ -547,9 +550,7 @@ namespace Microsoft.CodeAnalysis
                         inProgressCompilation = await action.InvokeAsync(inProgressCompilation, cancellationToken).ConfigureAwait(false);
                         intermediateProjects = intermediateProjects.RemoveAt(0);
 
-                        this.WriteState(State.Create(
-                            this.Retain(solution, inProgressCompilation),
-                            intermediateProjects));
+                        this.WriteState(State.Create(inProgressCompilation, intermediateProjects), solution);
                     }
 
                     return inProgressCompilation;
@@ -612,7 +613,7 @@ namespace Microsoft.CodeAnalysis
                         compilation = compilation.WithReferences(newReferences);
                     }
 
-                    this.WriteState(new FinalState(this.Retain(solution, compilation)));
+                    this.WriteState(new FinalState(State.CreateValueSource(compilation, solution.Services)), solution);
 
                     return compilation;
                 }
@@ -628,7 +629,7 @@ namespace Microsoft.CodeAnalysis
             /// compilation is not available, it is built. If a skeletal assembly reference is
             /// needed and does not exist, it is also built.
             /// </summary>
-            internal async Task<MetadataReference> GetMetadataReferenceAsync(
+            public async Task<MetadataReference> GetMetadataReferenceAsync(
                 Solution solution,
                 ProjectState fromProject,
                 ProjectReference projectReference,
@@ -669,7 +670,7 @@ namespace Microsoft.CodeAnalysis
             /// compilation. Actual compilation references are preferred over skeletal assembly
             /// references.  Could potentially return null if nothing can be provided.
             /// </summary>
-            internal MetadataReference GetPartialMetadataReference(Solution solution, ProjectState fromProject, ProjectReference projectReference, CancellationToken cancellationToken)
+            public MetadataReference GetPartialMetadataReference(Solution solution, ProjectState fromProject, ProjectReference projectReference, CancellationToken cancellationToken)
             {
                 var state = this.ReadState();
 
@@ -724,19 +725,36 @@ namespace Microsoft.CodeAnalysis
             }
 
             /// <summary>
-            /// Converts a compilation into a ValueSource employing an external compilation retention policy.
+            /// check whether the compilation contains any declaration symbol from syntax trees with given name
             /// </summary>
-            private ValueSource<Compilation> Retain(Solution solution, Compilation compilation)
+            public bool? ContainsSymbolsWithNameFromDeclarationOnlyCompilation(Func<string, bool> predicate, SymbolFilter filter, CancellationToken cancellationToken)
             {
-                var cache = solution.Services.CompilationCacheService;
-                if (cache != null)
+                var state = this.ReadState();
+                if (state.DeclarationOnlyCompilation == null)
                 {
-                    return new CachedObjectSource<Compilation>(compilation, cache);
+                    return null;
                 }
-                else
+
+                // DO NOT expose declaration only compilation to outside since it can be held alive long time, we don't want to create any symbol from the declaration only compilation.
+                return state.DeclarationOnlyCompilation.ContainsSymbolsWithName(predicate, filter, cancellationToken);
+            }
+
+            /// <summary>
+            /// get all syntax trees that contain declaration node with the given name
+            /// </summary>
+            public IEnumerable<SyntaxTree> GetSyntaxTreesWithNameFromDeclarationOnlyCompilation(Func<string, bool> predicate, SymbolFilter filter, CancellationToken cancellationToken)
+            {
+                var state = this.ReadState();
+                if (state.DeclarationOnlyCompilation == null)
                 {
-                    return new ConstantValueSource<Compilation>(compilation);
+                    return null;
                 }
+
+                // DO NOT expose declaration only compilation to outside since it can be held alive long time, we don't want to create any symbol from the declaration only compilation.
+
+                // use cloned compilation since this will cause symbols to be created.
+                var clone = state.DeclarationOnlyCompilation.Clone();
+                return clone.GetSymbolsWithName(predicate, filter, cancellationToken).SelectMany(s => s.DeclaringSyntaxReferences.Select(r => r.SyntaxTree));
             }
 
             #region Versions
@@ -746,7 +764,7 @@ namespace Microsoft.CodeAnalysis
             private AsyncLazy<VersionStamp> lazyDependentVersion;
             private AsyncLazy<VersionStamp> lazyDependentSemanticVersion;
 
-            internal async Task<VersionStamp> GetDependentVersionAsync(Solution solution, CancellationToken cancellationToken)
+            public async Task<VersionStamp> GetDependentVersionAsync(Solution solution, CancellationToken cancellationToken)
             {
                 if (this.lazyDependentVersion == null)
                 {
@@ -778,7 +796,7 @@ namespace Microsoft.CodeAnalysis
                 return version;
             }
 
-            internal async Task<VersionStamp> GetDependentSemanticVersionAsync(Solution solution, CancellationToken cancellationToken)
+            public async Task<VersionStamp> GetDependentSemanticVersionAsync(Solution solution, CancellationToken cancellationToken)
             {
                 if (this.lazyDependentSemanticVersion == null)
                 {

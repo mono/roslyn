@@ -1137,7 +1137,7 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         internal ModulePropertiesForSerialization ConstructModuleSerializationProperties(
             EmitOptions emitOptions,
-            string targetRuntimeVersion, 
+            string targetRuntimeVersion,
             Guid moduleVersionId = default(Guid))
         {
             CompilationOptions compilationOptions = this.Options;
@@ -1247,28 +1247,28 @@ namespace Microsoft.CodeAnalysis
             EmitOptions emitOptions,
             IEnumerable<ResourceDescription> manifestResources,
             Func<IAssemblySymbol, AssemblyIdentity> assemblySymbolMapper,
-            CancellationToken cancellationToken,
             CompilationTestData testData,
-            DiagnosticBag diagnostics);
+            DiagnosticBag diagnostics,
+            CancellationToken cancellationToken);
 
         // TODO: private protected
         internal abstract bool CompileImpl(
             CommonPEModuleBuilder moduleBuilder,
             Stream win32Resources,
             Stream xmlDocStream,
-            CancellationToken cancellationToken,
             bool generateDebugInfo,
             DiagnosticBag diagnostics,
-            Predicate<ISymbol> filterOpt);
+            Predicate<ISymbol> filterOpt,
+            CancellationToken cancellationToken);
 
         internal bool Compile(
             CommonPEModuleBuilder moduleBuilder,
             Stream win32Resources,
             Stream xmlDocStream,
-            CancellationToken cancellationToken,
             bool generateDebugInfo,
             DiagnosticBag diagnostics,
-            Predicate<ISymbol> filterOpt)
+            Predicate<ISymbol> filterOpt,
+            CancellationToken cancellationToken)
         {
             try
             {
@@ -1276,10 +1276,10 @@ namespace Microsoft.CodeAnalysis
                     moduleBuilder,
                     win32Resources,
                     xmlDocStream,
-                    cancellationToken,
                     generateDebugInfo,
                     diagnostics,
-                    filterOpt);
+                    filterOpt,
+                    cancellationToken);
             }
             finally
             {
@@ -1299,9 +1299,9 @@ namespace Microsoft.CodeAnalysis
                         emitOptions: EmitOptions.Default,
                         manifestResources: null,
                         assemblySymbolMapper: null,
-                        cancellationToken: cancellationToken,
                         testData: null,
-                        diagnostics: discardedDiagnostics);
+                        diagnostics: discardedDiagnostics,
+                        cancellationToken: cancellationToken);
 
                     if (moduleBeingBuilt != null)
                     {
@@ -1309,10 +1309,10 @@ namespace Microsoft.CodeAnalysis
                             moduleBeingBuilt,
                             win32Resources: null,
                             xmlDocStream: null,
-                            cancellationToken: cancellationToken,
                             generateDebugInfo: false,
                             diagnostics: discardedDiagnostics,
-                            filterOpt: null);
+                            filterOpt: null,
+                            cancellationToken: cancellationToken);
                     }
 
                     discardedDiagnostics.Free();
@@ -1469,9 +1469,9 @@ namespace Microsoft.CodeAnalysis
                     options,
                     manifestResources,
                     null,
-                    cancellationToken,
                     testData,
-                    diagnostics);
+                    diagnostics,
+                    cancellationToken);
 
                 if (moduleBeingBuilt == null)
                 {
@@ -1482,10 +1482,10 @@ namespace Microsoft.CodeAnalysis
                     moduleBeingBuilt,
                     win32Resources,
                     xmlDocumentationStream,
-                    cancellationToken,
                     generateDebugInfo: pdbStream != null,
                     diagnostics: diagnostics,
-                    filterOpt: null))
+                    filterOpt: null,
+                    cancellationToken: cancellationToken))
                 {
                     return ToEmitResultAndFree(diagnostics, success: false);
                 }
@@ -1560,7 +1560,7 @@ namespace Microsoft.CodeAnalysis
                         // when in deterministic mode, we need to seek and read the stream to compute a deterministic MVID.
                         // If the underlying stream isn't readable and seekable, we need to use a temp stream.
                         string deterministicString = this.Feature("deterministic");
-                        bool deterministic =  deterministicString != null && deterministicString != "false";
+                        bool deterministic = deterministicString != null && deterministicString != "false";
                         var writeToTempStream = deterministic && !(outputStream.CanRead && outputStream.CanSeek);
                         var streamToWrite = writeToTempStream ? new MemoryStream() : outputStream;
 
@@ -1798,6 +1798,20 @@ namespace Microsoft.CodeAnalysis
             if (source == null || destination == null) return this.AssemblyName;
             return string.Format("{0}: {1} {2} -> {3} {4}", this.AssemblyName, source.TypeKind.ToString(), source.Name, destination.TypeKind.ToString(), destination.Name);
         }
+
+        #endregion
+
+        #region Declaration Name Queries
+
+        /// <summary>
+        /// Return true if there is a source declaration symbol name that meets given predicate.
+        /// </summary>
+        public abstract bool ContainsSymbolsWithName(Func<string, bool> predicate, SymbolFilter filter = SymbolFilter.TypeAndMember, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// Return source declaration symbols whose name meets given predicate.
+        /// </summary>
+        public abstract IEnumerable<ISymbol> GetSymbolsWithName(Func<string, bool> predicate, SymbolFilter filter = SymbolFilter.TypeAndMember, CancellationToken cancellationToken = default(CancellationToken));
 
         #endregion
     }

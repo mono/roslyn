@@ -66,11 +66,12 @@
     </Reference>
     <Reference Include="System.Core" />
   </ItemGroup>
-  <ItemGroup></ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApiDesign\CancellationTokenMustBeLastCodeFixProvider.cs" />
     <Compile Include="Documentation\CSharpDoNotUseVerbatimCrefsAnalyzer.cs" />
     <Compile Include="Performance\CSharpCodeActionCreateAnalyzer.cs" />
     <Compile Include="Performance\CSharpEmptyArrayDiagnosticAnalyzer.cs" />
@@ -78,18 +79,11 @@
     <Compile Include="Performance\CSharpSpecializedEnumerableCreationAnalyzer.cs" />
     <Compile Include="Reliability\CSharpDirectlyAwaitingTaskAnalyzer.cs" />
     <Compile Include="Reliability\CSharpDirectlyAwaitingTaskFix.cs" />
+    <Compile Include="Reliability\ImmutableCollectionAnalyzer.cs" />
   </ItemGroup>
   <ImportGroup Label="Targets">
     <Import Project="..\..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Imports.targets" />
     <Import Project="..\..\..\..\packages\StyleCop.MSBuild.4.7.48.2\build\StyleCop.MSBuild.Targets" Condition="Exists('..\..\..\..\packages\StyleCop.MSBuild.4.7.48.2\build\StyleCop.MSBuild.Targets')" />
     <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-    <Error Condition="!Exists('..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4101501-beta\build\Microsoft.Net.ToolsetCompilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\Microsoft.Net.ToolsetCompilers.0.7.4101501-beta\build\Microsoft.Net.ToolsetCompilers.props'))" />
-    <Error Condition="!Exists('..\..\..\..\packages\Microsoft.Net.RoslynDiagnostics.0.7.4101501-beta\build\Microsoft.Net.RoslynDiagnostics.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\Microsoft.Net.RoslynDiagnostics.0.7.4101501-beta\build\Microsoft.Net.RoslynDiagnostics.props'))" />
-  </Target>
 </Project>

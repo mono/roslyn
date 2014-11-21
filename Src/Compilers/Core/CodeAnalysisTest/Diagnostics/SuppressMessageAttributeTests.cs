@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Test.Utilities;
@@ -1212,7 +1211,8 @@ public class C2
 
         protected static DiagnosticDescription Diagnostic(string id, string squiggledText)
         {
-            return new DiagnosticDescription(id, false, squiggledText, null, null, null, false);
+            var arguments = squiggledText != null ? new[] { squiggledText } : null;
+            return new DiagnosticDescription(id, false, squiggledText, arguments, null, null, false);
         }
     }
 }
