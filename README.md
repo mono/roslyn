@@ -11,6 +11,18 @@ C# compiler
 
 There are a few steps to getting the C# compiler to build on Mono:
 
+## Install PCL
+
+Download the
+[PCL Reference Assemblies](http://www.microsoft.com/en-us/download/details.aspx?id=40727)
+and copy the directory `v4.5/Profile/Profile7` into your Mono
+installation as a subdirectory of
+`$PREFIX/lib/mono/xbuild-frameworks/.NETPortable/v4.5/Profile/`.
+
+## Restore packages
+
+	`mono Src/.nuget/NuGet.exe restore Src/Roslyn.sln`
+
 ## Manual changes needed
 
 After succesfull package restore
@@ -28,14 +40,6 @@ has to be replaced with
   </PropertyGroup>
 </Project>
 ```
-
-## Install PCL
-
-Download the
-[PCL Reference Assemblies](http://www.microsoft.com/en-us/download/details.aspx?id=40727)
-and copy the directory `v4.5/Profile/Profile7` into your Mono
-installation as a subdirectory of
-`$PREFIX/lib/mono/xbuild-frameworks/.NETPortable/v4.5/Profile/`.
 
 ## Build FakeSign
 
