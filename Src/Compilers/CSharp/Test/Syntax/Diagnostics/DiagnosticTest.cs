@@ -2097,6 +2097,31 @@ public class Test
                 }
             }
 
+            public override LocalizableString GetDescription(int code)
+            {
+                return string.Empty;
+            }
+
+            public override LocalizableString GetTitle(int code)
+            {
+                return string.Empty;
+            }
+
+            public override LocalizableString GetMessageFormat(int code)
+            {
+                return string.Empty;
+            }
+
+            public override string GetHelpLink(int code)
+            {
+                return string.Empty;
+            }
+
+            public override string GetCategory(int code)
+            {
+                return string.Empty;
+            }
+
             public override string CodePrefix
             {
                 get { return "MOCK"; }

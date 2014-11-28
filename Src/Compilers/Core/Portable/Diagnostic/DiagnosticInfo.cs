@@ -2,10 +2,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using Roslyn.Utilities;
+using System.Threading;
 
 namespace Microsoft.CodeAnalysis
 {
@@ -24,6 +26,9 @@ namespace Microsoft.CodeAnalysis
         private readonly DiagnosticSeverity defaultSeverity;
         private readonly DiagnosticSeverity effectiveSeverity;
         private readonly object[] arguments;
+
+        private static ImmutableDictionary<int, DiagnosticDescriptor> errorCodeToDescriptorMap = ImmutableDictionary<int, DiagnosticDescriptor>.Empty;
+        private static readonly ImmutableArray<string> CompilerCustomTags = ImmutableArray.Create(WellKnownDiagnosticTags.Telemetry);
 
         // Only the compiler creates instances.
         internal DiagnosticInfo(CommonMessageProvider messageProvider, int errorCode)
@@ -51,6 +56,23 @@ namespace Microsoft.CodeAnalysis
             this.arguments = original.arguments;
 
             this.effectiveSeverity = overridenSeverity;
+        }
+
+        private static DiagnosticDescriptor GetOrCreateDescriptor(int errorCode, DiagnosticSeverity defaultSeverity, CommonMessageProvider messageProvider)
+        {
+            return ImmutableInterlocked.GetOrAdd(ref errorCodeToDescriptorMap, errorCode, code => CreateDescriptor(code, defaultSeverity, messageProvider));
+        }
+
+        private static DiagnosticDescriptor CreateDescriptor(int errorCode, DiagnosticSeverity defaultSeverity, CommonMessageProvider messageProvider)
+        {
+            var id = messageProvider.GetIdForErrorCode(errorCode);
+            var title = messageProvider.GetTitle(errorCode);
+            var description = messageProvider.GetDescription(errorCode);
+            var messageFormat = messageProvider.GetMessageFormat(errorCode);
+            var helpLink = messageProvider.GetHelpLink(errorCode);
+            var category = messageProvider.GetCategory(errorCode);
+            return new DiagnosticDescriptor(id, title, messageFormat, category,
+                defaultSeverity, isEnabledByDefault: true, description: description, helpLink: helpLink, customTags: CompilerCustomTags);
         }
 
         [Conditional("DEBUG")]
@@ -164,10 +186,18 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         public int Code { get { return errorCode; } }
 
+        public DiagnosticDescriptor Descriptor
+        {
+            get
+            {
+                return GetOrCreateDescriptor(this.errorCode, this.defaultSeverity, this.messageProvider);
+            }
+        }
+        
         /// <summary>
-        /// Returns the effective severity of the diagnostic: whether this diagnostic is informational, warning, or error.
-        /// If IsWarningsAsError is true, then this returns <see cref="DiagnosticSeverity.Error"/>, while <see cref="DefaultSeverity"/> returns <see cref="DiagnosticSeverity.Warning"/>.
-        /// </summary>
+         /// Returns the effective severity of the diagnostic: whether this diagnostic is informational, warning, or error.
+         /// If IsWarningsAsError is true, then this returns <see cref="DiagnosticSeverity.Error"/>, while <see cref="DefaultSeverity"/> returns <see cref="DiagnosticSeverity.Warning"/>.
+         /// </summary>
         public DiagnosticSeverity Severity
         {
             get
@@ -218,6 +248,26 @@ namespace Microsoft.CodeAnalysis
             {
                 return this.DefaultSeverity == DiagnosticSeverity.Warning &&
                     this.Severity == DiagnosticSeverity.Error;
+            }
+        }
+
+        /// <summary>
+        /// Get the diagnostic category for the given diagnostic code.
+        /// Default category is <see cref="Diagnostic.CompilerDiagnosticCategory"/>.
+        /// </summary>
+        public string Category
+        {
+            get
+            {
+                return this.messageProvider.GetCategory(this.errorCode) ;
+            }
+        }
+
+        internal ImmutableArray<string> CustomTags
+        {
+            get
+            {
+                return CompilerCustomTags;
             }
         }
 
@@ -334,7 +384,7 @@ namespace Microsoft.CodeAnalysis
         {
             return String.Format(formatProvider, "{0}: {1}",
                 messageProvider.GetMessagePrefix(this.MessageIdentifier, this.Severity, this.IsWarningAsError, formatProvider as CultureInfo),
-                this.GetMessage(formatProvider as CultureInfo));
+                this.GetMessage(formatProvider));
         }
 
         public override int GetHashCode()

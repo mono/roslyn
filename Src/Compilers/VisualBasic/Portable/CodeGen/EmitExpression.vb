@@ -830,7 +830,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
             Dim receiver = [call].ReceiverOpt
 
             Debug.Assert([call].MethodGroupOpt Is Nothing)
-            Debug.Assert(Not method.CallsAreOmitted([call].Syntax, [call].SyntaxTree))
+            Debug.Assert(Not Me._module.AllowOmissionOfConditionalCalls OrElse Not method.CallsAreOmitted([call].Syntax, [call].SyntaxTree))
 
             ' is this a call to a default struct constructor?
             ' this happens in struct non-parameterless constructors calling
@@ -918,7 +918,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
                     ' if the receiver is actually a value type it would need to be boxed.
                     ' let .constrained sort this out. 
 
-                    callKind = If(receiverType.IsReferenceType,
+                    callKind = If(receiverType.IsReferenceType AndAlso Not AllowedToTakeRef(receiver, AddressKind.ReadOnly),
                                     CallKind.CallVirt,
                                     CallKind.ConstrainedCallVirt)
 

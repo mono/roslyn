@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Globalization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Collections;
+using CDI = Microsoft.Cci.CustomDebugInfoConstants;
 
 namespace Roslyn.Utilities.Pdb
 {
@@ -17,19 +18,6 @@ namespace Roslyn.Utilities.Pdb
     /// </remarks>
     internal static class CustomDebugInfoReader
     {
-        // The version number of the custom debug info binary format.
-        // CDIVERSION in Dev10
-        internal const int CdiVersion = 4;
-
-        // The number of bytes at the beginning of the byte array that contain global header information.
-        // start after header (version byte + size byte + dword padding)
-        private const int CdiGlobalHeaderSize = 4;
-
-        // The number of bytes at the beginning of each custom debug info record that contain header information
-        // common to all record types (i.e. byte, kind, size).
-        // version byte + kind byte + two bytes padding + size dword
-        internal const int CdiRecordHeaderSize = 8; 
-
         /// <summary>
         /// This is the first header in the custom debug info blob.
         /// </summary>
@@ -37,7 +25,7 @@ namespace Roslyn.Utilities.Pdb
         {
             version = bytes[offset + 0];
             count = bytes[offset + 1];
-            offset += CdiGlobalHeaderSize;
+            offset += CDI.CdiGlobalHeaderSize;
         }
 
         /// <summary>
@@ -52,12 +40,12 @@ namespace Roslyn.Utilities.Pdb
             // two bytes of padding after kind
             size = BitConverter.ToInt32(bytes, offset + 4); 
 
-            offset += CdiRecordHeaderSize;
+            offset += CDI.CdiRecordHeaderSize;
         }
 
         internal static ImmutableArray<byte> TryGetCustomDebugInfoRecord(byte[] customDebugInfo, CustomDebugInfoKind recordKind)
         {
-            if (customDebugInfo.Length < CdiGlobalHeaderSize)
+            if (customDebugInfo.Length < CDI.CdiGlobalHeaderSize)
             {
                 return default(ImmutableArray<byte>);
             }
@@ -68,32 +56,32 @@ namespace Roslyn.Utilities.Pdb
             byte globalCount;
             ReadGlobalHeader(customDebugInfo, ref offset, out globalVersion, out globalCount);
 
-            if (globalVersion != CdiVersion)
+            if (globalVersion != CDI.CdiVersion)
             {
                 return default(ImmutableArray<byte>);
             }
 
-            while (offset <= customDebugInfo.Length - CdiRecordHeaderSize)
+            while (offset <= customDebugInfo.Length - CDI.CdiRecordHeaderSize)
             {
                 byte version;
                 CustomDebugInfoKind kind;
                 int size;
 
                 ReadRecordHeader(customDebugInfo, ref offset, out version, out kind, out size);
-                if (size < CdiRecordHeaderSize)
+                if (size < CDI.CdiRecordHeaderSize)
                 {
                     // invalid header
                     break;
                 }
 
-                int bodySize = size - CdiRecordHeaderSize;
+                int bodySize = size - CDI.CdiRecordHeaderSize;
                 if (offset > customDebugInfo.Length - bodySize)
                 {
                     // invalid header
                     break;
                 }
 
-                if (version != CdiVersion || kind != recordKind)
+                if (version != CDI.CdiVersion || kind != recordKind)
                 {
                     offset += bodySize;
                     continue;
@@ -130,7 +118,7 @@ namespace Roslyn.Utilities.Pdb
 
             counts = builder.ToImmutableAndFree();
 
-            offset += size - CdiRecordHeaderSize;
+            offset += size - CDI.CdiRecordHeaderSize;
             Debug.Assert(offset >= tempOffset);
         }
 
@@ -147,7 +135,7 @@ namespace Roslyn.Utilities.Pdb
 
             token = BitConverter.ToInt32(bytes, tempOffset);
 
-            offset += size - CdiRecordHeaderSize;
+            offset += size - CDI.CdiRecordHeaderSize;
             Debug.Assert(offset >= tempOffset);
         }
 
@@ -164,7 +152,7 @@ namespace Roslyn.Utilities.Pdb
 
             token = BitConverter.ToInt32(bytes, tempOffset);
 
-            offset += size - CdiRecordHeaderSize;
+            offset += size - CDI.CdiRecordHeaderSize;
             Debug.Assert(offset >= tempOffset);
         }
 
@@ -191,7 +179,7 @@ namespace Roslyn.Utilities.Pdb
 
             scopes = builder.ToImmutableAndFree();
 
-            offset += size - CdiRecordHeaderSize;
+            offset += size - CDI.CdiRecordHeaderSize;
             Debug.Assert(offset >= tempOffset);
         }
 
@@ -222,7 +210,7 @@ namespace Roslyn.Utilities.Pdb
 
             name = pooled.ToStringAndFree();
 
-            offset += size - CdiRecordHeaderSize;
+            offset += size - CDI.CdiRecordHeaderSize;
             Debug.Assert(offset >= tempOffset);
         }
 
@@ -287,7 +275,7 @@ namespace Roslyn.Utilities.Pdb
 
             buckets = builder.ToImmutableAndFree();
 
-            offset += size - CdiRecordHeaderSize;
+            offset += size - CDI.CdiRecordHeaderSize;
             Debug.Assert(offset >= tempOffset);
         }
 
@@ -296,7 +284,7 @@ namespace Roslyn.Utilities.Pdb
         /// </summary>
         public static void ReadRawRecordBody(byte[] bytes, ref int offset, int size, out ImmutableArray<byte> body)
         {
-            int bodySize = size - CdiRecordHeaderSize;
+            int bodySize = size - CDI.CdiRecordHeaderSize;
             body = ImmutableArray.Create(bytes, offset, bodySize);
             offset += bodySize;
         }
@@ -306,7 +294,7 @@ namespace Roslyn.Utilities.Pdb
         /// </summary>
         public static void SkipRecord(byte[] bytes, ref int offset, int size)
         {
-            offset += size - CdiRecordHeaderSize;
+            offset += size - CDI.CdiRecordHeaderSize;
         }
 
         /// <summary>
@@ -324,7 +312,7 @@ namespace Roslyn.Utilities.Pdb
             bool seenForward = false;
 
             RETRY:
-            var bytes = reader.GetCustomDebugInfo(methodToken);
+            var bytes = reader.GetCustomDebugInfo(methodToken, methodVersion);
             if (bytes == null)
             {
                 return default(ImmutableArray<ImmutableArray<string>>);
@@ -506,11 +494,160 @@ namespace Roslyn.Utilities.Pdb
             return importStrings;
         }
 
+        public static ImmutableSortedSet<int> GetCSharpInScopeHoistedLocalIndices(this ISymUnmanagedReader reader, int methodToken, int methodVersion, int ilOffset)
+        {
+            byte[] bytes = reader.GetCustomDebugInfo(methodToken, methodVersion);
+            if (bytes == null)
+            {
+                return ImmutableSortedSet<int>.Empty;
+            }
+
+            int offset = 0;
+
+            byte globalVersion;
+            byte unusedGlobalCount;
+            ReadGlobalHeader(bytes, ref offset, out globalVersion, out unusedGlobalCount);
+            CheckVersion(globalVersion, methodToken);
+
+            ImmutableArray<StateMachineHoistedLocalScope> scopes = default(ImmutableArray<StateMachineHoistedLocalScope>);
+
+            while (offset < bytes.Length)
+            {
+                byte version;
+                CustomDebugInfoKind kind;
+                int size;
+                ReadRecordHeader(bytes, ref offset, out version, out kind, out size);
+                CheckVersion(version, methodToken);
+
+                if (kind == CustomDebugInfoKind.StateMachineHoistedLocalScopes)
+                {
+                    ReadStateMachineHoistedLocalScopesRecord(bytes, ref offset, size, out scopes);
+                    break;
+                }
+                else
+                {
+                    SkipRecord(bytes, ref offset, size);
+                }
+            }
+
+            if (scopes.IsDefault)
+            {
+                return ImmutableSortedSet<int>.Empty;
+            }
+
+            ArrayBuilder<int> builder = ArrayBuilder<int>.GetInstance();
+            for (int i = 0; i < scopes.Length; i++)
+            {
+                StateMachineHoistedLocalScope scope = scopes[i];
+
+                // NB: scopes are end-inclusive.
+                if (ilOffset >= scope.StartOffset && ilOffset <= scope.EndOffset)
+                {
+                    builder.Add(i);
+                }
+            }
+
+            ImmutableSortedSet<int> result = builder.ToImmutableSortedSet();
+            builder.Free();
+            return result;
+        }
+
+        public static void GetCSharpDynamicLocalInfo(
+            this ISymUnmanagedReader reader,
+            int methodToken,
+            int methodVersion,
+            string firstLocalName,
+            out ImmutableDictionary<int, ImmutableArray<bool>> dynamicLocalMap,
+            out ImmutableDictionary<string, ImmutableArray<bool>> dynamicLocalConstantMap)
+        {
+            dynamicLocalMap = ImmutableDictionary<int, ImmutableArray<bool>>.Empty;
+            dynamicLocalConstantMap = ImmutableDictionary<string, ImmutableArray<bool>>.Empty;
+
+            byte[] bytes = reader.GetCustomDebugInfo(methodToken, methodVersion);
+            if (bytes == null)
+            {
+                return;
+            }
+
+            int offset = 0;
+
+            byte globalVersion;
+            byte unusedGlobalCount;
+            ReadGlobalHeader(bytes, ref offset, out globalVersion, out unusedGlobalCount);
+            CheckVersion(globalVersion, methodToken);
+
+            ImmutableArray<DynamicLocalBucket> buckets = default(ImmutableArray<DynamicLocalBucket>);
+
+            while (offset < bytes.Length)
+            {
+                byte version;
+                CustomDebugInfoKind kind;
+                int size;
+                ReadRecordHeader(bytes, ref offset, out version, out kind, out size);
+                CheckVersion(version, methodToken);
+
+                if (kind == CustomDebugInfoKind.DynamicLocals)
+                {
+                    ReadDynamicLocalsRecord(bytes, ref offset, size, out buckets);
+                    break;
+                }
+                else
+                {
+                    SkipRecord(bytes, ref offset, size);
+                }
+            }
+
+            if (buckets.IsDefault)
+            {
+                return;
+            }
+
+            ImmutableDictionary<int, ImmutableArray<bool>>.Builder localBuilder = null;
+            ImmutableDictionary<string, ImmutableArray<bool>>.Builder constantBuilder = null;
+
+            foreach (DynamicLocalBucket bucket in buckets)
+            {
+                int flagCount = bucket.FlagCount;
+                ulong flags = bucket.Flags;
+                ArrayBuilder<bool> dynamicBuilder = ArrayBuilder<bool>.GetInstance(flagCount);
+                for (int i = 0; i < flagCount; i++)
+                {
+                    dynamicBuilder.Add((flags & (1u << i)) != 0);
+                }
+
+                var slot = bucket.SlotId;
+                var name = bucket.Name;
+
+                // All constants have slot 0, but none of them can have the same name
+                // as the local that is actually in slot 0 (if there is one).
+                if (slot == 0 && (firstLocalName == null || firstLocalName != name))
+                {
+                    constantBuilder = constantBuilder ?? ImmutableDictionary.CreateBuilder<string, ImmutableArray<bool>>();
+                    constantBuilder.Add(name, dynamicBuilder.ToImmutableAndFree());
+                }
+                else
+                {
+                    localBuilder = localBuilder ?? ImmutableDictionary.CreateBuilder<int, ImmutableArray<bool>>();
+                    localBuilder.Add(slot, dynamicBuilder.ToImmutableAndFree());
+                }
+            }
+
+            if (localBuilder != null)
+            {
+                dynamicLocalMap = localBuilder.ToImmutable();
+            }
+
+            if (constantBuilder != null)
+            {
+                dynamicLocalConstantMap = constantBuilder.ToImmutable();
+            }
+        }
+
         private static void CheckVersion(byte globalVersion, int methodToken)
         {
-            if (globalVersion != CdiVersion)
+            if (globalVersion != CDI.CdiVersion)
             {
-                throw new InvalidOperationException(string.Format("Method {0}: Expected version {1}, but found version {2}.", FormatMethodToken(methodToken), CdiVersion, globalVersion));
+                throw new InvalidOperationException(string.Format("Method {0}: Expected version {1}, but found version {2}.", FormatMethodToken(methodToken), CDI.CdiVersion, globalVersion));
             }
         }
 
@@ -592,6 +729,7 @@ namespace Roslyn.Utilities.Pdb
         ///  "XOldLib" -> <extern alias="OldLib" />
         ///  "ZOldLib assembly" -> <externinfo name="OldLib" assembly="assembly" />
         ///  "ESystem alias" -> <namespace qualifier="alias" name="System" />
+        ///  "TSystem.Math" -> <type name="System.Math" />
         /// ]]>
         /// </remarks>
         public static bool TryParseCSharpImportString(string import, out string alias, out string externAlias, out string target, out ImportTargetKind kind)
@@ -608,14 +746,14 @@ namespace Roslyn.Utilities.Pdb
 
             switch (import[0])
             {
-                case 'U': // C# using
+                case 'U': // C# (namespace) using
                     alias = null;
                     externAlias = null;
                     target = import.Substring(1);
                     kind = ImportTargetKind.Namespace;
                     return true;
 
-                case 'E': // C# using
+                case 'E': // C# (namespace) using
                     // NOTE: Dev12 has related cases "I" and "O" in EMITTER::ComputeDebugNamespace,
                     // but they were probably implementation details that do not affect roslyn.
                     if (!TrySplit(import, 1, ' ', out target, out externAlias))
@@ -625,6 +763,13 @@ namespace Roslyn.Utilities.Pdb
 
                     alias = null;
                     kind = ImportTargetKind.Namespace;
+                    return true;
+
+                case 'T': // C# (type) using
+                    alias = null;
+                    externAlias = null;
+                    target = import.Substring(1);
+                    kind = ImportTargetKind.Type;
                     return true;
 
                 case 'A': // C# type or namespace alias
@@ -950,12 +1095,12 @@ namespace Roslyn.Utilities.Pdb
     /// </summary>
     internal enum CustomDebugInfoKind : byte
     {
-        UsingInfo = 0,
-        ForwardInfo = 1,
-        ForwardToModuleInfo = 2,
-        StateMachineHoistedLocalScopes = 3,
-        ForwardIterator = 4,
-        DynamicLocals = 5,
-        EditAndContinueLocalSlotMap = 6,
+        UsingInfo = CDI.CdiKindUsingInfo,
+        ForwardInfo = CDI.CdiKindForwardInfo,
+        ForwardToModuleInfo = CDI.CdiKindForwardToModuleInfo,
+        StateMachineHoistedLocalScopes = CDI.CdiKindStateMachineHoistedLocalScopes,
+        ForwardIterator = CDI.CdiKindForwardIterator,
+        DynamicLocals = CDI.CdiKindDynamicLocals,
+        EditAndContinueLocalSlotMap = CDI.CdiKindEditAndContinueLocalSlotMap,
     }
 }

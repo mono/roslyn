@@ -56,6 +56,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             End If
         End Sub
 
+        ''' <summary>
+        ''' True if conditional calls may be omitted when the required preprocessor symbols are not defined.
+        ''' </summary>
+        ''' <remarks>
+        ''' Only false in debugger scenarios (where calls should never be omitted).
+        ''' </remarks>
+        Friend MustOverride ReadOnly Property AllowOmissionOfConditionalCalls As Boolean
+
         Friend Overrides ReadOnly Property Name As String
             Get
                 Return m_MetadataName
@@ -125,7 +133,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
         End Sub
 
         Friend NotOverridable Overrides Function SynthesizeAttribute(attributeConstructor As WellKnownMember) As Cci.ICustomAttribute
-            Return Me.Compilation.SynthesizeAttribute(attributeConstructor)
+            Return Me.Compilation.TrySynthesizeAttribute(attributeConstructor)
         End Function
 
         Friend NotOverridable Overrides Function GetSourceAssemblyAttributes() As IEnumerable(Of Cci.ICustomAttribute)

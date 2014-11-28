@@ -18,6 +18,7 @@ using Microsoft.Samples.Debugging.CorSymbolStore;
 using Microsoft.Samples.Debugging.SymbolStore;
 using Roslyn.Utilities.Pdb;
 using CDI = Roslyn.Utilities.Pdb.CustomDebugInfoReader;
+using CDIC = Microsoft.Cci.CustomDebugInfoConstants;
 using PooledStringBuilder = Microsoft.CodeAnalysis.Collections.PooledStringBuilder;
 
 namespace Roslyn.Test.PdbUtilities
@@ -200,7 +201,7 @@ namespace Roslyn.Test.PdbUtilities
             int token = metadataReader.GetToken(methodHandle);
             var symbolToken = new SymbolToken(token);
 
-            byte[] bytes = pdbReader.RawSymbolReader.GetCustomDebugInfo(token);
+            byte[] bytes = pdbReader.RawSymbolReader.GetCustomDebugInfo(token, methodVersion: 0);
             ISymbolMethod methodSymbol = pdbReader.SymbolReader.GetMethod(symbolToken);
             if (bytes == null && methodSymbol == null)
             {
@@ -282,7 +283,7 @@ namespace Roslyn.Test.PdbUtilities
                 int size;
                 CDI.ReadRecordHeader(bytes, ref offset, out version, out kind, out size);
 
-                if (version != CDI.CdiVersion)
+                if (version != CDIC.CdiVersion)
                 {
                     WriteUnknownCustomDebugInfo(version, kind, size, bytes, ref offset);
                 }
@@ -537,7 +538,7 @@ namespace Roslyn.Test.PdbUtilities
 
             WriteCustomDebugInfoRecordHeaderAttributes(version, kind, size);
 
-            int bodySize = size - CDI.CdiRecordHeaderSize;
+            int bodySize = size - CDIC.CdiRecordHeaderSize;
             int syntaxOffsetBaseline = -1;
 
             fixed (byte* compressedSlotMapPtr = &bytes[offset])
@@ -645,6 +646,7 @@ namespace Roslyn.Test.PdbUtilities
                         case 'X':
                         case 'Z':
                         case 'E':
+                        case 'T':
                             scope = ImportScope.Unspecified;
                             if (!CDI.TryParseCSharpImportString(rawName, out alias, out externAlias, out target, out kind))
                             {

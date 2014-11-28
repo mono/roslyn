@@ -5,9 +5,9 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CodeGen;
 using Microsoft.CodeAnalysis.Emit;
 using Roslyn.Utilities;
+using CDI = Microsoft.Cci.CustomDebugInfoConstants;
 
 namespace Microsoft.Cci
 {
@@ -94,21 +94,21 @@ namespace Microsoft.Cci
 
             if (!suppressNewCustomDebugInfo)
             {
-            SerializeDynamicLocalInfo(methodBody, customDebugInfo);
+                SerializeDynamicLocalInfo(methodBody, customDebugInfo);
 
-            // delta doesn't need this information - we use information recorded by previous generation emit
-            if (!isEncDelta)
-            {
-                var encSlotInfo = methodBody.StateMachineHoistedLocalSlots;
+                // delta doesn't need this information - we use information recorded by previous generation emit
+                if (!isEncDelta)
+                {
+                    var encSlotInfo = methodBody.StateMachineHoistedLocalSlots;
 
-                // Kickoff method of a state machine (async/iterator method) doens't have any interesting locals,
-                // so we use its EnC method debug info to store information about locals hoisted to the state machine.
-                var encDebugInfo = encSlotInfo.IsDefault ? 
-                    GetEncDebugInfoForLocals(methodBody.LocalVariables) :
-                    GetEncDebugInfoForLocals(encSlotInfo);
+                    // Kickoff method of a state machine (async/iterator method) doens't have any interesting locals,
+                    // so we use its EnC method debug info to store information about locals hoisted to the state machine.
+                    var encDebugInfo = encSlotInfo.IsDefault ?
+                        GetEncDebugInfoForLocals(methodBody.LocalVariables) :
+                        GetEncDebugInfoForLocals(encSlotInfo);
 
-                encDebugInfo.SerializeCustomDebugInformation(customDebugInfo);
-            }
+                    encDebugInfo.SerializeCustomDebugInformation(customDebugInfo);
+                }
             }
 
             byte[] result = SerializeCustomDebugMetadata(customDebugInfo);
@@ -146,8 +146,8 @@ namespace Microsoft.Cci
             if (iteratorClassName == null) return;
             MemoryStream customMetadata = new MemoryStream();
             BinaryWriter cmw = new BinaryWriter(customMetadata, true);
-            cmw.WriteByte(4); // version
-            cmw.WriteByte(4); // kind: ForwardIterator
+            cmw.WriteByte(CDI.CdiVersion);
+            cmw.WriteByte(CDI.CdiKindForwardIterator);
             cmw.Align(4);
             uint length = 10 + (uint)iteratorClassName.Length * 2;
             if ((length & 3) != 0) length += 4 - (length & 3);
@@ -169,15 +169,15 @@ namespace Microsoft.Cci
             uint numberOfScopes = (uint)scopes.Length;
             MemoryStream customMetadata = new MemoryStream();
             BinaryWriter cmw = new BinaryWriter(customMetadata);
-            cmw.WriteByte(4); // version
-            cmw.WriteByte(3); // kind: IteratorLocals
+            cmw.WriteByte(CDI.CdiVersion);
+            cmw.WriteByte(CDI.CdiKindStateMachineHoistedLocalScopes);
             cmw.Align(4);
             cmw.WriteUint(12 + numberOfScopes * 8);
             cmw.WriteUint(numberOfScopes);
             foreach (var scope in scopes)
             {
-                cmw.WriteUint(scope.Offset);
-                cmw.WriteUint(scope.Offset + scope.Length);
+                cmw.WriteUint(scope.StartOffset);
+                cmw.WriteUint(scope.EndOffset);
             }
 
             customDebugInfo.Add(customMetadata);
@@ -218,8 +218,8 @@ namespace Microsoft.Cci
             const int blobSize = 200;//DynamicAttribute - 64, DynamicAttributeLength - 4, SlotIndex -4, IdentifierName - 128
             MemoryStream customMetadata = new MemoryStream();
             BinaryWriter cmw = new BinaryWriter(customMetadata, true);
-            cmw.WriteByte(4);//Version
-            cmw.WriteByte(5);//Kind : Dynamic Locals
+            cmw.WriteByte(CDI.CdiVersion);
+            cmw.WriteByte(CDI.CdiKindDynamicLocals);
             cmw.Align(4);
             // size = Version,Kind + size + cBuckets + (dynamicCount * sizeOf(Local Blob))
             cmw.WriteUint(4 + 4 + 4 + (uint)dynamicLocals.Count * blobSize);//Size of the Dynamic Block
@@ -284,7 +284,7 @@ namespace Microsoft.Cci
 
             MemoryStream customMetadata = MemoryStream.GetInstance();
             BinaryWriter cmw = new BinaryWriter(customMetadata);
-            cmw.WriteByte(4); // version
+            cmw.WriteByte(CDI.CdiVersion);
             cmw.WriteByte((byte)customDebugInfo.Count); // count
             cmw.Align(4);
             foreach (MemoryStream ms in customDebugInfo)
@@ -324,8 +324,8 @@ namespace Microsoft.Cci
             if (usingCounts.Count > 0)
             {
                 uint streamLength = 0;
-                cmw.WriteByte(4); // version
-                cmw.WriteByte(0); // kind: UsingInfo
+                cmw.WriteByte(CDI.CdiVersion);
+                cmw.WriteByte(CDI.CdiKindUsingInfo);
                 cmw.Align(4);
 
                 cmw.WriteUint(streamLength = BitArithmeticUtilities.Align((uint)usingCounts.Count * 2 + 10, 4));
@@ -348,7 +348,7 @@ namespace Microsoft.Cci
 
         private bool ShouldForwardToPreviousMethodWithUsingInfo(IMethodBody methodBody)
         {
-            if (this.previousMethodBodyWithUsingInfo ==  null || ReferenceEquals(this.previousMethodBodyWithUsingInfo, methodBody))
+            if (this.previousMethodBodyWithUsingInfo == null || ReferenceEquals(this.previousMethodBodyWithUsingInfo, methodBody))
             {
                 return false;
             }
@@ -363,8 +363,8 @@ namespace Microsoft.Cci
         {
             MemoryStream customMetadata = new MemoryStream(12);
             BinaryWriter cmw = new BinaryWriter(customMetadata);
-            cmw.WriteByte(4); // version
-            cmw.WriteByte(2); // kind: ForwardToModuleInfo
+            cmw.WriteByte(CDI.CdiVersion);
+            cmw.WriteByte(CDI.CdiKindForwardToModuleInfo);
             cmw.Align(4);
             cmw.WriteUint(12);
             cmw.WriteUint(this.methodTokenWithModuleInfo);
@@ -375,8 +375,8 @@ namespace Microsoft.Cci
         {
             MemoryStream customMetadata = new MemoryStream(12);
             BinaryWriter cmw = new BinaryWriter(customMetadata);
-            cmw.WriteByte(4); // version
-            cmw.WriteByte(1); // kind: ForwardInfo
+            cmw.WriteByte(CDI.CdiVersion);
+            cmw.WriteByte(CDI.CdiKindForwardInfo);
             cmw.Align(4);
             cmw.WriteUint(12);
             cmw.WriteUint(this.previousMethodTokenWithUsingInfo);
