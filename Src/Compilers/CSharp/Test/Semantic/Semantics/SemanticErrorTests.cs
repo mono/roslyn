@@ -4484,6 +4484,19 @@ class C
             finally
             {
                 if (b) throw; //CS0724
+
+                try
+                {
+                    if (b) throw; //CS0724
+                }
+                catch
+                {
+                    if (b) throw; //fine
+                }
+                finally
+                {
+                    if (b) throw; //CS0724
+                }
             }
         }
         finally
@@ -4514,6 +4527,10 @@ class C
                 // (20,17): error CS0156: A throw statement with no arguments is not allowed outside of a catch clause
                 Diagnostic(ErrorCode.ERR_BadEmptyThrow, "throw"),
                 // (36,17): error CS0724: A throw statement with no arguments is not allowed in a finally clause that is nested inside the nearest enclosing catch clause
+                Diagnostic(ErrorCode.ERR_BadEmptyThrowInFinally, "throw"),
+                // (36,17): error CS0724: A throw statement with no arguments is not allowed in a finally clause that is nested inside the nearest enclosing catch clause
+                Diagnostic(ErrorCode.ERR_BadEmptyThrowInFinally, "throw"),
+                    // (36,17): error CS0724: A throw statement with no arguments is not allowed in a finally clause that is nested inside the nearest enclosing catch clause
                 Diagnostic(ErrorCode.ERR_BadEmptyThrowInFinally, "throw"),
                 // (41,13): error CS0156: A throw statement with no arguments is not allowed outside of a catch clause
                 Diagnostic(ErrorCode.ERR_BadEmptyThrow, "throw"),
@@ -10716,6 +10733,58 @@ class X
                 Diagnostic(ErrorCode.ERR_BadEmptyThrowInFinally, "throw").WithLocation(19, 17));
         }
 
+        [Fact, WorkItem(1040213, "DevDiv")]
+        public void CS0724ERR_BadEmptyThrowInFinally_Nesting()
+        {
+            var text = @"
+using System;
+
+class X
+{
+    static void Test(bool b)
+    {
+        try
+        {
+            throw new Exception();
+        }
+        catch
+        {
+            try
+            {
+            }
+            finally
+            {
+                if (b) throw; // CS0724
+
+                try
+                {
+                    throw; // CS0724
+                }
+                catch
+                {
+                    throw; // OK
+                }
+                finally
+                {
+                    throw; // CS0724
+                }
+            }
+        }
+    }
+
+    static void Main()
+    {
+    }
+}";
+            CreateCompilationWithMscorlib(text).VerifyDiagnostics(
+                // (19,17): error CS0724: A throw statement with no arguments is not allowed in a finally clause that is nested inside the nearest enclosing catch clause
+                Diagnostic(ErrorCode.ERR_BadEmptyThrowInFinally, "throw"),
+                // (19,17): error CS0724: A throw statement with no arguments is not allowed in a finally clause that is nested inside the nearest enclosing catch clause
+                Diagnostic(ErrorCode.ERR_BadEmptyThrowInFinally, "throw"),
+                // (19,17): error CS0724: A throw statement with no arguments is not allowed in a finally clause that is nested inside the nearest enclosing catch clause
+                Diagnostic(ErrorCode.ERR_BadEmptyThrowInFinally, "throw"));
+        }
+
         [Fact]
         public void CS0747ERR_InvalidInitializerElementInitializer()
         {
@@ -14856,7 +14925,7 @@ class Test
                 );
         }
 
-        [Fact]
+        [Fact, WorkItem(999399, "DevDiv")]
         public void CS1729ERR_BadCtorArgCount()
         {
             var text = @"
@@ -14888,7 +14957,9 @@ public class Child2 : Parent
     {
     }
 }";
-            CreateCompilationWithMscorlib(text).VerifyDiagnostics(
+            var compilation = CreateCompilationWithMscorlib(text);
+
+            DiagnosticDescription[] expected = {
                 // (21,14): error CS7036: There is no argument given that corresponds to the required formal parameter 'i' of 'Parent.Parent(int, int)'
                 // public class Child : Parent { } // CS1729
                 Diagnostic(ErrorCode.ERR_NoCorrespondingArgument, "Child").WithArguments("i", "Parent.Parent(int, int)").WithLocation(21, 14),
@@ -14900,7 +14971,12 @@ public class Child2 : Parent
                 Diagnostic(ErrorCode.ERR_BadCtorArgCount, "Test").WithArguments("Test", "1").WithLocation(7, 26),
                 // (9,37): error CS7036: There is no argument given that corresponds to the required formal parameter 'j' of 'Parent.Parent(int, int)'
                 //         Parent exampleParent1 = new Parent(10); // CS1729
-                Diagnostic(ErrorCode.ERR_NoCorrespondingArgument, "Parent").WithArguments("j", "Parent.Parent(int, int)").WithLocation(9, 37));
+                Diagnostic(ErrorCode.ERR_NoCorrespondingArgument, "Parent").WithArguments("j", "Parent.Parent(int, int)").WithLocation(9, 37)
+            };
+
+            compilation.VerifyDiagnostics(expected);
+
+            compilation.GetDiagnosticsForSyntaxTree(CompilationStage.Compile, compilation.SyntaxTrees.Single(), null, true).Verify(expected);
         }
 
         [WorkItem(539631, "DevDiv")]

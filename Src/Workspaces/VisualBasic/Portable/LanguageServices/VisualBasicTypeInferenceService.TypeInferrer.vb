@@ -74,8 +74,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             Private Function InferTypesWorker(expression As ExpressionSyntax) As IEnumerable(Of ITypeSymbol)
                 expression = expression.WalkUpParentheses()
+                Dim parent = expression.Parent
+                If TypeOf parent Is ConditionalAccessExpressionSyntax Then
+                    parent = parent.Parent
+                End If
 
-                Return expression.Parent.TypeSwitch(
+                Return parent.TypeSwitch(
                     Function(addRemoveHandlerStatement As AddRemoveHandlerStatementSyntax) InferTypeInAddRemoveHandlerStatementSyntax(addRemoveHandlerStatement, expression),
                     Function(argument As ArgumentSyntax) InferTypeInArgumentList(TryCast(argument.Parent, ArgumentListSyntax), argument),
                     Function(arrayCreationExpression As ArrayCreationExpressionSyntax) InferTypeInArrayCreationExpression(arrayCreationExpression),
@@ -538,6 +542,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         Dim asClause = DirectCast(variableDeclarator.AsClause, SimpleAsClauseSyntax)
                         Return GetTypes(asClause.Type)
                     End If
+                ElseIf equalsValue.IsParentKind(SyntaxKind.PropertyStatement) Then
+                    Dim propertySyntaxType = TryCast(equalsValue.Parent, PropertyStatementSyntax)?.AsClause?.Type
+                    If propertySyntaxType Is Nothing Then
+                        Return SpecializedCollections.EmptyEnumerable(Of ITypeSymbol)()
+                    End If
+                    Dim propertyType = _semanticModel.GetTypeInfo(propertySyntaxType).Type
+                    Return If(propertyType IsNot Nothing,
+                        SpecializedCollections.SingletonEnumerable(propertyType),
+                        SpecializedCollections.EmptyEnumerable(Of ITypeSymbol)())
                 End If
 
                 Return SpecializedCollections.EmptyEnumerable(Of ITypeSymbol)()

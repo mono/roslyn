@@ -1454,7 +1454,7 @@ using System;
                                      Assert.Equal(expectedGlobalMembers[i], actualGlobalMembers[i].Name);
                                  }
 
-                                 string[] expectedAMembers = {".cctor",
+                                 string[] expectedAMembers = {
                                                         "C", "B", "F", "A",
                                                         "<I>k__BackingField", "I", "get_I", "set_I",
                                                         "E",
@@ -1466,7 +1466,8 @@ using System;
                                                         "add_J", "remove_J", "J",
                                                         "O", "N", "M",
                                                         "F", "E", "D", 
-                                                        ".ctor"};
+                                                        ".ctor", ".cctor"
+                                                };
 
                                  var actualAMembers = ((SourceModuleSymbol)m).GlobalNamespace.GetTypeMembers("A1").Single().GetMembers().ToArray();
 
@@ -2579,8 +2580,11 @@ public interface IUsePlatform
         [Fact, WorkItem(769741, "DevDiv")]
         public void Bug769741()
         {
+            var comp = CreateCompilation("", new[] { TestReferences.SymbolsTests.netModule.x64COFF }, options: TestOptions.DebugDll);
             // modules not supported in ref emit
-            CompileAndVerify("", new[] { TestReferences.SymbolsTests.netModule.x64COFF }, emitOptions: TestEmitters.RefEmitBug, verify: false);
+            CompileAndVerify(comp, emitOptions: TestEmitters.RefEmitBug, verify: false);
+            Assert.NotSame(comp.Assembly.CorLibrary, comp.Assembly);
+            comp.GetSpecialType(SpecialType.System_Int32);
         }
 
         [Fact]

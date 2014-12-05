@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.ErrorReporting;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Collections.Immutable;
 using Roslyn.Utilities;
@@ -306,7 +307,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (this.ContainsProject(projectId))
@@ -579,7 +580,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectInfo == null)
             {
-                throw new ArgumentNullException("projectInfo");
+                throw new ArgumentNullException(nameof(projectInfo));
             }
 
             var projectId = projectInfo.Id;
@@ -643,7 +644,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             CheckContainsProject(projectId);
@@ -710,12 +711,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (assemblyName == null)
             {
-                throw new ArgumentNullException("assemblyName");
+                throw new ArgumentNullException(nameof(assemblyName));
             }
 
             CheckContainsProject(projectId);
@@ -738,7 +739,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             CheckContainsProject(projectId);
@@ -753,7 +754,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             CheckContainsProject(projectId);
@@ -768,7 +769,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             CheckContainsProject(projectId);
@@ -784,12 +785,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (options == null)
             {
-                throw new ArgumentNullException("OptionSet");
+                throw new ArgumentNullException(nameof(options));
             }
 
             CheckContainsProject(projectId);
@@ -813,7 +814,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             Contract.Requires(this.ContainsProject(projectId));
@@ -850,12 +851,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (projectReference == null)
             {
-                throw new ArgumentNullException("projectReference");
+                throw new ArgumentNullException(nameof(projectReference));
             }
 
             CheckContainsProject(projectId);
@@ -879,12 +880,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (projectReferences == null)
             {
-                throw new ArgumentNullException("projectReferences");
+                throw new ArgumentNullException(nameof(projectReferences));
             }
 
             CheckContainsProject(projectId);
@@ -911,12 +912,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (projectReference == null)
             {
-                throw new ArgumentNullException("projectReference");
+                throw new ArgumentNullException(nameof(projectReference));
             }
 
             CheckContainsProject(projectId);
@@ -936,12 +937,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (projectReferences == null)
             {
-                throw new ArgumentNullException("projectReferences");
+                throw new ArgumentNullException(nameof(projectReferences));
             }
 
             CheckContainsProject(projectId);
@@ -960,12 +961,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (metadataReference == null)
             {
-                throw new ArgumentNullException("metadataReference");
+                throw new ArgumentNullException(nameof(metadataReference));
             }
 
             CheckContainsProject(projectId);
@@ -982,12 +983,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (metadataReferences == null)
             {
-                throw new ArgumentNullException("metadataReferences");
+                throw new ArgumentNullException(nameof(metadataReferences));
             }
 
             CheckContainsProject(projectId);
@@ -1002,12 +1003,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (metadataReference == null)
             {
-                throw new ArgumentNullException("metadataReference");
+                throw new ArgumentNullException(nameof(metadataReference));
             }
 
             CheckContainsProject(projectId);
@@ -1024,12 +1025,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (metadataReferences == null)
             {
-                throw new ArgumentNullException("metadataReferences");
+                throw new ArgumentNullException(nameof(metadataReferences));
             }
 
             CheckContainsProject(projectId);
@@ -1044,12 +1045,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (analyzerReference == null)
             {
-                throw new ArgumentNullException("analyzerReference");
+                throw new ArgumentNullException(nameof(analyzerReference));
             }
 
             CheckContainsProject(projectId);
@@ -1064,12 +1065,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (analyzerReferences == null)
             {
-                throw new ArgumentNullException("analyzerReferences");
+                throw new ArgumentNullException(nameof(analyzerReferences));
             }
 
             CheckContainsProject(projectId);
@@ -1084,12 +1085,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (analyzerReference == null)
             {
-                throw new ArgumentNullException("analyzerReference");
+                throw new ArgumentNullException(nameof(analyzerReference));
             }
 
             CheckContainsProject(projectId);
@@ -1104,12 +1105,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (projectId == null)
             {
-                throw new ArgumentNullException("projectId");
+                throw new ArgumentNullException(nameof(projectId));
             }
 
             if (analyzerReferences == null)
             {
-                throw new ArgumentNullException("analyzerReferences");
+                throw new ArgumentNullException(nameof(analyzerReferences));
             }
 
             CheckContainsProject(projectId);
@@ -1120,7 +1121,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (state == null)
             {
-                throw new ArgumentNullException("document");
+                throw new ArgumentNullException(nameof(state));
             }
 
             CheckContainsProject(state.Id.ProjectId);
@@ -1148,7 +1149,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (documentId == null)
             {
-                throw new ArgumentNullException("documentId");
+                throw new ArgumentNullException(nameof(documentId));
             }
 
             CheckContainsProject(documentId.ProjectId);
@@ -1156,12 +1157,12 @@ namespace Microsoft.CodeAnalysis
 
             if (name == null)
             {
-                throw new ArgumentNullException("displayName");
+                throw new ArgumentNullException(nameof(name));
             }
 
             if (text == null)
             {
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
             }
 
             var project = this.GetProjectState(documentId.ProjectId);
@@ -1188,6 +1189,15 @@ namespace Microsoft.CodeAnalysis
         }
 
         /// <summary>
+        /// Creates a new solution instance with the corresponding project updated to include a new
+        /// document instance defined by its name and root <see cref="SyntaxNode"/>.
+        /// </summary>
+        public Solution AddDocument(DocumentId documentId, string name, SyntaxNode syntaxRoot, IEnumerable<string> folders = null, string filePath = null, bool isGenerated = false, PreservationMode preservationMode = PreservationMode.PreserveValue)
+        {
+            return AddDocument(documentId, name, SourceText.From(string.Empty), folders, filePath, isGenerated).WithDocumentSyntaxRoot(documentId, syntaxRoot, preservationMode);
+        }
+
+        /// <summary>
         /// Creates a new solution instance with the project updated to include a new document with
         /// the arguments specified.
         /// </summary>
@@ -1195,7 +1205,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (documentId == null)
             {
-                throw new ArgumentNullException("documentId");
+                throw new ArgumentNullException(nameof(documentId));
             }
 
             CheckContainsProject(documentId.ProjectId);
@@ -1203,12 +1213,12 @@ namespace Microsoft.CodeAnalysis
 
             if (name == null)
             {
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
             }
 
             if (loader == null)
             {
-                throw new ArgumentNullException("loader");
+                throw new ArgumentNullException(nameof(loader));
             }
 
             var project = this.GetProjectState(documentId.ProjectId);
@@ -1231,7 +1241,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (documentInfo == null)
             {
-                throw new ArgumentNullException("documentInfo");
+                throw new ArgumentNullException(nameof(documentInfo));
             }
 
             CheckContainsProject(documentInfo.Id.ProjectId);
@@ -1252,7 +1262,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (document == null)
             {
-                throw new ArgumentNullException("document");
+                throw new ArgumentNullException(nameof(document));
             }
 
             CheckNotContainsDocument(document.Id);
@@ -1265,11 +1275,20 @@ namespace Microsoft.CodeAnalysis
         /// Creates a new solution instance with the corresponding project updated to include a new
         /// additional document instance defined by its name and text.
         /// </summary>
+        public Solution AddAdditionalDocument(DocumentId documentId, string name, string text, IEnumerable<string> folders = null, string filePath = null)
+        {
+            return this.AddAdditionalDocument(documentId, name, SourceText.From(text), folders, filePath);
+        }
+
+        /// <summary>
+        /// Creates a new solution instance with the corresponding project updated to include a new
+        /// additional document instance defined by its name and text.
+        /// </summary>
         public Solution AddAdditionalDocument(DocumentId documentId, string name, SourceText text, IEnumerable<string> folders = null, string filePath = null)
         {
             if (documentId == null)
             {
-                throw new ArgumentNullException("documentId");
+                throw new ArgumentNullException(nameof(documentId));
             }
 
             CheckContainsProject(documentId.ProjectId);
@@ -1277,12 +1296,12 @@ namespace Microsoft.CodeAnalysis
 
             if (name == null)
             {
-                throw new ArgumentNullException("displayName");
+                throw new ArgumentNullException(nameof(name));
             }
 
             if (text == null)
             {
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
             }
 
             var project = this.GetProjectState(documentId.ProjectId);
@@ -1309,7 +1328,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (documentInfo == null)
             {
-                throw new ArgumentNullException("documentInfo");
+                throw new ArgumentNullException(nameof(documentInfo));
             }
 
             CheckContainsProject(documentInfo.Id.ProjectId);
@@ -1328,7 +1347,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (state == null)
             {
-                throw new ArgumentNullException("document");
+                throw new ArgumentNullException(nameof(state));
             }
 
             CheckContainsProject(state.Id.ProjectId);
@@ -1375,12 +1394,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (documentId == null)
             {
-                throw new ArgumentNullException("documentId");
+                throw new ArgumentNullException(nameof(documentId));
             }
 
             if (folders == null)
             {
-                throw new ArgumentNullException("folders");
+                throw new ArgumentNullException(nameof(folders));
             }
 
             folders = folders != null ? folders.WhereNotNull().ToReadOnlyCollection() : null;
@@ -1399,12 +1418,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (documentId == null)
             {
-                throw new ArgumentNullException("documentId");
+                throw new ArgumentNullException(nameof(documentId));
             }
 
             if (text == null)
             {
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
             }
 
             CheckContainsDocument(documentId);
@@ -1446,12 +1465,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (documentId == null)
             {
-                throw new ArgumentNullException("documentId");
+                throw new ArgumentNullException(nameof(documentId));
             }
 
             if (text == null)
             {
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
             }
 
             CheckContainsAdditionalDocument(documentId);
@@ -1499,12 +1518,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (documentId == null)
             {
-                throw new ArgumentNullException("documentId");
+                throw new ArgumentNullException(nameof(documentId));
             }
 
             if (textAndVersion == null)
             {
-                throw new ArgumentNullException("textAndVersion");
+                throw new ArgumentNullException(nameof(textAndVersion));
             }
 
             CheckContainsDocument(documentId);
@@ -1522,12 +1541,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (documentId == null)
             {
-                throw new ArgumentNullException("documentId");
+                throw new ArgumentNullException(nameof(documentId));
             }
 
             if (textAndVersion == null)
             {
-                throw new ArgumentNullException("textAndVersion");
+                throw new ArgumentNullException(nameof(textAndVersion));
             }
 
             CheckContainsAdditionalDocument(documentId);
@@ -1545,12 +1564,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (documentId == null)
             {
-                throw new ArgumentNullException("documentId");
+                throw new ArgumentNullException(nameof(documentId));
             }
 
             if (root == null)
             {
-                throw new ArgumentNullException("root");
+                throw new ArgumentNullException(nameof(root));
             }
 
             CheckContainsDocument(documentId);
@@ -1588,7 +1607,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (!Enum.IsDefined(typeof(SourceCodeKind), sourceCodeKind))
             {
-                throw new ArgumentNullException("sourceCodeKind");
+                throw new ArgumentOutOfRangeException(nameof(sourceCodeKind));
             }
 
             CheckContainsDocument(documentId);
@@ -1637,7 +1656,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (newDocument == null)
             {
-                throw new ArgumentNullException("newDocument");
+                throw new ArgumentNullException(nameof(newDocument));
             }
 
             CheckContainsDocument(newDocument.Id);
@@ -1674,7 +1693,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (newDocument == null)
             {
-                throw new ArgumentNullException("newDocument");
+                throw new ArgumentNullException(nameof(newDocument));
             }
 
             CheckContainsAdditionalDocument(newDocument.Id);
@@ -1904,12 +1923,12 @@ namespace Microsoft.CodeAnalysis
         {
             if (documentIds == null)
             {
-                throw new ArgumentNullException("documentIds");
+                throw new ArgumentNullException(nameof(documentIds));
             }
 
             if (text == null)
             {
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
             }
 
             var solution = this;
@@ -2034,7 +2053,7 @@ namespace Microsoft.CodeAnalysis
         {
             if (oldSolution == null)
             {
-                throw new ArgumentNullException("oldSolution");
+                throw new ArgumentNullException(nameof(oldSolution));
             }
 
             return new SolutionChanges(this, oldSolution);

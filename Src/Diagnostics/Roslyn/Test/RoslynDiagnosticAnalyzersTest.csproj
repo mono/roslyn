@@ -15,7 +15,6 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Microsoft.CodeAnalysis.UnitTests</RootNamespace>
     <AssemblyName>Roslyn.Diagnostics.Analyzers.UnitTests</AssemblyName>
-    <StyleCopEnabled>true</StyleCopEnabled>
     <NonShipping>true</NonShipping>
     <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">..\..\..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
@@ -93,6 +92,7 @@
   <ItemGroup>
     <Compile Include="ApiDesign\CancellationTokenMustBeLastTests.cs" />
     <Compile Include="Performance\EmptyArrayDiagnosticAnalyzerTests.cs" />
+    <Compile Include="Performance\LinqAnalyzerTests.cs" />
     <Compile Include="Performance\SpecializedEnumerableCreationAnalyzerTests.cs" />
     <Compile Include="Reliability\ImmutableCollectionAnalyzerTests.cs" />
   </ItemGroup>

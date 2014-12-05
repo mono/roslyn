@@ -933,6 +933,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             var usingToken = this.EatToken(SyntaxKind.UsingKeyword);
 
+            var staticToken = default(SyntaxToken);
+            if (this.CurrentToken.Kind == SyntaxKind.StaticKeyword)
+            {
+                staticToken = this.EatToken(SyntaxKind.StaticKeyword);
+            }
+
             NameEqualsSyntax alias = null;
             if (this.IsNamedAssignment())
             {
@@ -975,7 +981,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 semicolon = this.EatToken(SyntaxKind.SemicolonToken);
             }
 
-            return syntaxFactory.UsingDirective(usingToken, alias, name, semicolon);
+            var usingDirective = syntaxFactory.UsingDirective(usingToken, staticToken, alias, name, semicolon);
+            if (staticToken != default(SyntaxToken))
+            {
+                usingDirective = CheckFeatureAvailability(usingDirective, MessageID.IDS_FeatureUsingStatic);
+            }
+
+            return usingDirective;
         }
 
         private bool IsPossibleGlobalAttributeDeclaration()
@@ -9311,12 +9323,28 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         private bool IsAnonymousTypeMemberExpression(ExpressionSyntax expr)
         {
-            if (expr.Kind == SyntaxKind.QualifiedName)
+            while (true)
             {
-                return IsAnonymousTypeMemberExpression(((QualifiedNameSyntax)expr).Right);
-            }
+                switch (expr.Kind)
+                {
+                    case SyntaxKind.QualifiedName:
+                        expr = ((QualifiedNameSyntax)expr).Right;
+                        continue;
+                    case SyntaxKind.ConditionalAccessExpression:
+                        expr = ((ConditionalAccessExpressionSyntax)expr).WhenNotNull;
+                        if (expr.Kind == SyntaxKind.MemberBindingExpression)
+                        {
+                            return true;
+                        }
 
-            return expr.Kind == SyntaxKind.IdentifierName || expr.Kind == SyntaxKind.SimpleMemberAccessExpression;
+                        continue;
+                    case SyntaxKind.IdentifierName:
+                    case SyntaxKind.SimpleMemberAccessExpression:
+                        return true;
+                    default:
+                        return false;
+                }
+            }
         }
 
         private bool IsInitializerMember()

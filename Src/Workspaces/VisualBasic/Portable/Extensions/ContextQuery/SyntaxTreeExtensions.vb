@@ -288,6 +288,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Extensions.ContextQuery
                targetToken.IsChildToken(Of CallStatementSyntax)(Function(callStatementSyntax) callStatementSyntax.CallKeyword) OrElse
                targetToken.IsChildToken(Of CatchFilterClauseSyntax)(Function(catchFilterClauseSyntax) catchFilterClauseSyntax.WhenKeyword) OrElse
                targetToken.IsChildToken(Of CaseStatementSyntax)(Function(caseStatement) caseStatement.CaseKeyword) OrElse
+               targetToken.IsChildToken(Of ConditionalAccessExpressionSyntax)(Function(conditionalAccessExpressionSyntax) conditionalAccessExpressionSyntax.QuestionMarkToken) OrElse
                targetToken.IsChildSeparatorToken(Of CaseStatementSyntax, CaseClauseSyntax)(Function(caseStatement) caseStatement.Cases) OrElse
                targetToken.IsChildToken(Of RangeCaseClauseSyntax)(Function(rangeCaseClause) rangeCaseClause.ToKeyword) OrElse
                targetToken.IsChildToken(Of RelationalCaseClauseSyntax)(Function(relationalCaseClause) relationalCaseClause.OperatorToken) OrElse
@@ -448,7 +449,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Extensions.ContextQuery
         End Function
 
         <Extension()>
-        Public Function IsNameOfContext(syntaxTree As SyntaxTree, position As Integer, token As SyntaxToken, Optional cancellationToken As CancellationToken = Nothing) As Boolean
+        Public Function IsNameOfContext(syntaxTree As SyntaxTree, position As Integer, Optional cancellationToken As CancellationToken = Nothing) As Boolean
             ' first do quick exit check
             If syntaxTree.IsInPreprocessorDirectiveContext(position, cancellationToken) OrElse
                syntaxTree.IsInInactiveRegion(position, cancellationToken) OrElse
@@ -458,13 +459,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Extensions.ContextQuery
                 Return False
             End If
 
-            Contract.Requires(token = syntaxTree.GetTargetToken(position, cancellationToken))
-
-            If token.IsChildToken(Of NameOfExpressionSyntax)(Function(importAliasClause) importAliasClause.OpenParenToken) Then
-                Return True
-            End If
-
-            Return False
+            Return syntaxTree _
+                .GetTargetToken(position, cancellationToken) _
+                .IsChildToken(Of NameOfExpressionSyntax)(Function(nameOfExpression) nameOfExpression.OpenParenToken)
         End Function
 
         <Extension()>

@@ -106,7 +106,9 @@
     <Compile Include="CodeGeneration\CSharpCodeGenerationService.cs" />
     <Compile Include="CodeGeneration\CSharpCodeGenerationServiceFactory.cs" />
     <Compile Include="CodeGeneration\CSharpDeclarationComparer.cs" />
-    <Compile Include="CodeGeneration\CSharpSyntaxGenerator.cs" />
+    <Compile Include="CodeGeneration\CSharpSyntaxGenerator.cs">
+      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
+    </Compile>
     <Compile Include="CodeGeneration\DestructorGenerator.cs" />
     <Compile Include="CodeGeneration\EnumMemberGenerator.cs" />
     <Compile Include="CodeGeneration\EventGenerator.cs" />
@@ -213,14 +215,18 @@
     <Compile Include="LanguageServices\CSharpCompilationFactoryService.cs" />
     <Compile Include="LanguageServices\CSharpSemanticFactsService.cs" />
     <Compile Include="LanguageServices\CSharpSymbolDeclarationService.cs" />
-    <Compile Include="LanguageServices\CSharpSyntaxFactsService.cs" />
+    <Compile Include="LanguageServices\CSharpSyntaxFactsService.cs">
+      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
+    </Compile>
     <Compile Include="LanguageServices\CSharpSyntaxTreeFactory.PathSyntaxReference.cs" />
     <Compile Include="LanguageServices\CSharpSyntaxTreeFactoryService.cs" />
     <Compile Include="LanguageServices\CSharpSyntaxTreeFactoryService.NullSyntaxReference.cs" />
     <Compile Include="LanguageServices\CSharpSyntaxTreeFactoryService.PositionalSyntaxReference.cs" />
     <Compile Include="LanguageServices\CSharpSyntaxTreeFactoryService.RecoverableSyntaxTree.cs" />
     <Compile Include="LanguageServices\CSharpTypeInferenceService.cs" />
-    <Compile Include="LanguageServices\CSharpTypeInferenceService.TypeInferrer.cs" />
+    <Compile Include="LanguageServices\CSharpTypeInferenceService.TypeInferrer.cs">
+      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
+    </Compile>
     <Compile Include="LinkedFiles\CSharpLinkedFileMergeConflictCommentAdditionService.cs" />
     <Compile Include="Recommendations\CSharpRecommendationService.cs" />
     <Compile Include="Rename\CSharpRenameRewriterLanguageService.cs" />
