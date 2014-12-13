@@ -41,22 +41,21 @@ has to be replaced with
 </Project>
 ```
 
-## Build FakeSign
+## Build FakeSign tool
 
 FakeSign tool is needed during build and needs to be build as first step
 
-	`xbuild Src/Tools/Source/FakeSign/FakeSign.csproj`
+    xbuild Src/Tools/Source/FakeSign/FakeSign.csproj
 
 ## Build C# compiler
 
-The compiler can be build using xbuild with
+The compiler can be built using following xbuild command line 
 
-    `xbuild Src/Compilers/CSharp/csc/csc.csproj`
+    xbuild Src/Compilers/CSharp/csc/csc.csproj
 
 The Roslyn compiler is called `csc.exe` and once built it can be found in
 the top level `Binaries/Debug` directory.
 
 ## Build C# workspace (optional)
-===========
 
-Use `xbuild Src/Workspaces/CSharp/Portable/CSharpWorkspace.csproj` to build the C# workspace.
+    xbuild Src/Workspaces/CSharp/Portable/CSharpWorkspace.csproj
