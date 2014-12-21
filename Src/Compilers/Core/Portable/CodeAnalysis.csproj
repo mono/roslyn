@@ -566,6 +566,12 @@
     <Compile Include="WellKnownMembers.cs" />
     <Compile Include="WellKnownTypes.cs" />
     <Compile Include="Xml\XmlCharType.cs" />
+    <Compile Include="PEWriter\MdbWriter\MdbWriter.cs" />
+    <Compile Include="PEWriter\MdbWriter\MonoSymbolFile.cs" />
+    <Compile Include="PEWriter\MdbWriter\MonoSymbolTable.cs" />
+    <Compile Include="PEWriter\MdbWriter\MonoSymbolWriter.cs" />
+    <Compile Include="PEWriter\MdbWriter\SourceMethodBuilder.cs" />
+    <Compile Include="PEWriter\MdbWriter\PclFileAccess.cs" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.Desktop" />
