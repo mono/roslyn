@@ -53,7 +53,11 @@ namespace Microsoft.Cci
         {
             this.stream = new ComStreamWrapper(stream);
             this.fileName = fileName;
-            this.symWriterFactory = symWriterFactory;
+            if (Type.GetType ("Mono.Runtime") != null) {
+                this.symWriterFactory = new Func<object> (() => new Mono.CompilerServices.SymbolWriter.MdbWriter ());
+            } else {
+                this.symWriterFactory = symWriterFactory;
+            }
             CreateSequencePointBuffers(capacity: 64);
         }
 
