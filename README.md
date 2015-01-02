@@ -14,7 +14,7 @@ There are a few steps required to build Roslyn on Mono:
 ## Install PCL
 
 Download the
-[PCL Reference Assemblies](http://www.microsoft.com/en-us/download/details.aspx?id=40727)
+[PCL Reference Assemblies Windows Installer](http://www.microsoft.com/en-us/download/details.aspx?id=40727) or [PCL Reference Assemblies zip file](http://storage.bos.xamarin.com/bot-provisioning/PortableReferenceAssemblies-2014-04-14.zip)
 and copy the directory `v4.5/Profile/Profile7` into your Mono
 installation as a subdirectory of
 `$PREFIX/lib/mono/xbuild-frameworks/.NETPortable/v4.5/Profile/`.
