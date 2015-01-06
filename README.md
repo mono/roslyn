@@ -4,7 +4,7 @@ Roslyn
 Mono compatible copy of Roslyn Source Code
 
 The build requires `master` Mono
-`73bb10fff3d7b828c3508c4ab34126baa8345bd9` or newer.
+`40810cf0762c5f644169feb1fc7a14f09c724bc0` or newer.
 
 C# compiler
 ============
