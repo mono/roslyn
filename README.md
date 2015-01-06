@@ -9,12 +9,12 @@ The build requires `master` Mono
 C# compiler
 ============
 
-There are a few steps to getting the C# compiler to build on Mono:
+There are a few steps required to build Roslyn on Mono:
 
 ## Install PCL
 
 Download the
-[PCL Reference Assemblies](http://www.microsoft.com/en-us/download/details.aspx?id=40727)
+[PCL Reference Assemblies Windows Installer](http://www.microsoft.com/en-us/download/details.aspx?id=40727) or [PCL Reference Assemblies zip file](http://storage.bos.xamarin.com/bot-provisioning/PortableReferenceAssemblies-2014-04-14.zip)
 and copy the directory `v4.5/Profile/Profile7` into your Mono
 installation as a subdirectory of
 `$PREFIX/lib/mono/xbuild-frameworks/.NETPortable/v4.5/Profile/`.
@@ -41,22 +41,21 @@ has to be replaced with
 </Project>
 ```
 
-## Build FakeSign
+## Build FakeSign tool
 
 FakeSign tool is needed during build and needs to be build as first step
 
-	`xbuild Src/Tools/Source/FakeSign/FakeSign.csproj`
+    xbuild Src/Tools/Source/FakeSign/FakeSign.csproj
 
-## Run xbuild
+## Build C# compiler
 
-The compiler can be build using xbuild with
+The compiler can be built using following xbuild command line 
 
-    `xbuild Src/Compilers/CSharp/csc/csc.csproj`
+    xbuild Src/Compilers/CSharp/csc/csc.csproj
 
 The Roslyn compiler is called `csc.exe` and once built it can be found in
 the top level `Binaries/Debug` directory.
 
-Workspaces
-===========
+## Build C# workspace (optional)
 
-Use `xbuild Src/Workspaces/CSharp/Portable/CSharpWorkspace.csproj` to build the C# workspace.
+    xbuild Src/Workspaces/CSharp/Portable/CSharpWorkspace.csproj
