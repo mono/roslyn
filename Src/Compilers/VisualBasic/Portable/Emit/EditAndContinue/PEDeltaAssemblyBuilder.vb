@@ -22,11 +22,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
                        outputKind As OutputKind,
                        serializationProperties As ModulePropertiesForSerialization,
                        manifestResources As IEnumerable(Of ResourceDescription),
-                       assemblySymbolMapper As Func(Of AssemblySymbol, AssemblyIdentity),
                        previousGeneration As EmitBaseline,
-                       edits As IEnumerable(Of SemanticEdit))
+                       edits As IEnumerable(Of SemanticEdit),
+                       isAddedSymbol As Func(Of ISymbol, Boolean))
 
-            MyBase.New(sourceAssembly, emitOptions, outputKind, serializationProperties, manifestResources, assemblySymbolMapper, additionalTypes:=ImmutableArray(Of NamedTypeSymbol).Empty)
+            MyBase.New(sourceAssembly, emitOptions, outputKind, serializationProperties, manifestResources, assemblySymbolMapper:=Nothing, additionalTypes:=ImmutableArray(Of NamedTypeSymbol).Empty)
 
             Dim context = New EmitContext(Me, Nothing, New DiagnosticBag())
             Dim [module] = previousGeneration.OriginalMetadata
@@ -54,10 +54,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
 
             Me.m_PreviousDefinitions = New VisualBasicDefinitionMap(previousGeneration.OriginalMetadata.Module, edits, metadataDecoder, matchToMetadata, matchToPrevious)
             Me.m_PreviousGeneration = previousGeneration
-            Me.m_Changes = New SymbolChanges(m_PreviousDefinitions, edits)
+            Me.m_Changes = New SymbolChanges(m_PreviousDefinitions, edits, isAddedSymbol)
         End Sub
 
-        Private Overloads Shared Function GetAnonymousTypeMap(
+        Private Overloads Shared Function GetAnonymousTypeMapFromMetadata(
                                                    reader As MetadataReader,
                                                    metadataDecoder As Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE.MetadataDecoder) As IReadOnlyDictionary(Of AnonymousTypeKey, AnonymousTypeValue)
             Dim result = New Dictionary(Of AnonymousTypeKey, AnonymousTypeValue)
@@ -139,7 +139,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
                 Return previousGeneration
             End If
 
-            Dim anonymousTypeMap = GetAnonymousTypeMap(previousGeneration.MetadataReader, metadataDecoder)
+            Dim anonymousTypeMap = GetAnonymousTypeMapFromMetadata(previousGeneration.MetadataReader, metadataDecoder)
             Return previousGeneration.WithAnonymousTypeMap(anonymousTypeMap)
         End Function
 
@@ -201,7 +201,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             Dim embeddedTypesManager = Me.EmbeddedTypesManagerOpt
             If embeddedTypesManager IsNot Nothing Then
                 For Each embeddedType In embeddedTypesManager.EmbeddedTypesMap.Keys
-                    diagnostics.Add(ErrorFactory.ErrorInfo(ERRID.ERR_EnCNoPIAReference, embeddedType), Location.None)
+                    diagnostics.Add(ErrorFactory.ErrorInfo(ERRID.ERR_EncNoPIAReference, embeddedType), Location.None)
                 Next
             End If
         End Sub

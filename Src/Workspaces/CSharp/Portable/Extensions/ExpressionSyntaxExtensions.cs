@@ -461,59 +461,58 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                 }
             }
 
-            // Technically, you could introduce an LValue for "Foo" in "Foo()" even if "Foo" binds
-            // to a method.  (i.e. by assigning to a Func<...> type).  However, this is so contrived
-            // and none of the features that use this extension consider this replaceable.
-            if (expression.Parent is InvocationExpressionSyntax)
+            switch (expression.Parent.CSharpKind())
             {
-                if (expression.IsKind(SyntaxKind.IdentifierName) || expression is MemberAccessExpressionSyntax)
-                {
-                    // If it looks like a method then we don't allow it to be replaced if it is a
-                    // method (or if it doesn't bind).
+                case SyntaxKind.InvocationExpression:
+                    // Technically, you could introduce an LValue for "Foo" in "Foo()" even if "Foo" binds
+                    // to a method.  (i.e. by assigning to a Func<...> type).  However, this is so contrived
+                    // and none of the features that use this extension consider this replaceable.
+                    if (expression.IsKind(SyntaxKind.IdentifierName) || expression is MemberAccessExpressionSyntax)
+                    {
+                        // If it looks like a method then we don't allow it to be replaced if it is a
+                        // method (or if it doesn't bind).
 
-                    var symbolInfo = semanticModel.GetSymbolInfo(expression, cancellationToken);
-                    return symbolInfo.GetBestOrAllSymbols().Any() && !symbolInfo.GetBestOrAllSymbols().Any(s => s is IMethodSymbol);
-                }
-                else
-                {
-                    // It doesn't look like a method, we allow this to be replaced.
+                        var symbolInfo = semanticModel.GetSymbolInfo(expression, cancellationToken);
+                        return symbolInfo.GetBestOrAllSymbols().Any() && !symbolInfo.GetBestOrAllSymbols().Any(s => s is IMethodSymbol);
+                    }
+                    else
+                    {
+                        // It doesn't look like a method, we allow this to be replaced.
+                        return true;
+                    }
+
+                case SyntaxKind.IsExpression:
+                case SyntaxKind.AsExpression:
+                    // Can't introduce a variable for the type portion of an is/as check.
+                    var isOrAsExpression = (BinaryExpressionSyntax)expression.Parent;
+                    return expression == isOrAsExpression.Left;
+                case SyntaxKind.EqualsValueClause:
+                case SyntaxKind.ExpressionStatement:
+                case SyntaxKind.ArrayInitializerExpression:
+                case SyntaxKind.CollectionInitializerExpression:
+                case SyntaxKind.ConditionalAccessExpression:
+                case SyntaxKind.Argument:
+                case SyntaxKind.AttributeArgument:
+                case SyntaxKind.AnonymousObjectMemberDeclarator:
+                case SyntaxKind.ArrowExpressionClause:
+                case SyntaxKind.AwaitExpression:
+                case SyntaxKind.ReturnStatement:
+                case SyntaxKind.YieldReturnStatement:
+                case SyntaxKind.ParenthesizedLambdaExpression:
+                case SyntaxKind.SimpleLambdaExpression:
+                case SyntaxKind.ParenthesizedExpression:
+                case SyntaxKind.ArrayRankSpecifier:
+                case SyntaxKind.ConditionalExpression:
+                case SyntaxKind.IfStatement:
+                case SyntaxKind.CatchFilterClause:
+                case SyntaxKind.WhileStatement:
+                case SyntaxKind.DoStatement:
+                case SyntaxKind.ThrowStatement:
+                case SyntaxKind.SwitchStatement:
+                case SyntaxKind.InterpolatedStringExpression:
+                case SyntaxKind.ComplexElementInitializerExpression:
+                    // Direct parent kind checks.
                     return true;
-                }
-            }
-
-            // Direct parent kind checks.
-            if (expression.IsParentKind(SyntaxKind.ExpressionStatement) ||
-                expression.IsParentKind(SyntaxKind.EqualsValueClause) ||
-                expression.IsParentKind(SyntaxKind.ArrayInitializerExpression) ||
-                expression.IsParentKind(SyntaxKind.CollectionInitializerExpression) ||
-                expression.IsParentKind(SyntaxKind.ConditionalAccessExpression) ||
-                expression.IsParentKind(SyntaxKind.Argument) ||
-                expression.IsParentKind(SyntaxKind.AttributeArgument) ||
-                expression.IsParentKind(SyntaxKind.AnonymousObjectMemberDeclarator) ||
-                expression.IsParentKind(SyntaxKind.ReturnStatement) ||
-                expression.IsParentKind(SyntaxKind.YieldReturnStatement) ||
-                expression.IsParentKind(SyntaxKind.ParenthesizedLambdaExpression) ||
-                expression.IsParentKind(SyntaxKind.SimpleLambdaExpression) ||
-                expression.IsParentKind(SyntaxKind.ParenthesizedExpression) ||
-                expression.IsParentKind(SyntaxKind.ArrayRankSpecifier) ||
-                expression.IsParentKind(SyntaxKind.ConditionalExpression) ||
-                expression.IsParentKind(SyntaxKind.IfStatement) ||
-                expression.IsParentKind(SyntaxKind.CatchFilterClause) ||
-                expression.IsParentKind(SyntaxKind.WhileStatement) ||
-                expression.IsParentKind(SyntaxKind.DoStatement) ||
-                expression.IsParentKind(SyntaxKind.ThrowStatement) ||
-                expression.IsParentKind(SyntaxKind.SwitchStatement) ||
-                expression.IsParentKind(SyntaxKind.InterpolatedStringInsert))
-            {
-                return true;
-            }
-
-            if (expression.IsParentKind(SyntaxKind.IsExpression) ||
-                expression.IsParentKind(SyntaxKind.AsExpression))
-            {
-                // Can't introduce a variable for the type portion of an is/as check.
-                var isOrAsExpression = (BinaryExpressionSyntax)expression.Parent;
-                return expression == isOrAsExpression.Left;
             }
 
             if (expression.Parent is PrefixUnaryExpressionSyntax)
@@ -522,11 +521,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                 {
                     return true;
                 }
-            }
-
-            if (expression.Parent is AwaitExpressionSyntax)
-            {
-                return true;
             }
 
             var parentNonExpression = expression.GetAncestors().SkipWhile(n => n is ExpressionSyntax).FirstOrDefault();
@@ -1324,10 +1318,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                     if (!name.IsVar && (symbol.Kind == SymbolKind.NamedType) && !name.IsLeftSideOfQualifiedName())
                     {
                         var type = (INamedTypeSymbol)symbol;
-                        if ((!type.IsUnboundGenericType) && // Don't rewrite unbound generic type "Nullable<>"
-                            (type.OriginalDefinition != null) &&
-                            (type.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T) &&
-                            (aliasInfo == null))
+                        if (!type.IsUnboundGenericType && // Don't rewrite unbound generic type "Nullable<>"
+                            type.IsNullable() && 
+                            aliasInfo == null)
                         {
                             GenericNameSyntax genericName;
                             if (name.CSharpKind() == SyntaxKind.QualifiedName)

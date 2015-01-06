@@ -575,8 +575,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     // type cannot.
                     return BadExpression(node);
 
-                case SyntaxKind.InterpolatedString:
-                    return BindInterpolatedString((InterpolatedStringSyntax)node, diagnostics);
+                case SyntaxKind.InterpolatedStringExpression:
+                    return BindInterpolatedString((InterpolatedStringExpressionSyntax)node, diagnostics);
 
                 default:
                     // NOTE: We could probably throw an exception here, but it's conceivable
@@ -844,6 +844,12 @@ namespace Microsoft.CodeAnalysis.CSharp
             if (invoked)
             {
                 options |= LookupOptions.MustBeInvocableIfMember;
+            }
+
+            if (!IsInMethodBody)
+            {
+                Debug.Assert((options & LookupOptions.NamespacesOrTypesOnly) == 0);
+                options |= LookupOptions.MustNotBeMethodTypeParameter;
             }
 
             HashSet<DiagnosticInfo> useSiteDiagnostics = null;
@@ -1159,8 +1165,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                         }
                         else
                         {
-                                type = localSymbol.Type;
-                            }
+                            type = localSymbol.Type;
+                        }
 
                         return new BoundLocal(node, localSymbol, constantValueOpt, type, hasErrors: isError);
                     }
@@ -4150,14 +4156,8 @@ namespace Microsoft.CodeAnalysis.CSharp
             ExpressionSyntax exprSyntax = node.Expression;
             if (node.Kind == SyntaxKind.SimpleMemberAccessExpression)
             {
-                HashSet<DiagnosticInfo> useSiteDiagnostics = null;
-                boundLeft =
-                    // First, try to detect the Color Color case.
-                    BindLeftOfPotentialColorColorMemberAccess(exprSyntax, ref useSiteDiagnostics) ??
-                    // Then, if this is definitely not a Color Color case, just bind the expression normally.
-                    // NOTE: CheckValue will be called explicitly in BindMemberAccessWithBoundLeft.
-                    this.BindExpression(exprSyntax, diagnostics);
-                diagnostics.Add(node, useSiteDiagnostics);
+                // NOTE: CheckValue will be called explicitly in BindMemberAccessWithBoundLeft.
+                boundLeft = BindLeftOfPotentialColorColorMemberAccess(exprSyntax, diagnostics);
             }
             else
             {
@@ -4195,10 +4195,8 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// then return a BoundExpression if we can easily disambiguate or a BoundTypeOrValueExpression if we
         /// cannot.  If this is not a Color Color case, then return null.
         /// </summary>
-        private BoundExpression BindLeftOfPotentialColorColorMemberAccess(ExpressionSyntax left, ref HashSet<DiagnosticInfo> useSiteDiagnostics)
+        private BoundExpression BindLeftOfPotentialColorColorMemberAccess(ExpressionSyntax left, DiagnosticBag diagnostics)
         {
-            BoundExpression boundLeft = null;
-
             // SPEC: 7.6.4.1 Identical simple names and type names
             // SPEC: In a member access of the form E.I, if E is a single identifier, and if the meaning of E as
             // SPEC: a simple-name (spec 7.6.2) is a constant, field, property, local variable, or parameter with the
@@ -4207,85 +4205,66 @@ namespace Microsoft.CodeAnalysis.CSharp
             // SPEC: a member of the type E in both cases. In other words, the rule simply permits access to the 
             // SPEC: static members and nested types of E where a compile-time error would otherwise have occurred. 
 
-            // NOTE: We don't want to bind left until we know how to interpret it, because binding can have side-effects.
-
             if (left.Kind == SyntaxKind.IdentifierName)
             {
-                LookupResult result = LookupResult.GetInstance();
-                string leftName = ((IdentifierNameSyntax)left).Identifier.ValueText;
-                TypeSymbol leftType = null;
+                var node = (IdentifierNameSyntax)left;
+                var valueDiagnostics = DiagnosticBag.GetInstance();
+                var boundValue = BindIdentifier(node, invoked: false, diagnostics: valueDiagnostics);
 
-                this.LookupSymbolsWithFallback(result, leftName, arity: 0, useSiteDiagnostics: ref useSiteDiagnostics, options: LookupOptions.AllMethodsOnArityZero);
-
-                if (result.IsSingleViable)
+                Symbol leftSymbol;
+                if (boundValue.Kind == BoundKind.Conversion)
                 {
-                    Symbol leftSymbol = result.SingleSymbolOrDefault;
+                    // BindFieldAccess may insert a conversion if binding occurs
+                    // within an enum member initializer.
+                    leftSymbol = ((BoundConversion)boundValue).Operand.ExpressionSymbol;
+                }
+                else
+                {
+                    leftSymbol = boundValue.ExpressionSymbol;
+                }
 
+                if ((object)leftSymbol != null)
+                {
+                    TypeSymbol leftType;
                     switch (leftSymbol.Kind)
                     {
                         case SymbolKind.Local:
-                            {
-                                var localSymbol = (LocalSymbol)leftSymbol;
-
-                                bool isBindingVar = IsBindingImplicitlyTypedLocal(localSymbol);
-                                if (!isBindingVar)
-                                {
-                                    bool usedBeforeDecl =
-                                        left.SyntaxTree == localSymbol.Locations[0].SourceTree &&
-                                        left.SpanStart < localSymbol.Locations[0].SourceSpan.Start;
-
-                                    if (!usedBeforeDecl)
-                                    {
-                                        leftType = localSymbol.Type;
-                                    }
-                                }
-                                break;
-                            }
-                        case SymbolKind.Field:
-                            {
-                                FieldSymbol field = (FieldSymbol)leftSymbol;
-                                TypeSymbol fieldContainingType = field.ContainingType;
-                                if (fieldContainingType.IsEnumType() && this.InEnumMemberInitializer())
-                                {
-                                    leftType = fieldContainingType.GetEnumUnderlyingType();
-                                    Debug.Assert((object)leftType != null);
-                                }
-                                else
-                                {
-                                    leftType = field.GetFieldType(this.FieldsBeingBound);
-                                }
-                                break;
-                            }
-                        case SymbolKind.Property:
-                            leftType = ((PropertySymbol)leftSymbol).Type;
-                            break;
                         case SymbolKind.Parameter:
-                            leftType = ((ParameterSymbol)leftSymbol).Type;
+                        case SymbolKind.Field:
+                        case SymbolKind.Property:
+                            leftType = boundValue.Type;
                             break;
-                            // case SymbolKind.Event: //SPEC: 7.6.4.1 (a.k.a. Color Color) doesn't cover events
+
+                        // case SymbolKind.Event: //SPEC: 7.6.4.1 (a.k.a. Color Color) doesn't cover events
+
+                        default:
+                            // Not a Color Color case. Return the bound member.
+                            goto notColorColor;
                     }
 
-                    if ((object)leftType != null && (leftType.Name == leftName || IsUsingAliasInScope(leftName)))
+                    Debug.Assert((object)leftType != null);
+
+                    var leftName = node.Identifier.ValueText;
+                    if (leftType.Name == leftName || IsUsingAliasInScope(leftName))
                     {
-                        result.Clear();
-
-                        this.LookupSymbolsWithFallback(result, leftName, arity: 0, useSiteDiagnostics: ref useSiteDiagnostics, options: LookupOptions.NamespacesOrTypesOnly);
-
-                        Symbol leftTypeOrNamespaceSymbol = result.SingleSymbolOrDefault;
-                        if (result.IsSingleViable &&
-                            ((leftTypeOrNamespaceSymbol.Kind == SymbolKind.Alias && ((AliasSymbol)leftTypeOrNamespaceSymbol).Target == leftType) ||
-                                leftTypeOrNamespaceSymbol == leftType))
+                        var typeDiagnostics = DiagnosticBag.GetInstance();
+                        var boundType = BindNamespaceOrType(node, typeDiagnostics);
+                        if (boundType.Type == leftType)
                         {
-                            // We don't have enough information to determine how the left name should be interpreted.
-                            // Instantiate a placeholder node until overload resolution is done and we know what to replace it with.
-                            boundLeft = new BoundTypeOrValueExpression(left, leftSymbol, this, leftType);
+                            // NOTE: ReplaceTypeOrValueReceiver will call CheckValue explicitly.
+                            return new BoundTypeOrValueExpression(left, leftSymbol, boundValue, valueDiagnostics.ToReadOnlyAndFree(), boundType, typeDiagnostics.ToReadOnlyAndFree(), leftType);
                         }
                     }
                 }
 
-                result.Free();
+notColorColor:
+                // NOTE: it is up to the caller to call CheckValue on the result.
+                diagnostics.AddRangeAndFree(valueDiagnostics);
+                return boundValue;
             }
-            return boundLeft;
+
+            // NOTE: it is up to the caller to call CheckValue on the result.
+            return BindExpression(left, diagnostics);
         }
 
         // returns true if name matches a using alias in scope
@@ -5842,7 +5821,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     // Ideally the runtime binder would choose between type and value based on the result of the overload resolution.
                     // We need to pick one or the other here. Dev11 compiler passes the type only if the value can't be accessed.
                     bool inStaticContext;
-                    bool useType = IsInstance(typeOrValue.Variable) && !HasThis(isExplicit: false, inStaticContext: out inStaticContext);
+                    bool useType = IsInstance(typeOrValue.ValueSymbol) && !HasThis(isExplicit: false, inStaticContext: out inStaticContext);
 
                     receiverOpt = ReplaceTypeOrValueReceiver(typeOrValue, useType, diagnostics);
                 }
@@ -6257,30 +6236,33 @@ namespace Microsoft.CodeAnalysis.CSharp
             return memberAccess;
         }
 
-        private BoundExpression GetReceiverForConditionalBinding(ExpressionSyntax binding, DiagnosticBag diagnostics)
+        private CSharpSyntaxNode GetConditionalReceiverSyntax(ConditionalAccessExpressionSyntax node)
         {
-            BoundExpression receiver = null;
+            Debug.Assert(node != null);
+            Debug.Assert(node.Expression != null);
 
-            CSharpSyntaxNode conditionalAccessNode = SyntaxFactory.FindConditionalAccessNodeForBinding(binding);
-
-            var currentBinder = this;
-            while (currentBinder != null)
+            var receiver = node.Expression;
+            while (receiver.CSharpKind() == SyntaxKind.ParenthesizedExpression)
             {
-                var conditionalAccessBinder = currentBinder as BinderWithConditionalReceiver;
-                if (conditionalAccessBinder != null)
-                {
-                    receiver = conditionalAccessBinder.receiverExpression;
-                    break;
-                }
-                currentBinder = currentBinder.Next;
+                receiver = ((ParenthesizedExpressionSyntax)receiver).Expression;
+                Debug.Assert(receiver != null);
             }
 
-            if (receiver == null || receiver.Syntax != ((ConditionalAccessExpressionSyntax)conditionalAccessNode).Expression)
+            return receiver;
+        }
+
+        private BoundExpression GetReceiverForConditionalBinding(ExpressionSyntax binding, DiagnosticBag diagnostics)
+        {
+            var conditionalAccessNode = SyntaxFactory.FindConditionalAccessNodeForBinding(binding);
+            Debug.Assert(conditionalAccessNode != null);
+
+            BoundExpression receiver = this.ConditionalReceiverExpression;
+            if (receiver?.Syntax != GetConditionalReceiverSyntax(conditionalAccessNode))
             {
                 // this can happen when semantic model binds parts of a Call or a broken access expression. 
                 // We may not have receiver available in such cases.
                 // Not a problem - we only need receiver to get its type and we can bind it here.
-                receiver = BindConditionalAccessReceiver((ConditionalAccessExpressionSyntax)conditionalAccessNode, diagnostics);
+                receiver = BindConditionalAccessReceiver(conditionalAccessNode, diagnostics);
             }
 
             if (receiver.HasAnyErrors)
@@ -6290,12 +6272,12 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             // create surrogate receiver
             var receiverType = receiver.Type;
-            if (receiverType != null && receiverType.IsNullableType())
+            if (receiverType?.IsNullableType() == true)
             {
                 receiverType = receiverType.GetNullableUnderlyingType();
             }
 
-            receiver = new BoundConditionalReceiver(receiver.Syntax, receiverType);
+            receiver = new BoundConditionalReceiver(receiver.Syntax, receiverType) { WasCompilerGenerated = true };
             return receiver;
         }
 

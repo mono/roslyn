@@ -19,6 +19,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests.CodeGeneration
             Me.ienumerableInt = emptyCompilation.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T).Construct(emptyCompilation.GetSpecialType(SpecialType.System_Int32))
         End Sub
 
+        Public Function Compile(code As String) As Compilation
+            code = code.Replace(vbLf, vbCrLf)
+            Return VisualBasicCompilation.Create("test").AddReferences(TestReferences.NetFx.v4_0_30319.mscorlib).AddSyntaxTrees(SyntaxFactory.ParseSyntaxTree(code))
+        End Function
+
         Private Sub VerifySyntax(Of TSyntax As SyntaxNode)(type As SyntaxNode, expectedText As String)
             Assert.IsAssignableFrom(GetType(TSyntax), type)
             Dim normalized = type.NormalizeWhitespace().ToFullString()
@@ -1647,7 +1652,7 @@ End Class ' end</x>.Value).Members(0)
 Class C
 End Class ' end</x>.Value)
 
-            Dim removed = g.RemoveAttributes(added)
+            Dim removed = g.RemoveAllAttributes(added)
             VerifySyntax(Of ClassBlockSyntax)(
                 removed,
 <x>' comment
@@ -1694,7 +1699,7 @@ End Class ' end</x>.Value)
             Assert.Equal(DeclarationKind.CustomEvent, g.GetDeclarationKind(g.CustomEventDeclaration("ce", g.IdentifierName("t"))))
             Assert.Equal(DeclarationKind.Namespace, g.GetDeclarationKind(g.NamespaceDeclaration("n")))
             Assert.Equal(DeclarationKind.NamespaceImport, g.GetDeclarationKind(g.NamespaceImportDeclaration("u")))
-            Assert.Equal(DeclarationKind.LocalVariable, g.GetDeclarationKind(g.LocalDeclarationStatement(g.IdentifierName("t"), "loc")))
+            Assert.Equal(DeclarationKind.Variable, g.GetDeclarationKind(g.LocalDeclarationStatement(g.IdentifierName("t"), "loc")))
             Assert.Equal(DeclarationKind.Attribute, g.GetDeclarationKind(g.Attribute("a")))
         End Sub
 
@@ -1939,35 +1944,102 @@ End Function</x>.Value)
         End Sub
 
         <Fact>
-        Public Sub TestWithParameters()
-            Assert.Equal(1, g.GetParameters(g.WithParameters(g.MethodDeclaration("m"), {g.ParameterDeclaration("p", g.IdentifierName("t"))})).Count)
-            Assert.Equal(1, g.GetParameters(g.WithParameters(g.ConstructorDeclaration(), {g.ParameterDeclaration("p", g.IdentifierName("t"))})).Count)
-            Assert.Equal(2, g.GetParameters(g.WithParameters(g.IndexerDeclaration({g.ParameterDeclaration("p", g.IdentifierName("t"))}, g.IdentifierName("t")), {g.ParameterDeclaration("p2", g.IdentifierName("t2")), g.ParameterDeclaration("p3", g.IdentifierName("t3"))})).Count)
+        Public Sub TestAddParameters()
+            Assert.Equal(1, g.GetParameters(g.AddParameters(g.MethodDeclaration("m"), {g.ParameterDeclaration("p", g.IdentifierName("t"))})).Count)
+            Assert.Equal(1, g.GetParameters(g.AddParameters(g.ConstructorDeclaration(), {g.ParameterDeclaration("p", g.IdentifierName("t"))})).Count)
+            Assert.Equal(3, g.GetParameters(g.AddParameters(g.IndexerDeclaration({g.ParameterDeclaration("p", g.IdentifierName("t"))}, g.IdentifierName("t")), {g.ParameterDeclaration("p2", g.IdentifierName("t2")), g.ParameterDeclaration("p3", g.IdentifierName("t3"))})).Count)
 
-            Assert.Equal(1, g.GetParameters(g.WithParameters(g.ValueReturningLambdaExpression(g.IdentifierName("expr")), {g.LambdaParameter("p")})).Count)
-            Assert.Equal(1, g.GetParameters(g.WithParameters(g.VoidReturningLambdaExpression(g.IdentifierName("expr")), {g.LambdaParameter("p")})).Count)
+            Assert.Equal(1, g.GetParameters(g.AddParameters(g.ValueReturningLambdaExpression(g.IdentifierName("expr")), {g.LambdaParameter("p")})).Count)
+            Assert.Equal(1, g.GetParameters(g.AddParameters(g.VoidReturningLambdaExpression(g.IdentifierName("expr")), {g.LambdaParameter("p")})).Count)
 
-            Assert.Equal(1, g.GetParameters(g.WithParameters(g.DelegateDeclaration("d"), {g.ParameterDeclaration("p", g.IdentifierName("t"))})).Count)
+            Assert.Equal(1, g.GetParameters(g.AddParameters(g.DelegateDeclaration("d"), {g.ParameterDeclaration("p", g.IdentifierName("t"))})).Count)
 
-            Assert.Equal(0, g.GetParameters(g.WithParameters(g.ClassDeclaration("c"), {g.ParameterDeclaration("p", g.IdentifierName("t"))})).Count)
-            Assert.Equal(0, g.GetParameters(g.WithParameters(g.IdentifierName("x"), {g.ParameterDeclaration("p", g.IdentifierName("t"))})).Count)
-            Assert.Equal(0, g.GetParameters(g.WithParameters(g.PropertyDeclaration("p", g.IdentifierName("t")), {g.ParameterDeclaration("p", g.IdentifierName("t"))})).Count)
+            Assert.Equal(0, g.GetParameters(g.AddParameters(g.ClassDeclaration("c"), {g.ParameterDeclaration("p", g.IdentifierName("t"))})).Count)
+            Assert.Equal(0, g.GetParameters(g.AddParameters(g.IdentifierName("x"), {g.ParameterDeclaration("p", g.IdentifierName("t"))})).Count)
+            Assert.Equal(0, g.GetParameters(g.AddParameters(g.PropertyDeclaration("p", g.IdentifierName("t")), {g.ParameterDeclaration("p", g.IdentifierName("t"))})).Count)
         End Sub
 
         <Fact>
-        Public Sub TestGetInitializer()
-            Assert.Equal("x", g.GetInitializer(g.FieldDeclaration("f", g.IdentifierName("t"), initializer:=g.IdentifierName("x"))).ToString())
-            Assert.Equal("x", g.GetInitializer(g.ParameterDeclaration("p", g.IdentifierName("t"), initializer:=g.IdentifierName("x"))).ToString())
-            Assert.Equal("x", g.GetInitializer(g.LocalDeclarationStatement("loc", initializer:=g.IdentifierName("x"))).ToString())
-            Assert.Null(g.GetInitializer(g.IdentifierName("e")))
+        Public Sub TestGetExpression()
+            ' initializers
+            Assert.Equal("x", g.GetExpression(g.FieldDeclaration("f", g.IdentifierName("t"), initializer:=g.IdentifierName("x"))).ToString())
+            Assert.Equal("x", g.GetExpression(g.ParameterDeclaration("p", g.IdentifierName("t"), initializer:=g.IdentifierName("x"))).ToString())
+            Assert.Equal("x", g.GetExpression(g.LocalDeclarationStatement("loc", initializer:=g.IdentifierName("x"))).ToString())
+
+            ' lambda bodies
+            Assert.Null(g.GetExpression(g.ValueReturningLambdaExpression("p", {g.IdentifierName("x")})))
+            Assert.Equal(1, g.GetStatements(g.ValueReturningLambdaExpression("p", {g.IdentifierName("x")})).Count)
+            Assert.Equal("x", g.GetExpression(g.ValueReturningLambdaExpression(g.IdentifierName("x"))).ToString())
+            Assert.Equal("x", g.GetExpression(g.VoidReturningLambdaExpression(g.IdentifierName("x"))).ToString())
+            Assert.Equal("x", g.GetExpression(g.ValueReturningLambdaExpression("p", g.IdentifierName("x"))).ToString())
+            Assert.Equal("x", g.GetExpression(g.VoidReturningLambdaExpression("p", g.IdentifierName("x"))).ToString())
+
+            Assert.Null(g.GetExpression(g.IdentifierName("e")))
         End Sub
 
         <Fact>
-        Public Sub TestWithInitializer()
-            Assert.Equal("x", g.GetInitializer(g.WithInitializer(g.FieldDeclaration("f", g.IdentifierName("t")), g.IdentifierName("x"))).ToString())
-            Assert.Equal("x", g.GetInitializer(g.WithInitializer(g.ParameterDeclaration("p", g.IdentifierName("t")), g.IdentifierName("x"))).ToString())
-            Assert.Equal("x", g.GetInitializer(g.WithInitializer(g.LocalDeclarationStatement(g.IdentifierName("t"), "loc"), g.IdentifierName("x"))).ToString())
-            Assert.Null(g.GetInitializer(g.WithInitializer(g.IdentifierName("e"), g.IdentifierName("x"))))
+        Public Sub TestWithExpression()
+            ' initializers
+            Assert.Equal("x", g.GetExpression(g.WithExpression(g.FieldDeclaration("f", g.IdentifierName("t")), g.IdentifierName("x"))).ToString())
+            Assert.Equal("x", g.GetExpression(g.WithExpression(g.ParameterDeclaration("p", g.IdentifierName("t")), g.IdentifierName("x"))).ToString())
+            Assert.Equal("x", g.GetExpression(g.WithExpression(g.LocalDeclarationStatement(g.IdentifierName("t"), "loc"), g.IdentifierName("x"))).ToString())
+
+            ' lambda bodies
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.ValueReturningLambdaExpression("p", {g.IdentifierName("x")}), g.IdentifierName("y"))).ToString())
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.VoidReturningLambdaExpression("p", {g.IdentifierName("x")}), g.IdentifierName("y"))).ToString())
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.ValueReturningLambdaExpression({g.IdentifierName("x")}), g.IdentifierName("y"))).ToString())
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.VoidReturningLambdaExpression({g.IdentifierName("x")}), g.IdentifierName("y"))).ToString())
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.ValueReturningLambdaExpression("p", g.IdentifierName("x")), g.IdentifierName("y"))).ToString())
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.VoidReturningLambdaExpression("p", g.IdentifierName("x")), g.IdentifierName("y"))).ToString())
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.ValueReturningLambdaExpression(g.IdentifierName("x")), g.IdentifierName("y"))).ToString())
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.VoidReturningLambdaExpression(g.IdentifierName("x")), g.IdentifierName("y"))).ToString())
+
+            VerifySyntax(Of SingleLineLambdaExpressionSyntax)(
+                g.WithExpression(g.ValueReturningLambdaExpression({g.IdentifierName("s")}), g.IdentifierName("e")),
+                <x>Function() e</x>.Value)
+
+            Assert.Null(g.GetExpression(g.WithExpression(g.IdentifierName("e"), g.IdentifierName("x"))))
+        End Sub
+
+        <Fact>
+        Public Sub TestWithExpression_LambdaChanges()
+            ' multi line function changes to single line function
+            VerifySyntax(Of SingleLineLambdaExpressionSyntax)(
+                g.WithExpression(g.ValueReturningLambdaExpression({g.IdentifierName("s")}), g.IdentifierName("e")),
+                <x>Function() e</x>.Value)
+
+            ' multi line sub changes to single line sub
+            VerifySyntax(Of SingleLineLambdaExpressionSyntax)(
+                g.WithExpression(g.VoidReturningLambdaExpression({g.IdentifierName("s")}), g.IdentifierName("e")),
+                <x>Sub() e</x>.Value)
+
+            ' single line function changes to multi-line function with null expression
+            VerifySyntax(Of MultiLineLambdaExpressionSyntax)(
+                g.WithExpression(g.ValueReturningLambdaExpression(g.IdentifierName("e")), Nothing),
+<x>Function()
+End Function</x>.Value)
+
+            ' single line sub changes to multi line sub with null expression
+            VerifySyntax(Of MultiLineLambdaExpressionSyntax)(
+                g.WithExpression(g.VoidReturningLambdaExpression(g.IdentifierName("e")), Nothing),
+<x>Sub()
+End Sub</x>.Value)
+
+            ' multi line function no-op when assigned null expression
+            VerifySyntax(Of MultiLineLambdaExpressionSyntax)(
+                g.WithExpression(g.ValueReturningLambdaExpression({g.IdentifierName("s")}), Nothing),
+<x>Function()
+    s
+End Function</x>.Value)
+
+            ' multi line sub no-op when assigned null expression
+            VerifySyntax(Of MultiLineLambdaExpressionSyntax)(
+                g.WithExpression(g.VoidReturningLambdaExpression({g.IdentifierName("s")}), Nothing),
+<x>Sub()
+    s
+End Sub</x>.Value)
+
+            Assert.Null(g.GetExpression(g.WithExpression(g.IdentifierName("e"), g.IdentifierName("x"))))
         End Sub
 
         <Fact>
@@ -1980,9 +2052,11 @@ End Function</x>.Value)
             Assert.Equal(0, g.GetStatements(g.ConstructorDeclaration()).Count)
             Assert.Equal(2, g.GetStatements(g.ConstructorDeclaration(statements:=stmts)).Count)
 
+            Assert.Equal(0, g.GetStatements(g.VoidReturningLambdaExpression(g.IdentifierName("e"))).Count)
             Assert.Equal(0, g.GetStatements(g.VoidReturningLambdaExpression({})).Count)
             Assert.Equal(2, g.GetStatements(g.VoidReturningLambdaExpression(stmts)).Count)
 
+            Assert.Equal(0, g.GetStatements(g.ValueReturningLambdaExpression(g.IdentifierName("e"))).Count)
             Assert.Equal(0, g.GetStatements(g.ValueReturningLambdaExpression({})).Count)
             Assert.Equal(2, g.GetStatements(g.ValueReturningLambdaExpression(stmts)).Count)
 
@@ -1995,10 +2069,67 @@ End Function</x>.Value)
 
             Assert.Equal(2, g.GetStatements(g.WithStatements(g.MethodDeclaration("m"), stmts)).Count)
             Assert.Equal(2, g.GetStatements(g.WithStatements(g.ConstructorDeclaration(), stmts)).Count)
+
             Assert.Equal(2, g.GetStatements(g.WithStatements(g.VoidReturningLambdaExpression({}), stmts)).Count)
             Assert.Equal(2, g.GetStatements(g.WithStatements(g.ValueReturningLambdaExpression({}), stmts)).Count)
 
+            Assert.Equal(2, g.GetStatements(g.WithStatements(g.VoidReturningLambdaExpression(g.IdentifierName("e")), stmts)).Count)
+            Assert.Equal(2, g.GetStatements(g.WithStatements(g.ValueReturningLambdaExpression(g.IdentifierName("e")), stmts)).Count)
+
             Assert.Equal(0, g.GetStatements(g.WithStatements(g.IdentifierName("x"), stmts)).Count)
+        End Sub
+
+        <Fact>
+        Public Sub TestWithStatements_LambdaChanges()
+            Dim stmts = {g.ExpressionStatement(g.IdentifierName("x")), g.ExpressionStatement(g.IdentifierName("y"))}
+
+            VerifySyntax(Of MultiLineLambdaExpressionSyntax)(
+                g.WithStatements(g.VoidReturningLambdaExpression({}), stmts),
+<x>Sub()
+    x
+    y
+End Sub</x>.Value)
+
+            VerifySyntax(Of MultiLineLambdaExpressionSyntax)(
+                g.WithStatements(g.ValueReturningLambdaExpression({}), stmts),
+<x>Function()
+    x
+    y
+End Function</x>.Value)
+
+            VerifySyntax(Of MultiLineLambdaExpressionSyntax)(
+                g.WithStatements(g.VoidReturningLambdaExpression(g.IdentifierName("e")), stmts),
+<x>Sub()
+    x
+    y
+End Sub</x>.Value)
+
+            VerifySyntax(Of MultiLineLambdaExpressionSyntax)(
+                g.WithStatements(g.ValueReturningLambdaExpression(g.IdentifierName("e")), stmts),
+<x>Function()
+    x
+    y
+End Function</x>.Value)
+
+            VerifySyntax(Of MultiLineLambdaExpressionSyntax)(
+                g.WithStatements(g.VoidReturningLambdaExpression(stmts), {}),
+<x>Sub()
+End Sub</x>.Value)
+
+            VerifySyntax(Of MultiLineLambdaExpressionSyntax)(
+                g.WithStatements(g.ValueReturningLambdaExpression(stmts), {}),
+<x>Function()
+End Function</x>.Value)
+
+            VerifySyntax(Of MultiLineLambdaExpressionSyntax)(
+                g.WithStatements(g.VoidReturningLambdaExpression(g.IdentifierName("e")), {}),
+<x>Sub()
+End Sub</x>.Value)
+
+            VerifySyntax(Of MultiLineLambdaExpressionSyntax)(
+                g.WithStatements(g.ValueReturningLambdaExpression(g.IdentifierName("e")), {}),
+<x>Function()
+End Function</x>.Value)
         End Sub
 
         <Fact>
@@ -2043,8 +2174,9 @@ End Function</x>.Value)
             Assert.Equal(0, g.GetSetAccessorStatements(g.WithSetAccessorStatements(g.IdentifierName("x"), stmts)).Count)
         End Sub
 
-        Private Sub AssertNamesEqual(expectedNames As String(), actualNodes As IEnumerable(Of SyntaxNode))
+        Private Sub AssertNamesEqual(expectedNames As String(), actualNodes As IReadOnlyList(Of SyntaxNode))
             Dim actualNames = actualNodes.Select(Function(n) g.GetName(n)).ToArray()
+            Assert.Equal(expectedNames.Length, actualNames.Length)
             Dim expected = String.Join(", ", expectedNames)
             Dim actual = String.Join(", ", actualNames)
             Assert.Equal(expected, actual)
@@ -2069,23 +2201,6 @@ End Function</x>.Value)
         End Sub
 
         <Fact>
-        Public Sub TestWithMembers()
-            AssertMemberNamesEqual("m", g.WithMembers(g.ClassDeclaration("d"), {g.MethodDeclaration("m")}))
-            AssertMemberNamesEqual("m", g.WithMembers(g.StructDeclaration("s"), {g.MethodDeclaration("m")}))
-            AssertMemberNamesEqual("m", g.WithMembers(g.InterfaceDeclaration("i"), {g.MethodDeclaration("m")}))
-            AssertMemberNamesEqual("v", g.WithMembers(g.EnumDeclaration("e"), {g.EnumMember("v")}))
-            AssertMemberNamesEqual("n2", g.WithMembers(g.NamespaceDeclaration("n"), {g.NamespaceDeclaration("n2")}))
-            AssertMemberNamesEqual("n", g.WithMembers(g.CompilationUnit(), {g.NamespaceDeclaration("n")}))
-
-            Assert.Equal(0, g.GetMembers(g.WithMembers(g.ClassDeclaration("d", members:={g.MethodDeclaration("m")}), Nothing)).Count)
-            Assert.Equal(0, g.GetMembers(g.WithMembers(g.StructDeclaration("s", members:={g.MethodDeclaration("m")}), Nothing)).Count)
-            Assert.Equal(0, g.GetMembers(g.WithMembers(g.InterfaceDeclaration("i", members:={g.MethodDeclaration("m")}), Nothing)).Count)
-            Assert.Equal(0, g.GetMembers(g.WithMembers(g.EnumDeclaration("i", members:={g.EnumMember("v")}), Nothing)).Count)
-            Assert.Equal(0, g.GetMembers(g.WithMembers(g.NamespaceDeclaration("n", {g.NamespaceDeclaration("n")}), Nothing)).Count)
-            Assert.Equal(0, g.GetMembers(g.WithMembers(g.CompilationUnit(declarations:={g.NamespaceDeclaration("n")}), Nothing)).Count)
-        End Sub
-
-        <Fact>
         Public Sub TestAddMembers()
             AssertMemberNamesEqual("m", g.AddMembers(g.ClassDeclaration("d"), {g.MethodDeclaration("m")}))
             AssertMemberNamesEqual("m", g.AddMembers(g.StructDeclaration("s"), {g.MethodDeclaration("m")}))
@@ -2101,5 +2216,517 @@ End Function</x>.Value)
             AssertMemberNamesEqual({"n1", "n2"}, g.AddMembers(g.NamespaceDeclaration("n", {g.NamespaceDeclaration("n1")}), {g.NamespaceDeclaration("n2")}))
             AssertMemberNamesEqual({"n1", "n2"}, g.AddMembers(g.CompilationUnit(declarations:={g.NamespaceDeclaration("n1")}), {g.NamespaceDeclaration("n2")}))
         End Sub
+
+        <Fact>
+        Public Sub TestRemoveMembers()
+            TestRemoveAllMembers(g.ClassDeclaration("d", members:={g.MethodDeclaration("m")}))
+            TestRemoveAllMembers(g.StructDeclaration("s", members:={g.MethodDeclaration("m")}))
+            TestRemoveAllMembers(g.InterfaceDeclaration("i", members:={g.MethodDeclaration("m")}))
+            TestRemoveAllMembers(g.EnumDeclaration("i", members:={g.EnumMember("v")}))
+            TestRemoveAllMembers(g.AddMembers(g.NamespaceDeclaration("n", {g.NamespaceDeclaration("n1")})))
+            TestRemoveAllMembers(g.AddMembers(g.CompilationUnit(declarations:={g.NamespaceDeclaration("n1")})))
+        End Sub
+
+        Private Sub TestRemoveAllMembers(declaration As SyntaxNode)
+            Assert.Equal(0, g.GetMembers(g.RemoveDeclarations(declaration, g.GetMembers(declaration))).Count)
+        End Sub
+
+        Private Sub TestRemoveMember(declaration As SyntaxNode, name As String, remainingNames As String())
+            Dim newDecl = g.RemoveDeclaration(declaration, g.GetMembers(declaration).First(Function(m) g.GetName(m) = name))
+            AssertMemberNamesEqual(remainingNames, newDecl)
+        End Sub
+
+        <Fact>
+        Public Sub TestMultiFieldMembers()
+            Dim comp = Compile(
+<x>' Comment
+Public Class C
+    Public Shared X, Y, Z As Integer
+End Class</x>.Value)
+
+            Dim symbolC = DirectCast(comp.GlobalNamespace.GetMembers("C").First(), INamedTypeSymbol)
+            Dim symbolX = DirectCast(symbolC.GetMembers("X").First(), IFieldSymbol)
+            Dim symbolY = DirectCast(symbolC.GetMembers("Y").First(), IFieldSymbol)
+            Dim symbolZ = DirectCast(symbolC.GetMembers("Z").First(), IFieldSymbol)
+
+            Dim declC = g.GetDeclaration(symbolC.DeclaringSyntaxReferences.Select(Function(x) x.GetSyntax()).First())
+            Dim declX = g.GetDeclaration(symbolX.DeclaringSyntaxReferences.Select(Function(x) x.GetSyntax()).First())
+            Dim declY = g.GetDeclaration(symbolY.DeclaringSyntaxReferences.Select(Function(x) x.GetSyntax()).First())
+            Dim declZ = g.GetDeclaration(symbolZ.DeclaringSyntaxReferences.Select(Function(x) x.GetSyntax()).First())
+
+            Assert.Equal(SyntaxKind.ModifiedIdentifier, declX.VBKind)
+            Assert.Equal(SyntaxKind.ModifiedIdentifier, declY.VBKind)
+            Assert.Equal(SyntaxKind.ModifiedIdentifier, declZ.VBKind)
+
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(declX))
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(declY))
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(declZ))
+
+            Assert.NotNull(g.GetType(declX))
+            Assert.Equal("Integer", g.GetType(declX).ToString())
+            Assert.Equal("X", g.GetName(declX))
+            Assert.Equal(Accessibility.Public, g.GetAccessibility(declX))
+            Assert.Equal(DeclarationModifiers.Static, g.GetModifiers(declX))
+
+            Assert.NotNull(g.GetType(declY))
+            Assert.Equal("Integer", g.GetType(declY).ToString())
+            Assert.Equal("Y", g.GetName(declY))
+            Assert.Equal(Accessibility.Public, g.GetAccessibility(declY))
+            Assert.Equal(DeclarationModifiers.Static, g.GetModifiers(declY))
+
+            Assert.NotNull(g.GetType(declZ))
+            Assert.Equal("Integer", g.GetType(declZ).ToString())
+            Assert.Equal("Z", g.GetName(declZ))
+            Assert.Equal(Accessibility.Public, g.GetAccessibility(declZ))
+            Assert.Equal(DeclarationModifiers.Static, g.GetModifiers(declZ))
+
+            Dim xTypedT = g.WithType(declX, g.IdentifierName("T"))
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(xTypedT))
+            Assert.Equal(SyntaxKind.FieldDeclaration, xTypedT.VBKind)
+            Assert.Equal("T", g.GetType(xTypedT).ToString())
+
+            Dim xNamedQ = g.WithName(declX, "Q")
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(xNamedQ))
+            Assert.Equal(SyntaxKind.FieldDeclaration, xNamedQ.VBKind)
+            Assert.Equal("Q", g.GetName(xNamedQ).ToString())
+
+            Dim xInitialized = g.WithExpression(declX, g.IdentifierName("e"))
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(xInitialized))
+            Assert.Equal(SyntaxKind.FieldDeclaration, xInitialized.VBKind)
+            Assert.Equal("e", g.GetExpression(xInitialized).ToString())
+
+            Dim xPrivate = g.WithAccessibility(declX, Accessibility.Private)
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(xPrivate))
+            Assert.Equal(SyntaxKind.FieldDeclaration, xPrivate.VBKind)
+            Assert.Equal(Accessibility.Private, g.GetAccessibility(xPrivate))
+
+            Dim xReadOnly = g.WithModifiers(declX, DeclarationModifiers.ReadOnly)
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(xReadOnly))
+            Assert.Equal(SyntaxKind.FieldDeclaration, xReadOnly.VBKind)
+            Assert.Equal(DeclarationModifiers.ReadOnly, g.GetModifiers(xReadOnly))
+
+            Dim xAttributed = g.AddAttributes(declX, g.Attribute("A"))
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(xAttributed))
+            Assert.Equal(SyntaxKind.FieldDeclaration, xAttributed.VBKind)
+            Assert.Equal(1, g.GetAttributes(xAttributed).Count)
+            Assert.Equal("<A>", g.GetAttributes(xAttributed)(0).ToString())
+
+            Dim membersC = g.GetMembers(declC)
+            Assert.Equal(3, membersC.Count)
+            Assert.Equal(declX, membersC(0))
+            Assert.Equal(declY, membersC(1))
+            Assert.Equal(declZ, membersC(2))
+
+            ' create new class from existing members, now appear as separate declarations
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.ClassDeclaration("C", members:={declX, declY}),
+<x>Class C
+
+    Public Shared X As Integer
+
+    Public Shared Y As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.InsertMembers(declC, 0, g.FieldDeclaration("A", g.IdentifierName("T"))),
+<x>' Comment
+Public Class C
+
+    Dim A As T
+
+    Public Shared X, Y, Z As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.InsertMembers(declC, 1, g.FieldDeclaration("A", g.IdentifierName("T"))),
+<x>' Comment
+Public Class C
+
+    Public Shared X As Integer
+
+    Dim A As T
+
+    Public Shared Y, Z As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.InsertMembers(declC, 2, g.FieldDeclaration("A", g.IdentifierName("T"))),
+<x>' Comment
+Public Class C
+
+    Public Shared X, Y As Integer
+
+    Dim A As T
+
+    Public Shared Z As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.InsertMembers(declC, 3, g.FieldDeclaration("A", g.IdentifierName("T"))),
+<x>' Comment
+Public Class C
+
+    Public Shared X, Y, Z As Integer
+
+    Dim A As T
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.ReplaceDeclaration(declC, declX, g.WithType(declX, g.IdentifierName("T"))),
+<x>' Comment
+Public Class C
+
+    Public Shared X As T
+
+    Public Shared Y, Z As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.ReplaceDeclaration(declC, declX, g.WithExpression(declX, g.IdentifierName("e"))),
+<x>' Comment
+Public Class C
+
+    Public Shared X As Integer = e
+
+    Public Shared Y, Z As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.ReplaceDeclaration(declC, declX, g.WithName(declX, "Q")),
+<x>' Comment
+Public Class C
+
+    Public Shared Q, Y, Z As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.ReplaceDeclaration(declC, declY, g.WithType(declY, g.IdentifierName("T"))),
+<x>' Comment
+Public Class C
+
+    Public Shared X As Integer
+
+    Public Shared Y As T
+
+    Public Shared Z As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.ReplaceDeclaration(declC, declZ, g.WithType(declZ, g.IdentifierName("T"))),
+<x>' Comment
+Public Class C
+
+    Public Shared X, Y As Integer
+
+    Public Shared Z As T
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.ReplaceDeclaration(declC, declX, declZ),
+<x>' Comment
+Public Class C
+
+    Public Shared Z, Y, Z As Integer
+End Class</x>.Value)
+
+            ' Removing 
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclaration(declC, declX),
+<x>' Comment
+Public Class C
+
+    Public Shared Y, Z As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclaration(declC, declY),
+<x>' Comment
+Public Class C
+
+    Public Shared X, Z As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclaration(declC, declZ),
+<x>' Comment
+Public Class C
+
+    Public Shared X, Y As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclarations(declC, {declX, declY}),
+<x>' Comment
+Public Class C
+
+    Public Shared Z As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclarations(declC, {declX, declZ}),
+<x>' Comment
+Public Class C
+
+    Public Shared Y As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclarations(declC, {declY, declZ}),
+<x>' Comment
+Public Class C
+
+    Public Shared X As Integer
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclarations(declC, {declX, declY, declZ}),
+<x>' Comment
+Public Class C
+End Class</x>.Value)
+
+        End Sub
+
+        <Fact>
+        Public Sub TestMultiAttributes()
+            Dim comp = Compile(
+<x>' Comment
+&lt;X, Y, Z&gt;
+Public Class C
+End Class</x>.Value)
+
+            Dim symbolC = DirectCast(comp.GlobalNamespace.GetMembers("C").First(), INamedTypeSymbol)
+            Dim declC = g.GetDeclaration(symbolC.DeclaringSyntaxReferences.First().GetSyntax())
+
+            Dim attrs = g.GetAttributes(declC)
+            Assert.Equal(3, attrs.Count)
+            Dim declX = attrs(0)
+            Dim declY = attrs(1)
+            Dim declZ = attrs(2)
+            Assert.Equal(SyntaxKind.Attribute, declX.VBKind)
+            Assert.Equal(SyntaxKind.Attribute, declY.VBKind)
+            Assert.Equal(SyntaxKind.Attribute, declZ.VBKind)
+            Assert.Equal("X", g.GetName(declX))
+            Assert.Equal("Y", g.GetName(declY))
+            Assert.Equal("Z", g.GetName(declZ))
+
+            Dim xNamedQ = g.WithName(declX, "Q")
+            Assert.Equal(DeclarationKind.Attribute, g.GetDeclarationKind(xNamedQ))
+            Assert.Equal(SyntaxKind.AttributeList, xNamedQ.VBKind)
+            Assert.Equal("<Q>", xNamedQ.ToString())
+
+            Dim xWithArg = g.AddAttributeArguments(declX, {g.AttributeArgument(g.IdentifierName("e"))})
+            Assert.Equal(DeclarationKind.Attribute, g.GetDeclarationKind(xWithArg))
+            Assert.Equal(SyntaxKind.AttributeList, xWithArg.VBKind)
+            Assert.Equal("<X(e)>", xWithArg.ToString())
+
+            ' inserting
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.InsertAttributes(declC, 0, g.Attribute("A")),
+<x>' Comment
+&lt;A&gt;
+&lt;X, Y, Z&gt;
+Public Class C
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.InsertAttributes(declC, 1, g.Attribute("A")),
+<x>' Comment
+&lt;X&gt;
+&lt;A&gt;
+&lt;Y, Z&gt;
+Public Class C
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.InsertAttributes(declC, 2, g.Attribute("A")),
+<x>' Comment
+&lt;X, Y&gt;
+&lt;A&gt;
+&lt;Z&gt;
+Public Class C
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.InsertAttributes(declC, 3, g.Attribute("A")),
+<x>' Comment
+&lt;X, Y, Z&gt;
+&lt;A&gt;
+Public Class C
+End Class</x>.Value)
+
+            ' replacing
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.ReplaceDeclaration(declC, declX, g.Attribute("A")),
+<x>' Comment
+&lt;A, Y, Z&gt;
+Public Class C
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.ReplaceDeclaration(declC, declX, g.InsertAttributeArguments(declX, 0, {g.AttributeArgument(g.IdentifierName("e"))})),
+<x>' Comment
+&lt;X(e), Y, Z&gt;
+Public Class C
+End Class</x>.Value)
+
+            ' removing
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclaration(declC, declX),
+<x>' Comment
+&lt;Y, Z&gt;
+Public Class C
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclaration(declC, declY),
+<x>' Comment
+&lt;X, Z&gt;
+Public Class C
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclaration(declC, declZ),
+<x>' Comment
+&lt;X, Y&gt;
+Public Class C
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclarations(declC, {declX, declY}),
+<x>' Comment
+&lt;Z&gt;
+Public Class C
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclarations(declC, {declX, declZ}),
+<x>' Comment
+&lt;Y&gt;
+Public Class C
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclarations(declC, {declY, declZ}),
+<x>' Comment
+&lt;X&gt;
+Public Class C
+End Class</x>.Value)
+
+            VerifySyntax(Of ClassBlockSyntax)(
+                g.RemoveDeclarations(declC, {declX, declY, declZ}),
+<x>' Comment
+Public Class C
+End Class</x>.Value)
+        End Sub
+
+        <Fact>
+        Public Sub TestMultiImports()
+            Dim comp = Compile(
+<x>' Comment
+Imports X, Y, Z
+</x>.Value)
+
+            Dim declCU = comp.SyntaxTrees.First().GetRoot()
+
+            Assert.Equal(SyntaxKind.CompilationUnit, declCU.VBKind)
+            Dim imps = g.GetNamespaceImports(declCU)
+            Assert.Equal(3, imps.Count)
+            Dim declX = imps(0)
+            Dim declY = imps(1)
+            Dim declZ = imps(2)
+
+            Dim xRenamedQ = g.WithName(declX, "Q")
+            Assert.Equal(DeclarationKind.NamespaceImport, g.GetDeclarationKind(xRenamedQ))
+            Assert.Equal(SyntaxKind.ImportsStatement, xRenamedQ.VBKind)
+            Assert.Equal("Imports Q", xRenamedQ.ToString())
+
+            ' inserting
+            VerifySyntax(Of CompilationUnitSyntax)(
+                g.InsertNamespaceImports(declCU, 0, g.NamespaceImportDeclaration("N")),
+<x>' Comment
+Imports N
+Imports X, Y, Z
+</x>.Value)
+
+            VerifySyntax(Of CompilationUnitSyntax)(
+                g.InsertNamespaceImports(declCU, 1, g.NamespaceImportDeclaration("N")),
+<x>' Comment
+Imports X
+Imports N
+Imports Y, Z
+</x>.Value)
+
+            VerifySyntax(Of CompilationUnitSyntax)(
+                g.InsertNamespaceImports(declCU, 2, g.NamespaceImportDeclaration("N")),
+<x>' Comment
+Imports X, Y
+Imports N
+Imports Z
+</x>.Value)
+
+            VerifySyntax(Of CompilationUnitSyntax)(
+                g.InsertNamespaceImports(declCU, 3, g.NamespaceImportDeclaration("N")),
+<x>' Comment
+Imports X, Y, Z
+Imports N
+</x>.Value)
+
+            ' Replacing
+            VerifySyntax(Of CompilationUnitSyntax)(
+                g.ReplaceDeclaration(declCU, declX, g.NamespaceImportDeclaration("N")),
+<x>' Comment
+Imports N, Y, Z
+</x>.Value)
+
+            ' Removing
+            VerifySyntax(Of CompilationUnitSyntax)(
+                g.RemoveDeclaration(declCU, declX),
+<x>' Comment
+Imports Y, Z
+</x>.Value)
+
+            ' Removing
+            VerifySyntax(Of CompilationUnitSyntax)(
+                g.RemoveDeclaration(declCU, declY),
+<x>' Comment
+Imports X, Z
+</x>.Value)
+
+            ' Removing
+            VerifySyntax(Of CompilationUnitSyntax)(
+                g.RemoveDeclaration(declCU, declZ),
+<x>' Comment
+Imports X, Y
+</x>.Value)
+
+            ' Removing
+            VerifySyntax(Of CompilationUnitSyntax)(
+                g.RemoveDeclarations(declCU, {declX, declY}),
+<x>' Comment
+Imports Z
+</x>.Value)
+
+            ' Removing
+            VerifySyntax(Of CompilationUnitSyntax)(
+                g.RemoveDeclarations(declCU, {declX, declZ}),
+<x>' Comment
+Imports Y
+</x>.Value)
+
+            ' Removing
+            VerifySyntax(Of CompilationUnitSyntax)(
+                g.RemoveDeclarations(declCU, {declY, declZ}),
+<x>' Comment
+Imports X
+</x>.Value)
+
+            ' Removing
+            VerifySyntax(Of CompilationUnitSyntax)(
+                g.RemoveDeclarations(declCU, {declX, declY, declZ}),
+<x>' Comment
+</x>.Value)
+
+        End Sub
+
     End Class
 End Namespace

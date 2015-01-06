@@ -166,11 +166,6 @@ namespace Microsoft.Cci
             return this.parameterDefs.Rows;
         }
 
-        protected override uint GetGenericParameterIndex(IGenericParameter def)
-        {
-            return this.genericParameters[def];
-        }
-
         protected override IReadOnlyList<IGenericParameter> GetGenericParameters()
         {
             return this.genericParameters.Rows;
@@ -284,6 +279,11 @@ namespace Microsoft.Cci
         protected override ReferenceIndexer CreateReferenceVisitor()
         {
             return new FullReferenceIndexer(this);
+        }
+
+        protected override void ReportReferencesToAddedSymbols()
+        {
+            // noop
         }
 
         private sealed class FullReferenceIndexer : ReferenceIndexer

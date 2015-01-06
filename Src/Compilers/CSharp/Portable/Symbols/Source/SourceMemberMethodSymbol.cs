@@ -242,12 +242,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                     if ((object)attributeConstructor == null)
                     {
                         var memberDescriptor = WellKnownMembers.GetDescriptor(WellKnownMember.System_Runtime_CompilerServices_ExtensionAttribute__ctor);
-                        var attributeType = (WellKnownType)memberDescriptor.DeclaringTypeId;
                         // do not use Binder.ReportUseSiteErrorForAttributeCtor in this case, because we'll need to report a special error id, not a generic use site error.
                         diagnostics.Add(
                             ErrorCode.ERR_ExtensionAttrNotFound,
                             syntax.ParameterList.Parameters[0].Modifiers.FirstOrDefault(SyntaxKind.ThisKeyword).GetLocation(),
-                            attributeType.GetMetadataName());
+                            memberDescriptor.DeclaringTypeMetadataName);
                     }
                 }
             }
@@ -875,18 +874,19 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         private void CheckModifiers(Location location, DiagnosticBag diagnostics)
         {
-            if (IsPartial && !ReturnsVoid)
-            {
-                diagnostics.Add(ErrorCode.ERR_PartialMethodMustReturnVoid, location);
-            }
-            else if (IsPartial && !ContainingType.IsInterface && 0 != (DeclarationModifiers &
-                    (DeclarationModifiers.AccessibilityMask & ~DeclarationModifiers.Private |
+            const DeclarationModifiers partialMethodInvalidModifierMask = (DeclarationModifiers.AccessibilityMask & ~DeclarationModifiers.Private) |
                      DeclarationModifiers.Virtual |
                      DeclarationModifiers.Abstract |
                      DeclarationModifiers.Override |
                      DeclarationModifiers.New |
                      DeclarationModifiers.Sealed |
-                     DeclarationModifiers.Extern)))
+                     DeclarationModifiers.Extern;
+
+            if (IsPartial && !ReturnsVoid)
+            {
+                diagnostics.Add(ErrorCode.ERR_PartialMethodMustReturnVoid, location);
+            }
+            else if (IsPartial && !ContainingType.IsInterface && (DeclarationModifiers & partialMethodInvalidModifierMask) != 0)
             {
                 diagnostics.Add(ErrorCode.ERR_PartialMethodInvalidModifier, location);
             }
@@ -944,10 +944,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             {
                 diagnostics.Add(ErrorCode.ERR_ConcreteMissingBody, location, this);
             }
-            else if (
-                ContainingType.IsSealed &&
-                (this.DeclaredAccessibility == Accessibility.Protected || this.DeclaredAccessibility == Accessibility.ProtectedOrInternal) &&
-                !this.IsOverride)
+            else if (ContainingType.IsSealed && this.DeclaredAccessibility.HasProtected() && !this.IsOverride)
             {
                 diagnostics.Add(AccessCheck.GetProtectedMemberInSealedTypeError(ContainingType), location, this);
             }

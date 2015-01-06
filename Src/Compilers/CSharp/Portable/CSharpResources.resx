@@ -631,10 +631,10 @@
     <value>A local or parameter named '{0}' cannot be declared in this scope because that name is used in an enclosing local scope to define a local or parameter</value>
   </data>
   <data name="ERR_BadUsingNamespace" xml:space="preserve">
-    <value>A 'using namespace' directive can only be applied to namespaces; '{0}' is a type not a namespace. Consider using a 'using static' directive instead</value>
+    <value>A 'using namespace' directive can only be applied to namespaces; '{0}' is a type not a namespace. Consider a 'using static' directive instead</value>
   </data>
   <data name="ERR_BadUsingType" xml:space="preserve">
-    <value>A 'using static' directive can only be applied to types; '{0}' is a namespace not a type. Consider using a 'using namespace' directive instead</value>
+    <value>A 'using static' directive can only be applied to types; '{0}' is a namespace not a type. Consider a 'using namespace' directive instead</value>
   </data>
   <data name="ERR_NoAliasHere" xml:space="preserve">
     <value>A 'using static' directive cannot be used to declare an alias</value>
@@ -755,6 +755,9 @@
   </data>
   <data name="ERR_ExternHasBody" xml:space="preserve">
     <value>'{0}' cannot be extern and declare a body</value>
+  </data>
+  <data name="ERR_ExternHasConstructorInitializer" xml:space="preserve">
+    <value>'{0}' cannot be extern and have a constructor initializer</value>
   </data>
   <data name="ERR_AbstractAndExtern" xml:space="preserve">
     <value>'{0}' cannot be both extern and abstract</value>
@@ -3546,11 +3549,14 @@
   <data name="ERR_CantReadConfigFile" xml:space="preserve">
     <value>Cannot read config file '{0}' -- '{1}'</value>
   </data>
-  <data name="ERR_EnCNoPIAReference" xml:space="preserve">
+  <data name="ERR_EncNoPIAReference" xml:space="preserve">
     <value>Cannot continue since the edit includes a reference to an embedded type: '{0}'.</value>
   </data>
-  <data name="ERR_EnCNoDynamicOperation" xml:space="preserve">
+  <data name="ERR_EncNoDynamicOperation" xml:space="preserve">
     <value>Cannot continue since the edit includes an operation on a 'dynamic' type.</value>
+  </data>
+  <data name="ERR_EncReferenceToAddedMember" xml:space="preserve">
+    <value>Member '{0}' added during the current debug session can only be accessed from within its declaring assembly '{1}'.</value>
   </data>
   <data name="ERR_LinkedNetmoduleMetadataMustProvideFullPEImage" xml:space="preserve">
     <value>Linked netmodule metadata must provide a full PE image: '{0}'.</value>
@@ -3832,7 +3838,6 @@
  /nowarn:&lt;warn list&gt;           Disable specific warning messages
  /ruleset:&lt;file&gt;               Specify a ruleset file that disables specific
                                diagnostics.
- /option:&lt;name&gt;=&lt;value&gt;        Specify an option that can be passed to analyzers.
 
                         - LANGUAGE -
  /checked[+|-]                 Generate overflow checks
@@ -3931,7 +3936,7 @@
     <value>Auto-implemented properties must have get accessors.</value>
   </data>
   <data name="ERR_AutoPropertyMustOverrideSet" xml:space="preserve">
-    <value>“Auto-implemented properties must override all accessors of the overridden property.”</value>
+    <value>Auto-implemented properties must override all accessors of the overridden property.</value>
   </data>
   <data name="ERR_AutoPropertyInitializerInInterface" xml:space="preserve">
     <value>Auto-implemented properties inside interfaces cannot have initializers.</value>
@@ -3970,7 +3975,7 @@
     <value>struct instance parameterless constructors</value>
   </data>
   <data name="ERR_UnclosedExpressionHole" xml:space="preserve">
-    <value>Missing close delimiter '}' for interpolated expression started with \{.</value>
+    <value>Missing close delimiter '}' for interpolated expression started with '{'.</value>
   </data>
   <data name="ERR_SingleLineCommentInExpressionHole" xml:space="preserve">
     <value>A single-line comment may not be used in an interpolated string.</value>
@@ -3998,5 +4003,26 @@
   </data>
   <data name="IDS_FeatureUsingStatic" xml:space="preserve">
     <value>using static</value>
+  </data>
+  <data name="IDS_FeatureInterpolatedStrings" xml:space="preserve">
+    <value>interpolated strings</value>
+  </data>
+  <data name="ERR_UnescapedCurly" xml:space="preserve">
+    <value>A '{0}' character must be escaped (by doubling) in an interpolated string.</value>
+  </data>
+  <data name="ERR_EscapedCurly" xml:space="preserve">
+    <value>A '{0}' character may only be escaped by doubling '{0}{0}' in an interpolated string.</value>
+  </data>
+  <data name="ERR_TrailingWhitespaceInFormatSpecifier" xml:space="preserve">
+    <value>A format specifier may not contain trailing whitespace.</value>
+  </data>
+  <data name="ERR_EmptyFormatSpecifier" xml:space="preserve">
+    <value>Empty format specifier.</value>
+  </data>
+  <data name="ERR_ErrorInReferencedAssembly" xml:space="preserve">
+    <value>There is an error in a referenced assembly '{0}'.</value>
+  </data>
+  <data name="ERR_ExpressionOrDeclarationExpected" xml:space="preserve">
+    <value>Expression or declaration statement expected.</value>
   </data>
 </root>

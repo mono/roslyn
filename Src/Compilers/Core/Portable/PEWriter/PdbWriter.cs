@@ -88,7 +88,7 @@ namespace Microsoft.Cci
             Debug.Assert(metadataWriter != null);
 
             bool isIterator = methodBody.StateMachineTypeName != null;
-            bool emitDebugInfo = isIterator || methodBody.HasAnyLocations;
+            bool emitDebugInfo = isIterator || methodBody.HasAnySequencePoints;
 
             if (!emitDebugInfo)
             {
@@ -714,10 +714,10 @@ namespace Microsoft.Cci
                 //       the map without writing any resords with MapTokenToSourceSpan(...)
                 bool open = false;
 
-                foreach (var doc in file2definitions.Keys)
+                foreach (var kvp in file2definitions)
                 {
-                    ISymUnmanagedDocumentWriter docWriter = GetDocumentWriter(doc);
-                    foreach (var definition in file2definitions[doc])
+                    ISymUnmanagedDocumentWriter docWriter = GetDocumentWriter(kvp.Key);
+                    foreach (var definition in kvp.Value)
                     {
                         if (!open)
                         {

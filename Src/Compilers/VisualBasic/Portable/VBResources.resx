@@ -4329,7 +4329,7 @@
     <value>Invalid signature public key specified in AssemblySignatureKeyAttribute.</value>
   </data>
   <data name="ERR_CollisionWithPublicTypeInModule" xml:space="preserve">
-    <value>Type '{0}' conficts with public type defined in added module '{1}'.</value>
+    <value>Type '{0}' conflicts with public type defined in added module '{1}'.</value>
   </data>
   <data name="ERR_ExportedTypeConflictsWithDeclaration" xml:space="preserve">
     <value>Type '{0}' exported from module '{1}' conflicts with type declared in primary module of this assembly.</value>
@@ -4394,8 +4394,11 @@
   <data name="ERR_FieldHasMultipleDistinctConstantValues" xml:space="preserve">
     <value>The field has multiple distinct constant values.</value>
   </data>
-  <data name="ERR_EnCNoPIAReference" xml:space="preserve">
+  <data name="ERR_EncNoPIAReference" xml:space="preserve">
     <value>Cannot continue since the edit includes a reference to an embedded type: '{0}'.</value>
+  </data>
+  <data name="ERR_EncReferenceToAddedMember" xml:space="preserve">
+    <value>Member '{0}' added during the current debug session can only be accessed from within its declaring assembly '{1}'.</value>
   </data>
   <data name="ERR_UnsupportedModule1" xml:space="preserve">
     <value>'{0}' is an unsupported .NET module.</value>
@@ -4565,7 +4568,6 @@
 /warnaserror[+|-]:&lt;number_list&gt;   Treat a list of warnings as errors.
 /ruleset:&lt;file&gt;                   Specify a ruleset file that disables specific
                                   diagnostics.
-/option:&lt;name&gt;=&lt;value&gt;            Specify an option that can be passed to analyzers.
 
                                   - LANGUAGE -
 /define:&lt;symbol_list&gt;             Declare global conditional compilation 
@@ -4716,5 +4718,8 @@
   </data>
   <data name="ERR_InvalidAssemblyCulture" xml:space="preserve">
     <value>Assembly culture strings may not contain embedded NUL characters.</value>
+  </data>
+  <data name="ERR_InReferencedAssembly" xml:space="preserve">
+    <value>There is an error in a referenced assembly '{0}'.</value>
   </data>
 </root>

@@ -5919,7 +5919,7 @@ class System : Attribute
                 // (2,7): warning CS0437: The type 'System' in '' conflicts with the imported namespace 'System' in 'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'. Using the type defined in ''.
                 // using System;
                 Diagnostic(ErrorCode.WRN_SameFullNameThisAggNs, "System").WithArguments("", "System", "mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", "System"),
-                // (2,7): error CS0138: A 'using namespace' directive can only be applied to namespaces; 'System' is a type not a namespace. Consider using a 'using static' directive instead
+                // (2,7): error CS0138: A 'using namespace' directive can only be applied to namespaces; 'System' is a type not a namespace. Consider a 'using static' directive instead
                 // using System;
                 Diagnostic(ErrorCode.ERR_BadUsingNamespace, "System").WithArguments("System").WithLocation(2, 7),
                 // (4,16): error CS0246: The type or namespace name 'Attribute' could not be found (are you missing a using directive or an assembly reference?)
@@ -7247,6 +7247,31 @@ class Test
                 Assert.Equal(2, m.ReferencedAssemblies.Length);
                 Assert.Equal("Bug1020038", m.ReferencedAssemblies[1].Name);
             });
+        }
+
+        [Fact, WorkItem(937575, "DevDiv"), WorkItem(121, "CodePlex")]
+        public void Bug937575()
+        {
+            var source = @"
+using System;
+class XAttribute : Attribute { }
+class C<T>
+{
+    public void M<[X]U>() { }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+
+            CompileAndVerify(compilation, symbolValidator: (m) =>
+                                                            {
+                                                                var cc = m.GlobalNamespace.GetTypeMember("C");
+                                                                var mm = cc.GetMember<MethodSymbol>("M");
+
+                                                                Assert.True(cc.TypeParameters.Single().GetAttributes().IsEmpty);
+                                                                Assert.Equal("XAttribute", mm.TypeParameters.Single().GetAttributes().Single().ToString());
+                                                            }, 
+                             emitOptions: TestEmitters.RefEmitBug);
         }
         #endregion
     }

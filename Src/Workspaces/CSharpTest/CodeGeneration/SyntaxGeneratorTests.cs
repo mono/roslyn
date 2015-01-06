@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CodeGeneration;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Test.Utilities;
+using Microsoft.CodeAnalysis.Text;
 using Roslyn.Test.Utilities;
 using Xunit;
 
@@ -20,6 +21,13 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.CodeGeneration
         public SyntaxGeneratorTests()
         {
             this.ienumerableInt = emptyCompilation.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T).Construct(emptyCompilation.GetSpecialType(SpecialType.System_Int32));
+        }
+
+        public Compilation Compile(string code)
+        {
+            return CSharpCompilation.Create("test")
+                .AddReferences(TestReferences.NetFx.v4_0_30319.mscorlib)
+                .AddSyntaxTrees(SyntaxFactory.ParseSyntaxTree(code));
         }
 
         private void VerifySyntax<TSyntax>(SyntaxNode node, string expectedText) where TSyntax : SyntaxNode
@@ -1166,7 +1174,7 @@ public class C { } // end").Members[0];
             var added = g.AddAttributes(cls, g.Attribute("a"));
             VerifySyntax<ClassDeclarationSyntax>(added, "// comment\r\n[a]\r\npublic class C\r\n{\r\n} // end\r\n");
 
-            var removed = g.RemoveAttributes(added);
+            var removed = g.RemoveAllAttributes(added);
             VerifySyntax<ClassDeclarationSyntax>(removed, "// comment\r\npublic class C\r\n{\r\n} // end\r\n");
 
             var attrWithComment = g.GetAttributes(added).First();
@@ -1341,6 +1349,11 @@ public class C { } // end").Members[0];
             Assert.Equal(expected, actual);
         }
 
+        private void AssertNamesEqual(string name, IEnumerable<SyntaxNode> actualNodes)
+        {
+            AssertNamesEqual(new[] { name }, actualNodes);
+        }
+
         private void AssertMemberNamesEqual(string[] expectedNames, SyntaxNode declaration)
         {
             AssertNamesEqual(expectedNames, g.GetMembers(declaration));
@@ -1349,6 +1362,37 @@ public class C { } // end").Members[0];
         private void AssertMemberNamesEqual(string expectedName, SyntaxNode declaration)
         {
             AssertNamesEqual(new[] { expectedName }, g.GetMembers(declaration));
+        }
+
+        [Fact]
+        public void TestAddNamespaceImports()
+        {
+            AssertNamesEqual("x.y", g.GetNamespaceImports(g.AddNamespaceImports(g.CompilationUnit(), g.NamespaceImportDeclaration("x.y"))));
+            AssertNamesEqual(new[] { "x.y", "z" }, g.GetNamespaceImports(g.AddNamespaceImports(g.CompilationUnit(), g.NamespaceImportDeclaration("x.y"), g.IdentifierName("z"))));
+            AssertNamesEqual("", g.GetNamespaceImports(g.AddNamespaceImports(g.CompilationUnit(), g.MethodDeclaration("m"))));
+            AssertNamesEqual(new[] { "x", "y.z" }, g.GetNamespaceImports(g.AddNamespaceImports(g.CompilationUnit(g.IdentifierName("x")), g.DottedName("y.z"))));
+        }
+
+        [Fact]
+        public void TestRemoveNamespaceImports()
+        {
+            TestRemoveAllNamespaceImports(g.CompilationUnit(g.NamespaceImportDeclaration("x")));
+            TestRemoveAllNamespaceImports(g.CompilationUnit(g.NamespaceImportDeclaration("x"), g.IdentifierName("y")));
+
+            TestRemoveNamespaceImport(g.CompilationUnit(g.NamespaceImportDeclaration("x")), "x", new string[] { });
+            TestRemoveNamespaceImport(g.CompilationUnit(g.NamespaceImportDeclaration("x"), g.IdentifierName("y")), "x", new[] { "y" });
+            TestRemoveNamespaceImport(g.CompilationUnit(g.NamespaceImportDeclaration("x"), g.IdentifierName("y")), "y", new[] { "x" });
+        }
+
+        private void TestRemoveAllNamespaceImports(SyntaxNode declaration)
+        {
+            Assert.Equal(0, g.GetNamespaceImports(g.RemoveDeclarations(declaration, g.GetNamespaceImports(declaration))).Count);
+        }
+
+        private void TestRemoveNamespaceImport(SyntaxNode declaration, string name, string[] remainingNames)
+        {
+            var newDecl = g.RemoveDeclaration(declaration, g.GetNamespaceImports(declaration).First(m => g.GetName(m) == name));
+            AssertNamesEqual(remainingNames, g.GetNamespaceImports(newDecl));
         }
 
         [Fact]
@@ -1370,21 +1414,29 @@ public class C { } // end").Members[0];
         }
 
         [Fact]
-        public void TestWithMembers()
+        public void TestRemoveMembers()
         {
-            AssertMemberNamesEqual("m", g.WithMembers(g.ClassDeclaration("d"), new[] { g.MethodDeclaration("m") }));
-            AssertMemberNamesEqual("m", g.WithMembers(g.StructDeclaration("s"), new[] { g.MethodDeclaration("m") }));
-            AssertMemberNamesEqual("m", g.WithMembers(g.InterfaceDeclaration("i"), new[] { g.MethodDeclaration("m") }));
-            AssertMemberNamesEqual("v", g.WithMembers(g.EnumDeclaration("e"), new[] { g.EnumMember("v") }));
-            AssertMemberNamesEqual("n2", g.WithMembers(g.NamespaceDeclaration("n"), new[] { g.NamespaceDeclaration("n2") }));
-            AssertMemberNamesEqual("n", g.WithMembers(g.CompilationUnit(), new[] { g.NamespaceDeclaration("n") }));
+            // remove all members
+            TestRemoveAllMembers(g.ClassDeclaration("c", members: new[] { g.MethodDeclaration("m") }));
+            TestRemoveAllMembers(g.StructDeclaration("s", members: new[] { g.MethodDeclaration("m") }));
+            TestRemoveAllMembers(g.InterfaceDeclaration("i", members: new[] { g.MethodDeclaration("m") }));
+            TestRemoveAllMembers(g.EnumDeclaration("i", members: new[] { g.EnumMember("v") }));
+            TestRemoveAllMembers(g.NamespaceDeclaration("n", new[] { g.NamespaceDeclaration("n") }));
+            TestRemoveAllMembers(g.CompilationUnit(declarations: new[] { g.NamespaceDeclaration("n") }));
 
-            Assert.Equal(0, g.GetMembers(g.WithMembers(g.ClassDeclaration("d", members: new[] { g.MethodDeclaration("m") }), null)).Count);
-            Assert.Equal(0, g.GetMembers(g.WithMembers(g.StructDeclaration("s", members: new[] { g.MethodDeclaration("m") }), null)).Count);
-            Assert.Equal(0, g.GetMembers(g.WithMembers(g.InterfaceDeclaration("i", members: new[] { g.MethodDeclaration("m") }), null)).Count);
-            Assert.Equal(0, g.GetMembers(g.WithMembers(g.EnumDeclaration("i", members: new[] { g.EnumMember("v") }), null)).Count);
-            Assert.Equal(0, g.GetMembers(g.WithMembers(g.NamespaceDeclaration("n", new[] { g.NamespaceDeclaration("n") }), null)).Count);
-            Assert.Equal(0, g.GetMembers(g.WithMembers(g.CompilationUnit(declarations: new[] { g.NamespaceDeclaration("n") }), null)).Count);
+            TestRemoveMember(g.ClassDeclaration("c", members: new[] { g.MethodDeclaration("m1"), g.MethodDeclaration("m2") }), "m1", new[] { "m2" });
+            TestRemoveMember(g.StructDeclaration("s", members: new[] { g.MethodDeclaration("m1"), g.MethodDeclaration("m2") }), "m1", new[] { "m2" });
+        }
+
+        private void TestRemoveAllMembers(SyntaxNode declaration)
+        {
+            Assert.Equal(0, g.GetMembers(g.RemoveDeclarations(declaration, g.GetMembers(declaration))).Count);
+        }
+
+        private void TestRemoveMember(SyntaxNode declaration, string name, string[] remainingNames)
+        {
+            var newDecl = g.RemoveDeclaration(declaration, g.GetMembers(declaration).First(m => g.GetName(m) == name));
+            AssertMemberNamesEqual(remainingNames, newDecl);
         }
 
         [Fact]
@@ -1418,7 +1470,7 @@ public class C { } // end").Members[0];
             Assert.Equal(DeclarationKind.CustomEvent, g.GetDeclarationKind(g.CustomEventDeclaration("e", g.IdentifierName("t"))));
             Assert.Equal(DeclarationKind.Namespace, g.GetDeclarationKind(g.NamespaceDeclaration("n")));
             Assert.Equal(DeclarationKind.NamespaceImport, g.GetDeclarationKind(g.NamespaceImportDeclaration("u")));
-            Assert.Equal(DeclarationKind.LocalVariable, g.GetDeclarationKind(g.LocalDeclarationStatement(g.IdentifierName("t"), "loc")));
+            Assert.Equal(DeclarationKind.Variable, g.GetDeclarationKind(g.LocalDeclarationStatement(g.IdentifierName("t"), "loc")));
             Assert.Equal(DeclarationKind.Attribute, g.GetDeclarationKind(g.Attribute("a")));
         }
 
@@ -1632,37 +1684,59 @@ public class C { } // end").Members[0];
         }
 
         [Fact]
-        public void TestWithParameters()
+        public void TestAddParameters()
         {
-            Assert.Equal(1, g.GetParameters(g.WithParameters(g.MethodDeclaration("m"), new[] { g.ParameterDeclaration("p", g.IdentifierName("t")) })).Count);
-            Assert.Equal(1, g.GetParameters(g.WithParameters(g.ConstructorDeclaration(), new[] { g.ParameterDeclaration("p", g.IdentifierName("t")) })).Count);
-            Assert.Equal(2, g.GetParameters(g.WithParameters(g.IndexerDeclaration(new[] { g.ParameterDeclaration("p", g.IdentifierName("t")) }, g.IdentifierName("t")), new[] { g.ParameterDeclaration("p2", g.IdentifierName("t2")), g.ParameterDeclaration("p3", g.IdentifierName("t3")) })).Count);
+            Assert.Equal(1, g.GetParameters(g.AddParameters(g.MethodDeclaration("m"), new[] { g.ParameterDeclaration("p", g.IdentifierName("t")) })).Count);
+            Assert.Equal(1, g.GetParameters(g.AddParameters(g.ConstructorDeclaration(), new[] { g.ParameterDeclaration("p", g.IdentifierName("t")) })).Count);
+            Assert.Equal(3, g.GetParameters(g.AddParameters(g.IndexerDeclaration(new[] { g.ParameterDeclaration("p", g.IdentifierName("t")) }, g.IdentifierName("t")), new[] { g.ParameterDeclaration("p2", g.IdentifierName("t2")), g.ParameterDeclaration("p3", g.IdentifierName("t3")) })).Count);
 
-            Assert.Equal(1, g.GetParameters(g.WithParameters(g.ValueReturningLambdaExpression(g.IdentifierName("expr")), new[] { g.LambdaParameter("p") })).Count);
-            Assert.Equal(1, g.GetParameters(g.WithParameters(g.VoidReturningLambdaExpression(g.IdentifierName("expr")), new[] { g.LambdaParameter("p") })).Count);
+            Assert.Equal(1, g.GetParameters(g.AddParameters(g.ValueReturningLambdaExpression(g.IdentifierName("expr")), new[] { g.LambdaParameter("p") })).Count);
+            Assert.Equal(1, g.GetParameters(g.AddParameters(g.VoidReturningLambdaExpression(g.IdentifierName("expr")), new[] { g.LambdaParameter("p") })).Count);
 
-            Assert.Equal(1, g.GetParameters(g.WithParameters(g.DelegateDeclaration("d"), new[] { g.ParameterDeclaration("p", g.IdentifierName("t")) })).Count);
+            Assert.Equal(1, g.GetParameters(g.AddParameters(g.DelegateDeclaration("d"), new[] { g.ParameterDeclaration("p", g.IdentifierName("t")) })).Count);
 
-            Assert.Equal(0, g.GetParameters(g.WithParameters(g.ClassDeclaration("c"), new[] { g.ParameterDeclaration("p", g.IdentifierName("t")) })).Count);
-            Assert.Equal(0, g.GetParameters(g.WithParameters(g.IdentifierName("x"), new[] { g.ParameterDeclaration("p", g.IdentifierName("t")) })).Count);
+            Assert.Equal(0, g.GetParameters(g.AddParameters(g.ClassDeclaration("c"), new[] { g.ParameterDeclaration("p", g.IdentifierName("t")) })).Count);
+            Assert.Equal(0, g.GetParameters(g.AddParameters(g.IdentifierName("x"), new[] { g.ParameterDeclaration("p", g.IdentifierName("t")) })).Count);
         }
 
         [Fact]
-        public void TestGetInitializer()
+        public void TestGetExpression()
         {
-            Assert.Equal("x", g.GetInitializer(g.FieldDeclaration("f", g.IdentifierName("t"), initializer: g.IdentifierName("x"))).ToString());
-            Assert.Equal("x", g.GetInitializer(g.ParameterDeclaration("p", g.IdentifierName("t"), initializer: g.IdentifierName("x"))).ToString());
-            Assert.Equal("x", g.GetInitializer(g.LocalDeclarationStatement("loc", initializer: g.IdentifierName("x"))).ToString());
-            Assert.Null(g.GetInitializer(g.IdentifierName("e")));
+            // initializers
+            Assert.Equal("x", g.GetExpression(g.FieldDeclaration("f", g.IdentifierName("t"), initializer: g.IdentifierName("x"))).ToString());
+            Assert.Equal("x", g.GetExpression(g.ParameterDeclaration("p", g.IdentifierName("t"), initializer: g.IdentifierName("x"))).ToString());
+            Assert.Equal("x", g.GetExpression(g.LocalDeclarationStatement("loc", initializer: g.IdentifierName("x"))).ToString());
+
+            // lambda bodies
+            Assert.Null(g.GetExpression(g.ValueReturningLambdaExpression("p", new[] { g.IdentifierName("x") })));
+            Assert.Equal(1, g.GetStatements(g.ValueReturningLambdaExpression("p", new[] { g.IdentifierName("x") })).Count);
+            Assert.Equal("x", g.GetExpression(g.ValueReturningLambdaExpression(g.IdentifierName("x"))).ToString());
+            Assert.Equal("x", g.GetExpression(g.VoidReturningLambdaExpression(g.IdentifierName("x"))).ToString());
+            Assert.Equal("x", g.GetExpression(g.ValueReturningLambdaExpression("p", g.IdentifierName("x"))).ToString());
+            Assert.Equal("x", g.GetExpression(g.VoidReturningLambdaExpression("p", g.IdentifierName("x"))).ToString());
+
+            Assert.Null(g.GetExpression(g.IdentifierName("e")));
         }
 
         [Fact]
-        public void TestWithInitializer()
+        public void TestWithExpression()
         {
-            Assert.Equal("x", g.GetInitializer(g.WithInitializer(g.FieldDeclaration("f", g.IdentifierName("t")), g.IdentifierName("x"))).ToString());
-            Assert.Equal("x", g.GetInitializer(g.WithInitializer(g.ParameterDeclaration("p", g.IdentifierName("t")), g.IdentifierName("x"))).ToString());
-            Assert.Equal("x", g.GetInitializer(g.WithInitializer(g.LocalDeclarationStatement(g.IdentifierName("t"), "loc"), g.IdentifierName("x"))).ToString());
-            Assert.Null(g.GetInitializer(g.WithInitializer(g.IdentifierName("e"), g.IdentifierName("x"))));
+            // initializers
+            Assert.Equal("x", g.GetExpression(g.WithExpression(g.FieldDeclaration("f", g.IdentifierName("t")), g.IdentifierName("x"))).ToString());
+            Assert.Equal("x", g.GetExpression(g.WithExpression(g.ParameterDeclaration("p", g.IdentifierName("t")), g.IdentifierName("x"))).ToString());
+            Assert.Equal("x", g.GetExpression(g.WithExpression(g.LocalDeclarationStatement(g.IdentifierName("t"), "loc"), g.IdentifierName("x"))).ToString());
+
+            // lambda bodies
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.ValueReturningLambdaExpression("p", new[] { g.IdentifierName("x") }), g.IdentifierName("y"))).ToString());
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.VoidReturningLambdaExpression("p", new[] { g.IdentifierName("x") }), g.IdentifierName("y"))).ToString());
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.ValueReturningLambdaExpression(new[] { g.IdentifierName("x") }), g.IdentifierName("y"))).ToString());
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.VoidReturningLambdaExpression(new[] { g.IdentifierName("x") }), g.IdentifierName("y"))).ToString());
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.ValueReturningLambdaExpression("p", g.IdentifierName("x")), g.IdentifierName("y"))).ToString());
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.VoidReturningLambdaExpression("p", g.IdentifierName("x")), g.IdentifierName("y"))).ToString());
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.ValueReturningLambdaExpression(g.IdentifierName("x")), g.IdentifierName("y"))).ToString());
+            Assert.Equal("y", g.GetExpression(g.WithExpression(g.VoidReturningLambdaExpression(g.IdentifierName("x")), g.IdentifierName("y"))).ToString());
+
+            Assert.Null(g.GetExpression(g.WithExpression(g.IdentifierName("e"), g.IdentifierName("x"))));
         }
 
         [Fact]
@@ -1672,7 +1746,7 @@ public class C { } // end").Members[0];
             {
                 // x = y;
                 g.ExpressionStatement(g.AssignmentStatement(g.IdentifierName("x"), g.IdentifierName("y"))),
-                
+
                 // fn(arg);
                 g.ExpressionStatement(g.InvocationExpression(g.IdentifierName("fn"), g.IdentifierName("arg")))
             };
@@ -1768,6 +1842,596 @@ public class C { } // end").Members[0];
             Assert.Equal(2, g.GetSetAccessorStatements(g.WithSetAccessorStatements(g.PropertyDeclaration("p", g.IdentifierName("t")), stmts)).Count);
             Assert.Equal(2, g.GetSetAccessorStatements(g.WithSetAccessorStatements(g.IndexerDeclaration(new[] { p }, g.IdentifierName("t")), stmts)).Count);
             Assert.Equal(0, g.GetSetAccessorStatements(g.WithSetAccessorStatements(g.IdentifierName("x"), stmts)).Count);
+        }
+
+        [Fact]
+        public void TestMultiFieldDeclarations()
+        {
+            var comp = Compile(
+@"public class C
+{
+   public static int X, Y, Z;
+}");
+
+            var symbolC = (INamedTypeSymbol)comp.GlobalNamespace.GetMembers("C").First();
+            var symbolX = (IFieldSymbol)symbolC.GetMembers("X").First();
+            var symbolY = (IFieldSymbol)symbolC.GetMembers("Y").First();
+            var symbolZ = (IFieldSymbol)symbolC.GetMembers("Z").First();
+
+            var declC = g.GetDeclaration(symbolC.DeclaringSyntaxReferences.Select(x => x.GetSyntax()).First());
+            var declX = g.GetDeclaration(symbolX.DeclaringSyntaxReferences.Select(x => x.GetSyntax()).First());
+            var declY = g.GetDeclaration(symbolY.DeclaringSyntaxReferences.Select(x => x.GetSyntax()).First());
+            var declZ = g.GetDeclaration(symbolZ.DeclaringSyntaxReferences.Select(x => x.GetSyntax()).First());
+
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(declX));
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(declY));
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(declZ));
+
+            Assert.NotNull(g.GetType(declX));
+            Assert.Equal("int", g.GetType(declX).ToString());
+            Assert.Equal("X", g.GetName(declX));
+            Assert.Equal(Accessibility.Public, g.GetAccessibility(declX));
+            Assert.Equal(DeclarationModifiers.Static, g.GetModifiers(declX));
+
+            Assert.NotNull(g.GetType(declY));
+            Assert.Equal("int", g.GetType(declY).ToString());
+            Assert.Equal("Y", g.GetName(declY));
+            Assert.Equal(Accessibility.Public, g.GetAccessibility(declY));
+            Assert.Equal(DeclarationModifiers.Static, g.GetModifiers(declY));
+
+            Assert.NotNull(g.GetType(declZ));
+            Assert.Equal("int", g.GetType(declZ).ToString());
+            Assert.Equal("Z", g.GetName(declZ));
+            Assert.Equal(Accessibility.Public, g.GetAccessibility(declZ));
+            Assert.Equal(DeclarationModifiers.Static, g.GetModifiers(declZ));
+
+            var xTypedT = g.WithType(declX, g.IdentifierName("T"));
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(xTypedT));
+            Assert.Equal(SyntaxKind.FieldDeclaration, xTypedT.CSharpKind());
+            Assert.Equal("T", g.GetType(xTypedT).ToString());
+
+            var xNamedQ = g.WithName(declX, "Q");
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(xNamedQ));
+            Assert.Equal(SyntaxKind.FieldDeclaration, xNamedQ.CSharpKind());
+            Assert.Equal("Q", g.GetName(xNamedQ).ToString());
+
+            var xInitialized = g.WithExpression(declX, g.IdentifierName("e"));
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(xInitialized));
+            Assert.Equal(SyntaxKind.FieldDeclaration, xInitialized.CSharpKind());
+            Assert.Equal("e", g.GetExpression(xInitialized).ToString());
+
+            var xPrivate = g.WithAccessibility(declX, Accessibility.Private);
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(xPrivate));
+            Assert.Equal(SyntaxKind.FieldDeclaration, xPrivate.CSharpKind());
+            Assert.Equal(Accessibility.Private, g.GetAccessibility(xPrivate));
+
+            var xReadOnly = g.WithModifiers(declX, DeclarationModifiers.ReadOnly);
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(xReadOnly));
+            Assert.Equal(SyntaxKind.FieldDeclaration, xReadOnly.CSharpKind());
+            Assert.Equal(DeclarationModifiers.ReadOnly, g.GetModifiers(xReadOnly));
+
+            var xAttributed = g.AddAttributes(declX, g.Attribute("A"));
+            Assert.Equal(DeclarationKind.Field, g.GetDeclarationKind(xAttributed));
+            Assert.Equal(SyntaxKind.FieldDeclaration, xAttributed.CSharpKind());
+            Assert.Equal(1, g.GetAttributes(xAttributed).Count);
+            Assert.Equal("[A]", g.GetAttributes(xAttributed)[0].ToString());
+
+            var membersC = g.GetMembers(declC);
+            Assert.Equal(3, membersC.Count);
+            Assert.Equal(declX, membersC[0]);
+            Assert.Equal(declY, membersC[1]);
+            Assert.Equal(declZ, membersC[2]);
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.InsertMembers(declC, 0, g.FieldDeclaration("A", g.IdentifierName("T"))),
+@"public class C
+{
+    T A;
+    public static int X, Y, Z;
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.InsertMembers(declC, 1, g.FieldDeclaration("A", g.IdentifierName("T"))),
+@"public class C
+{
+    public static int X;
+    T A;
+    public static int Y, Z;
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.InsertMembers(declC, 2, g.FieldDeclaration("A", g.IdentifierName("T"))),
+@"public class C
+{
+    public static int X, Y;
+    T A;
+    public static int Z;
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.InsertMembers(declC, 3, g.FieldDeclaration("A", g.IdentifierName("T"))),
+@"public class C
+{
+    public static int X, Y, Z;
+    T A;
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.ClassDeclaration("C", members: new[] { declX, declY }),
+@"class C
+{
+    public static int X;
+    public static int Y;
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.ReplaceDeclaration(declC, declX, xTypedT),
+@"public class C
+{
+    public static T X;
+    public static int Y, Z;
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.ReplaceDeclaration(declC, declY, g.WithType(declY, g.IdentifierName("T"))),
+@"public class C
+{
+    public static int X;
+    public static T Y;
+    public static int Z;
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.ReplaceDeclaration(declC, declZ, g.WithType(declZ, g.IdentifierName("T"))),
+@"public class C
+{
+    public static int X, Y;
+    public static T Z;
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.ReplaceDeclaration(declC, declX, g.WithAccessibility(declX, Accessibility.Private)),
+@"public class C
+{
+    private static int X;
+    public static int Y, Z;
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.ReplaceDeclaration(declC, declX, g.WithModifiers(declX, DeclarationModifiers.None)),
+@"public class C
+{
+    public int X;
+    public static int Y, Z;
+}");
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.ReplaceDeclaration(declC, declX, g.WithName(declX, "Q")),
+@"public class C
+{
+    public static int Q, Y, Z;
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.ReplaceDeclaration(declC, declX, g.WithExpression(declX, g.IdentifierName("e"))),
+@"public class C
+{
+    public static int X = e, Y, Z;
+}");
+        }
+
+        [Fact]
+        public void TestMultiAttributeDeclarations()
+        {
+            var comp = Compile(
+@"[X, Y, Z]
+public class C
+{
+}");
+            var symbolC = comp.GlobalNamespace.GetMembers("C").First();
+            var declC = symbolC.DeclaringSyntaxReferences.First().GetSyntax();
+            var attrs = g.GetAttributes(declC);
+
+            var attrX = attrs[0];
+            var attrY = attrs[1];
+            var attrZ = attrs[2];
+
+            Assert.Equal(3, attrs.Count);
+            Assert.Equal("X", g.GetName(attrX));
+            Assert.Equal("Y", g.GetName(attrY));
+            Assert.Equal("Z", g.GetName(attrZ));
+
+            var xNamedQ = g.WithName(attrX, "Q");
+            Assert.Equal(DeclarationKind.Attribute, g.GetDeclarationKind(xNamedQ));
+            Assert.Equal(SyntaxKind.AttributeList, xNamedQ.CSharpKind());
+            Assert.Equal("[Q]", xNamedQ.ToString());
+
+            var xWithArg = g.AddAttributeArguments(attrX, new[] { g.AttributeArgument(g.IdentifierName("e")) });
+            Assert.Equal(DeclarationKind.Attribute, g.GetDeclarationKind(xWithArg));
+            Assert.Equal(SyntaxKind.AttributeList, xWithArg.CSharpKind());
+            Assert.Equal("[X(e)]", xWithArg.ToString());
+
+            // Inserting new attributes
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.InsertAttributes(declC, 0, g.Attribute("A")),
+@"[A]
+[X, Y, Z]
+public class C
+{
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.InsertAttributes(declC, 1, g.Attribute("A")),
+@"[X]
+[A]
+[Y, Z]
+public class C
+{
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.InsertAttributes(declC, 2, g.Attribute("A")),
+@"[X, Y]
+[A]
+[Z]
+public class C
+{
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.InsertAttributes(declC, 3, g.Attribute("A")),
+@"[X, Y, Z]
+[A]
+public class C
+{
+}");
+
+            // Removing attributes
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.RemoveDeclarations(declC, new[] { attrX }),
+@"[Y, Z]
+public class C
+{
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.RemoveDeclarations(declC, new[] { attrY }),
+@"[X, Z]
+public class C
+{
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.RemoveDeclarations(declC, new[] { attrZ }),
+@"[X, Y]
+public class C
+{
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.RemoveDeclarations(declC, new[] { attrX, attrY }),
+@"[Z]
+public class C
+{
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.RemoveDeclarations(declC, new[] { attrX, attrZ }),
+@"[Y]
+public class C
+{
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.RemoveDeclarations(declC, new[] { attrY, attrZ }),
+@"[X]
+public class C
+{
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.RemoveDeclarations(declC, new[] { attrX, attrY, attrZ }),
+@"public class C
+{
+}");
+
+            // Replacing attributes
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.ReplaceDeclaration(declC, attrX, g.Attribute("A")),
+@"[A, Y, Z]
+public class C
+{
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.ReplaceDeclaration(declC, attrY, g.Attribute("A")),
+@"[X, A, Z]
+public class C
+{
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.ReplaceDeclaration(declC, attrZ, g.Attribute("A")),
+@"[X, Y, A]
+public class C
+{
+}");
+
+            VerifySyntax<ClassDeclarationSyntax>(
+                g.ReplaceDeclaration(declC, attrX, g.AddAttributeArguments(attrX, new[] { g.AttributeArgument(g.IdentifierName("e")) })),
+@"[X(e), Y, Z]
+public class C
+{
+}");
+        }
+
+        [Fact]
+        public void TestMultiReturnAttributeDeclarations()
+        {
+            var comp = Compile(
+@"public class C
+{
+    [return: X, Y, Z]
+    public void M()
+    {
+    }
+}");
+            var symbolC = comp.GlobalNamespace.GetMembers("C").First();
+            var declC = symbolC.DeclaringSyntaxReferences.First().GetSyntax();
+            var declM = g.GetMembers(declC).First();
+
+            Assert.Equal(0, g.GetAttributes(declM).Count);
+
+            var attrs = g.GetReturnAttributes(declM);
+            Assert.Equal(3, attrs.Count);
+            var attrX = attrs[0];
+            var attrY = attrs[1];
+            var attrZ = attrs[2];
+
+            Assert.Equal("X", g.GetName(attrX));
+            Assert.Equal("Y", g.GetName(attrY));
+            Assert.Equal("Z", g.GetName(attrZ));
+
+            var xNamedQ = g.WithName(attrX, "Q");
+            Assert.Equal(DeclarationKind.Attribute, g.GetDeclarationKind(xNamedQ));
+            Assert.Equal(SyntaxKind.AttributeList, xNamedQ.CSharpKind());
+            Assert.Equal("[Q]", xNamedQ.ToString());
+
+            var xWithArg = g.AddAttributeArguments(attrX, new[] { g.AttributeArgument(g.IdentifierName("e")) });
+            Assert.Equal(DeclarationKind.Attribute, g.GetDeclarationKind(xWithArg));
+            Assert.Equal(SyntaxKind.AttributeList, xWithArg.CSharpKind());
+            Assert.Equal("[X(e)]", xWithArg.ToString());
+
+            // Inserting new attributes
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertReturnAttributes(declM, 0, g.Attribute("A")),
+@"[return: A]
+[return: X, Y, Z]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertReturnAttributes(declM, 1, g.Attribute("A")),
+@"[return: X]
+[return: A]
+[return: Y, Z]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertReturnAttributes(declM, 2, g.Attribute("A")),
+@"[return: X, Y]
+[return: A]
+[return: Z]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertReturnAttributes(declM, 3, g.Attribute("A")),
+@"[return: X, Y, Z]
+[return: A]
+public void M()
+{
+}");
+
+            // replacing
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.ReplaceDeclaration(declM, attrX, g.Attribute("Q")),
+@"[return: Q, Y, Z]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.ReplaceDeclaration(declM, attrX, g.AddAttributeArguments(attrX, new[] { g.AttributeArgument(g.IdentifierName("e")) })),
+@"[return: X(e), Y, Z]
+public void M()
+{
+}");
+        }
+
+        [Fact]
+        public void TestMixedAttributeDeclarations()
+        {
+            var comp = Compile(
+@"public class C
+{
+    [X]
+    [return: A]
+    [Y, Z]
+    [return: B, C, D]
+    [P]
+    public void M()
+    {
+    }
+}");
+            var symbolC = comp.GlobalNamespace.GetMembers("C").First();
+            var declC = symbolC.DeclaringSyntaxReferences.First().GetSyntax();
+            var declM = g.GetMembers(declC).First();
+
+            var attrs = g.GetAttributes(declM);
+            Assert.Equal(4, attrs.Count);
+
+            var attrX = attrs[0];
+            Assert.Equal("X", g.GetName(attrX));
+            Assert.Equal(SyntaxKind.AttributeList, attrX.CSharpKind());
+
+            var attrY = attrs[1];
+            Assert.Equal("Y", g.GetName(attrY));
+            Assert.Equal(SyntaxKind.Attribute, attrY.CSharpKind());
+
+            var attrZ = attrs[2];
+            Assert.Equal("Z", g.GetName(attrZ));
+            Assert.Equal(SyntaxKind.Attribute, attrZ.CSharpKind());
+
+            var attrP = attrs[3];
+            Assert.Equal("P", g.GetName(attrP));
+            Assert.Equal(SyntaxKind.AttributeList, attrP.CSharpKind());
+
+            var rattrs = g.GetReturnAttributes(declM);
+            Assert.Equal(4, rattrs.Count);
+
+            var attrA = rattrs[0];
+            Assert.Equal("A", g.GetName(attrA));
+            Assert.Equal(SyntaxKind.AttributeList, attrA.CSharpKind());
+
+            var attrB = rattrs[1];
+            Assert.Equal("B", g.GetName(attrB));
+            Assert.Equal(SyntaxKind.Attribute, attrB.CSharpKind());
+
+            var attrC = rattrs[2];
+            Assert.Equal("C", g.GetName(attrC));
+            Assert.Equal(SyntaxKind.Attribute, attrC.CSharpKind());
+
+            var attrD = rattrs[3];
+            Assert.Equal("D", g.GetName(attrD));
+            Assert.Equal(SyntaxKind.Attribute, attrD.CSharpKind());
+
+            // inserting
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertAttributes(declM, 0, g.Attribute("Q")),
+@"[Q]
+[X]
+[return: A]
+[Y, Z]
+[return: B, C, D]
+[P]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertAttributes(declM, 1, g.Attribute("Q")),
+@"[X]
+[return: A]
+[Q]
+[Y, Z]
+[return: B, C, D]
+[P]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertAttributes(declM, 2, g.Attribute("Q")),
+@"[X]
+[return: A]
+[Y]
+[Q]
+[Z]
+[return: B, C, D]
+[P]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertAttributes(declM, 3, g.Attribute("Q")),
+@"[X]
+[return: A]
+[Y, Z]
+[return: B, C, D]
+[Q]
+[P]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertAttributes(declM, 4, g.Attribute("Q")),
+@"[X]
+[return: A]
+[Y, Z]
+[return: B, C, D]
+[P]
+[Q]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertReturnAttributes(declM, 0, g.Attribute("Q")),
+@"[X]
+[return: Q]
+[return: A]
+[Y, Z]
+[return: B, C, D]
+[P]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertReturnAttributes(declM, 1, g.Attribute("Q")),
+@"[X]
+[return: A]
+[Y, Z]
+[return: Q]
+[return: B, C, D]
+[P]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertReturnAttributes(declM, 2, g.Attribute("Q")),
+@"[X]
+[return: A]
+[Y, Z]
+[return: B]
+[return: Q]
+[return: C, D]
+[P]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertReturnAttributes(declM, 3, g.Attribute("Q")),
+@"[X]
+[return: A]
+[Y, Z]
+[return: B, C]
+[return: Q]
+[return: D]
+[P]
+public void M()
+{
+}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                g.InsertReturnAttributes(declM, 4, g.Attribute("Q")),
+@"[X]
+[return: A]
+[Y, Z]
+[return: B, C, D]
+[P]
+[return: Q]
+public void M()
+{
+}");
         }
     }
 }

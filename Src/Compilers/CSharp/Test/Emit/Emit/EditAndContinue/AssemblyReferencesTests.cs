@@ -52,7 +52,7 @@ class C
 ";
 
             var c1 = CreateCompilation(src1, references);
-            var c2 = CreateCompilation(src2, references);
+            var c2 = c1.WithSource(src2);
             var md1 = AssemblyMetadata.CreateFromStream(c1.EmitToStream());
             var baseline = EmitBaseline.CreateInitialBaseline(md1.GetModules()[0], handle => default(EditAndContinueMethodDebugInformation));
             
@@ -61,13 +61,15 @@ class C
             var pdbStream = new MemoryStream();
             var updatedMethods = new List<MethodDefinitionHandle>();
 
-            c2.EmitDifference(baseline, new[]
+            var edits = new[]
             {
                 new SemanticEdit(
                     SemanticEditKind.Update,
                     c1.GlobalNamespace.GetMember<NamedTypeSymbol>("C").GetMember("Main"),
                     c2.GlobalNamespace.GetMember<NamedTypeSymbol>("C").GetMember("Main"))
-            }, mdStream, ilStream, pdbStream, updatedMethods);
+            };
+
+            c2.EmitDifference(baseline, edits, mdStream, ilStream, pdbStream, updatedMethods);
 
             var actualIL = ilStream.ToArray().GetMethodIL();
             var expectedIL = @"
@@ -122,7 +124,7 @@ class C
             var md1 = AssemblyMetadata.CreateFromStream(CreateCompilation(srcPE, new[] { MscorlibRef, SystemRef }).EmitToStream());
 
             var c1 = CreateCompilation(src1, new[] { MscorlibRef });
-            var c2 = CreateCompilation(src2, new[] { MscorlibRef });
+            var c2 = c1.WithSource(src2);
             var baseline = EmitBaseline.CreateInitialBaseline(md1.GetModules()[0], handle => default(EditAndContinueMethodDebugInformation));
 
             var mdStream = new MemoryStream();
@@ -130,13 +132,15 @@ class C
             var pdbStream = new MemoryStream();
             var updatedMethods = new List<MethodDefinitionHandle>();
 
-            c2.EmitDifference(baseline, new[]
+            var edits = new[]
             {
                 new SemanticEdit(
                     SemanticEditKind.Update,
                     c1.GlobalNamespace.GetMember<NamedTypeSymbol>("C").GetMember("Main"),
                     c2.GlobalNamespace.GetMember<NamedTypeSymbol>("C").GetMember("Main"))
-            }, mdStream, ilStream, pdbStream, updatedMethods);
+            };
+
+            c2.EmitDifference(baseline, edits, mdStream, ilStream, pdbStream, updatedMethods);
 
             var actualIL = ilStream.ToArray().GetMethodIL();
 

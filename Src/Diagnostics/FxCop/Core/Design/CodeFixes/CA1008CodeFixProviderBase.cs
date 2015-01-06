@@ -42,22 +42,20 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
             throw ExceptionUtilities.Unreachable;
         }
 
-        internal abstract SyntaxNode GetFieldInitializer(IFieldSymbol field);
-        internal abstract SyntaxNode CreateConstantValueInitializer(SyntaxNode constantValueExpression);
-
-        private IFieldSymbol GetExplicitlyAssignedField(IFieldSymbol originalField, SyntaxGenerator syntaxFactoryService)
+        private static SyntaxNode GetDeclaration(ISymbol symbol)
         {
-            var originalInitializer = GetFieldInitializer(originalField);
+            return (symbol.DeclaringSyntaxReferences.Length > 0) ? symbol.DeclaringSyntaxReferences[0].GetSyntax() : null;
+        }
+
+        private SyntaxNode GetExplicitlyAssignedField(IFieldSymbol originalField, SyntaxNode declaration, SyntaxGenerator generator)
+        {
+            var originalInitializer = generator.GetExpression(declaration);
             if (originalInitializer != null || !originalField.HasConstantValue)
             {
-                return originalField;
+                return declaration;
             }
 
-            var constantValueExpression = syntaxFactoryService.LiteralExpression(originalField.ConstantValue);
-            var newInitializer = CreateConstantValueInitializer(constantValueExpression);
-
-            return CodeGenerationSymbolFactory.CreateFieldSymbol(originalField.GetAttributes(), originalField.DeclaredAccessibility, originalField.GetSymbolModifiers(),
-                originalField.Type, originalField.Name, originalField.HasConstantValue, originalField.ConstantValue, newInitializer);
+            return generator.WithExpression(declaration, generator.LiteralExpression(originalField.ConstantValue));
         }
 
         private async Task<Document> GetUpdatedDocumentForRuleNameRenameAsync(Document document, IFieldSymbol field, CancellationToken cancellationToken)
@@ -66,16 +64,15 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
             return newSolution.GetDocument(document.Id);
         }
 
-        private IList<ISymbol> GetNewFieldsForRuleNameMultipleZero(INamedTypeSymbol enumType, IEnumerable<IFieldSymbol> zeroValuedFields, SyntaxGenerator syntaxFactoryService)
+        private async Task ApplyRuleNameMultipleZeroAsync(SymbolEditor editor, INamedTypeSymbol enumType, CancellationToken cancellationToken)
         {
             // Diagnostic: Remove all members that have the value zero from '{0}' except for one member that is named 'None'.
             // Fix: Remove all members that have the value zero except for one member that is named 'None'.
 
             bool needsNewZeroValuedNoneField = true;
-            var set = zeroValuedFields.ToSet();
+            var set = CA1008DiagnosticAnalyzer.GetZeroValuedFields(enumType).ToSet();
 
             bool makeNextFieldExplicit = false;
-            var newFields = new List<ISymbol>();
             foreach (IFieldSymbol field in enumType.GetMembers().Where(m => m.Kind == SymbolKind.Field))
             {
                 var isZeroValued = set.Contains(field);
@@ -83,14 +80,11 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
 
                 if (!isZeroValued || isZeroValuedNamedNone)
                 {
-                    var newField = field;
                     if (makeNextFieldExplicit)
                     {
-                        newField = GetExplicitlyAssignedField(field, syntaxFactoryService);
+                        await editor.EditOneDeclarationAsync(field, (d, g) => GetExplicitlyAssignedField(field, d, g), cancellationToken);
                         makeNextFieldExplicit = false;
                     }
-
-                    newFields.Add(newField);
 
                     if (isZeroValuedNamedNone)
                     {
@@ -99,60 +93,30 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
                 }
                 else
                 {
+                    await editor.EditOneDeclarationAsync(field, (d, g) => null); // removes the field declaration
                     makeNextFieldExplicit = true;
                 }
             }
 
             if (needsNewZeroValuedNoneField)
             {
-                var firstZeroValuedField = zeroValuedFields.First();
-                var constantValueExpression = syntaxFactoryService.LiteralExpression(firstZeroValuedField.ConstantValue);
-                var newInitializer = CreateConstantValueInitializer(constantValueExpression);
-                var newField = CodeGenerationSymbolFactory.CreateFieldSymbol(firstZeroValuedField.GetAttributes(), firstZeroValuedField.DeclaredAccessibility, firstZeroValuedField.GetSymbolModifiers(),
-                    firstZeroValuedField.Type, "None", firstZeroValuedField.HasConstantValue, firstZeroValuedField.ConstantValue, newInitializer);
-                newFields.Insert(0, newField);
+                await editor.EditOneDeclarationAsync(enumType, (d, g) => g.InsertMembers(d, 0, g.EnumMember("None")), cancellationToken);
             }
-
-            return newFields;
         }
 
-        private Document GetUpdatedDocumentForRuleNameMultipleZero(Document document, SyntaxNode root, SyntaxNode nodeToFix, INamedTypeSymbol enumType, IEnumerable<IFieldSymbol> zeroValuedFields, CancellationToken cancellationToken)
+        private async Task ApplyRuleNameNoZeroValueAsync(SymbolEditor editor, INamedTypeSymbol enumType, CancellationToken cancellationToken)
         {
-            Contract.ThrowIfFalse(zeroValuedFields.Count() > 1);
-
-            var syntaxFactoryService = document.GetLanguageService<SyntaxGenerator>();
-            var newFields = GetNewFieldsForRuleNameMultipleZero(enumType, zeroValuedFields, syntaxFactoryService);
-            return GetUpdatedDocumentWithFix(document, root, nodeToFix, newFields, cancellationToken);
-        }
-
-        private IList<ISymbol> GetNewFieldsForRuleNameNoZeroValue(INamedTypeSymbol enumType, SyntaxGenerator syntaxFactoryService)
-        {
-            // Diagnostic: Add a member to '{0}' that has a value of zero with a suggested name of 'None'.
-            // Fix: Add a zero-valued member 'None' to enum.
-
-            var newFields = new List<ISymbol>();
-            var constantValueExpression = syntaxFactoryService.LiteralExpression(0);
-            var newInitializer = CreateConstantValueInitializer(constantValueExpression);
-            var newField = CodeGenerationSymbolFactory.CreateFieldSymbol(SpecializedCollections.EmptyList<AttributeData>(), Accessibility.Public,
-                    default(DeclarationModifiers), enumType.EnumUnderlyingType, "None", true, 0, newInitializer);
-            newFields.Add(newField);
-
-            foreach (var member in enumType.GetMembers())
+            // remove any non-zero member named 'None'
+            foreach (IFieldSymbol field in enumType.GetMembers().Where(m => m.Kind == SymbolKind.Field))
             {
-                if (!CA1008DiagnosticAnalyzer.IsMemberNamedNone(member))
+                if (CA1008DiagnosticAnalyzer.IsMemberNamedNone(field))
                 {
-                    newFields.Add(member);
+                    await editor.EditOneDeclarationAsync(field, (d, g) => null); 
                 }
             }
 
-            return newFields;
-        }
-
-        private Document GetUpdatedDocumentForRuleNameNoZeroValue(Document document, SyntaxNode root, SyntaxNode nodeToFix, INamedTypeSymbol enumType, CancellationToken cancellationToken)
-        {
-            var syntaxFactoryService = document.GetLanguageService<SyntaxGenerator>();
-            var newFields = GetNewFieldsForRuleNameNoZeroValue(enumType, syntaxFactoryService);
-            return GetUpdatedDocumentWithFix(document, root, nodeToFix, newFields, cancellationToken);
+            // insert zero-valued member 'None' to top
+            await editor.EditOneDeclarationAsync(enumType, (d, g) => g.InsertMembers(d, 0, g.EnumMember("None")), cancellationToken);
         }
 
         protected virtual SyntaxNode GetParentNodeOrSelfToFix(SyntaxNode nodeToFix)
@@ -160,11 +124,11 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
             return nodeToFix;
         }
 
-        private Document GetUpdatedDocumentWithFix(Document document, SyntaxNode root, SyntaxNode nodeToFix, IList<ISymbol> newFields, CancellationToken cancellationToken)
+        private Document GetUpdatedDocumentWithFix(Document document, SyntaxNode root, SyntaxNode nodeToFix, IList<SyntaxNode> newFields, CancellationToken cancellationToken)
         {
             nodeToFix = GetParentNodeOrSelfToFix(nodeToFix);
-            var newEnumSyntax = CodeGenerator.UpdateDeclarationMembers(nodeToFix, document.Project.Solution.Workspace, newFields, cancellationToken: cancellationToken)
-                .WithAdditionalAnnotations(Formatting.Formatter.Annotation);
+            var g = SyntaxGenerator.GetGenerator(document);
+            var newEnumSyntax = g.AddMembers(nodeToFix, newFields);
             var newRoot = root.ReplaceNode(nodeToFix, newEnumSyntax);
             return document.WithSyntaxRoot(newRoot);
         }
@@ -174,6 +138,8 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
             ISymbol declaredSymbol = model.GetDeclaredSymbol(nodeToFix, cancellationToken);
             Contract.ThrowIfNull(declaredSymbol);
 
+            var editor = new SymbolEditor(document);
+
             foreach (var customTag in diagnostic.Descriptor.CustomTags)
             {
                 switch (customTag)
@@ -182,12 +148,12 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Design
                         return await GetUpdatedDocumentForRuleNameRenameAsync(document, (IFieldSymbol)declaredSymbol, cancellationToken).ConfigureAwait(false);
 
                     case CA1008DiagnosticAnalyzer.RuleMultipleZeroCustomTag:
-                        var enumType = (INamedTypeSymbol)declaredSymbol;
-                        var zeroValuedFields = CA1008DiagnosticAnalyzer.GetZeroValuedFields(enumType);
-                        return GetUpdatedDocumentForRuleNameMultipleZero(document, root, nodeToFix, enumType, zeroValuedFields, cancellationToken);
+                        await ApplyRuleNameMultipleZeroAsync(editor, (INamedTypeSymbol)declaredSymbol, cancellationToken);
+                        return editor.GetChangedDocuments().First();
 
                     case CA1008DiagnosticAnalyzer.RuleNoZeroCustomTag:
-                        return GetUpdatedDocumentForRuleNameNoZeroValue(document, root, nodeToFix, (INamedTypeSymbol)declaredSymbol, cancellationToken);
+                        await ApplyRuleNameNoZeroValueAsync(editor, (INamedTypeSymbol)declaredSymbol, cancellationToken);
+                        return editor.GetChangedDocuments().First();
                 }
             }
 

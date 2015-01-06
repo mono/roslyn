@@ -109,12 +109,27 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Function(returnStatement As ReturnStatementSyntax) InferTypeForReturnStatement(returnStatement),
                     Function(switchStatement As SelectStatementSyntax) InferTypeInSelectStatement(switchStatement),
                     Function(throwStatement As ThrowStatementSyntax) InferTypeInThrowStatement(),
+                    Function(typeOfExpression As TypeOfExpressionSyntax) InferTypeInTypeOfExpressionSyntax(typeOfExpression),
                     Function(usingStatement As UsingStatementSyntax) InferTypeInUsingStatement(usingStatement),
                     Function(whileStatement As WhileStatementSyntax) InferTypeInWhileStatement(),
                     Function(whileStatement As WhileOrUntilClauseSyntax) InferTypeInWhileOrUntilClause(),
                     Function(yieldStatement As YieldStatementSyntax) InferTypeInYieldStatement(yieldStatement),
                     Function(expressionStatement As ExpressionStatementSyntax) InferTypeInExpressionStatement(expressionStatement),
                     Function(x) SpecializedCollections.EmptyEnumerable(Of ITypeSymbol)())
+            End Function
+
+            Private Function InferTypeInTypeOfExpressionSyntax(typeOfExpression As TypeOfExpressionSyntax) As IEnumerable(Of ITypeSymbol)
+                Dim expresionType = typeOfExpression.Type
+                If expresionType Is Nothing Then
+                    Return SpecializedCollections.EmptyEnumerable(Of ITypeSymbol)()
+                End If
+
+                Dim typeSymbol = _semanticModel.GetTypeInfo(expresionType).Type
+                If TypeOf typeSymbol IsNot INamedTypeSymbol Then
+                    Return SpecializedCollections.EmptyEnumerable(Of ITypeSymbol)()
+                End If
+
+                Return SpecializedCollections.SingletonEnumerable(typeSymbol)
             End Function
 
             Private Function InferTypeInAddRemoveHandlerStatementSyntax(addRemoveHandlerStatement As AddRemoveHandlerStatementSyntax,
@@ -526,12 +541,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                         If symbol IsNot Nothing Then
                             Select Case symbol.Kind
-                                Case SymbolKind.Property
-                                    Return SpecializedCollections.SingletonEnumerable(DirectCast(symbol, IPropertySymbol).Type)
                                 Case SymbolKind.Field
                                     Return SpecializedCollections.SingletonEnumerable(DirectCast(symbol, IFieldSymbol).Type)
-                                Case SymbolKind.Parameter
-                                    Return SpecializedCollections.SingletonEnumerable(DirectCast(symbol, IParameterSymbol).Type)
                                 Case SymbolKind.Local
                                     Return SpecializedCollections.SingletonEnumerable(DirectCast(symbol, ILocalSymbol).Type)
                             End Select
@@ -543,13 +554,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         Return GetTypes(asClause.Type)
                     End If
                 ElseIf equalsValue.IsParentKind(SyntaxKind.PropertyStatement) Then
-                    Dim propertySyntaxType = TryCast(equalsValue.Parent, PropertyStatementSyntax)?.AsClause?.Type
-                    If propertySyntaxType Is Nothing Then
+                    Dim propertySyntax = CType(equalsValue.Parent, PropertyStatementSyntax)
+                    Dim propertySymbol = _semanticModel.GetDeclaredSymbol(propertySyntax)
+                    If propertySymbol Is Nothing Then
                         Return SpecializedCollections.EmptyEnumerable(Of ITypeSymbol)()
                     End If
-                    Dim propertyType = _semanticModel.GetTypeInfo(propertySyntaxType).Type
-                    Return If(propertyType IsNot Nothing,
-                        SpecializedCollections.SingletonEnumerable(propertyType),
+                    Return If(propertySymbol.Type IsNot Nothing,
+                        SpecializedCollections.SingletonEnumerable(propertySymbol.Type),
                         SpecializedCollections.EmptyEnumerable(Of ITypeSymbol)())
                 End If
 

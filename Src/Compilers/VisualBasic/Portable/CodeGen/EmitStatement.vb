@@ -1264,17 +1264,18 @@ OtherExpressions:
             Dim localId As LocalDebugId = Nothing
             Dim name As String = GetLocalDebugName(local, localId)
 
+            Dim synthesizedKind = local.SynthesizedKind
             Dim localDef = _builder.LocalSlotManager.DeclareLocal(
                 type:=translatedType,
                 symbol:=local,
                 name:=name,
-                kind:=local.SynthesizedKind,
+                kind:=synthesizedKind,
                 id:=localId,
-                pdbAttributes:=local.SynthesizedKind.PdbAttributes(),
+                pdbAttributes:=synthesizedKind.PdbAttributes(),
                 constraints:=constraints,
                 isDynamic:=False,
                 dynamicTransformFlags:=Nothing,
-                isSlotReusable:=local.SynthesizedKind.IsSlotReusable(_optimizations))
+                isSlotReusable:=synthesizedKind.IsSlotReusable(_optimizations))
 
             ' If named, add it to the local debug scope.
             If localDef.Name IsNot Nothing Then
@@ -1294,6 +1295,17 @@ OtherExpressions:
                 Return local.Name
             End If
 
+            ' We include function value locals in async and iterator methods so that appropriate
+            ' errors can be reported when users attempt to refer to them.  However, there's no
+            ' reason to actually emit them into the resulting MoveNext method, because they will
+            ' never be accessed.  Unfortunately, for implementation-specific reasons, dropping them
+            ' would be non-trivial.  Instead, we drop their names so that they do not appear while
+            ' debugging (esp in the Locals window).
+            If local.DeclarationKind = LocalDeclarationKind.FunctionValue AndAlso
+                TypeOf _method Is SynthesizedStateMachineMethod Then
+                Return Nothing
+            End If
+
             Dim localKind = local.SynthesizedKind
 
             ' only user-defined locals should be named during lowering:
@@ -1307,7 +1319,7 @@ OtherExpressions:
                 Dim syntax = local.GetDeclaratorSyntax()
                 Dim syntaxOffset = _method.CalculateLocalSyntaxOffset(syntax.SpanStart, syntax.SyntaxTree)
 
-                Dim ordinal = AssignLocalOrdinal(localKind, syntaxOffset)
+                Dim ordinal = _synthesizedLocalOrdinals.AssignLocalOrdinal(localKind, syntaxOffset)
 
                 ' user-defined locals should have 0 ordinal
                 Debug.Assert(ordinal = 0 OrElse localKind <> SynthesizedLocalKind.UserDefined)
@@ -1320,30 +1332,6 @@ OtherExpressions:
             End If
 
             Return GeneratedNames.MakeSynthesizedLocalName(localKind, _uniqueNameId)
-        End Function
-
-        Private Function AssignLocalOrdinal(localKind As SynthesizedLocalKind, syntaxOffset As Integer) As Integer
-#If Not DEBUG Then
-            ' Optimization (avoid growing the dictionary below) 
-            ' User-defined locals have to have a distinct syntax offset, thus ordinal is always 0.
-            If localKind = SynthesizedLocalKind.UserDefined
-                Return 0
-            End If
-#End If
-            Dim ordinal As Integer = 0
-            Dim key As Long = (CLng(syntaxOffset) << 8) Or localKind
-
-            ' Group by syntax offset and kind.
-            ' Variables associated with the same syntax and kind will be assigned different ordinals.
-            If _synthesizedLocalOrdinals Is Nothing Then
-                _synthesizedLocalOrdinals = PooledDictionary(Of Long, Integer).GetInstance()
-            Else
-                _synthesizedLocalOrdinals.TryGetValue(key, ordinal)
-            End If
-
-            _synthesizedLocalOrdinals(key) = ordinal + 1
-            Debug.Assert(ordinal = 0 OrElse localKind <> SynthesizedLocalKind.UserDefined)
-            Return ordinal
         End Function
 
         Private Function IsSlotReusable(local As LocalSymbol) As Boolean
@@ -1430,13 +1418,13 @@ OtherExpressions:
                 Dim index As Integer = 0
                 Dim parsedOk As Boolean = GeneratedNames.TryParseStateMachineLocalName(field.Name, name, index)
                 Debug.Assert(parsedOk)
-                Debug.Assert(index >= 1)
+                Debug.Assert(index >= 0)
                 If parsedOk Then
                     Dim fakePdbOnlyLocal = New LocalDefinition(
                         symbolOpt:=Nothing,
                         nameOpt:=field.Name,
                         type:=Nothing,
-                        slot:=0,
+                        slot:=index,
                         synthesizedKind:=SynthesizedLocalKind.EmitterTemp,
                         id:=Nothing,
                         pdbAttributes:=Cci.PdbWriter.DefaultLocalAttributesValue,

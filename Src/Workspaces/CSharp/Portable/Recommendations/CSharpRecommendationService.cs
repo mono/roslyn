@@ -125,7 +125,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Recommendations
             else if (node.CSharpKind() == SyntaxKind.MemberBindingExpression)
             {
                 var parentConditionalAccess = node.GetAncestor<ConditionalAccessExpressionSyntax>();
-                return GetSymbolsOffOfExpression(context, parentConditionalAccess.Expression, cancellationToken);
+                return GetSymbolsOffOfConditionalReceiver(context, parentConditionalAccess.Expression, cancellationToken);
             }
             else
             {
@@ -220,6 +220,16 @@ namespace Microsoft.CodeAnalysis.CSharp.Recommendations
         {
             var symbols = context.SemanticModel.LookupNamespacesAndTypes(context.LeftToken.SpanStart);
 
+            if (context.TargetToken.IsUsingKeywordInUsingDirective())
+            {
+                return symbols.Where(s => s.IsNamespace());
+            }
+
+            if (context.TargetToken.IsStaticKeywordInUsingDirective())
+            {
+                return symbols.Where(s => !s.IsDelegateType() && !s.IsInterfaceType());
+            }
+
             return symbols;
         }
 
@@ -247,6 +257,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Recommendations
             IEnumerable<ISymbol> symbols = !context.IsNameOfContext && context.LeftToken.Parent.IsInStaticContext()
                 ? context.SemanticModel.LookupStaticMembers(context.LeftToken.SpanStart)
                 : context.SemanticModel.LookupSymbols(context.LeftToken.SpanStart);
+
+            // Filter out any extension methods that might be imported by a using static directive.
+            symbols = symbols.Where(symbol => !symbol.IsExtensionMethod());
 
             // The symbols may include local variables that are declared later in the method and
             // should not be included in the completion list, so remove those. Filter them away,
@@ -301,15 +314,16 @@ namespace Microsoft.CodeAnalysis.CSharp.Recommendations
                 // Filter the types when in a using directive, but not an alias.
                 // 
                 // Cases:
-                //    using | -- Show namespaces (and static types in C# v6)
+                //    using | -- Show namespaces
+                //    using A.| -- Show namespaces
+                //    using static | -- Show namespace and types
                 //    using A = B.| -- Show namespace and types
                 var usingDirective = name.GetAncestorOrThis<UsingDirectiveSyntax>();
                 if (usingDirective != null && usingDirective.Alias == null)
                 {
-                    // Do we also have inclusion of static types?
-                    if (((CSharpParseOptions)context.SyntaxTree.Options).LanguageVersion >= LanguageVersion.CSharp6)
+                    if (usingDirective.StaticKeyword.IsKind(SyntaxKind.StaticKeyword))
                     {
-                        symbols = symbols.Where(s => s.IsNamespace() || s.IsStaticType()).ToList();
+                        return symbols.Where(s => !s.IsDelegateType() && !s.IsInterfaceType());
                     }
                     else
                     {
@@ -334,12 +348,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Recommendations
             var expression = originalExpression.WalkDownParentheses();
             var leftHandBinding = context.SemanticModel.GetSymbolInfo(expression, cancellationToken);
             var container = context.SemanticModel.GetTypeInfo(expression, cancellationToken).Type;
-
-            // TODO remove this when 531549 which causes GetTypeInfo to return an error type is fixed
-            if (container.IsErrorType())
-            {
-                container = leftHandBinding.Symbol.GetSymbolType() as ITypeSymbol;
-            }
 
             var normalSymbols = GetSymbolsOffOfBoundExpression(context, originalExpression, expression, leftHandBinding, container, cancellationToken);
 
@@ -370,6 +378,21 @@ namespace Microsoft.CodeAnalysis.CSharp.Recommendations
                 container = ((IPointerTypeSymbol)container).PointedAtType;
             }
 
+            return GetSymbolsOffOfBoundExpression(context, originalExpression, expression, leftHandBinding, container, cancellationToken);
+        }
+
+        private static IEnumerable<ISymbol> GetSymbolsOffOfConditionalReceiver(
+            CSharpSyntaxContext context,
+            ExpressionSyntax originalExpression,
+            CancellationToken cancellationToken)
+        {
+            // Given ((T?)t)?.|, the '.' will behave as if the expression was actually ((T)t).|. More plainly,
+            // a member access off of a conitional receiver of nullable type binds to the unwrapped nullable
+            // type. This is not exposed via the binding information for the LHS, so repeat this work here.
+
+            var expression = originalExpression.WalkDownParentheses();
+            var leftHandBinding = context.SemanticModel.GetSymbolInfo(expression, cancellationToken);
+            var container = context.SemanticModel.GetTypeInfo(expression, cancellationToken).Type.RemoveNullableIfPresent();
             return GetSymbolsOffOfBoundExpression(context, originalExpression, expression, leftHandBinding, container, cancellationToken);
         }
 

@@ -22,8 +22,6 @@ using EmitContext = Microsoft.CodeAnalysis.Emit.EmitContext;
 
 namespace Microsoft.Cci
 {
-    using BitArithmeticUtilities;
-    
     internal abstract class MetadataWriter
     {
         private static readonly Encoding Utf8Encoding = Encoding.UTF8;
@@ -250,12 +248,6 @@ namespace Microsoft.Cci
         protected abstract IReadOnlyList<IParameterDefinition> GetParameterDefs();
 
         /// <summary>
-        /// The 1-based index of the generic parameter definition.
-        /// The index is into the full metadata.
-        /// </summary>
-        protected abstract uint GetGenericParameterIndex(IGenericParameter def);
-
-        /// <summary>
         /// The generic parameter definitions to be emitted, in row order. These
         /// are just the generic parameter definitions from the current generation.
         /// </summary>
@@ -443,12 +435,14 @@ namespace Microsoft.Cci
         /// </summary>
         protected abstract void PopulateEncMapTableRows(List<EncMapRow> table, ImmutableArray<int> rowCounts);
 
+        protected abstract void ReportReferencesToAddedSymbols();
+
         // If true, it is allowed to have methods not have bodies (for emitting metadata-only
         // assembly)
         private readonly CancellationToken cancellationToken;
         protected readonly IModule module;
         public readonly EmitContext Context;
-        private readonly CommonMessageProvider messageProvider;
+        protected readonly CommonMessageProvider messageProvider;
 
         // progress:
         private bool streamsAreComplete;
@@ -1000,7 +994,7 @@ namespace Microsoft.Cci
                 byteArray[i++] = (byte)(ch >> 8);
             }
 
-            return this.GetBlobIndex(ImmutableArrayInterop.DangerousCreateFromUnderlyingArray(ref byteArray));
+            return this.GetBlobIndex(ImmutableArray.Create(byteArray));
         }
 
         private uint GetCustomAttributeSignatureIndex(ICustomAttribute customAttribute)
@@ -1851,13 +1845,12 @@ namespace Microsoft.Cci
 
         private static Location GetNamedEntityLocation(INamedEntity errorEntity)
         {
-            Location location = Location.None;
-            ISymbol symbol = errorEntity as ISymbol;
-            if (symbol != null && !symbol.Locations.IsDefaultOrEmpty)
-            {
-                location = symbol.Locations[0];
-            }
-            return location;
+            return GetSymbolLocation(errorEntity as ISymbol);
+        }
+
+        protected static Location GetSymbolLocation(ISymbol symbolOpt)
+        {
+            return symbolOpt != null && !symbolOpt.Locations.IsDefaultOrEmpty ? symbolOpt.Locations[0] : Location.None;
         }
 
         private static SignatureTypeCode GetConstantTypeCode(object val)
@@ -2395,7 +2388,7 @@ namespace Microsoft.Cci
         private static void SerializeStreamHeader(ref int offsetFromStartOfMetadata, int alignedStreamSize, string streamName, BinaryWriter writer)
         {
             // 4 for the first uint (offset), 4 for the second uint (padded size), length of stream name + 1 for null terminator (then padded)
-            int sizeOfStreamHeader = 8 + Align(streamName.Length + 1, 4);
+            int sizeOfStreamHeader = 8 + BitArithmeticUtilities.Align(streamName.Length + 1, 4);
             writer.WriteInt(offsetFromStartOfMetadata);
             writer.WriteInt(alignedStreamSize);
             foreach (char ch in streamName)
@@ -2483,6 +2476,8 @@ namespace Microsoft.Cci
 
             // method body serialization adds Stand Alone Signatures
             this.tableIndicesAreComplete = true;
+
+            ReportReferencesToAddedSymbols();
 
             PopulateTables(methodBodyRvas, mappedFieldDataWriter, managedResourceDataWriter);
 
@@ -2863,7 +2858,7 @@ namespace Microsoft.Cci
             // TODO: exported types 17
             // TODO: this.AddCustomAttributesToTable(assembly.Resources, 18);
 
-            // The indices of this.genericParameterList do not correspond to the table indices because the
+            // The indices of this.GetGenericParameters() do not correspond to the table indices because the
             // the table may be sorted after the list has been constructed.
             // Note that in all other cases, tables that are sorted are sorted in an order that depends
             // only on list indices. The generic parameter table is the sole exception.
@@ -2873,7 +2868,7 @@ namespace Microsoft.Cci
                 sortedGenericParameterList.Add(genericParamRow.GenericParameter);
             }
 
-            this.AddCustomAttributesToTable(sortedGenericParameterList, 19, this.GetGenericParameterIndex);
+            this.AddCustomAttributesToTable(sortedGenericParameterList, 19);
 
             this.customAttributeTable.Sort(new CustomAttributeRowComparer());
         }
@@ -2948,12 +2943,12 @@ namespace Microsoft.Cci
             }
         }
 
-        private void AddCustomAttributesToTable(IEnumerable<IReference> parentList, uint tag)
+        private void AddCustomAttributesToTable<T>(IEnumerable<T> parentList, uint tag)
+            where T : IReference
         {
             uint parentIndex = 0;
-            foreach (IReference parent in parentList)
+            foreach (var parent in parentList)
             {
-                Debug.Assert(this.IsFullMetadata); // parentToken is not relative
                 parentIndex++;
                 uint parentToken = (parentIndex << 5) | tag;
                 foreach (ICustomAttribute customAttribute in parent.GetAttributes(Context))

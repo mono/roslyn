@@ -135,6 +135,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Me.Flags = flags
         End Sub
 
+        Public ReadOnly Property OptimizationLevelIsDebug As Boolean
+            Get
+                Return Me.Compilation.Options.OptimizationLevel = OptimizationLevel.Debug
+            End Get
+        End Property
+
         Private Shared Function RewriteNode(node As BoundNode,
                                             topMethod As MethodSymbol,
                                             currentMethod As MethodSymbol,
@@ -617,7 +623,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim descriptor = SpecialMembers.GetDescriptor(specialMember)
 
             ' TODO: If the type is generic, we might want to use VB style name rather than emitted name.
-            Dim typeName As String = SpecialTypes.GetMetadataName(CType(descriptor.DeclaringTypeId, SpecialType))
+            Dim typeName As String = descriptor.DeclaringTypeMetadataName
             Dim memberName As String = descriptor.Name
 
             ReportMissingRuntimeHelper(node, typeName, memberName, diagnostics, embedVBCoreRuntime)
@@ -653,7 +659,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim descriptor = WellKnownMembers.GetDescriptor(wellKnownMember)
 
             ' TODO: If the type is generic, we might want to use VB style name rather than emitted name.
-            Dim typeName As String = WellKnownTypes.GetMetadataName(CType(descriptor.DeclaringTypeId, WellKnownType))
+            Dim typeName As String = descriptor.DeclaringTypeMetadataName
             Dim memberName As String = descriptor.Name
 
             ReportMissingRuntimeHelper(node, typeName, memberName, diagnostics, embedVBCoreRuntime)

@@ -198,13 +198,14 @@ namespace Microsoft.CodeAnalysis.Emit
         }
 
         /// <summary>
-        /// Return tokens for all modified methods.
+        /// Return tokens for all modified debuggable methods.
         /// </summary>
         public void GetMethodTokens(ICollection<MethodDefinitionHandle> methods)
         {
             foreach (var def in this.methodDefs.GetRows())
             {
-                if (!this.methodDefs.IsAddedNotChanged(def))
+                // The debugger tries to remap all modified methods, which requires presence of sequence points.
+                if (!this.methodDefs.IsAddedNotChanged(def) && (def.GetBody(this.Context)?.HasAnySequencePoints ?? false))
                 {
                     methods.Add(MetadataTokens.MethodDefinitionHandle((int)this.methodDefs[def]));
                 }
@@ -309,11 +310,6 @@ namespace Microsoft.CodeAnalysis.Emit
         protected override IReadOnlyList<IParameterDefinition> GetParameterDefs()
         {
             return this.parameterDefs.GetRows();
-        }
-
-        protected override uint GetGenericParameterIndex(IGenericParameter def)
-        {
-            return this.genericParameters[def];
         }
 
         protected override IReadOnlyList<IGenericParameter> GetGenericParameters()
@@ -593,6 +589,31 @@ namespace Microsoft.CodeAnalysis.Emit
         protected override ReferenceIndexer CreateReferenceVisitor()
         {
             return new DeltaReferenceIndexer(this);
+        }
+
+        protected override void ReportReferencesToAddedSymbols()
+        {
+            foreach (var typeRef in GetTypeRefs())
+            {
+                ReportReferencesToAddedSymbol(typeRef as ISymbol);
+            }
+
+            foreach (var memberRef in GetMemberRefs())
+            {
+                ReportReferencesToAddedSymbol(memberRef as ISymbol);
+            }
+        }
+
+        private void ReportReferencesToAddedSymbol(ISymbol symbolOpt)
+        {
+            if (symbolOpt != null && this.changes.IsAdded(symbolOpt))
+            {
+                this.Context.Diagnostics.Add(this.messageProvider.CreateDiagnostic(
+                    this.messageProvider.ERR_EncReferenceToAddedMember, 
+                    GetSymbolLocation(symbolOpt), 
+                    symbolOpt.Name,
+                    symbolOpt.ContainingAssembly.Name));
+            }
         }
 
         protected override uint SerializeLocalVariablesSignature(IMethodBody body)
@@ -1379,10 +1400,14 @@ namespace Microsoft.CodeAnalysis.Emit
         {
             private readonly SymbolChanges changes;
 
-            public DeltaReferenceIndexer(DeltaMetadataWriter writer) :
-                base(writer)
+            public DeltaReferenceIndexer(DeltaMetadataWriter writer)
+                : base(writer)
             {
                 this.changes = writer.changes;
+            }
+
+            private void ReportReferenceToAddedSymbolDefinedInExternalAssembly(IReference symbol)
+            {
             }
 
             public override void Visit(IAssembly assembly)

@@ -16814,9 +16814,6 @@ class C
                 new ErrorDescription { Code = (int)ErrorCode.WRN_ProtectedInSealed, Line = 6, Column = 33, IsWarning = true },
                 new ErrorDescription { Code = (int)ErrorCode.WRN_ProtectedInSealed, Line = 11, Column = 33, IsWarning = true },
                 new ErrorDescription { Code = (int)ErrorCode.WRN_ProtectedInSealed, Line = 12, Column = 21, IsWarning = true });
-
-            var ns = comp.SourceModule.GlobalNamespace.GetMembers("NS").Single() as NamespaceSymbol;
-            // TODO...
         }
 
         [Fact]
@@ -16887,6 +16884,39 @@ sealed class C
                 // (4,35): warning CS0067: The event 'C.E' is never used
                 //     protected event System.Action E;
                 Diagnostic(ErrorCode.WRN_UnreferencedEvent, "E").WithArguments("C.E"));
+        }
+
+        [Fact]
+        public void CS0628WRN_ProtectedInSealed05()
+        {
+            const string text = @"
+abstract class C
+{
+    protected C() { }
+}
+
+sealed class D : C
+{
+    protected override D() { }
+    protected D(byte b) { }
+    protected internal D(short s) { }
+    internal protected D(int i) { }
+}
+";
+
+            CreateCompilationWithMscorlib(text).VerifyDiagnostics(
+                // (9,24): error CS0106: The modifier 'override' is not valid for this item
+                //     protected override D() { }
+                Diagnostic(ErrorCode.ERR_BadMemberFlag, "D").WithArguments("override").WithLocation(9, 24),
+                // (10,15): warning CS0628: 'D.D(byte)': new protected member declared in sealed class
+                //     protected D(byte b) { }
+                Diagnostic(ErrorCode.WRN_ProtectedInSealed, "D").WithArguments("D.D(byte)").WithLocation(10, 15),
+                // (11,24): warning CS0628: 'D.D(short)': new protected member declared in sealed class
+                //     protected internal D(short s) { }
+                Diagnostic(ErrorCode.WRN_ProtectedInSealed, "D").WithArguments("D.D(short)").WithLocation(11, 24),
+                // (12,24): warning CS0628: 'D.D(int)': new protected member declared in sealed class
+                //     internal protected D(int i) { }
+                Diagnostic(ErrorCode.WRN_ProtectedInSealed, "D").WithArguments("D.D(int)").WithLocation(12, 24));
         }
 
         [Fact]
@@ -17116,6 +17146,205 @@ class C
             CreateCompilationWithMscorlib(source).VerifyDiagnostics(
                 // (4,19): warning CS0824: Constructor 'B.B()' is marked external
                 Diagnostic(ErrorCode.WRN_ExternCtorNoImplementation, "B").WithArguments("B.B()").WithLocation(4, 19));
+        }
+
+        [WorkItem(1084682, "DevDiv"), WorkItem(386, "CodePlex")]
+        [Fact]
+        public void CS0824WRN_ExternCtorNoImplementation03()
+        {
+            var source =
+@"
+public class A
+{
+    public A(int a) { }
+}
+public class B : A
+{
+  public extern B();
+}
+";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+
+            var verifier = CompileAndVerify(comp, verify: false, emitOptions: TestEmitters.RefEmitBug).
+                           VerifyDiagnostics(
+    // (8,17): warning CS0824: Constructor 'B.B()' is marked external
+    //   public extern B();
+    Diagnostic(ErrorCode.WRN_ExternCtorNoImplementation, "B").WithArguments("B.B()").WithLocation(8, 17)
+                                );
+
+            Assert.True(verifier.TestData.Methods.Keys.Any(n => n.StartsWith("A..ctor")));
+            Assert.False(verifier.TestData.Methods.Keys.Any(n => n.StartsWith("B..ctor"))); // Haven't tried to emit it
+        }
+
+        [WorkItem(1084682, "DevDiv"), WorkItem(1036359, "DevDiv"), WorkItem(386, "CodePlex")]
+        [Fact]
+        public void CS0824WRN_ExternCtorNoImplementation04()
+        {
+            var source =
+@"
+public class A
+{
+    public A(int a) { }
+}
+public class B : A
+{
+  public extern B() : base(); // error
+}";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+
+            // Dev12 :  error CS1514: { expected
+            //          error CS1513: } expected
+            comp.VerifyDiagnostics(
+    // (8,17): error CS8091: 'B.B()' cannot be extern and have a constructor initializer
+    //   public extern B() : base(); // error
+    Diagnostic(ErrorCode.ERR_ExternHasConstructorInitializer, "B").WithArguments("B.B()").WithLocation(8, 17)
+                );
+        }
+
+        [WorkItem(1084682, "DevDiv"), WorkItem(1036359, "DevDiv"), WorkItem(386, "CodePlex")]
+        [Fact]
+        public void CS0824WRN_ExternCtorNoImplementation05()
+        {
+            var source =
+@"
+public class A
+{
+    public A(int a) { }
+}
+public class B : A
+{
+  public extern B() : base(unknown); // error
+}";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+
+            // Dev12 :  error CS1514: { expected
+            //          error CS1513: } expected
+            comp.VerifyDiagnostics(
+    // (8,17): error CS8091: 'B.B()' cannot be extern and have a constructor initializer
+    //   public extern B() : base(unknown); // error
+    Diagnostic(ErrorCode.ERR_ExternHasConstructorInitializer, "B").WithArguments("B.B()").WithLocation(8, 17)
+                );
+        }
+
+        [WorkItem(1084682, "DevDiv"), WorkItem(1036359, "DevDiv"), WorkItem(386, "CodePlex")]
+        [Fact]
+        public void CS0824WRN_ExternCtorNoImplementation06()
+        {
+            var source =
+@"
+public class A
+{
+    public A(int a) { }
+}
+public class B : A
+{
+  public extern B() : base(1) {}
+}";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+
+            comp.VerifyDiagnostics(
+    // (8,17): error CS8091: 'B.B()' cannot be extern and have a constructor initializer
+    //   public extern B() : base(1) {}
+    Diagnostic(ErrorCode.ERR_ExternHasConstructorInitializer, "B").WithArguments("B.B()").WithLocation(8, 17),
+    // (8,17): error CS0179: 'B.B()' cannot be extern and declare a body
+    //   public extern B() : base(1) {}
+    Diagnostic(ErrorCode.ERR_ExternHasBody, "B").WithArguments("B.B()").WithLocation(8, 17)
+                );
+        }
+
+        [WorkItem(1084682, "DevDiv"), WorkItem(386, "CodePlex")]
+        [Fact]
+        public void CS0824WRN_ExternCtorNoImplementation07()
+        {
+            var source =
+@"
+public class A
+{
+    public A(int a) { }
+}
+public class B : A
+{
+  public extern B() {}
+}";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+
+            comp.VerifyDiagnostics(
+    // (8,17): error CS0179: 'B.B()' cannot be extern and declare a body
+    //   public extern B() {}
+    Diagnostic(ErrorCode.ERR_ExternHasBody, "B").WithArguments("B.B()").WithLocation(8, 17)
+                );
+        }
+
+        [WorkItem(1084682, "DevDiv"), WorkItem(386, "CodePlex")]
+        [Fact]
+        public void CS0824WRN_ExternCtorNoImplementation08()
+        {
+            var source =
+@"
+public class B
+{
+  private int x = 1;
+  public extern B();
+}";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+
+            comp.VerifyEmitDiagnostics(
+    // (5,17): warning CS0824: Constructor 'B.B()' is marked external
+    //   public extern B();
+    Diagnostic(ErrorCode.WRN_ExternCtorNoImplementation, "B").WithArguments("B.B()").WithLocation(5, 17),
+    // (4,15): warning CS0414: The field 'B.x' is assigned but its value is never used
+    //   private int x = 1;
+    Diagnostic(ErrorCode.WRN_UnreferencedFieldAssg, "x").WithArguments("B.x").WithLocation(4, 15)
+                );
+        }
+
+        [WorkItem(1084682, "DevDiv"), WorkItem(1036359, "DevDiv"), WorkItem(386, "CodePlex")]
+        [Fact]
+        public void CS0824WRN_ExternCtorNoImplementation09()
+        {
+            var source =
+@"
+public class A
+{
+    public A() { }
+}
+public class B : A
+{
+  static extern B() : base(); // error
+}";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+
+            comp.VerifyDiagnostics(
+    // (8,23): error CS0514: 'B': static constructor cannot have an explicit 'this' or 'base' constructor call
+    //   static extern B() : base(); // error
+    Diagnostic(ErrorCode.ERR_StaticConstructorWithExplicitConstructorCall, "base").WithArguments("B").WithLocation(8, 23)
+                );
+        }
+
+        [WorkItem(1084682, "DevDiv"), WorkItem(1036359, "DevDiv"), WorkItem(386, "CodePlex")]
+        [Fact]
+        public void CS0824WRN_ExternCtorNoImplementation10()
+        {
+            var source =
+@"
+public class A
+{
+    public A() { }
+}
+public class B : A
+{
+  static extern B() : base() {} // error
+}";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+
+            comp.VerifyDiagnostics(
+    // (8,23): error CS0514: 'B': static constructor cannot have an explicit 'this' or 'base' constructor call
+    //   static extern B() : base() {} // error
+    Diagnostic(ErrorCode.ERR_StaticConstructorWithExplicitConstructorCall, "base").WithArguments("B").WithLocation(8, 23),
+    // (8,17): error CS0179: 'B.B()' cannot be extern and declare a body
+    //   static extern B() : base() {} // error
+    Diagnostic(ErrorCode.ERR_ExternHasBody, "B").WithArguments("B.B()").WithLocation(8, 17)
+                );
         }
 
         [Fact]

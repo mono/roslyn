@@ -1689,7 +1689,7 @@ public class mine {
         catch {}
         catch (S1) {}
         catch (S) {}
-        catch if (false) {}
+        catch when (false) {}
         if (retval == 0) Console.WriteLine(""PASS"");
         else Console.WriteLine(""FAIL"");
            return retval;
@@ -1721,7 +1721,7 @@ public class mine {
         try {
                 throw new S();
         }
-        catch if (true) {}
+        catch when (true) {}
         catch (S1) {}
         catch (S) {}
         if (retval == 0) Console.WriteLine(""PASS"");
@@ -2250,13 +2250,18 @@ class C
     }
 }";
             ParseAndValidate(test,
-Diagnostic(ErrorCode.ERR_CloseParenExpected, "this"),
-Diagnostic(ErrorCode.ERR_LbraceExpected, "this"),
-Diagnostic(ErrorCode.ERR_SemicolonExpected, "object"),
-Diagnostic(ErrorCode.ERR_SemicolonExpected, ")"),
-Diagnostic(ErrorCode.ERR_RbraceExpected, ")"),
-Diagnostic(ErrorCode.ERR_SemicolonExpected, ")"),
-Diagnostic(ErrorCode.ERR_RbraceExpected, ")"));
+                // (6,25): error CS1026: ) expected
+                Diagnostic(ErrorCode.ERR_CloseParenExpected, "this").WithLocation(6, 25),
+                // (6,25): error CS1514: { expected
+                Diagnostic(ErrorCode.ERR_LbraceExpected, "this").WithLocation(6, 25),
+                // (6,25): error CS1002: ; expected
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "this").WithLocation(6, 25),
+                // (6,30): error CS1002: ; expected
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "object").WithLocation(6, 30),
+                // (6,38): error CS1002: ; expected
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, ")").WithLocation(6, 38),
+                // (6,38): error CS1513: } expected
+                Diagnostic(ErrorCode.ERR_RbraceExpected, ")").WithLocation(6, 38));
         }
 
         [Fact, WorkItem(541347, "DevDiv")]
@@ -4235,7 +4240,7 @@ public class C
 {
     public static int Main()
     {
-        try { } catch if (true) {}
+        try { } catch when (true) {}
     }
 }
 ";
@@ -4244,9 +4249,10 @@ public class C
 
             tree = Parse(text, options: CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp5));
             tree.GetDiagnostics().Verify(
-                // (6,23): error CS8026: Feature 'exception filter' is not available in C# 5.  Please use language version 6 or greater.
-                //         try { } catch if (true) {}
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "if").WithArguments("exception filter", "6"));
+    // (6,23): error CS8026: Feature 'exception filter' is not available in C# 5.  Please use language version 6 or greater.
+    //         try { } catch when (true) {}
+    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "when").WithArguments("exception filter", "6").WithLocation(6, 23)
+                );
         }
 
         #endregion
@@ -4673,7 +4679,7 @@ class C
     void P(object o)
     {
         try {
-        } catch (Exception ex) if (ex.ToString() == null) { // exception filter
+        } catch (Exception ex) when (ex.ToString() == null) { // exception filter
         }
 
         var s = o?.ToString(); // null propagating operator
@@ -4682,30 +4688,31 @@ class C
             SyntaxFactory.ParseSyntaxTree(source, options: CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp6)).GetDiagnostics().Verify();
 
             SyntaxFactory.ParseSyntaxTree(source, options: CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp5)).GetDiagnostics().Verify(
-                // (3,20): error CS8026: Feature 'auto property initializer' is not available in C# 5.  Please use language version 6 or greater.
-                //     int L { get; } = 12; // auto property initializer
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "= 12").WithArguments("auto property initializer", "6").WithLocation(3, 20),
-                // (5,13): error CS8026: Feature 'expression-bodied method' is not available in C# 5.  Please use language version 6 or greater.
-                //     int M() => 12; // expression-bodied method
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "=> 12").WithArguments("expression-bodied method", "6").WithLocation(5, 13),
-                // (7,11): error CS8026: Feature 'expression-bodied property' is not available in C# 5.  Please use language version 6 or greater.
-                //     int N => 12; // expression-bodied property
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "=> 12").WithArguments("expression-bodied property", "6").WithLocation(7, 11),
-                // (9,21): error CS8026: Feature 'expression-bodied indexer' is not available in C# 5.  Please use language version 6 or greater.
-                //     int this[int a] => a + 1; // expression-bodied indexer
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "=> a + 1").WithArguments("expression-bodied indexer", "6").WithLocation(9, 21),
-                // (11,48): error CS8026: Feature 'expression-bodied method' is not available in C# 5.  Please use language version 6 or greater.
-                //     public static int operator +(Foo a, Foo b) => null; // expression-bodied operator
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "=> null").WithArguments("expression-bodied method", "6").WithLocation(11, 48),
-                // (13,49): error CS8026: Feature 'expression-bodied method' is not available in C# 5.  Please use language version 6 or greater.
-                //     public static explicit operator bool(Foo a) => false; // expression-bodied conversion operator
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "=> false").WithArguments("expression-bodied method", "6").WithLocation(13, 49),
-                // (18,32): error CS8026: Feature 'exception filter' is not available in C# 5.  Please use language version 6 or greater.
-                //         } catch (Exception ex) if (ex.ToString() == null) { // exception filter
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "if").WithArguments("exception filter", "6").WithLocation(18, 32),
-                // (21,17): error CS8026: Feature 'null propagating operator' is not available in C# 5.  Please use language version 6 or greater.
-                //         var s = o?.ToString(); // null propagating operator
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "o?.ToString()").WithArguments("null propagating operator", "6").WithLocation(21, 17));
+    // (3,20): error CS8026: Feature 'auto property initializer' is not available in C# 5.  Please use language version 6 or greater.
+    //     int L { get; } = 12; // auto property initializer
+    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "= 12").WithArguments("auto property initializer", "6").WithLocation(3, 20),
+    // (5,13): error CS8026: Feature 'expression-bodied method' is not available in C# 5.  Please use language version 6 or greater.
+    //     int M() => 12; // expression-bodied method
+    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "=> 12").WithArguments("expression-bodied method", "6").WithLocation(5, 13),
+    // (7,11): error CS8026: Feature 'expression-bodied property' is not available in C# 5.  Please use language version 6 or greater.
+    //     int N => 12; // expression-bodied property
+    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "=> 12").WithArguments("expression-bodied property", "6").WithLocation(7, 11),
+    // (9,21): error CS8026: Feature 'expression-bodied indexer' is not available in C# 5.  Please use language version 6 or greater.
+    //     int this[int a] => a + 1; // expression-bodied indexer
+    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "=> a + 1").WithArguments("expression-bodied indexer", "6").WithLocation(9, 21),
+    // (11,48): error CS8026: Feature 'expression-bodied method' is not available in C# 5.  Please use language version 6 or greater.
+    //     public static int operator +(Foo a, Foo b) => null; // expression-bodied operator
+    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "=> null").WithArguments("expression-bodied method", "6").WithLocation(11, 48),
+    // (13,49): error CS8026: Feature 'expression-bodied method' is not available in C# 5.  Please use language version 6 or greater.
+    //     public static explicit operator bool(Foo a) => false; // expression-bodied conversion operator
+    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "=> false").WithArguments("expression-bodied method", "6").WithLocation(13, 49),
+    // (18,32): error CS8026: Feature 'exception filter' is not available in C# 5.  Please use language version 6 or greater.
+    //         } catch (Exception ex) when (ex.ToString() == null) { // exception filter
+    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "when").WithArguments("exception filter", "6").WithLocation(18, 32),
+    // (21,17): error CS8026: Feature 'null propagating operator' is not available in C# 5.  Please use language version 6 or greater.
+    //         var s = o?.ToString(); // null propagating operator
+    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "o?.ToString()").WithArguments("null propagating operator", "6").WithLocation(21, 17)
+                );
         }
 
         [Fact]
@@ -4751,6 +4758,83 @@ class Test
             var actualErrors = parsedTree.GetDiagnostics().ToArray();
             Assert.Equal(1, actualErrors.Length);
             Assert.Equal((int)ErrorCode.ERR_InsufficientStack, actualErrors[0].Code);
+        }
+
+        [Fact]
+        [WorkItem(1085618, "DevDiv")]
+        public void TooDeepDelegateDeclaration()
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine(
+@"
+class Program
+{
+    static void Main(string[] args)
+    {
+");
+
+            const int depth = 10000;
+            for (int i = 0; i < depth; i++)
+            {
+                var line = string.Format("Action a{0} = delegate d{0} {{", i);
+                builder.AppendLine(line);
+            }
+
+            for (int i = 0; i < depth; i++)
+            {
+                builder.Append("};");
+            }
+
+            builder.Append(@"} }");
+
+            var parsedTree = Parse(builder.ToString());
+            var actualErrors = parsedTree.GetDiagnostics().ToArray();
+            Assert.Equal(1, actualErrors.Length);
+            Assert.Equal((int)ErrorCode.ERR_InsufficientStack, actualErrors[0].Code);
+        }
+
+        [Fact]
+        [WorkItem(1085618, "DevDiv")]
+        public void MismatchedBracesAndDelegateDeclaration()
+        {
+            var source = @"
+class Program
+{
+    public static void Main(string[] args)
+    {
+
+    delegate int F1(); 
+    delegate int F2();
+}
+";
+
+            SyntaxFactory.ParseSyntaxTree(source).GetDiagnostics().Verify(
+                // (7,14): error CS1514: { expected
+                Diagnostic(ErrorCode.ERR_LbraceExpected, "int").WithLocation(7, 14),
+                // (7,14): error CS1002: ; expected
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "int").WithLocation(7, 14),
+                // (7,20): error CS1528: Expected ; or = (cannot specify constructor arguments in declaration)
+                Diagnostic(ErrorCode.ERR_BadVarDecl, "()").WithLocation(7, 20),
+                // (7,20): error CS1003: Syntax error, '[' expected
+                Diagnostic(ErrorCode.ERR_SyntaxError, "(").WithArguments("[", "(").WithLocation(7, 20),
+                // (7,21): error CS1525: Invalid expression term ')'
+                Diagnostic(ErrorCode.ERR_InvalidExprTerm, ")").WithArguments(")").WithLocation(7, 21),
+                // (7,22): error CS1003: Syntax error, ']' expected
+                Diagnostic(ErrorCode.ERR_SyntaxError, ";").WithArguments("]", ";").WithLocation(7, 22),
+                // (8,14): error CS1514: { expected
+                Diagnostic(ErrorCode.ERR_LbraceExpected, "int").WithLocation(8, 14),
+                // (8,14): error CS1002: ; expected
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "int").WithLocation(8, 14),
+                // (8,20): error CS1528: Expected ; or = (cannot specify constructor arguments in declaration)
+                Diagnostic(ErrorCode.ERR_BadVarDecl, "()").WithLocation(8, 20),
+                // (8,20): error CS1003: Syntax error, '[' expected
+                Diagnostic(ErrorCode.ERR_SyntaxError, "(").WithArguments("[", "(").WithLocation(8, 20),
+                // (8,21): error CS1525: Invalid expression term ')'
+                Diagnostic(ErrorCode.ERR_InvalidExprTerm, ")").WithArguments(")").WithLocation(8, 21),
+                // (8,22): error CS1003: Syntax error, ']' expected
+                Diagnostic(ErrorCode.ERR_SyntaxError, ";").WithArguments("]", ";").WithLocation(8, 22),
+                // (9,2): error CS1513: } expected
+                Diagnostic(ErrorCode.ERR_RbraceExpected, "").WithLocation(9, 2));
         }
 
         #endregion

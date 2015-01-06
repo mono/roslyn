@@ -75,6 +75,14 @@ namespace Microsoft.CodeAnalysis.CSharp
             return false;
         }
 
+        internal override bool IsInMethodBody
+        {
+            get
+            {
+                return false;
+            }
+        }
+
         internal override bool IsDirectlyInIterator
         {
             get
@@ -100,6 +108,14 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
 
         internal override GeneratedLabelSymbol ContinueLabel
+        {
+            get
+            {
+                return null;
+            }
+        }
+
+        internal override BoundExpression ConditionalReceiverExpression
         {
             get
             {

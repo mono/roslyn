@@ -137,16 +137,16 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         protected override void AddLookupSymbolsInfoInSingleBinder(LookupSymbolsInfo result, LookupOptions options, Binder originalBinder)
         {
-            if (options.CanConsiderTypeParameters())
+            if (CanConsiderTypeParameters(options))
             {
-                foreach (string name in TypeParameterMap.Keys)
+                foreach (var kvp in TypeParameterMap)
                 {
-                    foreach (TypeParameterSymbol typeParameter in TypeParameterMap[name])
+                    foreach (TypeParameterSymbol typeParameter in kvp.Value)
                     {
                         // In any context where this binder applies, the type parameters are always viable/speakable.
                         Debug.Assert(originalBinder.CanAddLookupSymbolInfo(typeParameter, options, null));
 
-                        result.AddSymbol(typeParameter, name, 0);
+                        result.AddSymbol(typeParameter, kvp.Key, 0);
                     }
                 }
             }

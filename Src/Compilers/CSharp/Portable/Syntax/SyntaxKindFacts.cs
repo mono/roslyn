@@ -190,7 +190,8 @@ namespace Microsoft.CodeAnalysis.CSharp
             {
                 case SyntaxKind.InterpolatedStringToken:
                 case SyntaxKind.InterpolatedStringStartToken:
-                case SyntaxKind.InterpolatedStringMidToken:
+                case SyntaxKind.InterpolatedVerbatimStringStartToken:
+                case SyntaxKind.InterpolatedStringTextToken:
                 case SyntaxKind.InterpolatedStringEndToken:
                     return true;
                 default:
@@ -1026,7 +1027,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         public static IEnumerable<SyntaxKind> GetContextualKeywordKinds()
         {
-            for (int i = (int)SyntaxKind.YieldKeyword; i <= (int)SyntaxKind.AwaitKeyword; i++)
+            for (int i = (int)SyntaxKind.YieldKeyword; i <= (int)SyntaxKind.WhenKeyword; i++)
             {
                 yield return (SyntaxKind)i;
             }
@@ -1068,6 +1069,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.NameOfKeyword:
                 case SyntaxKind.AsyncKeyword:
                 case SyntaxKind.AwaitKeyword:
+                case SyntaxKind.WhenKeyword:
                     return true;
                 default:
                     return false;
@@ -1163,6 +1165,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return SyntaxKind.AsyncKeyword;
                 case "await":
                     return SyntaxKind.AwaitKeyword;
+                case "when":
+                    return SyntaxKind.WhenKeyword;
                 case "nameof":
                     return SyntaxKind.NameOfKeyword;
                 default:
@@ -1556,8 +1560,16 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return "async";
                 case SyntaxKind.AwaitKeyword:
                     return "await";
+                case SyntaxKind.WhenKeyword:
+                    return "when";
                 case SyntaxKind.NameOfKeyword:
                     return "nameof";
+                case SyntaxKind.InterpolatedVerbatimStringStartToken:
+                    return "$@\"";
+                case SyntaxKind.InterpolatedStringStartToken:
+                    return "$\"";
+                case SyntaxKind.InterpolatedStringEndToken:
+                    return "\"";
                 default:
                     return string.Empty;
             }

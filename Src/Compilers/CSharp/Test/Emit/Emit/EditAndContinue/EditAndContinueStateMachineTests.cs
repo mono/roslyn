@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -222,7 +223,7 @@ class C
                     Handle(2, TableIndex.NestedClass));
             }
 
-            string actualPdb1 = PdbToXmlConverter.DeltaPdbToXml(diff1.PdbDelta, Enumerable.Range(1, 100).Select(rid => 0x06000000U | (uint)rid));
+            string actualPdb1 = PdbToXmlConverter.DeltaPdbToXml(diff1.PdbDelta, Enumerable.Range(1, 100).Select(rid => 0x06000000 | rid));
 
             // TODO (tomat): bug in SymWriter.
             // The PDB is missing debug info for G method. The info is written to the PDB but the native SymWriter 
@@ -280,7 +281,7 @@ class C
     }
 }";
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: TestOptions.DebugDll);
+            var compilation1 = compilation0.WithSource(source1);
             var v0 = CompileAndVerify(compilation0);
 
             var generation0 = EmitBaseline.CreateInitialBaseline(ModuleMetadata.CreateFromImage(v0.EmittedAssemblyData), EmptyLocalsProvider);
@@ -354,7 +355,7 @@ class C
     }
 }";
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: TestOptions.DebugDll);
+            var compilation1 = compilation0.WithSource(source1);
 
             var v0 = CompileAndVerify(compilation0);
 
@@ -457,7 +458,7 @@ class C
     }
 }";
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: TestOptions.DebugDll);
+            var compilation1 = compilation0.WithSource(source1);
 
             var v0 = CompileAndVerify(compilation0);
 
@@ -529,7 +530,7 @@ class C
     }
 }";
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: TestOptions.DebugDll);
+            var compilation1 = compilation0.WithSource(source1);
 
             var v0 = CompileAndVerify(compilation0);
 
@@ -576,7 +577,7 @@ class C
     }
 }";
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: TestOptions.DebugDll);
+            var compilation1 = compilation0.WithSource(source1);
 
             var v0 = CompileAndVerify(compilation0);
 
@@ -647,7 +648,7 @@ class C
     public void X() { } // needs to be present to work around SymWriter bug #1068894
 }";
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: TestOptions.DebugDll);
+            var compilation1 = compilation0.WithSource(source1);
 
             var v0 = CompileAndVerify(compilation0);
 
@@ -718,7 +719,7 @@ class C
     }
 }";
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: TestOptions.DebugDll);
+            var compilation1 = compilation0.WithSource(source1);
 
             var v0 = CompileAndVerify(compilation0);
 
@@ -731,6 +732,9 @@ class C
                 var diff1 = compilation1.EmitDifference(
                     generation0,
                     ImmutableArray.Create(new SemanticEdit(SemanticEditKind.Update, method0, method1)));
+
+                // only methods with sequence points should be listed in UpdatedMethods:
+                AssertEx.Equal(new[] { 0x06000005 }, diff1.UpdatedMethods.Select(m => MetadataTokens.GetToken(m)));
 
                 // Verify delta metadata contains expected rows.
                 using (var md1 = diff1.GetMetadata())
@@ -864,7 +868,7 @@ class C
     }
 }";
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: TestOptions.DebugDll);
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: TestOptions.DebugDll);
+            var compilation1 = compilation0.WithSource(source1);
 
             var v0 = CompileAndVerify(compilation0);
 
@@ -877,6 +881,9 @@ class C
                 var diff1 = compilation1.EmitDifference(
                     generation0,
                     ImmutableArray.Create(new SemanticEdit(SemanticEditKind.Update, method0, method1)));
+
+                // only methods with sequence points should be listed in UpdatedMethods:
+                AssertEx.Equal(new[] { 0x06000004 }, diff1.UpdatedMethods.Select(m => MetadataTokens.GetToken(m)));
 
                 using (var md1 = diff1.GetMetadata())
                 {
@@ -1101,7 +1108,7 @@ class C
     public void X() { } // needs to be present to work around SymWriter bug #1068894
 }";
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: ComSafeDebugDll);
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: ComSafeDebugDll);
+            var compilation1 = compilation0.WithSource(source1);
 
             var v0 = CompileAndVerify(compilation0);
             var debugInfoProvider = v0.CreatePdbInfoProvider();
@@ -1219,7 +1226,7 @@ class C
     public void X() { } // needs to be present to work around SymWriter bug #1068894
 }";
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: ComSafeDebugDll);
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: ComSafeDebugDll);
+            var compilation1 = compilation0.WithSource(source1);
 
             var v0 = CompileAndVerify(compilation0);
             var debugInfoProvider = v0.CreatePdbInfoProvider();
@@ -1341,7 +1348,7 @@ class C
     public void X() { } // needs to be present to work around SymWriter bug #1068894
 }";
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: ComSafeDebugDll);
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: ComSafeDebugDll);
+            var compilation1 = compilation0.WithSource(source1);
 
             var v0 = CompileAndVerify(compilation0);
             var debugInfoProvider = v0.CreatePdbInfoProvider();
@@ -1460,7 +1467,7 @@ class C
     public void X() { } // needs to be present to work around SymWriter bug #1068894
 }";
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: ComSafeDebugDll);
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: ComSafeDebugDll);
+            var compilation1 = compilation0.WithSource(source1);
 
             var v0 = CompileAndVerify(compilation0);
             var debugInfoProvider = v0.CreatePdbInfoProvider();
@@ -1576,7 +1583,7 @@ class C
             // Rude edit but the compiler should handle it.
 
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: ComSafeDebugDll.WithMetadataImportOptions(MetadataImportOptions.All));
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: ComSafeDebugDll.WithMetadataImportOptions(MetadataImportOptions.All));
+            var compilation1 = compilation0.WithSource(source1);
 
             var v0 = CompileAndVerify(compilation0, symbolValidator: module =>
             {
@@ -1590,7 +1597,7 @@ class C
                     "<item>5__3: object"
                 }, module.GetFieldNamesAndTypes("C.<F>d__1"));
             });
-            
+
             var debugInfoProvider = v0.CreatePdbInfoProvider();
 
             using (var md0 = ModuleMetadata.CreateFromImage(v0.EmittedAssemblyData))
@@ -1838,9 +1845,9 @@ class C
             // Rude edit but the compiler should handle it.
 
             var compilation0 = CreateCompilationWithMscorlib45(source0, options: ComSafeDebugDll.WithMetadataImportOptions(MetadataImportOptions.All));
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: ComSafeDebugDll.WithMetadataImportOptions(MetadataImportOptions.All));
-            var compilation2 = CreateCompilationWithMscorlib45(source2, options: ComSafeDebugDll.WithMetadataImportOptions(MetadataImportOptions.All));
-            var compilation3 = CreateCompilationWithMscorlib45(source3, options: ComSafeDebugDll.WithMetadataImportOptions(MetadataImportOptions.All));
+            var compilation1 = compilation0.WithSource(source1);
+            var compilation2 = compilation1.WithSource(source2);
+            var compilation3 = compilation2.WithSource(source3);
 
             var f0 = compilation0.GetMember<MethodSymbol>("C.F");
             var f1 = compilation1.GetMember<MethodSymbol>("C.F");
@@ -2309,10 +2316,10 @@ class C
 
             // Rude edit but the compiler should handle it.
 
-            var compilation0 = CreateCompilationWithMscorlib45(source0, options: ComSafeDebugDll.WithMetadataImportOptions(MetadataImportOptions.All));
-            var compilation1 = CreateCompilationWithMscorlib45(source1, options: ComSafeDebugDll.WithMetadataImportOptions(MetadataImportOptions.All));
-            var compilation2 = CreateCompilationWithMscorlib45(source2, options: ComSafeDebugDll.WithMetadataImportOptions(MetadataImportOptions.All));
-            var compilation3 = CreateCompilationWithMscorlib45(source3, options: ComSafeDebugDll.WithMetadataImportOptions(MetadataImportOptions.All));
+            var compilation0 = CreateCompilationWithMscorlib45(source0, options: ComSafeDebugDll.WithMetadataImportOptions(MetadataImportOptions.All), assemblyName: "A");
+            var compilation1 = compilation0.WithSource(source1);
+            var compilation2 = compilation1.WithSource(source2);
+            var compilation3 = compilation2.WithSource(source3);
 
             var f0 = compilation0.GetMember<MethodSymbol>("C.F");
             var f1 = compilation1.GetMember<MethodSymbol>("C.F");
@@ -2688,6 +2695,132 @@ class C
                 Row(15, TableIndex.MethodDef, EditAndContinueOperation.Default),
                 Row(16, TableIndex.CustomAttribute, EditAndContinueOperation.Default),
                 Row(17, TableIndex.CustomAttribute, EditAndContinueOperation.Default));
+        }
+
+        [Fact]
+        public void SynthesizedMembersMerging()
+        {
+            var source0 = @"
+using System.Collections.Generic;
+
+public class C
+{    
+}";
+            var source1 = @"
+using System.Collections.Generic;
+
+public class C
+{
+    public static IEnumerable<int> F() 
+    {
+        yield return 1;
+        yield return 2;
+    }
+}";
+            var source2 = @"
+using System.Collections.Generic;
+
+public class C
+{
+    public static IEnumerable<int> F() 
+    {
+        yield return 1;
+        yield return 3;
+    }
+}";
+            var source3 = @"
+using System.Collections.Generic;
+
+public class C
+{
+    public static IEnumerable<int> F() 
+    {
+        yield return 1;
+        yield return 3;
+    }
+
+    public static void G() 
+    {
+        System.Console.WriteLine(1);    
+    }
+}";
+            var source4 = @"
+using System.Collections.Generic;
+
+public class C
+{
+    public static IEnumerable<int> F() 
+    {
+        yield return 1;
+        yield return 3;
+    }
+
+    public static void G() 
+    {
+        System.Console.WriteLine(1);    
+    }
+
+    public static IEnumerable<int> H() 
+    {
+        yield return 1;
+    }
+}";
+
+            // Rude edit but the compiler should handle it.
+
+            var compilation0 = CreateCompilationWithMscorlib45(source0, options: ComSafeDebugDll.WithMetadataImportOptions(MetadataImportOptions.All), assemblyName: "A");
+            var compilation1 = compilation0.WithSource(source1);
+            var compilation2 = compilation1.WithSource(source2);
+            var compilation3 = compilation2.WithSource(source3);
+            var compilation4 = compilation3.WithSource(source4);
+
+            var f1 = compilation1.GetMember<MethodSymbol>("C.F");
+            var f2 = compilation2.GetMember<MethodSymbol>("C.F");
+            var f3 = compilation3.GetMember<MethodSymbol>("C.F");
+
+            var g3 = compilation3.GetMember<MethodSymbol>("C.G");
+            var h4 = compilation4.GetMember<MethodSymbol>("C.H");
+
+            var v0 = CompileAndVerify(compilation0);
+            var md0 = ModuleMetadata.CreateFromImage(v0.EmittedAssemblyData);
+
+            var generation0 = EmitBaseline.CreateInitialBaseline(md0, v0.CreatePdbInfoProvider().GetEncMethodDebugInfo);
+            var diff1 = compilation1.EmitDifference(
+                generation0,
+                ImmutableArray.Create(
+                    new SemanticEdit(SemanticEditKind.Insert, null, f1)));
+
+            diff1.VerifySynthesizedMembers(
+                "C: {<F>d__1}",
+                "C.<F>d__1: {<>1__state, <>2__current, <>l__initialThreadId, System.IDisposable.Dispose, MoveNext, System.Collections.Generic.IEnumerator<System.Int32>.get_Current, System.Collections.IEnumerator.Reset, System.Collections.IEnumerator.get_Current, System.Collections.Generic.IEnumerable<System.Int32>.GetEnumerator, System.Collections.IEnumerable.GetEnumerator, System.Collections.Generic.IEnumerator<System.Int32>.Current, System.Collections.IEnumerator.Current}");
+
+            var diff2 = compilation2.EmitDifference(
+                diff1.NextGeneration,
+                ImmutableArray.Create(
+                    new SemanticEdit(SemanticEditKind.Update, f1, f2, GetSyntaxMapByKind(f1, SyntaxKind.Block), preserveLocalVariables: true)));
+
+            diff2.VerifySynthesizedMembers(
+                "C: {<F>d__1}",
+                "C.<F>d__1: {<>1__state, <>2__current, <>l__initialThreadId, System.IDisposable.Dispose, MoveNext, System.Collections.Generic.IEnumerator<System.Int32>.get_Current, System.Collections.IEnumerator.Reset, System.Collections.IEnumerator.get_Current, System.Collections.Generic.IEnumerable<System.Int32>.GetEnumerator, System.Collections.IEnumerable.GetEnumerator, System.Collections.Generic.IEnumerator<System.Int32>.Current, System.Collections.IEnumerator.Current}");
+
+            var diff3 = compilation3.EmitDifference(
+                diff2.NextGeneration,
+                ImmutableArray.Create(
+                    new SemanticEdit(SemanticEditKind.Insert, null, g3)));
+
+            diff3.VerifySynthesizedMembers(
+                "C: {<F>d__1}",
+                "C.<F>d__1: {<>1__state, <>2__current, <>l__initialThreadId, System.IDisposable.Dispose, MoveNext, System.Collections.Generic.IEnumerator<System.Int32>.get_Current, System.Collections.IEnumerator.Reset, System.Collections.IEnumerator.get_Current, System.Collections.Generic.IEnumerable<System.Int32>.GetEnumerator, System.Collections.IEnumerable.GetEnumerator, System.Collections.Generic.IEnumerator<System.Int32>.Current, System.Collections.IEnumerator.Current}");
+
+            var diff4 = compilation4.EmitDifference(
+                diff3.NextGeneration,
+                ImmutableArray.Create(
+                    new SemanticEdit(SemanticEditKind.Insert, null, h4)));
+
+            diff4.VerifySynthesizedMembers(
+                "C: {<H>d__1, <F>d__1}",
+                "C.<F>d__1: {<>1__state, <>2__current, <>l__initialThreadId, System.IDisposable.Dispose, MoveNext, System.Collections.Generic.IEnumerator<System.Int32>.get_Current, System.Collections.IEnumerator.Reset, System.Collections.IEnumerator.get_Current, System.Collections.Generic.IEnumerable<System.Int32>.GetEnumerator, System.Collections.IEnumerable.GetEnumerator, System.Collections.Generic.IEnumerator<System.Int32>.Current, System.Collections.IEnumerator.Current}",
+                "C.<H>d__1: {<>1__state, <>2__current, <>l__initialThreadId, System.IDisposable.Dispose, MoveNext, System.Collections.Generic.IEnumerator<System.Int32>.get_Current, System.Collections.IEnumerator.Reset, System.Collections.IEnumerator.get_Current, System.Collections.Generic.IEnumerable<System.Int32>.GetEnumerator, System.Collections.IEnumerable.GetEnumerator, System.Collections.Generic.IEnumerator<System.Int32>.Current, System.Collections.IEnumerator.Current}");
         }
     }
 }

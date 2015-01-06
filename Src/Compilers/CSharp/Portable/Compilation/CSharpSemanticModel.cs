@@ -1109,13 +1109,19 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// </summary>
         protected int CheckAndAdjustPosition(int position)
         {
+            SyntaxToken unused;
+            return CheckAndAdjustPosition(position, out unused);
+        }
+
+        protected int CheckAndAdjustPosition(int position, out SyntaxToken token)
+        {
             int fullStart = this.Root.Position;
             int fullEnd = this.Root.FullSpan.End;
             bool atEOF = position == fullEnd && position == this.SyntaxTree.GetRoot().FullSpan.End;
 
             if ((fullStart <= position && position < fullEnd) || atEOF) // allow for EOF
             {
-                SyntaxToken token = (atEOF ? (CSharpSyntaxNode)this.SyntaxTree.GetRoot() : Root).FindTokenIncludingCrefAndNameAttributes(position);
+                token = (atEOF ? (CSharpSyntaxNode)this.SyntaxTree.GetRoot() : Root).FindTokenIncludingCrefAndNameAttributes(position);
 
                 if (position < token.SpanStart) // NB: Span, not FullSpan
                 {
@@ -1133,6 +1139,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             else if (fullStart == fullEnd && position == fullEnd)
             {
                 // The root is an empty span and isn't the full compilation unit. No other choice here.
+                token = default(SyntaxToken);
                 return fullStart;
             }
 
@@ -1399,7 +1406,8 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                 options.ThrowIfInvalid();
 
-                position = CheckAndAdjustPosition(position);
+                SyntaxToken token;
+                position = CheckAndAdjustPosition(position, out token);
 
                 if ((object)container == null || container.Kind == SymbolKind.Namespace)
                 {
@@ -1424,6 +1432,19 @@ namespace Microsoft.CodeAnalysis.CSharp
                             "position");
                     }
                     container = baseType;
+                }
+
+                if (!binder.IsInMethodBody && (options & LookupOptions.NamespacesOrTypesOnly) == 0)
+                {
+                    // Method type parameters are not in scope outside a method body unless
+                    // the position is either:
+                    // a) in a type-only context inside an expression, or
+                    // b) inside of an XML name attribute in an XML doc comment.
+                    var parentExpr = token.Parent as ExpressionSyntax;
+                    if (parentExpr != null && !(parentExpr.Parent is XmlNameAttributeSyntax) && !SyntaxFacts.IsInTypeOnlyContext(parentExpr))
+                    {
+                        options |= LookupOptions.MustNotBeMethodTypeParameter;
+                    }
                 }
 
                 var info = LookupSymbolsInfo.GetInstance();
@@ -1711,6 +1732,12 @@ namespace Microsoft.CodeAnalysis.CSharp
                     }
                     else if (highestResultKind != LookupResultKind.Empty && highestResultKind < resultKind)
                     {
+                        resultKind = highestResultKind;
+                        isDynamic = highestIsDynamic;
+                    }
+                    else if (highestBoundExpr.Kind == BoundKind.TypeOrValueExpression)
+                    {
+                        symbols = highestSymbols;
                         resultKind = highestResultKind;
                         isDynamic = highestIsDynamic;
                     }
@@ -2857,7 +2884,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         // If we're seeing a node of this kind, then we failed to resolve the member access
                         // as either a type or a property/field/event/local/parameter.  In such cases,
                         // the second interpretation applies so just visit the node for that.
-                        BoundExpression valueExpression = ((BoundTypeOrValueExpression)boundNode).GetValueExpression();
+                        BoundExpression valueExpression = ((BoundTypeOrValueExpression)boundNode).ValueExpression;
                         return GetSemanticSymbols(valueExpression, boundNodeForSyntacticParent, binderOpt, options, out isDynamic, out resultKind, out memberGroup);
                     }
 

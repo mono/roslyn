@@ -108,8 +108,20 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
         End Sub
 
-        Public Function StateMachineField(fieldType As TypeSymbol, implicitlyDefinedBy As Symbol, name As String, Optional accessibility As Accessibility = Accessibility.Private) As SynthesizedFieldSymbol
-            Dim result As New StateMachineFieldSymbol(Me.CurrentType, implicitlyDefinedBy, fieldType, name, accessibility:=accessibility)
+        Public Function StateMachineField(type As TypeSymbol, implicitlyDefinedBy As Symbol, name As String, Optional accessibility As Accessibility = Accessibility.Private) As SynthesizedFieldSymbol
+            Dim result As New StateMachineFieldSymbol(Me.CurrentType, implicitlyDefinedBy, type, name, accessibility:=accessibility)
+            AddField(CurrentType, result)
+            Return result
+        End Function
+
+        Public Function StateMachineField(type As TypeSymbol, implicitlyDefinedBy As Symbol, name As String, synthesizedKind As SynthesizedLocalKind, slotIndex As Integer, Optional accessibility As Accessibility = Accessibility.Private) As SynthesizedFieldSymbol
+            Dim result As New StateMachineFieldSymbol(Me.CurrentType, implicitlyDefinedBy, type, name, synthesizedKind, slotIndex, accessibility)
+            AddField(CurrentType, result)
+            Return result
+        End Function
+
+        Public Function StateMachineField(type As TypeSymbol, implicitlyDefinedBy As Symbol, name As String, slotDebugInfo As LocalSlotDebugInfo, slotIndex As Integer, Optional accessibility As Accessibility = Accessibility.Private) As SynthesizedFieldSymbol
+            Dim result As New StateMachineFieldSymbol(Me.CurrentType, implicitlyDefinedBy, type, name, slotDebugInfo, slotIndex, accessibility)
             AddField(CurrentType, result)
             Return result
         End Function
@@ -276,8 +288,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             If memberSymbol Is Nothing Then
                 Dim memberDescriptor As MemberDescriptor = SpecialMembers.GetDescriptor(sm)
-                Dim containingType As SpecialType = CType(memberDescriptor.DeclaringTypeId, SpecialType)
-                diagInfo = GetDiagnosticForMissingRuntimeHelper(containingType.GetMetadataName(), memberDescriptor.Name, CompilationState.Compilation.Options.EmbedVbCoreRuntime)
+                diagInfo = GetDiagnosticForMissingRuntimeHelper(memberDescriptor.DeclaringTypeMetadataName, memberDescriptor.Name, CompilationState.Compilation.Options.EmbedVbCoreRuntime)
             Else
                 diagInfo = If(memberSymbol.GetUseSiteErrorInfo(), memberSymbol.ContainingType.GetUseSiteErrorInfo())
             End If

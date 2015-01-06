@@ -847,18 +847,13 @@ namespace Microsoft.CodeAnalysis.CSharp
             // This occurs through the semantic model.  In that case concoct a plausible result.
             if ((object)localSymbol == null)
             {
-                if (declarator.Initializer == null)
-                {
-                    localSymbol = SourceLocalSymbol.MakeLocal(
-                        ContainingMemberOrLambda, this, typeSyntax,
-                        declarator.Identifier, LocalDeclarationKind.RegularVariable);
-                }
-                else
-                {
-                    localSymbol = SourceLocalSymbol.MakeLocalWithInitializer(
-                        ContainingMemberOrLambda, this, typeSyntax,
-                        declarator.Identifier, declarator.Initializer, LocalDeclarationKind.RegularVariable);
-                }
+                localSymbol = SourceLocalSymbol.MakeLocal(
+                    ContainingMemberOrLambda,
+                    this,
+                    typeSyntax,
+                    declarator.Identifier,
+                    LocalDeclarationKind.RegularVariable,
+                    declarator.Initializer);
             }
 
             return localSymbol;
@@ -1666,7 +1661,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         var typeOrValue = (BoundTypeOrValueExpression)receiver;
                         receiver = otherSymbol.IsStatic
                             ? null // no receiver required
-                            : typeOrValue.GetValueExpression();
+                            : typeOrValue.ValueExpression;
                     }
                     return new BoundBadExpression(
                         expr.Syntax,

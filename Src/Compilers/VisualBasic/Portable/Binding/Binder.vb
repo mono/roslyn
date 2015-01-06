@@ -472,8 +472,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             If specialMemberSymbol Is Nothing Then
                 Dim memberDescriptor As MemberDescriptor = SpecialMembers.GetDescriptor(member)
-                Dim containingType As SpecialType = CType(memberDescriptor.DeclaringTypeId, SpecialType)
-                useSiteError = ErrorFactory.ErrorInfo(ERRID.ERR_MissingRuntimeHelper, containingType.GetMetadataName() & "." & memberDescriptor.Name)
+                useSiteError = ErrorFactory.ErrorInfo(ERRID.ERR_MissingRuntimeHelper, memberDescriptor.DeclaringTypeMetadataName & "." & memberDescriptor.Name)
             Else
                 useSiteError = If(specialMemberSymbol.GetUseSiteErrorInfo(), specialMemberSymbol.ContainingType.GetUseSiteErrorInfo())
             End If
@@ -507,9 +506,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend Shared Function GetUseSiteErrorForWellKnownTypeMember(memberSymbol As Symbol, member As WellKnownMember, embedVBRuntimeUsed As Boolean) As DiagnosticInfo
             If memberSymbol Is Nothing Then
                 Dim memberDescriptor As MemberDescriptor = WellKnownMembers.GetDescriptor(member)
-                Dim containingType As WellKnownType = CType(memberDescriptor.DeclaringTypeId, WellKnownType)
 
-                Return GetDiagnosticForMissingRuntimeHelper(containingType.GetMetadataName(), memberDescriptor.Name, embedVBRuntimeUsed)
+                Return GetDiagnosticForMissingRuntimeHelper(memberDescriptor.DeclaringTypeMetadataName, memberDescriptor.Name, embedVBRuntimeUsed)
             Else
                 Return If(memberSymbol.GetUseSiteErrorInfo(), memberSymbol.ContainingType.GetUseSiteErrorInfo())
             End If
@@ -795,7 +793,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' can be reported at a later stage.
         ''' </summary>
         Friend Sub ReportDiagnosticsIfObsolete(diagnostics As DiagnosticBag, symbol As Symbol, node As VisualBasicSyntaxNode)
-            ReportDiagnosticsIfObsolete(diagnostics, Me.ContainingMember, symbol, node)
+            If Not Me.SuppressObsoleteDiagnostics Then
+                ReportDiagnosticsIfObsolete(diagnostics, Me.ContainingMember, symbol, node)
+            End If
         End Sub
 
         Friend Shared Sub ReportDiagnosticsIfObsolete(diagnostics As DiagnosticBag, context As Symbol, symbol As Symbol, node As VisualBasicSyntaxNode)
@@ -841,6 +841,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
         End Sub
 
+        Friend Overridable ReadOnly Property SuppressObsoleteDiagnostics As Boolean
+            Get
+                Return m_containingBinder.SuppressObsoleteDiagnostics
+            End Get
+        End Property
+
         ''' <summary>
         ''' Returns the type of construct being bound (BaseTypes, MethodSignature,
         ''' etc.) to allow the Binder to provide different behavior in certain cases.
@@ -869,9 +875,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Get
                 Select Case Me.BindingLocation
                     Case BindingLocation.BaseTypes,
-                        BindingLocation.MethodSignature,
-                        BindingLocation.GenericConstraintsClause,
-                        BindingLocation.ImportsDeclaration
+                         BindingLocation.MethodSignature,
+                         BindingLocation.GenericConstraintsClause,
+                         BindingLocation.ProjectImportsDeclaration,
+                         BindingLocation.SourceFileImportsDeclaration
                         Return False
 
                     Case Else

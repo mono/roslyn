@@ -16,6 +16,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
             compilation As VisualBasicCompilation,
             baseline As EmitBaseline,
             edits As IEnumerable(Of SemanticEdit),
+            isAddedSymbol As Func(Of ISymbol, Boolean),
             metadataStream As Stream,
             ilStream As Stream,
             pdbStream As Stream,
@@ -45,9 +46,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
                     outputKind:=compilation.Options.OutputKind,
                     serializationProperties:=serializationProperties,
                     manifestResources:=manifestResources,
-                    assemblySymbolMapper:=Nothing,
                     previousGeneration:=baseline,
-                    edits:=edits)
+                    edits:=edits,
+                    isAddedSymbol:=isAddedSymbol)
 
             If testData IsNot Nothing Then
                 moduleBeingBuilt.SetMethodTestData(testData.Methods)
@@ -90,10 +91,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Emit
                         writer.WriteMetadataAndIL(pdbWriter, metadataStream, ilStream, metadataSizes)
                         writer.GetMethodTokens(updatedMethods)
 
+                        Dim hasErrors = diagnostics.HasAnyErrors()
+
                         Return New EmitDifferenceResult(
-                            success:=True,
+                            success:=Not hasErrors,
                             diagnostics:=diagnostics.ToReadOnlyAndFree(),
-                            baseline:=writer.GetDelta(baseline, compilation, encId, metadataSizes))
+                            baseline:=If(hasErrors, Nothing, writer.GetDelta(baseline, compilation, encId, metadataSizes)))
 
                     Catch e As Cci.PdbWritingException
                         diagnostics.Add(ERRID.ERR_PDBWritingFailed, Location.None, e.Message)
