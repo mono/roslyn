@@ -4087,6 +4087,51 @@ class A
                 expectedOutput: "12");
         }
 
+        [Fact]
+        public void StaticClosureSerialize()
+        {
+            string source = @"
+using System;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Func<int> x = () => 42;
+        System.Console.WriteLine(x.Target.GetType().IsSerializable);
+
+        Func<int> y = () => x();
+        System.Console.WriteLine(y.Target.GetType().IsSerializable);
+    }
+}
+";
+            var compilation = CompileAndVerify(source, options: TestOptions.ReleaseExe, expectedOutput: @"True
+False");
+        }
+
+        [Fact]
+        public void StaticClosureSerializeD()
+        {
+            string source = @"
+using System;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Func<int> x = () => 42;
+        System.Console.WriteLine(x.Target.GetType().IsSerializable);
+
+        Func<int> y = () => x();
+        System.Console.WriteLine(y.Target.GetType().IsSerializable);
+    }
+}
+";
+            var compilation = CompileAndVerify(source, options: TestOptions.DebugExe ,expectedOutput: @"True
+False");
+        }
+
+
         [WorkItem(540178, "DevDiv")]
         [Fact]
         public void NestedGenericLambda()

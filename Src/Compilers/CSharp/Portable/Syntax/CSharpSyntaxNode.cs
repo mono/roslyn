@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -113,16 +114,14 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
 
         /// <summary>
-        /// Gets the <see cref="SyntaxKind"/>  of the node.
+        /// Returns the <see cref="SyntaxKind"/> of the node.
         /// </summary>
-        internal SyntaxKind Kind
+        public SyntaxKind Kind()
         {
-            get
-            {
-                return (SyntaxKind)this.Green.RawKind;
-            }
+            return (SyntaxKind)this.Green.RawKind;
         }
 
+        [Obsolete("To be removed, use Kind() instead."), EditorBrowsable(EditorBrowsableState.Never)]
         public SyntaxKind CSharpKind()
         {
             return (SyntaxKind)this.Green.RawKind;
@@ -132,7 +131,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             get
             {
-                return this.Kind.ToString();
+                return this.Kind().ToString();
             }
         }
 
@@ -574,7 +573,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             while (true)
             {
-                Debug.Assert(curNode.CSharpKind() != SyntaxKind.None);
+                Debug.Assert(curNode.Kind() != SyntaxKind.None);
                 Debug.Assert(curNode.FullSpan.Contains(position));
 
                 var node = curNode.AsNode();
@@ -697,7 +696,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             SyntaxTrivia trivia = GetTriviaFromSyntaxToken(position, nonTriviaToken);
 
-            if (!SyntaxFacts.IsDocumentationCommentTrivia(trivia.CSharpKind()))
+            if (!SyntaxFacts.IsDocumentationCommentTrivia(trivia.Kind()))
             {
                 return nonTriviaToken;
             }
@@ -712,7 +711,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             while (curr != null)
             {
                 // Don't return a trivia token unless we're in the scope of a cref or name attribute.
-                if (curr.Kind == SyntaxKind.XmlCrefAttribute || curr.Kind == SyntaxKind.XmlNameAttribute)
+                if (curr.Kind() == SyntaxKind.XmlCrefAttribute || curr.Kind() == SyntaxKind.XmlNameAttribute)
                 {
                     return LookupPosition.IsInXmlAttributeValue(position, (XmlAttributeSyntax)curr)
                         ? triviaToken

@@ -50,8 +50,8 @@ namespace Microsoft.CodeAnalysis.FxCopAnalyzers.Usage
                     typeSymbol.IsSealed ? Accessibility.Private : Accessibility.Protected,
                     statements: new[] { throwStatement });
 
-                var editor = new SymbolEditor(document.Project.Solution);
-                await editor.EditOneDeclarationAsync(typeSymbol, nodeToFix.GetLocation(), (d, g) => g.AddMembers(d, new[] { ctorDecl }), cancellationToken);
+                var editor = SymbolEditor.Create(document.Project.Solution);
+                await editor.EditOneDeclarationAsync(typeSymbol, nodeToFix.GetLocation(), (e, d) => e.AddMember(d, ctorDecl), cancellationToken);
                 return editor.GetChangedDocuments().First();
             }
             else if (symbol.Kind == SymbolKind.Method)

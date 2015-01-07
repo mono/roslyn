@@ -242,6 +242,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Case SyntaxKind.ConditionalAccessExpression
                     Return BindConditionalAccessExpression(DirectCast(node, ConditionalAccessExpressionSyntax), diagnostics)
 
+                Case SyntaxKind.InterpolatedStringExpression
+                    Return BindInterpolatedStringExpression(DirectCast(node, InterpolatedStringExpressionSyntax), diagnostics)
+
                 Case Else
                     ' e.g. SyntaxKind.MidExpression is handled elsewhere
                     ' NOTE: There were too many "else" cases to justify listing them explicitly and throwing on
@@ -1912,7 +1915,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim err As ERRID = Nothing
 
             If Not CanAccessMe(False, err) Then
-                ReportDiagnostic(diagnostics, node, err, SyntaxFacts.GetText(node.Keyword.VBKind))
+                ReportDiagnostic(diagnostics, node, err, SyntaxFacts.GetText(node.Keyword.Kind))
                 Return New BoundMeReference(node, If(Me.ContainingType, ErrorTypeSymbol.UnknownResultType), hasErrors:=True)
             End If
 
@@ -1935,7 +1938,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim err As ERRID = Nothing
 
             If Not CanAccessMyBase(False, err) Then
-                ReportDiagnostic(diagnostics, node, err, SyntaxFacts.GetText(node.Keyword.VBKind))
+                ReportDiagnostic(diagnostics, node, err, SyntaxFacts.GetText(node.Keyword.Kind))
                 Return New BoundMyBaseReference(node, If(Me.ContainingType IsNot Nothing, Me.ContainingType.BaseTypeNoUseSiteDiagnostics, ErrorTypeSymbol.UnknownResultType), hasErrors:=True)
             End If
 
@@ -1947,7 +1950,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim err As ERRID = Nothing
 
             If Not CanAccessMyClass(False, err) Then
-                ReportDiagnostic(diagnostics, node, err, SyntaxFacts.GetText(node.Keyword.VBKind))
+                ReportDiagnostic(diagnostics, node, err, SyntaxFacts.GetText(node.Keyword.Kind))
                 Return New BoundMyClassReference(node, If(Me.ContainingType, ErrorTypeSymbol.UnknownResultType), hasErrors:=True)
             End If
 

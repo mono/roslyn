@@ -627,7 +627,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
         private bool CanHandleReturnLabel(BoundReturnStatement boundReturnStatement)
         {
             return boundReturnStatement.WasCompilerGenerated &&
-                    (boundReturnStatement.Syntax.Kind == SyntaxKind.Block || (((object)this.method != null) && this.method.IsImplicitConstructor)) &&
+                    (boundReturnStatement.Syntax.Kind() == SyntaxKind.Block || (((object)this.method != null) && this.method.IsImplicitConstructor)) &&
                     !builder.InExceptionHandler;
         }
 
@@ -996,7 +996,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
                 foreach (BoundSwitchLabel boundLabel in section.BoundSwitchLabels)
                 {
                     var label = (SourceLabelSymbol)boundLabel.Label;
-                    if (label.IdentifierNodeOrToken.CSharpKind() == SyntaxKind.DefaultSwitchLabel)
+                    if (label.IdentifierNodeOrToken.Kind() == SyntaxKind.DefaultSwitchLabel)
                     {
                         fallThroughLabel = label;
                     }

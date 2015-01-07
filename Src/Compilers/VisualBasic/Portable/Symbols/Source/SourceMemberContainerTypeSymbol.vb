@@ -1680,7 +1680,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         Private Function BuildMembersAndInitializers(diagBag As DiagnosticBag) As MembersAndInitializers
 #If DEBUG Then
             Dim threadId = Environment.CurrentManagedThreadId
-            Debug.Assert(m_computingMembersThreadId <> threadId)
+
+            ' Bug 1098580 tracks re-enabling this assert.
+            'Debug.Assert(m_computingMembersThreadId <> threadId)
             Interlocked.CompareExchange(m_computingMembersThreadId, threadId, 0)
 #End If
             ' Get type members
@@ -3210,16 +3212,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
                     aggregateLength += syntaxRef.Span.Length
                 Next
-
-                Throw ExceptionUtilities.Unreachable
             End If
 
-            'Dim initializerStart As Integer = 0
-            'If TryFindDeclaringInitializerStart(localPosition, localTree, isShared, initializerStart, aggregateLength) Then
-            '    Return -aggregateLength + (localPosition - initializerStart)
-            'End If
-
-            Throw ExceptionUtilities.Unreachable
+            Return -1
         End Function
 
         Public Overrides ReadOnly Property MightContainExtensionMethods As Boolean

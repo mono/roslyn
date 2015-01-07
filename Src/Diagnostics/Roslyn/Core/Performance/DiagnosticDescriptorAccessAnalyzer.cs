@@ -11,14 +11,18 @@ namespace Roslyn.Diagnostics.Analyzers
     {
         private static readonly string DiagnosticTypeFullName = typeof(Diagnostic).FullName;
 
+        private static LocalizableString localizableTitle = new LocalizableResourceString(nameof(RoslynDiagnosticsResources.DiagnosticDescriptorAccessTitle), RoslynDiagnosticsResources.ResourceManager, typeof(RoslynDiagnosticsResources));
+        private static LocalizableString localizableMessage = new LocalizableResourceString(nameof(RoslynDiagnosticsResources.DiagnosticDescriptorAccessMessage), RoslynDiagnosticsResources.ResourceManager, typeof(RoslynDiagnosticsResources));
+        private static LocalizableString localizableDescription = new LocalizableResourceString(nameof(RoslynDiagnosticsResources.DiagnosticDescriptorAccessDescription), RoslynDiagnosticsResources.ResourceManager, typeof(RoslynDiagnosticsResources));
+
         internal static readonly DiagnosticDescriptor DoNotRealizeDiagnosticDescriptorRule = new DiagnosticDescriptor(
             RoslynDiagnosticIds.DoNotAccessDiagnosticDescriptorRuleId,
-            RoslynDiagnosticsResources.DiagnosticDescriptorAccessTitle,
-            RoslynDiagnosticsResources.DiagnosticDescriptorAccessMessage,
+            localizableTitle,
+            localizableMessage,
             "Performance",
             DiagnosticSeverity.Warning,
             isEnabledByDefault: false,
-            description: RoslynDiagnosticsResources.DiagnosticDescriptorAccessDescription,
+            description: localizableDescription,
             customTags: WellKnownDiagnosticTags.Telemetry);
 
         protected sealed override DiagnosticDescriptor Descriptor
@@ -41,6 +45,7 @@ namespace Roslyn.Diagnostics.Analyzers
 
         protected abstract SyntaxNode GetLeftOfMemberAccess(TMemberAccessExpressionSyntax memberAccess);
         protected abstract SyntaxNode GetRightOfMemberAccess(TMemberAccessExpressionSyntax memberAccess);
+        protected abstract bool IsThisOrBaseOrMeOrMyBaseExpression(SyntaxNode node);
 
         protected override void AnalyzeNode(SyntaxNodeAnalysisContext context)
         {
@@ -53,7 +58,7 @@ namespace Roslyn.Diagnostics.Analyzers
 
             var left = GetLeftOfMemberAccess(memberAccess);
             var leftType = context.SemanticModel.GetTypeInfo(left).Type;
-            if (leftType != null && leftType.ToDisplayString() == DiagnosticTypeFullName)
+            if (leftType != null && leftType.ToDisplayString() == DiagnosticTypeFullName && !IsThisOrBaseOrMeOrMyBaseExpression(left))
             {
                 var nameOfMember = string.Empty;
                 var parentMemberAccess = memberAccess.Parent as TMemberAccessExpressionSyntax;

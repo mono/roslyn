@@ -6,12 +6,13 @@ using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeGeneration;
-using Microsoft.CodeAnalysis.CodeGeneration.CodeGenerationHelpers;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Roslyn.Utilities;
+
+using static Microsoft.CodeAnalysis.CodeGeneration.CodeGenerationHelpers;
 
 namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
 {
@@ -77,7 +78,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
             var updatedToken = lastToken.ReplaceTrivia(lastToken.TrailingTrivia,
                 (t1, t2) =>
                 {
-                    if (t1.CSharpKind() == SyntaxKind.MultiLineCommentTrivia)
+                    if (t1.Kind() == SyntaxKind.MultiLineCommentTrivia)
                     {
                         var text = t1.ToString();
                         if (!text.EndsWith(MultiLineCommentTerminator))
@@ -85,7 +86,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
                             return SyntaxFactory.SyntaxTrivia(SyntaxKind.MultiLineCommentTrivia, text + MultiLineCommentTerminator);
                         }
                     }
-                    else if (t1.CSharpKind() == SyntaxKind.SkippedTokensTrivia)
+                    else if (t1.Kind() == SyntaxKind.SkippedTokensTrivia)
                     {
                         return ReplaceUnterminatedConstructs(t1);
                     }
@@ -333,7 +334,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
         {
             if (destination != null)
             {
-                switch (destination.CSharpKind())
+                switch (destination.Kind())
                 {
                     case SyntaxKind.ClassDeclaration:
                         return CodeGenerationDestination.ClassType;

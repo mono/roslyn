@@ -866,7 +866,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// </summary>
         public override BoundNode DefaultVisit(BoundNode node)
         {
-            Debug.Assert(false, string.Format("Should Visit{0} be overridden in {1}?", node.Kind, this.GetType().Name));
+            Debug.Assert(false, $"Should Visit{node.Kind} be overridden in {this.GetType().Name}?");
             return null;
         }
 
@@ -1633,7 +1633,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     foreach (var boundSwitchLabel in section.BoundSwitchLabels)
                     {
                         var label = boundSwitchLabel.Label;
-                        hasDefaultLabel = hasDefaultLabel || label.IdentifierNodeOrToken.CSharpKind() == SyntaxKind.DefaultSwitchLabel;
+                        hasDefaultLabel = hasDefaultLabel || label.IdentifierNodeOrToken.Kind() == SyntaxKind.DefaultSwitchLabel;
                         SetState(breakState.Clone());
                         var simulatedGoto = new BoundGotoStatement(node.Syntax, label);
                         VisitGotoStatement(simulatedGoto);

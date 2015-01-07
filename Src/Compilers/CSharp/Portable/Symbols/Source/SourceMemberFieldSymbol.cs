@@ -72,13 +72,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                 SyntaxToken constToken = default(SyntaxToken);
                 foreach (var modifier in fieldSyntax.Modifiers)
                 {
-                    if (modifier.CSharpKind() == SyntaxKind.ConstKeyword)
+                    if (modifier.Kind() == SyntaxKind.ConstKeyword)
                     {
                         constToken = modifier;
                         break;
                     }
                 }
-                Debug.Assert(constToken.CSharpKind() == SyntaxKind.ConstKeyword);
+                Debug.Assert(constToken.Kind() == SyntaxKind.ConstKeyword);
 
                 diagnostics.Add(ErrorCode.ERR_BadConstType, constToken.GetLocation(), type);
             }
@@ -148,7 +148,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         private bool IsPointerFieldSyntactically()
         {
             var declaration = GetFieldDeclaration(VariableDeclaratorNode).Declaration;
-            if (declaration.Type.Kind == SyntaxKind.PointerType)
+            if (declaration.Type.Kind() == SyntaxKind.PointerType)
             {
                 // public int * Blah;   // pointer
                 return true;

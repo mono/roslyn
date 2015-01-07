@@ -34,7 +34,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind);
+            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind());
             Assert.True(((IdentifierNameSyntax)expr).Identifier.IsMissing);
             Assert.Equal(text, expr.ToString());
             Assert.Equal(1, expr.Errors().Length);
@@ -48,7 +48,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind);
+            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind());
             Assert.False(((IdentifierNameSyntax)expr).Identifier.IsMissing);
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
@@ -61,7 +61,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ParenthesizedExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ParenthesizedExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
         }
@@ -73,11 +73,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
             Assert.NotNull(expr);
             var opKind = SyntaxFacts.GetLiteralExpression(kind);
-            Assert.Equal(opKind, expr.Kind);
+            Assert.Equal(opKind, expr.Kind());
             Assert.Equal(0, expr.Errors().Length);
             var us = (LiteralExpressionSyntax)expr;
             Assert.NotNull(us.Token);
-            Assert.Equal(kind, us.Token.CSharpKind());
+            Assert.Equal(kind, us.Token.Kind());
         }
 
         [Fact]
@@ -96,20 +96,20 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
             Assert.NotNull(expr);
             var opKind = SyntaxFacts.GetInstanceExpression(kind);
-            Assert.Equal(opKind, expr.Kind);
+            Assert.Equal(opKind, expr.Kind());
             Assert.Equal(0, expr.Errors().Length);
             SyntaxToken token;
-            switch (expr.Kind)
+            switch (expr.Kind())
             {
                 case SyntaxKind.ThisExpression:
                     token = ((ThisExpressionSyntax)expr).Token;
                     Assert.NotNull(token);
-                    Assert.Equal(kind, token.CSharpKind());
+                    Assert.Equal(kind, token.Kind());
                     break;
                 case SyntaxKind.BaseExpression:
                     token = ((BaseExpressionSyntax)expr).Token;
                     Assert.NotNull(token);
-                    Assert.Equal(kind, token.CSharpKind());
+                    Assert.Equal(kind, token.Kind());
                     break;
             }
         }
@@ -128,11 +128,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.StringLiteralExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.StringLiteralExpression, expr.Kind());
             Assert.Equal(0, expr.Errors().Length);
             var us = (LiteralExpressionSyntax)expr;
             Assert.NotNull(us.Token);
-            Assert.Equal(SyntaxKind.StringLiteralToken, us.Token.CSharpKind());
+            Assert.Equal(SyntaxKind.StringLiteralToken, us.Token.Kind());
         }
 
         [WorkItem(540379, "DevDiv")]
@@ -143,11 +143,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.StringLiteralExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.StringLiteralExpression, expr.Kind());
             Assert.Equal(0, expr.Errors().Length);
             var us = (LiteralExpressionSyntax)expr;
             Assert.NotNull(us.Token);
-            Assert.Equal(SyntaxKind.StringLiteralToken, us.Token.CSharpKind());
+            Assert.Equal(SyntaxKind.StringLiteralToken, us.Token.Kind());
             Assert.Equal("\"stuff\"", us.Token.ValueText);
         }
 
@@ -158,11 +158,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.CharacterLiteralExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.CharacterLiteralExpression, expr.Kind());
             Assert.Equal(0, expr.Errors().Length);
             var us = (LiteralExpressionSyntax)expr;
             Assert.NotNull(us.Token);
-            Assert.Equal(SyntaxKind.CharacterLiteralToken, us.Token.CSharpKind());
+            Assert.Equal(SyntaxKind.CharacterLiteralToken, us.Token.Kind());
         }
 
         [Fact]
@@ -172,11 +172,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.NumericLiteralExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.NumericLiteralExpression, expr.Kind());
             Assert.Equal(0, expr.Errors().Length);
             var us = (LiteralExpressionSyntax)expr;
             Assert.NotNull(us.Token);
-            Assert.Equal(SyntaxKind.NumericLiteralToken, us.Token.CSharpKind());
+            Assert.Equal(SyntaxKind.NumericLiteralToken, us.Token.Kind());
         }
 
         private void TestPrefixUnary(SyntaxKind kind)
@@ -186,14 +186,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
             Assert.NotNull(expr);
             var opKind = SyntaxFacts.GetPrefixUnaryExpression(kind);
-            Assert.Equal(opKind, expr.Kind);
+            Assert.Equal(opKind, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var us = (PrefixUnaryExpressionSyntax)expr;
             Assert.NotNull(us.OperatorToken);
-            Assert.Equal(kind, us.OperatorToken.CSharpKind());
+            Assert.Equal(kind, us.OperatorToken.Kind());
             Assert.NotNull(us.Operand);
-            Assert.Equal(SyntaxKind.IdentifierName, us.Operand.Kind);
+            Assert.Equal(SyntaxKind.IdentifierName, us.Operand.Kind());
             Assert.Equal("a", us.Operand.ToString());
         }
 
@@ -217,14 +217,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
             Assert.NotNull(expr);
             var opKind = SyntaxFacts.GetPostfixUnaryExpression(kind);
-            Assert.Equal(opKind, expr.Kind);
+            Assert.Equal(opKind, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var us = (PostfixUnaryExpressionSyntax)expr;
             Assert.NotNull(us.OperatorToken);
-            Assert.Equal(kind, us.OperatorToken.CSharpKind());
+            Assert.Equal(kind, us.OperatorToken.Kind());
             Assert.NotNull(us.Operand);
-            Assert.Equal(SyntaxKind.IdentifierName, us.Operand.Kind);
+            Assert.Equal(SyntaxKind.IdentifierName, us.Operand.Kind());
             Assert.Equal("a", us.Operand.ToString());
         }
 
@@ -242,12 +242,12 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
             Assert.NotNull(expr);
             var opKind = SyntaxFacts.GetBinaryExpression(kind);
-            Assert.Equal(opKind, expr.Kind);
+            Assert.Equal(opKind, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var b = (BinaryExpressionSyntax)expr;
             Assert.NotNull(b.OperatorToken);
-            Assert.Equal(kind, b.OperatorToken.CSharpKind());
+            Assert.Equal(kind, b.OperatorToken.Kind());
             Assert.NotNull(b.Left);
             Assert.NotNull(b.Right);
             Assert.Equal("(a)", b.Left.ToString());
@@ -287,12 +287,12 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
             Assert.NotNull(expr);
             var opKind = SyntaxFacts.GetAssignmentExpression(kind);
-            Assert.Equal(opKind, expr.Kind);
+            Assert.Equal(opKind, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var a = (AssignmentExpressionSyntax)expr;
             Assert.NotNull(a.OperatorToken);
-            Assert.Equal(kind, a.OperatorToken.CSharpKind());
+            Assert.Equal(kind, a.OperatorToken.Kind());
             Assert.NotNull(a.Left);
             Assert.NotNull(a.Right);
             Assert.Equal("(a)", a.Left.ToString());
@@ -325,7 +325,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(0, expr.Errors().Length);
             var e = (MemberAccessExpressionSyntax)expr;
             Assert.NotNull(e.OperatorToken);
-            Assert.Equal(kind, e.OperatorToken.CSharpKind());
+            Assert.Equal(kind, e.OperatorToken.Kind());
             Assert.NotNull(e.Expression);
             Assert.NotNull(e.Name);
             Assert.Equal("(a)", e.Expression.ToString());
@@ -368,31 +368,31 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal("a.b", e.Expression.ToString());
             var cons = e.WhenNotNull;
             Assert.Equal(".c.d?[1]?.e()?.f", cons.ToString());
-            Assert.Equal(cons.Kind, SyntaxKind.ConditionalAccessExpression);
+            Assert.Equal(cons.Kind(), SyntaxKind.ConditionalAccessExpression);
 
             e = e.WhenNotNull as ConditionalAccessExpressionSyntax;
             Assert.Equal(".c.d", e.Expression.ToString());
             cons = e.WhenNotNull;
             Assert.Equal("[1]?.e()?.f", cons.ToString());
-            Assert.Equal(cons.Kind, SyntaxKind.ConditionalAccessExpression);
+            Assert.Equal(cons.Kind(), SyntaxKind.ConditionalAccessExpression);
 
             e = e.WhenNotNull as ConditionalAccessExpressionSyntax;
             Assert.Equal("[1]", e.Expression.ToString());
             cons = e.WhenNotNull;
             Assert.Equal(".e()?.f", cons.ToString());
-            Assert.Equal(cons.Kind, SyntaxKind.ConditionalAccessExpression);
+            Assert.Equal(cons.Kind(), SyntaxKind.ConditionalAccessExpression);
 
             e = e.WhenNotNull as ConditionalAccessExpressionSyntax;
             Assert.Equal(".e()", e.Expression.ToString());
             cons = e.WhenNotNull;
             Assert.Equal(".f", cons.ToString());
-            Assert.Equal(cons.Kind, SyntaxKind.MemberBindingExpression);
+            Assert.Equal(cons.Kind(), SyntaxKind.MemberBindingExpression);
         }
 
         private void TestFunctionKeyword(SyntaxKind kind, SyntaxToken keyword)
         {
             Assert.NotNull(keyword);
-            Assert.Equal(kind, keyword.CSharpKind());
+            Assert.Equal(kind, keyword.Kind());
         }
 
         private void TestParenthesizedArgument(SyntaxToken openParen, CSharpSyntaxNode arg, SyntaxToken closeParen)
@@ -411,7 +411,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
             Assert.NotNull(expr);
             var opKind = SyntaxFacts.GetPrimaryFunction(kind);
-            Assert.Equal(opKind, expr.Kind);
+            Assert.Equal(opKind, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             switch (opKind)
@@ -474,12 +474,12 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.RefValueExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.RefValueExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var fs = (RefValueExpressionSyntax)expr;
             Assert.NotNull(fs.Keyword);
-            Assert.Equal(SyntaxKind.RefValueKeyword, fs.Keyword.CSharpKind());
+            Assert.Equal(SyntaxKind.RefValueKeyword, fs.Keyword.Kind());
             Assert.NotNull(fs.OpenParenToken);
             Assert.False(fs.OpenParenToken.IsMissing);
             Assert.NotNull(fs.CloseParenToken);
@@ -495,14 +495,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ConditionalExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ConditionalExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var ts = (ConditionalExpressionSyntax)expr;
             Assert.NotNull(ts.QuestionToken);
             Assert.NotNull(ts.ColonToken);
-            Assert.Equal(SyntaxKind.QuestionToken, ts.QuestionToken.CSharpKind());
-            Assert.Equal(SyntaxKind.ColonToken, ts.ColonToken.CSharpKind());
+            Assert.Equal(SyntaxKind.QuestionToken, ts.QuestionToken.Kind());
+            Assert.Equal(SyntaxKind.ColonToken, ts.ColonToken.Kind());
             Assert.Equal("a", ts.Condition.ToString());
             Assert.Equal("b", ts.WhenTrue.ToString());
             Assert.Equal("c", ts.WhenFalse.ToString());
@@ -515,7 +515,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.CastExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.CastExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var cs = (CastExpressionSyntax)expr;
@@ -536,7 +536,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.InvocationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.InvocationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var cs = (InvocationExpressionSyntax)expr;
@@ -557,7 +557,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.InvocationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.InvocationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var cs = (InvocationExpressionSyntax)expr;
@@ -570,7 +570,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal("a", cs.Expression.ToString());
             Assert.Equal("ref b", cs.ArgumentList.Arguments[0].ToString());
             Assert.NotNull(cs.ArgumentList.Arguments[0].RefOrOutKeyword);
-            Assert.Equal(SyntaxKind.RefKeyword, cs.ArgumentList.Arguments[0].RefOrOutKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.RefKeyword, cs.ArgumentList.Arguments[0].RefOrOutKeyword.Kind());
             Assert.NotNull(cs.ArgumentList.Arguments[0].Expression);
             Assert.Equal("b", cs.ArgumentList.Arguments[0].Expression.ToString());
         }
@@ -582,7 +582,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.InvocationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.InvocationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var cs = (InvocationExpressionSyntax)expr;
@@ -595,7 +595,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal("a", cs.Expression.ToString());
             Assert.Equal("out b", cs.ArgumentList.Arguments[0].ToString());
             Assert.NotNull(cs.ArgumentList.Arguments[0].RefOrOutKeyword);
-            Assert.Equal(SyntaxKind.OutKeyword, cs.ArgumentList.Arguments[0].RefOrOutKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.OutKeyword, cs.ArgumentList.Arguments[0].RefOrOutKeyword.Kind());
             Assert.NotNull(cs.ArgumentList.Arguments[0].Expression);
             Assert.Equal("b", cs.ArgumentList.Arguments[0].Expression.ToString());
         }
@@ -607,7 +607,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.InvocationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.InvocationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var cs = (InvocationExpressionSyntax)expr;
@@ -632,7 +632,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ElementAccessExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ElementAccessExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var ea = (ElementAccessExpressionSyntax)expr;
@@ -653,7 +653,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ElementAccessExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ElementAccessExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var ea = (ElementAccessExpressionSyntax)expr;
@@ -666,7 +666,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal("a", ea.Expression.ToString());
             Assert.Equal("ref b", ea.ArgumentList.Arguments[0].ToString());
             Assert.NotNull(ea.ArgumentList.Arguments[0].RefOrOutKeyword);
-            Assert.Equal(SyntaxKind.RefKeyword, ea.ArgumentList.Arguments[0].RefOrOutKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.RefKeyword, ea.ArgumentList.Arguments[0].RefOrOutKeyword.Kind());
             Assert.NotNull(ea.ArgumentList.Arguments[0].Expression);
             Assert.Equal("b", ea.ArgumentList.Arguments[0].Expression.ToString());
         }
@@ -678,7 +678,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ElementAccessExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ElementAccessExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var ea = (ElementAccessExpressionSyntax)expr;
@@ -691,7 +691,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal("a", ea.Expression.ToString());
             Assert.Equal("out b", ea.ArgumentList.Arguments[0].ToString());
             Assert.NotNull(ea.ArgumentList.Arguments[0].RefOrOutKeyword);
-            Assert.Equal(SyntaxKind.OutKeyword, ea.ArgumentList.Arguments[0].RefOrOutKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.OutKeyword, ea.ArgumentList.Arguments[0].RefOrOutKeyword.Kind());
             Assert.NotNull(ea.ArgumentList.Arguments[0].Expression);
             Assert.Equal("b", ea.ArgumentList.Arguments[0].Expression.ToString());
         }
@@ -703,7 +703,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ElementAccessExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ElementAccessExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var ea = (ElementAccessExpressionSyntax)expr;
@@ -724,7 +724,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var oc = (ObjectCreationExpressionSyntax)expr;
@@ -746,7 +746,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var oc = (ObjectCreationExpressionSyntax)expr;
@@ -769,7 +769,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var oc = (ObjectCreationExpressionSyntax)expr;
@@ -792,7 +792,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var oc = (ObjectCreationExpressionSyntax)expr;
@@ -820,7 +820,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var oc = (ObjectCreationExpressionSyntax)expr;
@@ -843,7 +843,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var oc = (ObjectCreationExpressionSyntax)expr;
@@ -867,7 +867,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var oc = (ObjectCreationExpressionSyntax)expr;
@@ -893,7 +893,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var oc = (ObjectCreationExpressionSyntax)expr;
@@ -917,7 +917,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var oc = (ObjectCreationExpressionSyntax)expr;
@@ -932,10 +932,10 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(oc.Initializer.CloseBraceToken.IsMissing);
             Assert.Equal(1, oc.Initializer.Expressions.Count);
             Assert.Equal("B = { X = x }", oc.Initializer.Expressions[0].ToString());
-            Assert.Equal(SyntaxKind.SimpleAssignmentExpression, oc.Initializer.Expressions[0].Kind);
+            Assert.Equal(SyntaxKind.SimpleAssignmentExpression, oc.Initializer.Expressions[0].Kind());
             var b = (AssignmentExpressionSyntax)oc.Initializer.Expressions[0];
             Assert.Equal("B", b.Left.ToString());
-            Assert.Equal(SyntaxKind.ObjectInitializerExpression, b.Right.Kind);
+            Assert.Equal(SyntaxKind.ObjectInitializerExpression, b.Right.Kind());
         }
 
         [Fact]
@@ -945,7 +945,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ArrayCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ArrayCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var ac = (ArrayCreationExpressionSyntax)expr;
@@ -961,7 +961,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ArrayCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ArrayCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var ac = (ArrayCreationExpressionSyntax)expr;
@@ -983,7 +983,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ArrayCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ArrayCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var ac = (ArrayCreationExpressionSyntax)expr;
@@ -1007,7 +1007,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ArrayCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ArrayCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var ac = (ArrayCreationExpressionSyntax)expr;
@@ -1029,7 +1029,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ImplicitArrayCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ImplicitArrayCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var ac = (ImplicitArrayCreationExpressionSyntax)expr;
@@ -1049,7 +1049,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.AnonymousObjectCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.AnonymousObjectCreationExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var ac = (AnonymousObjectCreationExpressionSyntax)expr;
@@ -1070,7 +1070,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.AnonymousMethodExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.AnonymousMethodExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var am = (AnonymousMethodExpressionSyntax)expr;
@@ -1101,7 +1101,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.AnonymousMethodExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.AnonymousMethodExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var am = (AnonymousMethodExpressionSyntax)expr;
@@ -1131,7 +1131,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.AnonymousMethodExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.AnonymousMethodExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var am = (AnonymousMethodExpressionSyntax)expr;
@@ -1156,7 +1156,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.SimpleLambdaExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.SimpleLambdaExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var lambda = (SimpleLambdaExpressionSyntax)expr;
@@ -1174,7 +1174,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.SimpleLambdaExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.SimpleLambdaExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var lambda = (SimpleLambdaExpressionSyntax)expr;
@@ -1182,7 +1182,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(lambda.Parameter.Identifier.IsMissing);
             Assert.Equal("a", lambda.Parameter.Identifier.ToString());
             Assert.NotNull(lambda.Body);
-            Assert.Equal(SyntaxKind.Block, lambda.Body.Kind);
+            Assert.Equal(SyntaxKind.Block, lambda.Body.Kind());
             var b = (BlockSyntax)lambda.Body;
             Assert.Equal("{ }", lambda.Body.ToString());
         }
@@ -1194,7 +1194,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ParenthesizedLambdaExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ParenthesizedLambdaExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var lambda = (ParenthesizedLambdaExpressionSyntax)expr;
@@ -1214,7 +1214,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ParenthesizedLambdaExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ParenthesizedLambdaExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var lambda = (ParenthesizedLambdaExpressionSyntax)expr;
@@ -1224,7 +1224,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(lambda.ParameterList.CloseParenToken.IsMissing);
             Assert.Equal(0, lambda.ParameterList.Parameters.Count);
             Assert.NotNull(lambda.Body);
-            Assert.Equal(SyntaxKind.Block, lambda.Body.Kind);
+            Assert.Equal(SyntaxKind.Block, lambda.Body.Kind());
             var b = (BlockSyntax)lambda.Body;
             Assert.Equal("{ }", lambda.Body.ToString());
         }
@@ -1236,7 +1236,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ParenthesizedLambdaExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ParenthesizedLambdaExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var lambda = (ParenthesizedLambdaExpressionSyntax)expr;
@@ -1245,7 +1245,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(lambda.ParameterList.OpenParenToken.IsMissing);
             Assert.False(lambda.ParameterList.CloseParenToken.IsMissing);
             Assert.Equal(1, lambda.ParameterList.Parameters.Count);
-            Assert.Equal(SyntaxKind.Parameter, lambda.ParameterList.Parameters[0].Kind);
+            Assert.Equal(SyntaxKind.Parameter, lambda.ParameterList.Parameters[0].Kind());
             var ps = (ParameterSyntax)lambda.ParameterList.Parameters[0];
             Assert.Null(ps.Type);
             Assert.Equal("a", ps.Identifier.ToString());
@@ -1260,7 +1260,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ParenthesizedLambdaExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ParenthesizedLambdaExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var lambda = (ParenthesizedLambdaExpressionSyntax)expr;
@@ -1269,7 +1269,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(lambda.ParameterList.OpenParenToken.IsMissing);
             Assert.False(lambda.ParameterList.CloseParenToken.IsMissing);
             Assert.Equal(2, lambda.ParameterList.Parameters.Count);
-            Assert.Equal(SyntaxKind.Parameter, lambda.ParameterList.Parameters[0].Kind);
+            Assert.Equal(SyntaxKind.Parameter, lambda.ParameterList.Parameters[0].Kind());
             var ps = (ParameterSyntax)lambda.ParameterList.Parameters[0];
             Assert.Null(ps.Type);
             Assert.Equal("a", ps.Identifier.ToString());
@@ -1287,7 +1287,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ParenthesizedLambdaExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ParenthesizedLambdaExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var lambda = (ParenthesizedLambdaExpressionSyntax)expr;
@@ -1296,7 +1296,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(lambda.ParameterList.OpenParenToken.IsMissing);
             Assert.False(lambda.ParameterList.CloseParenToken.IsMissing);
             Assert.Equal(1, lambda.ParameterList.Parameters.Count);
-            Assert.Equal(SyntaxKind.Parameter, lambda.ParameterList.Parameters[0].Kind);
+            Assert.Equal(SyntaxKind.Parameter, lambda.ParameterList.Parameters[0].Kind());
             var ps = (ParameterSyntax)lambda.ParameterList.Parameters[0];
             Assert.NotNull(ps.Type);
             Assert.Equal("T", ps.Type.ToString());
@@ -1312,7 +1312,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ParenthesizedLambdaExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ParenthesizedLambdaExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
             var lambda = (ParenthesizedLambdaExpressionSyntax)expr;
@@ -1321,13 +1321,13 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(lambda.ParameterList.OpenParenToken.IsMissing);
             Assert.False(lambda.ParameterList.CloseParenToken.IsMissing);
             Assert.Equal(1, lambda.ParameterList.Parameters.Count);
-            Assert.Equal(SyntaxKind.Parameter, lambda.ParameterList.Parameters[0].Kind);
+            Assert.Equal(SyntaxKind.Parameter, lambda.ParameterList.Parameters[0].Kind());
             var ps = (ParameterSyntax)lambda.ParameterList.Parameters[0];
             Assert.NotNull(ps.Type);
             Assert.Equal("T", ps.Type.ToString());
             Assert.Equal("a", ps.Identifier.ToString());
             Assert.Equal(1, ps.Modifiers.Count);
-            Assert.Equal(SyntaxKind.RefKeyword, ps.Modifiers[0].CSharpKind());
+            Assert.Equal(SyntaxKind.RefKeyword, ps.Modifiers[0].Kind());
             Assert.NotNull(lambda.Body);
             Assert.Equal("b", lambda.Body.ToString());
         }
@@ -1339,7 +1339,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
@@ -1348,7 +1348,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
-            Assert.Equal(SyntaxKind.FromKeyword, fs.FromKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.FromKeyword, fs.FromKeyword.Kind());
             Assert.False(fs.FromKeyword.IsMissing);
             Assert.Null(fs.Type);
             Assert.Equal("a", fs.Identifier.ToString());
@@ -1356,10 +1356,10 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
-            Assert.Equal(SyntaxKind.SelectKeyword, ss.SelectKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.SelectKeyword, ss.SelectKeyword.Kind());
             Assert.False(ss.SelectKeyword.IsMissing);
             Assert.Equal("b", ss.Expression.ToString());
             Assert.Null(qs.Body.Continuation);
@@ -1372,14 +1372,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(0, qs.Body.Clauses.Count);
 
-            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
             Assert.False(fs.FromKeyword.IsMissing);
@@ -1390,7 +1390,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -1405,14 +1405,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(0, qs.Body.Clauses.Count);
-            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind);
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
 
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
@@ -1423,16 +1423,16 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
             Assert.Equal("b", ss.Expression.ToString());
 
             Assert.NotNull(qs.Body.Continuation);
-            Assert.Equal(SyntaxKind.QueryContinuation, qs.Body.Continuation.Kind);
+            Assert.Equal(SyntaxKind.QueryContinuation, qs.Body.Continuation.Kind());
             Assert.NotNull(qs.Body.Continuation.IntoKeyword);
-            Assert.Equal(SyntaxKind.IntoKeyword, qs.Body.Continuation.IntoKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.IntoKeyword, qs.Body.Continuation.IntoKeyword.Kind());
             Assert.False(qs.Body.Continuation.IntoKeyword.IsMissing);
             Assert.Equal("c", qs.Body.Continuation.Identifier.ToString());
 
@@ -1440,7 +1440,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(0, qs.Body.Continuation.Body.Clauses.Count);
             Assert.NotNull(qs.Body.Continuation.Body.SelectOrGroup);
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.Continuation.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.Continuation.Body.SelectOrGroup.Kind());
             ss = (SelectClauseSyntax)qs.Body.Continuation.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -1456,14 +1456,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(1, qs.Body.Clauses.Count);
 
-            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
             Assert.False(fs.FromKeyword.IsMissing);
@@ -1473,15 +1473,15 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.WhereClause, qs.Body.Clauses[0].Kind);
+            Assert.Equal(SyntaxKind.WhereClause, qs.Body.Clauses[0].Kind());
             var ws = (WhereClauseSyntax)qs.Body.Clauses[0];
             Assert.NotNull(ws.WhereKeyword);
-            Assert.Equal(SyntaxKind.WhereKeyword, ws.WhereKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.WhereKeyword, ws.WhereKeyword.Kind());
             Assert.False(ws.WhereKeyword.IsMissing);
             Assert.NotNull(ws.Condition);
             Assert.Equal("b", ws.Condition.ToString());
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -1496,14 +1496,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(1, qs.Body.Clauses.Count);
 
-            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
             Assert.False(fs.FromKeyword.IsMissing);
@@ -1512,9 +1512,9 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(fs.InKeyword);
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
 
-            Assert.Equal(SyntaxKind.FromClause, qs.Body.Clauses[0].Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.Body.Clauses[0].Kind());
             fs = (FromClauseSyntax)qs.Body.Clauses[0];
             Assert.NotNull(fs.FromKeyword);
             Assert.False(fs.FromKeyword.IsMissing);
@@ -1524,7 +1524,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("B", fs.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -1539,14 +1539,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(1, qs.Body.Clauses.Count);
 
-            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
             Assert.False(fs.FromKeyword.IsMissing);
@@ -1555,12 +1555,12 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(fs.InKeyword);
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
 
-            Assert.Equal(SyntaxKind.LetClause, qs.Body.Clauses[0].Kind);
+            Assert.Equal(SyntaxKind.LetClause, qs.Body.Clauses[0].Kind());
             var ls = (LetClauseSyntax)qs.Body.Clauses[0];
             Assert.NotNull(ls.LetKeyword);
-            Assert.Equal(SyntaxKind.LetKeyword, ls.LetKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.LetKeyword, ls.LetKeyword.Kind());
             Assert.False(ls.LetKeyword.IsMissing);
             Assert.NotNull(ls.Identifier);
             Assert.Equal("b", ls.Identifier.ToString());
@@ -1569,7 +1569,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(ls.Expression);
             Assert.Equal("B", ls.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -1584,14 +1584,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(1, qs.Body.Clauses.Count);
 
-            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
             Assert.False(fs.FromKeyword.IsMissing);
@@ -1600,21 +1600,21 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(fs.InKeyword);
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
 
-            Assert.Equal(SyntaxKind.OrderByClause, qs.Body.Clauses[0].Kind);
+            Assert.Equal(SyntaxKind.OrderByClause, qs.Body.Clauses[0].Kind());
             var obs = (OrderByClauseSyntax)qs.Body.Clauses[0];
             Assert.NotNull(obs.OrderByKeyword);
-            Assert.Equal(SyntaxKind.OrderByKeyword, obs.OrderByKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.OrderByKeyword, obs.OrderByKeyword.Kind());
             Assert.False(obs.OrderByKeyword.IsMissing);
             Assert.Equal(1, obs.Orderings.Count);
 
             var os = (OrderingSyntax)obs.Orderings[0];
-            Assert.Equal(SyntaxKind.None, os.AscendingOrDescendingKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.None, os.AscendingOrDescendingKeyword.Kind());
             Assert.NotNull(os.Expression);
             Assert.Equal("b", os.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -1629,14 +1629,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(1, qs.Body.Clauses.Count);
 
-            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
             Assert.False(fs.FromKeyword.IsMissing);
@@ -1645,25 +1645,25 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(fs.InKeyword);
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
 
-            Assert.Equal(SyntaxKind.OrderByClause, qs.Body.Clauses[0].Kind);
+            Assert.Equal(SyntaxKind.OrderByClause, qs.Body.Clauses[0].Kind());
             var obs = (OrderByClauseSyntax)qs.Body.Clauses[0];
             Assert.NotNull(obs.OrderByKeyword);
             Assert.False(obs.OrderByKeyword.IsMissing);
             Assert.Equal(2, obs.Orderings.Count);
 
             var os = (OrderingSyntax)obs.Orderings[0];
-            Assert.Equal(SyntaxKind.None, os.AscendingOrDescendingKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.None, os.AscendingOrDescendingKeyword.Kind());
             Assert.NotNull(os.Expression);
             Assert.Equal("b", os.Expression.ToString());
 
             os = (OrderingSyntax)obs.Orderings[1];
-            Assert.Equal(SyntaxKind.None, os.AscendingOrDescendingKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.None, os.AscendingOrDescendingKeyword.Kind());
             Assert.NotNull(os.Expression);
             Assert.Equal("b2", os.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -1678,14 +1678,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(1, qs.Body.Clauses.Count);
 
-            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
             Assert.False(fs.FromKeyword.IsMissing);
@@ -1694,9 +1694,9 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(fs.InKeyword);
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
 
-            Assert.Equal(SyntaxKind.OrderByClause, qs.Body.Clauses[0].Kind);
+            Assert.Equal(SyntaxKind.OrderByClause, qs.Body.Clauses[0].Kind());
             var obs = (OrderByClauseSyntax)qs.Body.Clauses[0];
             Assert.NotNull(obs.OrderByKeyword);
             Assert.False(obs.OrderByKeyword.IsMissing);
@@ -1704,14 +1704,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
             var os = (OrderingSyntax)obs.Orderings[0];
             Assert.NotNull(os.AscendingOrDescendingKeyword);
-            Assert.Equal(SyntaxKind.AscendingKeyword, os.AscendingOrDescendingKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.AscendingKeyword, os.AscendingOrDescendingKeyword.Kind());
             Assert.False(os.AscendingOrDescendingKeyword.IsMissing);
-            Assert.Equal(SyntaxKind.AscendingKeyword, os.AscendingOrDescendingKeyword.CSharpContextualKind());
+            Assert.Equal(SyntaxKind.AscendingKeyword, os.AscendingOrDescendingKeyword.ContextualKind());
 
             Assert.NotNull(os.Expression);
             Assert.Equal("b", os.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -1726,14 +1726,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(1, qs.Body.Clauses.Count);
 
-            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
             Assert.False(fs.FromKeyword.IsMissing);
@@ -1742,9 +1742,9 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(fs.InKeyword);
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
 
-            Assert.Equal(SyntaxKind.OrderByClause, qs.Body.Clauses[0].Kind);
+            Assert.Equal(SyntaxKind.OrderByClause, qs.Body.Clauses[0].Kind());
             var obs = (OrderByClauseSyntax)qs.Body.Clauses[0];
             Assert.NotNull(obs.OrderByKeyword);
             Assert.False(obs.OrderByKeyword.IsMissing);
@@ -1752,14 +1752,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
             var os = (OrderingSyntax)obs.Orderings[0];
             Assert.NotNull(os.AscendingOrDescendingKeyword);
-            Assert.Equal(SyntaxKind.DescendingKeyword, os.AscendingOrDescendingKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.DescendingKeyword, os.AscendingOrDescendingKeyword.Kind());
             Assert.False(os.AscendingOrDescendingKeyword.IsMissing);
-            Assert.Equal(SyntaxKind.DescendingKeyword, os.AscendingOrDescendingKeyword.CSharpContextualKind());
+            Assert.Equal(SyntaxKind.DescendingKeyword, os.AscendingOrDescendingKeyword.ContextualKind());
 
             Assert.NotNull(os.Expression);
             Assert.Equal("b", os.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -1773,13 +1773,13 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(1, qs.Body.Clauses.Count);
-            Assert.Equal(SyntaxKind.FromClause, qs.Body.Clauses[0].Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.Body.Clauses[0].Kind());
 
             var fs = (FromClauseSyntax)qs.Body.Clauses[0];
             Assert.NotNull(fs.FromKeyword);
@@ -1790,15 +1790,15 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.GroupClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.GroupClause, qs.Body.SelectOrGroup.Kind());
             var gbs = (GroupClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(gbs.GroupKeyword);
-            Assert.Equal(SyntaxKind.GroupKeyword, gbs.GroupKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.GroupKeyword, gbs.GroupKeyword.Kind());
             Assert.False(gbs.GroupKeyword.IsMissing);
             Assert.NotNull(gbs.GroupExpression);
             Assert.Equal("b", gbs.GroupExpression.ToString());
             Assert.NotNull(gbs.ByKeyword);
-            Assert.Equal(SyntaxKind.ByKeyword, gbs.ByKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.ByKeyword, gbs.ByKeyword.Kind());
             Assert.False(gbs.ByKeyword.IsMissing);
             Assert.NotNull(gbs.ByExpression);
             Assert.Equal("c", gbs.ByExpression.ToString());
@@ -1812,13 +1812,13 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(1, qs.Body.Clauses.Count);
-            Assert.Equal(SyntaxKind.FromClause, qs.Body.Clauses[0].Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.Body.Clauses[0].Kind());
 
             var fs = (FromClauseSyntax)qs.Body.Clauses[0];
             Assert.NotNull(fs.FromKeyword);
@@ -1829,7 +1829,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.GroupClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.GroupClause, qs.Body.SelectOrGroup.Kind());
             var gbs = (GroupClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(gbs.GroupKeyword);
             Assert.False(gbs.GroupKeyword.IsMissing);
@@ -1841,7 +1841,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal("c", gbs.ByExpression.ToString());
 
             Assert.NotNull(qs.Body.Continuation);
-            Assert.Equal(SyntaxKind.QueryContinuation, qs.Body.Continuation.Kind);
+            Assert.Equal(SyntaxKind.QueryContinuation, qs.Body.Continuation.Kind());
             Assert.NotNull(qs.Body.Continuation.IntoKeyword);
             Assert.False(qs.Body.Continuation.IntoKeyword.IsMissing);
             Assert.Equal("d", qs.Body.Continuation.Identifier.ToString());
@@ -1850,7 +1850,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(0, qs.Body.Continuation.Body.Clauses.Count);
             Assert.NotNull(qs.Body.Continuation.Body.SelectOrGroup);
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.Continuation.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.Continuation.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.Continuation.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -1866,14 +1866,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(1, qs.Body.Clauses.Count);
 
-            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
             Assert.False(fs.FromKeyword.IsMissing);
@@ -1883,10 +1883,10 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.JoinClause, qs.Body.Clauses[0].Kind);
+            Assert.Equal(SyntaxKind.JoinClause, qs.Body.Clauses[0].Kind());
             var js = (JoinClauseSyntax)qs.Body.Clauses[0];
             Assert.NotNull(js.JoinKeyword);
-            Assert.Equal(SyntaxKind.JoinKeyword, js.JoinKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.JoinKeyword, js.JoinKeyword.Kind());
             Assert.False(js.JoinKeyword.IsMissing);
             Assert.Null(js.Type);
             Assert.NotNull(js.Identifier);
@@ -1896,18 +1896,18 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(js.InExpression);
             Assert.Equal("B", js.InExpression.ToString());
             Assert.NotNull(js.OnKeyword);
-            Assert.Equal(SyntaxKind.OnKeyword, js.OnKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.OnKeyword, js.OnKeyword.Kind());
             Assert.False(js.OnKeyword.IsMissing);
             Assert.NotNull(js.LeftExpression);
             Assert.Equal("a", js.LeftExpression.ToString());
             Assert.NotNull(js.EqualsKeyword);
-            Assert.Equal(SyntaxKind.EqualsKeyword, js.EqualsKeyword.CSharpKind());
+            Assert.Equal(SyntaxKind.EqualsKeyword, js.EqualsKeyword.Kind());
             Assert.False(js.EqualsKeyword.IsMissing);
             Assert.NotNull(js.RightExpression);
             Assert.Equal("b", js.RightExpression.ToString());
             Assert.Null(js.Into);
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -1922,14 +1922,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(1, qs.Body.Clauses.Count);
 
-            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
             Assert.False(fs.FromKeyword.IsMissing);
@@ -1940,7 +1940,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.JoinClause, qs.Body.Clauses[0].Kind);
+            Assert.Equal(SyntaxKind.JoinClause, qs.Body.Clauses[0].Kind());
             var js = (JoinClauseSyntax)qs.Body.Clauses[0];
             Assert.NotNull(js.JoinKeyword);
             Assert.False(js.JoinKeyword.IsMissing);
@@ -1962,7 +1962,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal("b", js.RightExpression.ToString());
             Assert.Null(js.Into);
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -1977,14 +1977,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
             var qs = (QueryExpressionSyntax)expr;
             Assert.Equal(1, qs.Body.Clauses.Count);
 
-            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind);
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
             var fs = (FromClauseSyntax)qs.FromClause;
             Assert.NotNull(fs.FromKeyword);
             Assert.False(fs.FromKeyword.IsMissing);
@@ -1994,7 +1994,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.False(fs.InKeyword.IsMissing);
             Assert.Equal("A", fs.Expression.ToString());
 
-            Assert.Equal(SyntaxKind.JoinClause, qs.Body.Clauses[0].Kind);
+            Assert.Equal(SyntaxKind.JoinClause, qs.Body.Clauses[0].Kind());
             var js = (JoinClauseSyntax)qs.Body.Clauses[0];
             Assert.NotNull(js.JoinKeyword);
             Assert.False(js.JoinKeyword.IsMissing);
@@ -2019,7 +2019,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(js.Into.Identifier);
             Assert.Equal("c", js.Into.Identifier.ToString());
 
-            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind);
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
             var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
             Assert.NotNull(ss.SelectKeyword);
             Assert.False(ss.SelectKeyword.IsMissing);
@@ -2034,7 +2034,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = SyntaxFactory.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.Equal(0, expr.Errors().Length);
 
@@ -2056,7 +2056,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ArrayCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ArrayCreationExpression, expr.Kind());
 
             var arrayCreation = (ArrayCreationExpressionSyntax)expr;
             Assert.Equal(1, arrayCreation.Type.RankSpecifiers.Single().Rank);
@@ -2070,7 +2070,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ObjectCreationExpression, expr.Kind());
 
             var objectCreation = (ObjectCreationExpressionSyntax)expr;
             Assert.Equal(1, ((NameSyntax)objectCreation.Type).Arity);
@@ -2085,7 +2085,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
             Assert.Equal(text, expr.ToString());
             Assert.NotEqual(0, expr.Errors().Length);
         }
@@ -2097,10 +2097,10 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var expr = this.ParseExpression(text);
 
             Assert.NotNull(expr);
-            Assert.Equal(SyntaxKind.ParenthesizedExpression, expr.Kind);
+            Assert.Equal(SyntaxKind.ParenthesizedExpression, expr.Kind());
 
             var parenExp = (ParenthesizedExpressionSyntax)expr;
-            Assert.Equal(SyntaxKind.ElementAccessExpression, parenExp.Expression.Kind);
+            Assert.Equal(SyntaxKind.ElementAccessExpression, parenExp.Expression.Kind());
         }
 
         [WorkItem(543993, "DevDiv")]

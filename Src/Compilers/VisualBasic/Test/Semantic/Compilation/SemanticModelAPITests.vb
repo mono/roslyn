@@ -567,7 +567,7 @@ End Class
             Dim typeBlock = DirectCast(root.Members(1), TypeBlockSyntax)
             Dim methodBlock = DirectCast(typeBlock.Members(0), MethodBlockSyntax)
             Dim originalStatement = DirectCast(methodBlock.Statements(0), ExecutableStatementSyntax)
-            Dim originalExpression = originalStatement.DescendantNodes().Where(Function(syntax) syntax.VBKind = SyntaxKind.ObjectCreationExpression).FirstOrDefault()
+            Dim originalExpression = originalStatement.DescendantNodes().Where(Function(syntax) syntax.Kind = SyntaxKind.ObjectCreationExpression).FirstOrDefault()
 
             Dim speculatedExpression = SyntaxFactory.ParseExpression("DirectCast(3, Integer)")
             Dim speculatedStatement = originalStatement.ReplaceNode(originalExpression, speculatedExpression)
@@ -821,6 +821,55 @@ End Class
             Assert.Equal("y", local.Name)
             Assert.Equal(SymbolKind.Local, local.Kind)
             Assert.Equal("System.String", DirectCast(local, LocalSymbol).Type.ToTestDisplayString())
+        End Sub
+
+        <Fact(Skip:="1019361"), WorkItem(1019361)>
+        Public Sub TestGetSpeculativeSemanticModelForStatement_DeclaredLocal_2()
+            Dim compilation = CompilationUtils.CreateCompilationWithMscorlib(
+<compilation name="BindAsExpressionVsBindAsType">
+    <file name="a.vb">
+Imports N
+Namespace N
+    Class A
+        Public Const X As Integer = 1
+    End Class
+End Namespace
+
+Class Program
+    Sub Main()
+        Dim x = N.A.X
+        Dim a As A = Nothing
+    End Sub
+End Class
+    </file>
+</compilation>)
+
+            Dim tree As SyntaxTree = (From t In compilation.SyntaxTrees Where t.FilePath = "a.vb").Single()
+            Dim root = tree.GetCompilationUnitRoot()
+            Dim typeBlock = root.Members.OfType(Of TypeBlockSyntax).First
+            Dim methodBlock = DirectCast(typeBlock.Members(0), MethodBlockSyntax)
+            Dim originalStatement = DirectCast(methodBlock.Statements(0), ExecutableStatementSyntax)
+
+            Dim semanticModel = compilation.GetSemanticModel(tree)
+            Dim position1 = originalStatement.SpanStart
+
+            ' different initializer for local, whose type should be error type as "A" bounds to the local "a" instead of "N.A"
+            Dim speculatedStatement = DirectCast(SyntaxFactory.ParseExecutableStatement("Dim x = A.X"), ExecutableStatementSyntax)
+
+            Dim speculativeModel As SemanticModel = Nothing
+            Dim success = semanticModel.TryGetSpeculativeSemanticModel(position1, speculatedStatement, speculativeModel)
+            Assert.True(success)
+            Assert.NotNull(speculativeModel)
+
+            Dim declStatement = DirectCast(speculatedStatement, LocalDeclarationStatementSyntax)
+            Dim varDecl = declStatement.Declarators(0).Names(0)
+            Dim local = speculativeModel.GetDeclaredSymbol(varDecl)
+            Assert.NotNull(local)
+            Assert.Equal("x", local.Name)
+            Assert.Equal(SymbolKind.Local, local.Kind)
+
+            ' Type should be error type as "A" bounds to the local "a" instead of type "N.A"
+            Assert.Equal(True, DirectCast(local, LocalSymbol).Type.IsErrorType)
         End Sub
 
         <Fact()>
@@ -3804,7 +3853,7 @@ BC42306: XML comment tag 'param' is not permitted on a 'variable' language eleme
             Dim tree As SyntaxTree = (From t In compilation.SyntaxTrees Where t.FilePath = "sam.vb").Single()
             Dim semanticModel = compilation.GetSemanticModel(tree)
 
-            Dim nodes = From n In tree.GetCompilationUnitRoot().DescendantNodes() Where n.VBKind = SyntaxKind.IdentifierName Select CType(n, IdentifierNameSyntax)
+            Dim nodes = From n In tree.GetCompilationUnitRoot().DescendantNodes() Where n.Kind = SyntaxKind.IdentifierName Select CType(n, IdentifierNameSyntax)
             Dim enode = nodes.First(Function(n) n.ToString() = "e")
             Dim symbol = semanticModel.GetSymbolInfo(enode).Symbol
             Assert.NotNull(symbol)

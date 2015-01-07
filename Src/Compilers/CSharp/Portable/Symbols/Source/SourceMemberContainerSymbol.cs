@@ -1513,10 +1513,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                 }
             }
 
-            if (typeParameterNames != null)
-            {
-                typeParameterNames.Free();
-            }
+            typeParameterNames?.Free();
         }
 
         private void CheckIndexerSignatureCollisions(
@@ -1963,7 +1960,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         private static bool HasInstanceData(MemberDeclarationSyntax m)
         {
-            switch (m.Kind)
+            switch (m.Kind())
             {
                 case SyntaxKind.FieldDeclaration:
                     var fieldDecl = (FieldDeclarationSyntax)m;
@@ -1993,13 +1990,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         private static bool All<T>(SyntaxList<T> list, Func<T, bool> predicate) where T : CSharpSyntaxNode
         {
-            foreach (var t in list) if (predicate(t)) return true;
+            foreach (var t in list) { if (predicate(t)) return true; };
             return false;
         }
 
         private static bool ContainsModifier(SyntaxTokenList modifiers, SyntaxKind modifier)
         {
-            foreach (var m in modifiers) if (m.CSharpKind() == modifier) return true;
+            foreach (var m in modifiers) { if (m.IsKind(modifier)) return true; };
             return false;
         }
 
@@ -2176,7 +2173,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
                 var syntax = decl.SyntaxReference.GetSyntax();
 
-                switch (syntax.CSharpKind())
+                switch (syntax.Kind())
                 {
                     case SyntaxKind.EnumDeclaration:
                         AddEnumMembers(builder, (EnumDeclarationSyntax)syntax, diagnostics);
@@ -2210,7 +2207,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                         break;
 
                     default:
-                        throw ExceptionUtilities.UnexpectedValue(syntax.CSharpKind());
+                        throw ExceptionUtilities.UnexpectedValue(syntax.Kind());
                 }
             }
         }
@@ -2492,7 +2489,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
             foreach (var m in syntax.Members)
             {
-                switch (m.Kind)
+                switch (m.Kind())
                 {
                     case SyntaxKind.EnumMemberDeclaration:
                         {
@@ -2528,7 +2525,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                         break;
 
                     default:
-                        throw ExceptionUtilities.UnexpectedValue(m.Kind);
+                        throw ExceptionUtilities.UnexpectedValue(m.Kind());
                 }
             }
 
@@ -2648,28 +2645,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         private void CheckForStructBadInitializers(MembersAndInitializersBuilder builder, DiagnosticBag diagnostics)
         {
             Debug.Assert(TypeKind == TypeKind.Struct);
-            if (builder.InstanceInitializers.Count > 0)
-            {
-                var members = builder.NonTypeNonIndexerMembers;
 
-                foreach (var s in members)
+            foreach (var initializers in builder.InstanceInitializers)
                 {
-                    var p = s as SourcePropertySymbol;
-                    if (p != null && !p.IsStatic && p.IsAutoProperty
-                        && p.BackingField.HasInitializer)
-                    {
-                        // '{0}': cannot have instance field initializers in structs
-                        diagnostics.Add(ErrorCode.ERR_FieldInitializerInStruct, p.Locations[0], this);
-                    }
-                    else
-                    {
-                        var f = s as SourceMemberFieldSymbol;
-                        if (f != null && !f.IsStatic && f.HasInitializer)
+                foreach (FieldOrPropertyInitializer initializer in initializers)
                         {
                             // '{0}': cannot have instance field initializers in structs
-                            diagnostics.Add(ErrorCode.ERR_FieldInitializerInStruct, f.Locations[0], this);
-                        }
-                    }
+                    diagnostics.Add(ErrorCode.ERR_FieldInitializerInStruct, (initializer.Field.AssociatedSymbol ?? initializer.Field).Locations[0], this);
                 }
             }
         }
@@ -2780,7 +2762,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
                 bool reportMisplacedGlobalCode = !globalCodeAllowed && !m.HasErrors;
 
-                switch (m.Kind)
+                switch (m.Kind())
                 {
                     case SyntaxKind.FieldDeclaration:
                         {
@@ -3025,9 +3007,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
                     default:
                         Debug.Assert(
-                            SyntaxFacts.IsTypeDeclaration(m.Kind) ||
-                            m.Kind == SyntaxKind.NamespaceDeclaration ||
-                            m.Kind == SyntaxKind.IncompleteMember);
+                            SyntaxFacts.IsTypeDeclaration(m.Kind()) ||
+                            m.Kind() == SyntaxKind.NamespaceDeclaration ||
+                            m.Kind() == SyntaxKind.IncompleteMember);
                         break;
                 }
             }
@@ -3038,7 +3020,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         private static bool IsGlobalCodeAllowed(CSharpSyntaxNode parent)
         {
-            var parentKind = parent.Kind;
+            var parentKind = parent.Kind();
             return !(parentKind == SyntaxKind.NamespaceDeclaration ||
                 parentKind == SyntaxKind.CompilationUnit && parent.SyntaxTree.Options.Kind == SourceCodeKind.Regular);
         }

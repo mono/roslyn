@@ -586,7 +586,7 @@ class F
             Assert.Equal("Q=E", alias.ToTestDisplayString());
 
             var parentExpr = (ExpressionSyntax)expr.Parent;
-            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind);
+            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind());
             var parentInfo = model.GetSymbolInfo(parentExpr);
             Assert.NotNull(parentInfo);
             Assert.Equal(SymbolKind.Method, parentInfo.Symbol.Kind);
@@ -626,14 +626,14 @@ class C
             var model = comp.GetSemanticModel(tree);
 
             var expr = GetExprSyntaxForBinding(GetExprSyntaxList(tree));
-            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind);
+            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind());
             var info = model.GetSymbolInfo(expr);
             Assert.NotNull(info);
             Assert.Equal(SymbolKind.Local, info.Symbol.Kind);
             Assert.Equal("Color Color", info.Symbol.ToTestDisplayString());
 
             var parentExpr = (ExpressionSyntax)expr.Parent;
-            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind);
+            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind());
             var parentInfo = model.GetSymbolInfo(parentExpr);
             Assert.NotNull(parentInfo);
             Assert.Null(parentInfo.Symbol); // the lexically first matching method
@@ -1056,14 +1056,14 @@ class F
             var model = comp.GetSemanticModel(tree);
 
             var expr = GetExprSyntaxForBinding(GetExprSyntaxList(tree));
-            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind);
+            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind());
             var info = model.GetSymbolInfo(expr);
             Assert.NotNull(info);
             Assert.Equal(SymbolKind.Property, info.Symbol.Kind);
             Assert.Equal("E F.E { get; set; }", info.Symbol.ToTestDisplayString());
 
             var parentExpr = (ExpressionSyntax)expr.Parent;
-            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind);
+            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind());
             var parentInfo = model.GetSymbolInfo(parentExpr);
             Assert.NotNull(parentInfo);
             Assert.Null(parentInfo.Symbol);
@@ -1101,14 +1101,14 @@ class F
             var model = comp.GetSemanticModel(tree);
 
             var expr = GetExprSyntaxForBinding(GetExprSyntaxList(tree));
-            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind);
+            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind());
             var info = model.GetSymbolInfo(expr);
             Assert.NotNull(info);
             Assert.Equal(SymbolKind.Property, info.Symbol.Kind);
             Assert.Equal("E F.E { get; set; }", info.Symbol.ToTestDisplayString());
 
             var parentExpr = (ExpressionSyntax)expr.Parent;
-            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind);
+            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind());
             var parentInfo = model.GetSymbolInfo(parentExpr);
             Assert.NotNull(parentInfo);
             Assert.Null(parentInfo.Symbol);
@@ -1146,14 +1146,14 @@ class F
             var model = comp.GetSemanticModel(tree);
 
             var expr = GetExprSyntaxForBinding(GetExprSyntaxList(tree));
-            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind);
+            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind());
             var info = model.GetSymbolInfo(expr);
             Assert.NotNull(info);
             Assert.Equal(SymbolKind.Property, info.Symbol.Kind);
             Assert.Equal("E F.E { get; set; }", info.Symbol.ToTestDisplayString());
 
             var parentExpr = (ExpressionSyntax)expr.Parent;
-            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind);
+            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind());
             var parentInfo = model.GetSymbolInfo(parentExpr);
             Assert.NotNull(parentInfo);
             Assert.Null(parentInfo.Symbol);
@@ -1191,14 +1191,14 @@ class F
             var model = comp.GetSemanticModel(tree);
 
             var expr = GetExprSyntaxForBinding(GetExprSyntaxList(tree));
-            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind);
+            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind());
             var info = model.GetSymbolInfo(expr);
             Assert.NotNull(info);
             Assert.Equal(SymbolKind.Property, info.Symbol.Kind);
             Assert.Equal("E F.E { get; set; }", info.Symbol.ToTestDisplayString());
 
             var parentExpr = (ExpressionSyntax)expr.Parent;
-            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind);
+            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind());
             var parentInfo = model.GetSymbolInfo(parentExpr);
             Assert.NotNull(parentInfo);
             Assert.Null(parentInfo.Symbol);
@@ -1232,7 +1232,7 @@ class F
             var model = comp.GetSemanticModel(tree);
 
             var expr = GetExprSyntaxForBinding(GetExprSyntaxList(tree));
-            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind);
+            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind());
             var info = model.GetSymbolInfo(expr);
             Assert.NotNull(info);
             Assert.Null(info.Symbol);
@@ -1242,7 +1242,7 @@ class F
             Assert.Equal("event E F.E", candidate.ToTestDisplayString());
 
             var parentExpr = (ExpressionSyntax)expr.Parent;
-            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind);
+            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind());
             var parentInfo = model.GetSymbolInfo(parentExpr);
             Assert.NotNull(parentInfo);
             Assert.Equal(WellKnownMemberNames.DelegateInvokeName, parentInfo.Symbol.Name); // Succeeded even though the receiver has an error.
@@ -1269,14 +1269,14 @@ enum Color
             var model = comp.GetSemanticModel(tree);
 
             var expr = GetExprSyntaxForBinding(GetExprSyntaxList(tree));
-            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind);
+            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind());
             var info = model.GetSymbolInfo(expr);
             Assert.NotNull(info);
             Assert.Equal(SymbolKind.Field, info.Symbol.Kind);
             Assert.Equal("Color.Color", info.Symbol.ToTestDisplayString());
 
             var parentExpr = (ExpressionSyntax)expr.Parent;
-            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind);
+            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind());
             var parentInfo = model.GetSymbolInfo(parentExpr);
             Assert.NotNull(parentInfo);
             Assert.Null(parentInfo.Symbol);
@@ -1698,6 +1698,37 @@ namespace Foo
                 Diagnostic(ErrorCode.WRN_SameFullNameThisAggAgg, "A").WithArguments("", "Foo.A", refIdentity, "Foo.A").WithLocation(8, 39));
         }
 
+        [WorkItem(1095020, "DevDiv")]
+        [Fact]
+        public void RangeVariableColorColor()
+        {
+            const string source = @"
+using System.Linq;
+using System.Collections.Generic;
+ 
+class Program
+{
+    static void Main()
+    {
+        var q = from X X in new List<X> { new X() }
+                where X.Static() // error CS0176: Member 'X.Static()' cannot be accessed with an instance reference; qualify it with a type name instead
+                where X.Instance()
+                select 42;
+        System.Console.Write(q.Single());
+    }
+}
+  
+class X
+{
+    public static bool Static() { return true; }
+    public bool Instance() { return true; }
+}";
+
+            var comp = CreateCompilationWithMscorlibAndSystemCore(source, options: TestOptions.ReleaseExe);
+            comp.VerifyDiagnostics();
+
+            CompileAndVerify(comp, expectedOutput: "42");
+        }
 
         #endregion Regression cases
 
@@ -1718,14 +1749,14 @@ namespace Foo
             var model = comp.GetSemanticModel(tree);
 
             var expr = GetExprSyntaxForBinding(GetExprSyntaxList(tree));
-            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind);
+            Assert.Equal(SyntaxKind.IdentifierName, expr.Kind());
             var info = model.GetSymbolInfo(expr);
             Assert.NotNull(info);
             Assert.Equal(exprSymbolKind, info.Symbol.Kind);
             Assert.Equal(exprDisplayString, info.Symbol.ToTestDisplayString());
 
             var parentExpr = (ExpressionSyntax)expr.Parent;
-            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind);
+            Assert.Equal(SyntaxKind.SimpleMemberAccessExpression, parentExpr.Kind());
             var parentInfo = model.GetSymbolInfo(parentExpr);
             Assert.NotNull(parentInfo);
             Assert.Equal(parentSymbolKind, parentInfo.Symbol.Kind);

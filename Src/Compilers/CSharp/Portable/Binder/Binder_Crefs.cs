@@ -22,7 +22,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         private ImmutableArray<Symbol> BindCrefInternal(CrefSyntax syntax, out Symbol ambiguityWinner, DiagnosticBag diagnostics)
         {
-            switch (syntax.Kind)
+            switch (syntax.Kind())
             {
                 case SyntaxKind.TypeCref:
                     return BindTypeCref((TypeCrefSyntax)syntax, out ambiguityWinner, diagnostics);
@@ -34,7 +34,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.ConversionOperatorMemberCref:
                     return BindMemberCref((MemberCrefSyntax)syntax, containerOpt: null, ambiguityWinner: out ambiguityWinner, diagnostics: diagnostics);
                 default:
-                    Debug.Assert(false, "Unexpected cref kind " + syntax.Kind);
+                    Debug.Assert(false, "Unexpected cref kind " + syntax.Kind());
                     ambiguityWinner = null;
                     return ImmutableArray<Symbol>.Empty;
             }
@@ -112,7 +112,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
 
             ImmutableArray<Symbol> result;
-            switch (syntax.Kind)
+            switch (syntax.Kind())
             {
                 case SyntaxKind.NameMemberCref:
                     result = BindNameMemberCref((NameMemberCrefSyntax)syntax, containerOpt, out ambiguityWinner, diagnostics);
@@ -127,7 +127,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     result = BindConversionOperatorMemberCref((ConversionOperatorMemberCrefSyntax)syntax, containerOpt, out ambiguityWinner, diagnostics);
                     break;
                 default:
-                    Debug.Assert(false, "Unexpected member cref kind " + syntax.Kind);
+                    Debug.Assert(false, "Unexpected member cref kind " + syntax.Kind());
                     ambiguityWinner = null;
                     result = ImmutableArray<Symbol>.Empty;
                     break;
@@ -229,7 +229,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             // NOTE: Prefer binary to unary, unless there is exactly one parameter.
             // CONSIDER: we're following dev11 by never using a binary operator name if there's
             // exactly one parameter, but doing so would allow us to match single-parameter constructors.
-            SyntaxKind operatorTokenKind = syntax.OperatorToken.CSharpKind();
+            SyntaxKind operatorTokenKind = syntax.OperatorToken.Kind();
             string memberName = parameterListSyntax != null && parameterListSyntax.Parameters.Count == 1
                 ? null
                 : OperatorFacts.BinaryOperatorNameFromSyntaxKindIfAny(operatorTokenKind);
@@ -264,7 +264,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             const int arity = 0;
 
-            string memberName = syntax.ImplicitOrExplicitKeyword.CSharpKind() == SyntaxKind.ImplicitKeyword
+            string memberName = syntax.ImplicitOrExplicitKeyword.Kind() == SyntaxKind.ImplicitKeyword
                 ? WellKnownMemberNames.ImplicitConversionName
                 : WellKnownMemberNames.ExplicitConversionName;
 
@@ -869,7 +869,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             foreach (CrefParameterSyntax parameter in parameterListSyntax.Parameters)
             {
-                RefKind refKind = parameter.RefOrOutKeyword.CSharpKind().GetRefKind();
+                RefKind refKind = parameter.RefOrOutKeyword.Kind().GetRefKind();
 
                 TypeSymbol type = BindCrefParameterOrReturnType(parameter.Type, (MemberCrefSyntax)parameterListSyntax.Parent, diagnostics);
 
@@ -906,7 +906,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             {
                 if (HasNonObsoleteError(unusedDiagnostics))
                 {
-                    ErrorCode code = typeSyntax.Parent.Kind == SyntaxKind.ConversionOperatorMemberCref
+                    ErrorCode code = typeSyntax.Parent.Kind() == SyntaxKind.ConversionOperatorMemberCref
                         ? ErrorCode.WRN_BadXMLRefReturnType
                         : ErrorCode.WRN_BadXMLRefParamType;
                     CrefSyntax crefSyntax = GetRootCrefSyntax(memberCrefSyntax);

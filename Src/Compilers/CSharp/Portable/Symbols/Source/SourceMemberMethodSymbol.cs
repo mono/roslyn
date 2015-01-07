@@ -177,7 +177,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             var signatureBinder = withTypeParamsBinder.WithAdditionalFlagsAndContainingMemberOrLambda(BinderFlags.SuppressConstraintChecks, this);
 
             this.lazyParameters = ParameterHelpers.MakeParameters(signatureBinder, this, syntax.ParameterList, true, out arglistToken, diagnostics);
-            this.lazyIsVararg = (arglistToken.CSharpKind() == SyntaxKind.ArgListKeyword);
+            this.lazyIsVararg = (arglistToken.Kind() == SyntaxKind.ArgListKeyword);
             this.lazyReturnType = signatureBinder.BindType(syntax.ReturnType, diagnostics);
 
             if (this.lazyReturnType.IsRestrictedType())
@@ -605,8 +605,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             get
             {
                 return this.IsPartial
-                    && this.BodySyntax == null
-                    && !this.IsExpressionBodied;
+                    && this.BodySyntax == null;
             }
         }
 
@@ -618,8 +617,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             get
             {
                 return this.IsPartial
-                    && this.BodySyntax != null
-                    && !this.IsExpressionBodied;
+                    && this.BodySyntax != null;
             }
         }
 

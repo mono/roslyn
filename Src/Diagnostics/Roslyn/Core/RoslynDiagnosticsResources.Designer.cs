@@ -79,6 +79,33 @@ namespace Roslyn.Diagnostics.Analyzers {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to PreserveSigAttribute indicates that a method will return an HRESULT, rather than throwing an exception.  Therefore, it is important to consume the HRESULT returned by the method, so that errors can be detected.  Generally, this is done by calling Marshal.ThrowExceptionForHR..
+        /// </summary>
+        internal static string ConsumePreserveSigDescription {
+            get {
+                return ResourceManager.GetString("ConsumePreserveSigDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Consume the hresult returned by method &apos;{0}&apos; and call Marshal.ThrowExceptionForHR..
+        /// </summary>
+        internal static string ConsumePreserveSigMessage {
+            get {
+                return ResourceManager.GetString("ConsumePreserveSigMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Always consume the value returned by methods marked with PreserveSigAttribute.
+        /// </summary>
+        internal static string ConsumePreserveSigTitle {
+            get {
+                return ResourceManager.GetString("ConsumePreserveSigTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Accessing the Descriptor property of Diagnostic in compiler layer leads to unnecessary string allocations for fields of the descriptor that are not utilized in command line compilation. Hence, you should avoid accessing the Descriptor of the compiler diagnostics here. Instead you should directly access these properties off the Diagnostic type..
         /// </summary>
         internal static string DiagnosticDescriptorAccessDescription {
@@ -277,7 +304,7 @@ namespace Roslyn.Diagnostics.Analyzers {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Use cref tags without a type prefix..
+        ///   Looks up a localized string similar to Use of cref tags with prefixes should be avoided, since it prevents the compiler from verifying references and the IDE from updating references during refactorings. It is permissible to suppress this error at a single documentation site if the cref must use a prefix because the type being mentioned is not findable by the compiler. For example, if a cref is mentioning a special attribute in the full framework but you’re in a file that compiles against the portable framework, or if you want to reference a typ [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string UseProperCrefTagsDescription {
             get {
@@ -291,6 +318,15 @@ namespace Roslyn.Diagnostics.Analyzers {
         internal static string UseProperCrefTagsMessage {
             get {
                 return ResourceManager.GetString("UseProperCrefTagsMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Avoid using cref tags with a prefix.
+        /// </summary>
+        internal static string UseProperCrefTagsTitle {
+            get {
+                return ResourceManager.GetString("UseProperCrefTagsTitle", resourceCulture);
             }
         }
         

@@ -773,7 +773,7 @@ End Namespace
 
     <Fact>
     Public Sub IsPunctuation()
-        For Each item As SyntaxKind In {SyntaxKind.ExclamationToken, SyntaxKind.AtToken, SyntaxKind.CommaToken, SyntaxKind.HashToken, SyntaxKind.AmpersandToken, SyntaxKind.SingleQuoteToken, SyntaxKind.OpenParenToken, SyntaxKind.CloseParenToken, SyntaxKind.OpenBraceToken, SyntaxKind.CloseBraceToken, SyntaxKind.SemicolonToken, SyntaxKind.AsteriskToken, SyntaxKind.PlusToken, SyntaxKind.MinusToken, SyntaxKind.DotToken, SyntaxKind.SlashToken, SyntaxKind.ColonToken, SyntaxKind.LessThanToken, SyntaxKind.LessThanEqualsToken, SyntaxKind.LessThanGreaterThanToken, SyntaxKind.EqualsToken, SyntaxKind.GreaterThanToken, SyntaxKind.GreaterThanEqualsToken, SyntaxKind.BackslashToken, SyntaxKind.CaretToken, SyntaxKind.ColonEqualsToken, SyntaxKind.AmpersandEqualsToken, SyntaxKind.AsteriskEqualsToken, SyntaxKind.PlusEqualsToken, SyntaxKind.MinusEqualsToken, SyntaxKind.SlashEqualsToken, SyntaxKind.BackslashEqualsToken, SyntaxKind.CaretEqualsToken, SyntaxKind.LessThanLessThanToken, SyntaxKind.GreaterThanGreaterThanToken, SyntaxKind.LessThanLessThanEqualsToken, SyntaxKind.GreaterThanGreaterThanEqualsToken, SyntaxKind.QuestionToken, SyntaxKind.DoubleQuoteToken, SyntaxKind.StatementTerminatorToken, SyntaxKind.EndOfFileToken, SyntaxKind.EmptyToken, SyntaxKind.SlashGreaterThanToken, SyntaxKind.LessThanSlashToken, SyntaxKind.LessThanExclamationMinusMinusToken, SyntaxKind.MinusMinusGreaterThanToken, SyntaxKind.LessThanQuestionToken, SyntaxKind.QuestionGreaterThanToken, SyntaxKind.LessThanPercentEqualsToken, SyntaxKind.PercentGreaterThanToken, SyntaxKind.BeginCDataToken, SyntaxKind.EndCDataToken, SyntaxKind.EndOfXmlToken}
+        For Each item As SyntaxKind In {SyntaxKind.ExclamationToken, SyntaxKind.AtToken, SyntaxKind.CommaToken, SyntaxKind.HashToken, SyntaxKind.AmpersandToken, SyntaxKind.SingleQuoteToken, SyntaxKind.OpenParenToken, SyntaxKind.CloseParenToken, SyntaxKind.OpenBraceToken, SyntaxKind.CloseBraceToken, SyntaxKind.SemicolonToken, SyntaxKind.AsteriskToken, SyntaxKind.PlusToken, SyntaxKind.MinusToken, SyntaxKind.DotToken, SyntaxKind.SlashToken, SyntaxKind.ColonToken, SyntaxKind.LessThanToken, SyntaxKind.LessThanEqualsToken, SyntaxKind.LessThanGreaterThanToken, SyntaxKind.EqualsToken, SyntaxKind.GreaterThanToken, SyntaxKind.GreaterThanEqualsToken, SyntaxKind.BackslashToken, SyntaxKind.CaretToken, SyntaxKind.ColonEqualsToken, SyntaxKind.AmpersandEqualsToken, SyntaxKind.AsteriskEqualsToken, SyntaxKind.PlusEqualsToken, SyntaxKind.MinusEqualsToken, SyntaxKind.SlashEqualsToken, SyntaxKind.BackslashEqualsToken, SyntaxKind.CaretEqualsToken, SyntaxKind.LessThanLessThanToken, SyntaxKind.GreaterThanGreaterThanToken, SyntaxKind.LessThanLessThanEqualsToken, SyntaxKind.GreaterThanGreaterThanEqualsToken, SyntaxKind.QuestionToken, SyntaxKind.DoubleQuoteToken, SyntaxKind.StatementTerminatorToken, SyntaxKind.EndOfFileToken, SyntaxKind.EmptyToken, SyntaxKind.SlashGreaterThanToken, SyntaxKind.LessThanSlashToken, SyntaxKind.LessThanExclamationMinusMinusToken, SyntaxKind.MinusMinusGreaterThanToken, SyntaxKind.LessThanQuestionToken, SyntaxKind.QuestionGreaterThanToken, SyntaxKind.LessThanPercentEqualsToken, SyntaxKind.PercentGreaterThanToken, SyntaxKind.BeginCDataToken, SyntaxKind.EndCDataToken, SyntaxKind.EndOfXmlToken, SyntaxKind.DollarSignDoubleQuoteToken, SyntaxKind.EndOfInterpolatedStringToken}
             Assert.True(SyntaxFacts.IsPunctuation(item))
         Next
         Assert.False(SyntaxFacts.IsPunctuation(SyntaxKind.ExitKeyword))
@@ -784,6 +784,8 @@ End Namespace
     Public Sub IsPunctuationOrKeyword()
         Assert.True(SyntaxFacts.IsPunctuationOrKeyword(SyntaxKind.AddHandlerKeyword))
         Assert.True(SyntaxFacts.IsPunctuationOrKeyword(SyntaxKind.EndOfXmlToken))
+        Assert.True(SyntaxFacts.IsPunctuationOrKeyword(SyntaxKind.DollarSignDoubleQuoteToken))
+        Assert.True(SyntaxFacts.IsPunctuationOrKeyword(SyntaxKind.EndOfInterpolatedStringToken))
         Assert.False(SyntaxFacts.IsPunctuationOrKeyword(SyntaxKind.XmlNameToken))
         Assert.False(SyntaxFacts.IsPunctuationOrKeyword(SyntaxKind.ImportAliasClause))
         Assert.False(SyntaxFacts.IsPunctuationOrKeyword(SyntaxKind.ForStatement))
@@ -1026,7 +1028,7 @@ End Namespace
                 nextToken = enumerator.Current
 
                 If currentToken = currentToken.Parent.AncestorsAndSelf.OfType(Of StatementSyntax).First.GetLastToken() OrElse
-                   nextToken.VBKind = SyntaxKind.EndOfFileToken Then
+                   nextToken.Kind = SyntaxKind.EndOfFileToken Then
                     builder.Append(currentToken.ToFullString())
                     Continue Do
                 End If
@@ -1044,7 +1046,7 @@ End Namespace
 
                     For Each trivia In currentToken.TrailingTrivia
 
-                        If trivia.VBKind = SyntaxKind.LineContinuationTrivia Then
+                        If trivia.Kind = SyntaxKind.LineContinuationTrivia Then
 
                             If SyntaxFacts.AllowsTrailingImplicitLineContinuation(currentToken) OrElse
                                SyntaxFacts.AllowsLeadingImplicitLineContinuation(nextToken) Then
@@ -1057,7 +1059,7 @@ End Namespace
                             End If
 
                             hasContinuation = True
-                        ElseIf trivia.VBKind = SyntaxKind.EndOfLineTrivia Then
+                        ElseIf trivia.Kind = SyntaxKind.EndOfLineTrivia Then
                             If Not hasContinuation Then
                                 hasContinuation = True
                                 builder.Append(trivia.ToFullString())
@@ -1070,7 +1072,7 @@ End Namespace
 
                     If Not hasContinuation AndAlso
                        currentToken <> currentToken.Parent.AncestorsAndSelf.OfType(Of StatementSyntax).First.GetLastToken() AndAlso
-                       nextToken.VBKind <> SyntaxKind.EndOfFileToken Then
+                       nextToken.Kind <> SyntaxKind.EndOfFileToken Then
 
                         If SyntaxFacts.AllowsTrailingImplicitLineContinuation(currentToken) OrElse
                            SyntaxFacts.AllowsLeadingImplicitLineContinuation(nextToken) Then
@@ -1078,10 +1080,10 @@ End Namespace
                             builder.Append(vbCrLf)
 
                             ' These tokens appear in XML literals, explicit line continuation is illegal in these contexts.
-                        ElseIf currentToken.VBKind <> SyntaxKind.XmlKeyword AndAlso
-                               currentToken.VBKind <> SyntaxKind.XmlNameToken AndAlso
-                               currentToken.VBKind <> SyntaxKind.DoubleQuoteToken AndAlso
-                               currentToken.VBKind <> SyntaxKind.XmlTextLiteralToken Then
+                        ElseIf currentToken.Kind <> SyntaxKind.XmlKeyword AndAlso
+                               currentToken.Kind <> SyntaxKind.XmlNameToken AndAlso
+                               currentToken.Kind <> SyntaxKind.DoubleQuoteToken AndAlso
+                               currentToken.Kind <> SyntaxKind.XmlTextLiteralToken Then
 
                             builder.Append(explicitLineContinuation)
                         End If
@@ -1123,17 +1125,17 @@ End Namespace
                 ' Tokens for which adding trailing newline does nothing or
                 ' creates a new text which could parse differently but valid code.
                 If currentToken.TrailingTrivia.Any(Function(t)
-                                                       Return t.VBKind = SyntaxKind.ColonTrivia OrElse t.VBKind = SyntaxKind.EndOfLineTrivia
+                                                       Return t.Kind = SyntaxKind.ColonTrivia OrElse t.Kind = SyntaxKind.EndOfLineTrivia
                                                    End Function) OrElse
-                   currentToken.VBKind = SyntaxKind.ColonToken OrElse
-                   currentToken.VBKind = SyntaxKind.NextKeyword OrElse
-                   nextToken.VBKind = SyntaxKind.DotToken OrElse
-                   nextToken.VBKind = SyntaxKind.ColonToken OrElse
-                   nextToken.VBKind = SyntaxKind.EndOfFileToken Then
+                   currentToken.Kind = SyntaxKind.ColonToken OrElse
+                   currentToken.Kind = SyntaxKind.NextKeyword OrElse
+                   nextToken.Kind = SyntaxKind.DotToken OrElse
+                   nextToken.Kind = SyntaxKind.ColonToken OrElse
+                   nextToken.Kind = SyntaxKind.EndOfFileToken Then
                     Continue Do
                 End If
 
-                Dim kindAndParentKind = Tuple.Create(currentToken.VBKind(), currentToken.Parent.VBKind())
+                Dim kindAndParentKind = Tuple.Create(currentToken.Kind(), currentToken.Parent.Kind())
 
                 If checked.Contains(kindAndParentKind) Then Continue Do
 
@@ -1141,13 +1143,13 @@ End Namespace
                         SyntaxFacts.AllowsLeadingImplicitLineContinuation(nextToken)) Then
 
                     Dim newTrailing = Aggregate trivia In currentToken.TrailingTrivia
-                                      Where trivia.VBKind <> SyntaxKind.EndOfLineTrivia
+                                      Where trivia.Kind <> SyntaxKind.EndOfLineTrivia
                                       Into ToList()
 
                     newTrailing.Add(SyntaxFactory.EndOfLineTrivia(vbCrLf))
 
                     Assert.True(SyntaxFactory.ParseCompilationUnit(cu.ReplaceToken(currentToken, currentToken.WithTrailingTrivia(newTrailing)).ToFullString()).ContainsDiagnostics,
-                                "Expected diagnostic when adding line continuation to " & currentToken.VBKind.ToString() & " in " & currentToken.Parent.ToString() & ".")
+                                "Expected diagnostic when adding line continuation to " & currentToken.Kind.ToString() & " in " & currentToken.Parent.ToString() & ".")
 
                     checked.Add(kindAndParentKind)
                 End If
@@ -1174,7 +1176,7 @@ End Module
         Dim tokens = tree.GetRoot().DescendantTokens().ToArray()
         Dim index = 0
         For Each token In tokens
-            If token.VBKind = SyntaxKind.ThenKeyword Then
+            If token.Kind = SyntaxKind.ThenKeyword Then
                 Dim prevToken = tokens(index - 1)
                 Dim nextToken = tokens(index)
                 Assert.False(SyntaxFacts.AllowsTrailingImplicitLineContinuation(prevToken))

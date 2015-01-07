@@ -3,12 +3,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis.CodeGeneration;
-using Microsoft.CodeAnalysis.CodeGeneration.CodeGenerationHelpers;
-using Microsoft.CodeAnalysis.CSharp.CodeGeneration.CSharpCodeGenerationHelpers;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Roslyn.Utilities;
+
+using static Microsoft.CodeAnalysis.CodeGeneration.CodeGenerationHelpers;
+using static Microsoft.CodeAnalysis.CSharp.CodeGeneration.CSharpCodeGenerationHelpers;
 
 namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
 {
@@ -18,7 +19,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
             SyntaxList<MemberDeclarationSyntax> members,
             MemberDeclarationSyntax eventDeclaration)
         {
-            if (eventDeclaration.CSharpKind() == SyntaxKind.EventFieldDeclaration)
+            if (eventDeclaration.Kind() == SyntaxKind.EventFieldDeclaration)
             {
                 // Field style events go after the last field event, or after the last field.
                 var lastEvent = members.LastOrDefault(m => m is EventFieldDeclarationSyntax);
@@ -26,7 +27,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
                 return lastEvent ?? LastField(members);
             }
 
-            if (eventDeclaration.CSharpKind() == SyntaxKind.EventDeclaration)
+            if (eventDeclaration.Kind() == SyntaxKind.EventDeclaration)
             {
                 // Property style events go after existing events, then after existing constructors.
                 var lastEvent = members.LastOrDefault(m => m is EventDeclarationSyntax);
@@ -43,7 +44,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
         {
             // If it's a field style event, then it goes before everything else if we don't have any
             // existing fields/events.
-            if (eventDeclaration.CSharpKind() == SyntaxKind.FieldDeclaration)
+            if (eventDeclaration.Kind() == SyntaxKind.FieldDeclaration)
             {
                 return members.FirstOrDefault();
             }

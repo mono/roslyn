@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using System;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -26,6 +27,8 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         public abstract Conversion GetMethodGroupConversion(BoundMethodGroup source, TypeSymbol destination, ref HashSet<DiagnosticInfo> useSiteDiagnostics);
 
+        protected abstract Conversion GetInterpolatedStringConversion(BoundInterpolatedString source, TypeSymbol destination, ref HashSet<DiagnosticInfo> useSiteDiagnostics);
+
         /// <summary>
         /// Attempt a quick classification of builtin conversions.  As result of "no conversion"
         /// means that there is no built-in conversion, though there still may be a user-defined
@@ -36,7 +39,6 @@ namespace Microsoft.CodeAnalysis.CSharp
             ConversionKind convKind = ConversionEasyOut.ClassifyConversion(source, target);
             return new Conversion(convKind);
         }
-
 
         /// <summary>
         /// IsBaseInterface returns true if baseType is on the base interface list of derivedType or

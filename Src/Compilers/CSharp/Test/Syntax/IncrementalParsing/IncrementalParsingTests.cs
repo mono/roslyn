@@ -76,7 +76,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             int diffI = 0;
             foreach (var kind in kinds)
             {
-                if (diffI < diffs.Length && diffs[diffI].CSharpKind() == kind)
+                if (diffI < diffs.Length && diffs[diffI].IsKind(kind))
                 {
                     diffI++;
                 }
@@ -321,10 +321,10 @@ class C { void c() { } }
             Assert.Equal(0, oldTree.GetCompilationUnitRoot().Errors().Length);
             var oldDirectives = oldTree.GetCompilationUnitRoot().GetDirectives();
             Assert.Equal(4, oldDirectives.Count);
-            Assert.Equal(SyntaxKind.IfDirectiveTrivia, oldDirectives[0].Kind);
-            Assert.Equal(SyntaxKind.RegionDirectiveTrivia, oldDirectives[1].Kind);
-            Assert.Equal(SyntaxKind.EndRegionDirectiveTrivia, oldDirectives[2].Kind);
-            Assert.Equal(SyntaxKind.EndIfDirectiveTrivia, oldDirectives[3].Kind);
+            Assert.Equal(SyntaxKind.IfDirectiveTrivia, oldDirectives[0].Kind());
+            Assert.Equal(SyntaxKind.RegionDirectiveTrivia, oldDirectives[1].Kind());
+            Assert.Equal(SyntaxKind.EndRegionDirectiveTrivia, oldDirectives[2].Kind());
+            Assert.Equal(SyntaxKind.EndIfDirectiveTrivia, oldDirectives[3].Kind());
 
             var newTree = oldTree.WithRemoveFirst("#endregion");
             var errors = newTree.GetCompilationUnitRoot().Errors();
@@ -333,9 +333,9 @@ class C { void c() { } }
             Assert.Equal((int)ErrorCode.ERR_EndRegionDirectiveExpected, errors[1].Code);
             var newDirectives = newTree.GetCompilationUnitRoot().GetDirectives();
             Assert.Equal(3, newDirectives.Count);
-            Assert.Equal(SyntaxKind.IfDirectiveTrivia, newDirectives[0].Kind);
-            Assert.Equal(SyntaxKind.RegionDirectiveTrivia, newDirectives[1].Kind);
-            Assert.Equal(SyntaxKind.BadDirectiveTrivia, newDirectives[2].Kind);
+            Assert.Equal(SyntaxKind.IfDirectiveTrivia, newDirectives[0].Kind());
+            Assert.Equal(SyntaxKind.RegionDirectiveTrivia, newDirectives[1].Kind());
+            Assert.Equal(SyntaxKind.BadDirectiveTrivia, newDirectives[2].Kind());
 
             var diffs = SyntaxDifferences.GetRebuiltNodes(oldTree, newTree);
             TestDiffsInOrder(diffs,
@@ -367,19 +367,19 @@ class C { void c() { } }
             Assert.Equal((int)ErrorCode.ERR_EndRegionDirectiveExpected, errors[1].Code);
             var oldDirectives = oldTree.GetCompilationUnitRoot().GetDirectives();
             Assert.Equal(3, oldDirectives.Count);
-            Assert.Equal(SyntaxKind.IfDirectiveTrivia, oldDirectives[0].Kind);
-            Assert.Equal(SyntaxKind.RegionDirectiveTrivia, oldDirectives[1].Kind);
-            Assert.Equal(SyntaxKind.BadDirectiveTrivia, oldDirectives[2].Kind);
+            Assert.Equal(SyntaxKind.IfDirectiveTrivia, oldDirectives[0].Kind());
+            Assert.Equal(SyntaxKind.RegionDirectiveTrivia, oldDirectives[1].Kind());
+            Assert.Equal(SyntaxKind.BadDirectiveTrivia, oldDirectives[2].Kind());
 
             var newTree = oldTree.WithInsertBefore("class C", "#endregion\r\n");
             errors = newTree.GetCompilationUnitRoot().Errors();
             Assert.Equal(0, errors.Length);
             var newDirectives = newTree.GetCompilationUnitRoot().GetDirectives();
             Assert.Equal(4, newDirectives.Count);
-            Assert.Equal(SyntaxKind.IfDirectiveTrivia, newDirectives[0].Kind);
-            Assert.Equal(SyntaxKind.RegionDirectiveTrivia, newDirectives[1].Kind);
-            Assert.Equal(SyntaxKind.EndRegionDirectiveTrivia, newDirectives[2].Kind);
-            Assert.Equal(SyntaxKind.EndIfDirectiveTrivia, newDirectives[3].Kind);
+            Assert.Equal(SyntaxKind.IfDirectiveTrivia, newDirectives[0].Kind());
+            Assert.Equal(SyntaxKind.RegionDirectiveTrivia, newDirectives[1].Kind());
+            Assert.Equal(SyntaxKind.EndRegionDirectiveTrivia, newDirectives[2].Kind());
+            Assert.Equal(SyntaxKind.EndIfDirectiveTrivia, newDirectives[3].Kind());
 
             var diffs = SyntaxDifferences.GetRebuiltNodes(oldTree, newTree);
             TestDiffsInOrder(diffs,
@@ -1240,7 +1240,7 @@ class Test
             // Verify if the children of the trees are of the same kind
             for (int i = 0; i < parsedTree.GetCompilationUnitRoot().ChildNodesAndTokens().Count; i++)
             {
-                Assert.Equal(parsedTree.GetCompilationUnitRoot().ChildNodesAndTokens()[i].CSharpKind(), incrementalTree.GetCompilationUnitRoot().ChildNodesAndTokens()[i].CSharpKind());
+                Assert.Equal(parsedTree.GetCompilationUnitRoot().ChildNodesAndTokens()[i].Kind(), incrementalTree.GetCompilationUnitRoot().ChildNodesAndTokens()[i].Kind());
             }
         }
 
@@ -2541,7 +2541,7 @@ class D { }
             {
                 var tempTree = SyntaxFactory.ParseSyntaxTree(text);
                 var tempRoot = tempTree.GetRoot();
-                var tempToken = tempRoot.DescendantTokens().First(t => t.CSharpKind() == SyntaxKind.IdentifierToken);
+                var tempToken = tempRoot.DescendantTokens().First(t => t.Kind() == SyntaxKind.IdentifierToken);
                 var oldRoot = tempRoot.ReplaceToken(tempToken, tempToken.WithAdditionalAnnotations(new SyntaxAnnotation()));
                 Assert.True(oldRoot.ContainsAnnotations, "Should contain annotations.");
                 Assert.Equal(text, oldRoot.ToFullString());
@@ -2687,7 +2687,7 @@ class D { }
 
         private static void CompareTreeEquivalence(SyntaxNodeOrToken parsedTreeNode, SyntaxNodeOrToken incrementalTreeNode)
         {
-            Assert.Equal(parsedTreeNode.CSharpKind(), incrementalTreeNode.CSharpKind());
+            Assert.Equal(parsedTreeNode.Kind(), incrementalTreeNode.Kind());
 
             Assert.Equal(parsedTreeNode.ChildNodesAndTokens().Count, incrementalTreeNode.ChildNodesAndTokens().Count);
 

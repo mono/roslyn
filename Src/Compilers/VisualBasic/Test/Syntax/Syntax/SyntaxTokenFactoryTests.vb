@@ -110,12 +110,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
             For k = CInt(SyntaxKind.None) To CInt(SyntaxKind.BadDirectiveTrivia)
 
                 ' keywords or punctuation
-                If k >= CInt(SyntaxKind.AddHandlerKeyword) AndAlso k <= CInt(SyntaxKind.YieldKeyword) OrElse
-                    k >= CInt(SyntaxKind.ExclamationToken) AndAlso k <= CInt(SyntaxKind.EndOfXmlToken) Then
+                If (k >= CInt(SyntaxKind.AddHandlerKeyword) AndAlso k <= CInt(SyntaxKind.YieldKeyword)) OrElse
+                   (k >= CInt(SyntaxKind.ExclamationToken) AndAlso k <= CInt(SyntaxKind.EndOfXmlToken)) OrElse
+                   k = SyntaxKind.NameOfKeyword OrElse
+                   k = SyntaxKind.DollarSignDoubleQuoteToken OrElse
+                   k = SyntaxKind.EndOfInterpolatedStringToken _
+                Then
 
                     token = SyntaxFactory.Token(CType(k, SyntaxKind))
                     ' no exception during execution
-                    Assert.Equal(token.VBKind, CType(k, SyntaxKind))
+                    Assert.Equal(token.Kind, CType(k, SyntaxKind))
 
                     token = SyntaxFactory.Token(CType(k, SyntaxKind), text:=Nothing)
                     ' check default text is there
@@ -147,7 +151,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
 
             ' get whitespace trivia inside structured directive trivia
             Dim deepTrivia = From d In expr.GetDirectives().SelectMany(Function(d)
-                                                                           Return d.DescendantTrivia.Where(Function(tr) tr.VBKind = SyntaxKind.WhitespaceTrivia)
+                                                                           Return d.DescendantTrivia.Where(Function(tr) tr.Kind = SyntaxKind.WhitespaceTrivia)
                                                                        End Function).ToList
 
 
@@ -181,7 +185,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
             Dim expr = SyntaxFactory.ParseExpression("a + b")
             Dim twoSpaces = SyntaxFactory.Whitespace("  ")
             Dim trivia = (From tr In expr.DescendantTrivia()
-                         Where tr.VBKind = SyntaxKind.WhitespaceTrivia
+                         Where tr.Kind = SyntaxKind.WhitespaceTrivia
                          Select tr).ToList
 
             Dim replaced As ExpressionSyntax = expr.ReplaceTrivia(trivia, Function(tr, tr2) twoSpaces)
@@ -194,7 +198,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
             Dim expr = SyntaxFactory.ParseExpression("a + (c - b)")
             Dim twoSpaces = SyntaxFactory.Whitespace("  ")
             Dim trivia = (From tr In expr.DescendantTrivia()
-                         Where tr.VBKind = SyntaxKind.WhitespaceTrivia
+                         Where tr.Kind = SyntaxKind.WhitespaceTrivia
                          Select tr).ToList
 
             Dim replaced As ExpressionSyntax = expr.ReplaceTrivia(trivia, Function(tr, tr2) twoSpaces)
@@ -214,7 +218,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
         <Fact()>
         Public Sub TestReplaceSingleTriviaInToken()
             Dim id = SyntaxFactory.ParseToken("a ")
-            Assert.Equal(SyntaxKind.IdentifierToken, id.VBKind)
+            Assert.Equal(SyntaxKind.IdentifierToken, id.Kind)
             Dim trivia = id.TrailingTrivia(0)
             Assert.Equal(1, trivia.Width)
             Dim id2 = id.ReplaceTrivia(trivia, SyntaxFactory.Whitespace("  "))

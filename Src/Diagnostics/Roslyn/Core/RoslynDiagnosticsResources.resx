@@ -178,7 +178,7 @@
     <value>Do not directly invoke the property '{0}', instead use '{0}NoUseSiteDiagnostics'.</value>
   </data>
   <data name="UseProperCrefTagsDescription" xml:space="preserve">
-    <value>Use cref tags without a type prefix.</value>
+    <value>Use of cref tags with prefixes should be avoided, since it prevents the compiler from verifying references and the IDE from updating references during refactorings. It is permissible to suppress this error at a single documentation site if the cref must use a prefix because the type being mentioned is not findable by the compiler. For example, if a cref is mentioning a special attribute in the full framework but you’re in a file that compiles against the portable framework, or if you want to reference a type at higher layer of Roslyn, you should suppress the error. You should not suppress the error just because you want to take a shortcut and avoid using the full syntax.</value>
   </data>
   <data name="UseProperCrefTagsMessage" xml:space="preserve">
     <value>cref tag has prefix '{0}', which should be removed unless the type or member cannot be accessed.</value>
@@ -206,5 +206,17 @@
   </data>
   <data name="DoNotUseLinqOnIndexableCollectionDescription" xml:space="preserve">
     <value>This collection is directly indexable.  Going through LINQ here causes unnecessary allocations and CPU work.</value>
+  </data>
+  <data name="UseProperCrefTagsTitle" xml:space="preserve">
+    <value>Avoid using cref tags with a prefix</value>
+  </data>
+  <data name="ConsumePreserveSigTitle" xml:space="preserve">
+    <value>Always consume the value returned by methods marked with PreserveSigAttribute</value>
+  </data>
+  <data name="ConsumePreserveSigMessage" xml:space="preserve">
+    <value>Consume the hresult returned by method '{0}' and call Marshal.ThrowExceptionForHR.</value>
+  </data>
+  <data name="ConsumePreserveSigDescription" xml:space="preserve">
+    <value>PreserveSigAttribute indicates that a method will return an HRESULT, rather than throwing an exception.  Therefore, it is important to consume the HRESULT returned by the method, so that errors can be detected.  Generally, this is done by calling Marshal.ThrowExceptionForHR.</value>
   </data>
 </root>

@@ -303,7 +303,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 if (location.IsInSource)
                 {
                     SyntaxToken token = (SyntaxToken)location.SourceTree.GetRoot().FindToken(location.SourceSpan.Start);
-                    if (token.CSharpKind() != SyntaxKind.None)
+                    if (token.Kind() != SyntaxKind.None)
                     {
                         CSharpSyntaxNode node = token.Parent.FirstAncestorOrSelf<TNode>();
                         if (node != null)
@@ -739,7 +739,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         internal string GetDebuggerDisplay()
         {
-            return string.Format("{0} {1}", this.Kind, this.ToDisplayString(SymbolDisplayFormat.TestFormat));
+            return $"{this.Kind} {this.ToDisplayString(SymbolDisplayFormat.TestFormat)}";
         }
 
         internal void AddSemanticDiagnostics(DiagnosticBag diagnostics)

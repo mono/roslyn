@@ -760,7 +760,11 @@ public class Program
     private static void Use(object o) {}
 }";
             var compilation = CreateCompilationWithMscorlibAndSystemCore(source);
-            compilation.VerifyDiagnostics();
+            compilation.VerifyDiagnostics(
+                // (13,20): error CS8093: Extension method groups are not allowed as an argument to 'nameof'.
+                //         Use(nameof(a.Extension));
+                Diagnostic(ErrorCode.ERR_NameofExtensionMethod, "a.Extension").WithLocation(13, 20)
+                );
             var tree = compilation.SyntaxTrees[0];
             var model = compilation.GetSemanticModel(tree);
             var node = tree.GetRoot().DescendantNodes().Where(n => n.ToString() == "a.Extension").OfType<ExpressionSyntax>().First();
@@ -803,7 +807,11 @@ namespace N1
     }
 }";
             var compilation = CreateCompilationWithMscorlibAndSystemCore(source);
-            compilation.VerifyDiagnostics();
+            compilation.VerifyDiagnostics(
+                // (22,28): error CS8093: Extension method groups are not allowed as an argument to 'nameof'.
+                //                 Use(nameof(a.Extension));
+                Diagnostic(ErrorCode.ERR_NameofExtensionMethod, "a.Extension").WithLocation(22, 28)
+                );
             var tree = compilation.SyntaxTrees[0];
             var model = compilation.GetSemanticModel(tree);
             var node = tree.GetRoot().DescendantNodes().Where(n => n.ToString() == "a.Extension").OfType<ExpressionSyntax>().First();
@@ -918,7 +926,11 @@ namespace N1
     }
 }";
             var compilation = CreateCompilationWithMscorlibAndSystemCore(source);
-            compilation.VerifyDiagnostics();
+            compilation.VerifyDiagnostics(
+                // (21,28): error CS8093: Extension method groups are not allowed as an argument to 'nameof'.
+                //                 Use(nameof(A.Extension));
+                Diagnostic(ErrorCode.ERR_NameofExtensionMethod, "A.Extension").WithLocation(21, 28)
+                );
             var tree = compilation.SyntaxTrees[0];
             var model = compilation.GetSemanticModel(tree);
             var node = tree.GetRoot().DescendantNodes().Where(n => n.ToString() == "A.Extension").OfType<ExpressionSyntax>().First();
@@ -1096,6 +1108,37 @@ public class Program
                 //     public string S = nameof(I3.Property);
                 Diagnostic(ErrorCode.ERR_AmbigMember, "Property").WithArguments("I1.Property", "I2.Property").WithLocation(13, 33)
                 );
+        }
+
+        [Fact]
+        [WorkItem(1077150, "DevDiv")]
+        public void SymbolInfoForMethodGroup06()
+        {
+            var source =
+@"public class A
+{
+}
+public static class X1
+{
+    public static string Extension(this A a) { return null; }
+}
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        Use(nameof(X1.Extension));
+    }
+    private static void Use(object o) {}
+}";
+            var compilation = CreateCompilationWithMscorlibAndSystemCore(source);
+            compilation.VerifyDiagnostics();
+            var tree = compilation.SyntaxTrees[0];
+            var model = compilation.GetSemanticModel(tree);
+            var node = tree.GetRoot().DescendantNodes().Where(n => n.ToString() == "X1.Extension").OfType<ExpressionSyntax>().First();
+            var symbolInfo = model.GetSymbolInfo(node, default(CancellationToken));
+            Assert.Null(symbolInfo.Symbol);
+            Assert.Equal(CandidateReason.MemberGroup, symbolInfo.CandidateReason);
+            Assert.Equal(1, symbolInfo.CandidateSymbols.Length);
         }
 
     }

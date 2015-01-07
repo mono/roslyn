@@ -3800,7 +3800,7 @@ unsafe class C
             var model = compilation.GetSemanticModel(tree);
 
             var syntax = tree.GetCompilationUnitRoot().DescendantNodes().OfType<PrefixUnaryExpressionSyntax>().Single();
-            Assert.Equal(SyntaxKind.AddressOfExpression, syntax.Kind);
+            Assert.Equal(SyntaxKind.AddressOfExpression, syntax.Kind());
 
             var symbolInfo = model.GetSymbolInfo(syntax);
             Assert.Null(symbolInfo.Symbol);
@@ -3837,7 +3837,7 @@ unsafe struct S
             var model = compilation.GetSemanticModel(tree);
 
             var syntax = tree.GetCompilationUnitRoot().DescendantNodes().OfType<FieldDeclarationSyntax>().Single();
-            Assert.Equal(SyntaxKind.FieldDeclaration, syntax.Kind);
+            Assert.Equal(SyntaxKind.FieldDeclaration, syntax.Kind());
 
             model.GetSpeculativeTypeInfo(syntax.SpanStart, SyntaxFactory.ParseTypeName("S*"), SpeculativeBindingOption.BindAsTypeOrNamespace);
 
@@ -3866,7 +3866,7 @@ unsafe class C
             var model = compilation.GetSemanticModel(tree);
 
             var syntax = tree.GetCompilationUnitRoot().DescendantNodes().OfType<PrefixUnaryExpressionSyntax>().Single();
-            Assert.Equal(SyntaxKind.AddressOfExpression, syntax.Kind);
+            Assert.Equal(SyntaxKind.AddressOfExpression, syntax.Kind());
             Assert.Equal("&()", syntax.ToString()); //NOTE: not actually lambda
 
             var symbolInfo = model.GetSymbolInfo(syntax);
@@ -3904,7 +3904,7 @@ unsafe class C
             var model = compilation.GetSemanticModel(tree);
 
             var syntax = tree.GetCompilationUnitRoot().DescendantNodes().OfType<PrefixUnaryExpressionSyntax>().Single();
-            Assert.Equal(SyntaxKind.AddressOfExpression, syntax.Kind);
+            Assert.Equal(SyntaxKind.AddressOfExpression, syntax.Kind());
             Assert.Equal("&(()=>5)", syntax.ToString());
 
             var symbolInfo = model.GetSymbolInfo(syntax);
@@ -3942,7 +3942,7 @@ unsafe class C
             var model = compilation.GetSemanticModel(tree);
 
             var syntax = tree.GetCompilationUnitRoot().DescendantNodes().OfType<PrefixUnaryExpressionSyntax>().Single();
-            Assert.Equal(SyntaxKind.AddressOfExpression, syntax.Kind);
+            Assert.Equal(SyntaxKind.AddressOfExpression, syntax.Kind());
 
             var symbolInfo = model.GetSymbolInfo(syntax);
             Assert.Null(symbolInfo.Symbol);
@@ -4078,7 +4078,7 @@ unsafe class C
             var model = compilation.GetSemanticModel(tree);
 
             var syntax = tree.GetCompilationUnitRoot().DescendantNodes().OfType<PrefixUnaryExpressionSyntax>().Last();
-            Assert.Equal(SyntaxKind.PointerIndirectionExpression, syntax.Kind);
+            Assert.Equal(SyntaxKind.PointerIndirectionExpression, syntax.Kind());
 
             var symbolInfo = model.GetSymbolInfo(syntax);
             Assert.Null(symbolInfo.Symbol);
@@ -4388,7 +4388,7 @@ struct S
             var model = compilation.GetSemanticModel(tree);
 
             var syntax = tree.GetCompilationUnitRoot().DescendantNodes().OfType<MemberAccessExpressionSyntax>().Single();
-            Assert.Equal(SyntaxKind.PointerMemberAccessExpression, syntax.Kind);
+            Assert.Equal(SyntaxKind.PointerMemberAccessExpression, syntax.Kind());
 
             var receiverSyntax = syntax.Expression;
             var methodGroupSyntax = syntax;
@@ -4456,7 +4456,7 @@ struct S
             var model = compilation.GetSemanticModel(tree);
 
             var syntax = tree.GetCompilationUnitRoot().DescendantNodes().OfType<MemberAccessExpressionSyntax>().Single();
-            Assert.Equal(SyntaxKind.PointerMemberAccessExpression, syntax.Kind);
+            Assert.Equal(SyntaxKind.PointerMemberAccessExpression, syntax.Kind());
 
             var receiverSyntax = syntax.Expression;
             var methodGroupSyntax = syntax;
@@ -4640,7 +4640,7 @@ unsafe class C
             var model = compilation.GetSemanticModel(tree);
 
             var syntax = tree.GetCompilationUnitRoot().DescendantNodes().OfType<ElementAccessExpressionSyntax>().Single();
-            Assert.Equal(SyntaxKind.ElementAccessExpression, syntax.Kind);
+            Assert.Equal(SyntaxKind.ElementAccessExpression, syntax.Kind());
 
             var receiverSyntax = syntax.Expression;
             var indexSyntax = syntax.ArgumentList.Arguments.Single().Expression;
@@ -4709,7 +4709,7 @@ unsafe struct S
 
             compilation.VerifyDiagnostics();
 
-            foreach (var nullSyntax in tree.GetCompilationUnitRoot().DescendantTokens().Where(token => token.CSharpKind() == SyntaxKind.NullKeyword))
+            foreach (var nullSyntax in tree.GetCompilationUnitRoot().DescendantTokens().Where(token => token.IsKind(SyntaxKind.NullKeyword)))
             {
                 var node = (ExpressionSyntax)nullSyntax.Parent;
                 var typeInfo = model.GetTypeInfo(node);
@@ -4745,7 +4745,7 @@ unsafe struct S
 
             compilation.VerifyDiagnostics();
 
-            foreach (var declarationSyntax in tree.GetCompilationUnitRoot().DescendantTokens().OfType<VariableDeclarationSyntax>().Where(syntax => syntax.GetFirstToken().CSharpKind() == SyntaxKind.VoidKeyword))
+            foreach (var declarationSyntax in tree.GetCompilationUnitRoot().DescendantTokens().OfType<VariableDeclarationSyntax>().Where(syntax => syntax.GetFirstToken().IsKind(SyntaxKind.VoidKeyword)))
             {
                 var value = declarationSyntax.Variables.Single().Initializer.Value;
                 var typeInfo = model.GetTypeInfo(value);
@@ -5229,7 +5229,7 @@ unsafe class C
             {
                 var summary = model.GetSemanticInfoSummary(binOpSyntax);
 
-                if (binOpSyntax.Kind == SyntaxKind.SimpleAssignmentExpression)
+                if (binOpSyntax.Kind() == SyntaxKind.SimpleAssignmentExpression)
                 {
                     Assert.Null(summary.Symbol);
                 }
@@ -5677,7 +5677,7 @@ unsafe class C
             {
                 var summary = model.GetSemanticInfoSummary(binOpSyntax);
 
-                if (binOpSyntax.Kind == SyntaxKind.SimpleAssignmentExpression)
+                if (binOpSyntax.Kind() == SyntaxKind.SimpleAssignmentExpression)
                 {
                     Assert.Null(summary.Symbol);
                 }

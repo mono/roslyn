@@ -90,7 +90,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 return;
             }
 
-            if (IsStatementWithEmbeddedStatementBody(syntax.Kind))
+            if (IsStatementWithEmbeddedStatementBody(syntax.Kind()))
             {
                 return;
             }
@@ -107,7 +107,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 return;
             }
             
-            throw ExceptionUtilities.UnexpectedValue(syntax.CSharpKind());
+            throw ExceptionUtilities.UnexpectedValue(syntax.Kind());
         }
 
         private static bool IsStatementWithEmbeddedStatementBody(SyntaxKind syntax)
@@ -157,6 +157,12 @@ namespace Microsoft.CodeAnalysis.CSharp
         internal FieldSymbol SingletonCache
         {
             get { return this.singletonCache; }
+        }
+
+        // display classes for static lambdas do not have any data and can be serialized.
+        internal override bool IsSerializable
+        {
+            get { return (object)this.singletonCache != null;}
         }
 
         public override Symbol ContainingSymbol

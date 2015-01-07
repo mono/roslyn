@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using System;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Roslyn.Utilities;
 
@@ -33,6 +34,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
             //   foreach (var y in (x)) -> foreach (var y in x)
             //   lock ((x))             -> lock (x)
             //   using ((x))            -> using (x)
+            //   catch when ((x))       -> catch when (x)
             if ((node.IsParentKind(SyntaxKind.EqualsValueClause) && ((EqualsValueClauseSyntax)node.Parent).Value == node) ||
                 (node.IsParentKind(SyntaxKind.IfStatement) && ((IfStatementSyntax)node.Parent).Condition == node) ||
                 (node.IsParentKind(SyntaxKind.ReturnStatement) && ((ReturnStatementSyntax)node.Parent).Expression == node) ||
@@ -44,7 +46,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                 (node.IsParentKind(SyntaxKind.ForStatement) && ((ForStatementSyntax)node.Parent).Condition == node) ||
                 (node.IsParentKind(SyntaxKind.ForEachStatement) && ((ForEachStatementSyntax)node.Parent).Expression == node) ||
                 (node.IsParentKind(SyntaxKind.LockStatement) && ((LockStatementSyntax)node.Parent).Expression == node) ||
-                (node.IsParentKind(SyntaxKind.UsingStatement) && ((UsingStatementSyntax)node.Parent).Expression == node))
+                (node.IsParentKind(SyntaxKind.UsingStatement) && ((UsingStatementSyntax)node.Parent).Expression == node) ||
+                (node.IsParentKind(SyntaxKind.CatchFilterClause) && ((CatchFilterClauseSyntax)node.Parent).FilterExpression == node))
             {
                 return true;
             }
@@ -59,6 +62,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
             // Cases:
             //   y((x)) -> y(x)
             if (node.IsParentKind(SyntaxKind.Argument) && ((ArgumentSyntax)node.Parent).Expression == node)
+            {
+                return true;
+            }
+
+            // Cases:
+            //   $"{(x)}" -> $"{x}"
+            if (node.IsParentKind(SyntaxKind.Interpolation) &&
+                !RemovalMayIntroduceInterpolationAmbiguity(node))
             {
                 return true;
             }
@@ -106,7 +117,28 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
             // Operator precedence cases:
             // - If the parent is not an expression, do not remove parentheses
             // - Otherwise, parentheses may be removed if doing so does not change operator associations.
-            return parentExpression == null ? false : !RemovalChangesAssociation(node, expression, parentExpression);
+            return parentExpression != null
+                ? !RemovalChangesAssociation(node, expression, parentExpression)
+                : false;
+        }
+
+        private static bool RemovalMayIntroduceInterpolationAmbiguity(ParenthesizedExpressionSyntax node)
+        {
+            if (node.IsParentKind(SyntaxKind.Interpolation))
+            {
+                // Can't remove parentheses in this case:
+                //   $"{(true ? == 0 : 1):x"
+                var interpolation = (InterpolationSyntax)node.Parent;
+                if (node.Expression.IsKind(SyntaxKind.ConditionalExpression) &&
+                    interpolation.AlignmentClause == null &&
+                    interpolation.FormatClause != null &&
+                    !interpolation.FormatClause.ColonToken.IsMissing)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool RemovalChangesAssociation(ParenthesizedExpressionSyntax node, ExpressionSyntax expression, ExpressionSyntax parentExpression)
@@ -146,7 +178,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                     // If both the expression and its parent are binary expressions and their kinds
                     // are the same, check to see if they are commutative (e.g. + or *).
                     if (parentBinaryExpression.IsKind(SyntaxKind.AddExpression, SyntaxKind.MultiplyExpression) &&
-                        node.Expression.CSharpKind() == parentBinaryExpression.CSharpKind())
+                        node.Expression.Kind() == parentBinaryExpression.Kind())
                     {
                         return false;
                     }

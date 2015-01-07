@@ -6,9 +6,10 @@ using System.Diagnostics;
 using System.Globalization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Collections;
+using Microsoft.VisualStudio.SymReaderInterop;
 using CDI = Microsoft.Cci.CustomDebugInfoConstants;
 
-namespace Roslyn.Utilities.Pdb
+namespace Microsoft.VisualStudio.SymReaderInterop
 {
     /// <summary>
     /// A collection of utility method for consuming custom debug info from a PDB.
@@ -396,7 +397,6 @@ namespace Roslyn.Utilities.Pdb
             var method = reader.GetMethodByVersion(methodToken, methodVersion);
             if (method == null)
             {
-                // TODO: remove this workaround for DevDiv #1060879.
                 return default(ImmutableArray<ImmutableArray<string>>);
             }
 
@@ -666,12 +666,8 @@ namespace Roslyn.Utilities.Pdb
         {
             if (method == null)
             {
-                // TODO: remove this workaround for DevDiv #1060879.
-                // If methodToken was updated (because the method we started with forwards to another method),
-                // we have no way to know what version the new method is on.  If it's not the same as the
-                // version we stared with (e.g. because it has been changed less frequently), then we may not
-                // find a corresponding ISymUnmanagedMethod.
-                // Note: The real fix is to not use CDI forwarding in EnC PDBs.
+                // In rare circumstances (only bad PDBs?) GetMethodByVersion can return null.
+                // If there's no debug info for the method, then no import strings are available.
                 return ImmutableArray<string>.Empty;
             }
 

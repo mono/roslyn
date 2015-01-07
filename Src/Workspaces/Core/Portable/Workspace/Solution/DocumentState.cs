@@ -44,7 +44,7 @@ namespace Microsoft.CodeAnalysis
             SolutionServices services)
         {
             var textSource = info.TextLoader != null
-                ? CreateRecoverableText(info.TextLoader, info.Id, services)
+                ? CreateRecoverableText(info.TextLoader, info.Id, services, reportInvalidDataException: true)
                 : CreateStrongText(TextAndVersion.Create(SourceText.From(string.Empty, Encoding.UTF8), VersionStamp.Default, info.FilePath));
 
             var treeSource = CreateLazyFullyParsedTree(
@@ -329,8 +329,8 @@ namespace Microsoft.CodeAnalysis
             }
 
             var newTextSource = (mode == PreservationMode.PreserveIdentity)
-                ? CreateStrongText(loader, this.Id, this.solutionServices)
-                : CreateRecoverableText(loader, this.Id, this.solutionServices);
+                ? CreateStrongText(loader, this.Id, this.solutionServices, reportInvalidDataException: true)
+                : CreateRecoverableText(loader, this.Id, this.solutionServices, reportInvalidDataException: true);
 
             var newTreeSource = CreateLazyFullyParsedTree(
                 newTextSource,
@@ -396,8 +396,12 @@ namespace Microsoft.CodeAnalysis
             DocumentInfo info, ParseOptions options, ISyntaxTreeFactoryService factory, PreservationMode mode, SolutionServices solutionServices)
         {
             string filePath = info.FilePath;
-            Encoding encoding = info.DefaultEncoding;
             TreeAndVersion lazyTree = null;
+
+            // Since this text will be created from a tree, it doesn't have an explicit encoding.
+            // We'll check for this case when writing out the file, and look at the original file's
+            // encoding.
+            Encoding encoding = null;
 
             // this captures the lazyTree local
             var lazyText = new AsyncLazy<TextAndVersion>(

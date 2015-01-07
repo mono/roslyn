@@ -118,10 +118,30 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         End Function
 
         ''' <summary>
-        ''' Parse the local name and returns 'index' and 'name' in case of successful.
+        ''' Try to parse the local (or parameter) name and return <paramref name="variableName"/> if successful.
         ''' </summary>
-        Public Shared Function TryParseStateMachineLocalName(proxyName As String, <Out()> ByRef localName As String, <Out()> ByRef index As Integer) As Boolean
-            localName = Nothing
+        Public Shared Function TryParseHoistedUserVariableName(proxyName As String, <Out()> ByRef variableName As String) As Boolean
+            variableName = Nothing
+
+            Dim prefixLen As Integer = StringConstants.HoistedUserVariablePrefix.Length
+            If proxyName.Length <= prefixLen Then
+                Return False
+            End If
+
+            ' All names should start with "$VB$Local_"
+            If Not proxyName.StartsWith(StringConstants.HoistedUserVariablePrefix) Then
+                Return False
+            End If
+
+            variableName = proxyName.Substring(prefixLen)
+            Return True
+        End Function
+
+        ''' <summary>
+        ''' Try to parse the local name and return <paramref name="variableName"/> and <paramref name="index"/> if successful.
+        ''' </summary>
+        Public Shared Function TryParseStateMachineHoistedUserVariableName(proxyName As String, <Out()> ByRef variableName As String, <Out()> ByRef index As Integer) As Boolean
+            variableName = Nothing
             index = 0
 
             ' All names should start with "$VB$ResumableLocal_"
@@ -129,13 +149,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 Return False
             End If
 
+            Dim prefixLen As Integer = StringConstants.StateMachineHoistedUserVariablePrefix.Length
             Dim separator As Integer = proxyName.LastIndexOf("$"c)
-            If separator < 0 Then
+            If separator <= prefixLen Then
                 Return False
             End If
 
-            Dim prefixLen As Integer = StringConstants.StateMachineHoistedUserVariablePrefix.Length
-            localName = proxyName.Substring(prefixLen, separator - prefixLen)
+            variableName = proxyName.Substring(prefixLen, separator - prefixLen)
             Return Integer.TryParse(proxyName.Substring(separator + 1), NumberStyles.None, CultureInfo.InvariantCulture, index)
         End Function
 
@@ -253,20 +273,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
         End Function
 
         ' Extracts the slot index from a name of a field that stores hoisted variables Or awaiters.
-        ' Such a name ends with "__{slot index + 1}". 
+        ' Such a name ends with "$prefix{slot index}". 
         ' Returned slot index Is >= 0.
-        Friend Shared Function TryParseSlotIndex(fieldName As String, <Out> ByRef slotIndex As Integer) As Boolean
-            Dim lastUnder = fieldName.LastIndexOf("_"c)
-            If lastUnder - 1 < 0 OrElse lastUnder = fieldName.Length OrElse fieldName(lastUnder - 1) <> "_"c Then
-                slotIndex = -1
-                Return False
-            End If
-
-            If Integer.TryParse(fieldName.Substring(lastUnder + 1), slotIndex) AndAlso slotIndex >= 1 Then
-                slotIndex = slotIndex - 1
+        Friend Shared Function TryParseSlotIndex(prefix As String, fieldName As String, <Out> ByRef slotIndex As Integer) As Boolean
+            If fieldName.StartsWith(prefix, StringComparison.Ordinal) AndAlso
+                Integer.TryParse(fieldName.Substring(prefix.Length), NumberStyles.None, CultureInfo.InvariantCulture, slotIndex) Then
                 Return True
             End If
-
             slotIndex = -1
             Return False
         End Function

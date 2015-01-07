@@ -184,6 +184,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
             TestParseSimpleName("a\\", expected: null);
 
             // double quotes (unescaped can't be in the middle):
+            TestParseSimpleName("\"a\"", expected: "a");
             TestParseSimpleName("\"a'a\", Version=1.0.0.0", expected: "a'a");
             TestParseSimpleName("\\\"aa\\\", Version=1.0.0.0", expected: "\"aa\"");
             TestParseSimpleName("\\\"a'a\\\", Version=1.0.0.0", expected: null);
@@ -206,6 +207,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
             TestParseSimpleName("\"\"a\"\", Version=1.0.0.0", expected: null);
 
             // single quotes  (unescaped can't be in the middle):
+            TestParseSimpleName("'a'", expected: "a");
             TestParseSimpleName("'a\"a', Version=1.0.0.0", expected: "a\"a");
             TestParseSimpleName("\\'aa\\', Version=1.0.0.0", expected: "'aa'");
             TestParseSimpleName("\\'a\"a\\', Version=1.0.0.0", expected: null);
@@ -227,6 +229,24 @@ namespace Microsoft.CodeAnalysis.UnitTests
             TestParseSimpleName("'', Version=1.0.0.0", expected: null);
             TestParseSimpleName("''a'', Version=1.0.0.0", expected: null);
 
+            // Unicode quotes
+            TestParseSimpleName("\u201ca\u201d", expected: "\u201ca\u201d");
+            TestParseSimpleName("\\u201c;a\\u201d;", expected: "\u201ca\u201d");
+            TestParseSimpleName("\u201ca", expected: "\u201ca");
+            TestParseSimpleName("\\u201c;a", expected: "\u201ca");
+            TestParseSimpleName("a\u201d", expected: "a\u201d");
+            TestParseSimpleName("a\\u201d;", expected: "a\u201d");
+            TestParseSimpleName("\u201ca\u201d       ", expected: "\u201ca\u201d");
+            TestParseSimpleName("\\u201c;a\\u201d;       ", expected: "\u201ca\u201d");
+            TestParseSimpleName("\u2018a\u2019", expected: "\u2018a\u2019");
+            TestParseSimpleName("\\u2018;a\\u2019;", expected: "\u2018a\u2019");
+            TestParseSimpleName("\u2018a", expected: "\u2018a");
+            TestParseSimpleName("\\u2018;a", expected: "\u2018a");
+            TestParseSimpleName("a\u2019", expected: "a\u2019");
+            TestParseSimpleName("a\\u2019;", expected: "a\u2019");
+            TestParseSimpleName("\u2018a\u2019       ", expected: "\u2018a\u2019");
+            TestParseSimpleName("\\u2018;a\\u2019;       ", expected: "\u2018a\u2019");
+
             // NUL characters in the name:
             TestParseSimpleName("  \0  , Version=1.0.0.0", expected: null);
             TestParseSimpleName("zzz, Version=1.0.0\0.0", null);
@@ -239,11 +259,29 @@ namespace Microsoft.CodeAnalysis.UnitTests
             TestParseSimpleName("    , Version=1.0.0.0", expected: null);
 
             // single or double quote if name starts or ends with whitespace:
+            TestParseSimpleName("\"    a    \"", expected: "    a    ");
+            TestParseSimpleName("'    a    '", expected: "    a    ");
             TestParseSimpleName("'\r\t\n', Version=1.0.0.0", expected: "\r\t\n");
             TestParseSimpleName("\"\r\t\n\", Version=1.0.0.0", expected: "\r\t\n");
             TestParseSimpleName("x\n\t\nx, Version=1.0.0.0", expected: "x\n\t\nx");
 
+            // Missing parts
+            TestParseSimpleName("=", null);
+            TestParseSimpleName(",", null);
+            TestParseSimpleName("a,", null);
+            TestParseSimpleName("a   ,", null);
+            TestParseSimpleName("\"a\"=", expected: null);
+            TestParseSimpleName("\"a\" =", expected: null);
+            TestParseSimpleName("\"a\",", expected: null);
+            TestParseSimpleName("\"a\" ,", expected: null);
+            TestParseSimpleName("'a'=", expected: null);
+            TestParseSimpleName("'a' =", expected: null);
+            TestParseSimpleName("'a',", expected: null);
+            TestParseSimpleName("'a' ,", expected: null);
+
             // skips initial and trailing whitespace characters (' ', \t, \r, \n):
+            TestParseSimpleName("    \"a\"    ", expected: "a");
+            TestParseSimpleName("    'a'    ", expected: "a");
             TestParseSimpleName(" x, Version=1.0.0.0", expected: "x");
             TestParseSimpleName(" x\t\r\n , Version=1.0.0.0", expected: "x");
             TestParseSimpleName("\u0008x, Version=1.0.0.0", expected: "\u0008x");
@@ -255,6 +293,12 @@ namespace Microsoft.CodeAnalysis.UnitTests
             TestParseSimpleName("   \"aa\"  x , Version=1.0.0.0", expected: null);
             TestParseSimpleName("   \"aa\"  \"\" , Version=1.0.0.0", expected: null);
             TestParseSimpleName("   \"aa\"  \'\' , Version=1.0.0.0", expected: null);
+            TestParseSimpleName("  A", "A");
+            TestParseSimpleName("A  ", "A");
+            TestParseSimpleName("  A  ", "A");
+            TestParseSimpleName("  A, Version=1.0.0.0", "A");
+            TestParseSimpleName("A  , Version=1.0.0.0", "A");
+            TestParseSimpleName(  "A  , Version=1.0.0.0", "A");
 
             // invalid characters:
             foreach (var c in ClrInvalidCharacters)
@@ -483,10 +527,14 @@ namespace Microsoft.CodeAnalysis.UnitTests
             TestParseDisplayName("foo, PublicKeyToken=111111111111111, Version=1.0.0.1", null);
             TestParseDisplayName("foo, PublicKeyToken=1111111111111111111, Version=1.0.0.1", null);
             TestParseDisplayName("foo, PublicKey=1, Version=1.0.0.1", null);
+            TestParseDisplayName("foo, PublicKey=1000000040000000", null);
+            TestParseDisplayName("foo, PublicKey=11, Version=1.0.0.1", null);
 
-            // TODO: fusion doesn't accept the key
-            //TestParseDisplayName("foo, PublicKey=11, Version=1.0.0.1",
-            //    new AssemblyIdentity("foo", new Version(1, 0, 0, 1), publicKeyOrToken: new byte[] { 0x11 }.AsImmutable(), hasPublicKey: true));
+            // TODO: need to calculate the correct token for the ECMA key.
+            // TestParseDisplayName("foo, PublicKey=0000000040000000",
+            //    expectedParts: 0,
+            //    expectedFusion: null, // Fusion rejects the ECMA key.
+            //    expected: new AssemblyIdentity("foo", hasPublicKey: true, publicKeyOrToken: new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0 }.AsImmutable()));
 
             // if public key token calculated from public key matches, then it's ok to specify both
             TestParseDisplayName("foo, Culture=neutral, Version=1.0.0.0, PublicKey=" + StrPublicKey1 + ", PublicKeyToken=" + StrPublicKeyToken1,

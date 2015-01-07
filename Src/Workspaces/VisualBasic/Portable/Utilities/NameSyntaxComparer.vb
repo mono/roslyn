@@ -101,15 +101,18 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Utilities
         End Function
 
         Private Sub DecomposeNameParts(name As NameSyntax, result As List(Of NameSyntax))
-            Select Case name.VBKind
+            Select Case name.Kind
                 Case SyntaxKind.QualifiedName
                     Dim dottedName = DirectCast(name, QualifiedNameSyntax)
                     result.AddRange(DecomposeNameParts(dottedName.Left))
                     result.AddRange(DecomposeNameParts(SyntaxFactory.IdentifierName(dottedName.Right.Identifier)))
                     Return
-                Case Else
+                Case SyntaxKind.IdentifierName,
+                     SyntaxKind.GenericName
                     result.Add(name)
-                    Return
+                Case SyntaxKind.GlobalName
+                    Dim globalName = DirectCast(name, GlobalNameSyntax)
+                    result.Add(SyntaxFactory.IdentifierName(SyntaxFactory.Identifier(globalName.GlobalKeyword.ToString())))
             End Select
         End Sub
 

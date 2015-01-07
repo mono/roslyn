@@ -605,13 +605,13 @@ End Class
 BC40027: Return type of function 'M1' is not CLS-compliant.
     Public MustOverride Function M1() As Bad
                                  ~~
-BC40034: Non CLS-compliant 'Mustoverride' member is not allowed in CLS-compliant type 'A'.
+BC40034: Non CLS-compliant 'MustOverride' member is not allowed in CLS-compliant type 'A'.
     Public MustOverride Sub M2()
                             ~~
-BC40034: Non CLS-compliant 'Mustoverride' member is not allowed in CLS-compliant type 'Kinds'.
+BC40034: Non CLS-compliant 'MustOverride' member is not allowed in CLS-compliant type 'Kinds'.
     Public MustOverride Sub M()
                             ~
-BC40034: Non CLS-compliant 'Mustoverride' member is not allowed in CLS-compliant type 'Kinds'.
+BC40034: Non CLS-compliant 'MustOverride' member is not allowed in CLS-compliant type 'Kinds'.
     Public MustOverride Property P()
                                  ~
 ]]></errors>)
@@ -655,13 +655,13 @@ BC40033: Non CLS-compliant 'Event EV3(i3 As Integer)' is not allowed in a CLS-co
 BC40033: Non CLS-compliant 'Sub Sub4()' is not allowed in a CLS-compliant interface.
     <CLSCompliant(False)> Sub Sub4()
                               ~~~~
-BC40034: Non CLS-compliant 'Mustoverride' member is not allowed in CLS-compliant type 'QuiteCompliant'.
+BC40034: Non CLS-compliant 'MustOverride' member is not allowed in CLS-compliant type 'QuiteCompliant'.
     <CLSCompliant(False)> Public MustOverride Sub Sub1()
                                                   ~~~~
-BC40034: Non CLS-compliant 'Mustoverride' member is not allowed in CLS-compliant type 'QuiteCompliant'.
+BC40034: Non CLS-compliant 'MustOverride' member is not allowed in CLS-compliant type 'QuiteCompliant'.
     <CLSCompliant(False)> Protected MustOverride Function Fun2() As Integer
                                                           ~~~~
-BC40034: Non CLS-compliant 'Mustoverride' member is not allowed in CLS-compliant type 'QuiteCompliant'.
+BC40034: Non CLS-compliant 'MustOverride' member is not allowed in CLS-compliant type 'QuiteCompliant'.
     <CLSCompliant(False)> Protected Friend MustOverride Sub Sub3()
                                                             ~~~~
 ]]></errors>)
@@ -1979,6 +1979,38 @@ Imports System
             CreateCompilationWithMscorlib(source2, options:=TestOptions.ReleaseDll.WithRootNamespace("_A")).AssertTheseDiagnostics(<errors><![CDATA[
   BC40038: Root namespace '_A' is not CLS-compliant.
 ]]></errors>)
+
+            Dim source3 =
+                <compilation>
+                    <file name="a.vb">
+                        <![CDATA[
+Public Class Test
+End Class
+                        ]]>
+                    </file>
+                </compilation>
+
+            Dim moduleRef = CreateCompilationWithMscorlib(source3, options:=TestOptions.ReleaseModule).EmitToImageReference()
+
+            CreateCompilationWithMscorlibAndReferences(source2, {moduleRef}, options:=TestOptions.ReleaseDll.WithRootNamespace("_A").WithConcurrentBuild(False)).AssertTheseDiagnostics(<errors><![CDATA[
+  BC40038: Root namespace '_A' is not CLS-compliant.
+]]></errors>)
+
+            Dim source4 =
+                <compilation>
+                    <file name="a.vb">
+                        <![CDATA[
+Imports System
+<Module: CLSCompliant(True)>
+                        ]]>
+                    </file>
+                </compilation>
+
+            CreateCompilationWithMscorlibAndReferences(source4, {moduleRef}, options:=TestOptions.ReleaseModule.WithRootNamespace("_A").WithConcurrentBuild(True)).AssertTheseDiagnostics(<errors><![CDATA[
+  BC40038: Root namespace '_A' is not CLS-compliant.
+]]></errors>)
+
+            CreateCompilationWithMscorlibAndReferences(source2, {moduleRef}, options:=TestOptions.ReleaseModule.WithRootNamespace("_A")).AssertTheseDiagnostics()
         End Sub
 
         <Fact>
@@ -1991,7 +2023,7 @@ Imports System
 
 <Assembly: CLSCompliant(True)>
                         ]]>
-                    </file>
+                                                                                                                                               </file>
                 </compilation>
 
             CreateCompilationWithMscorlib(source, options:=TestOptions.ReleaseDll.WithRootNamespace("_A.B.C")).AssertTheseDiagnostics(<errors><![CDATA[
@@ -3616,5 +3648,48 @@ BC40030: event 'Public Event Scen6(x As Integer)' cannot be marked CLS-compliant
                      ~~~~~
             ]]></errors>)
         End Sub
+
+        <Fact, WorkItem(1026453, "DevDiv")>
+        Public Sub Bug1026453()
+            Dim source1 =
+                <compilation>
+                    <file name="a.vb">
+                        <![CDATA[
+Namespace N1
+    Public Class A
+    End Class
+End Namespace
+                        ]]>
+                    </file>
+                </compilation>
+
+            Dim comp1 = CreateCompilationWithMscorlib(source1, TestOptions.ReleaseModule)
+
+            Dim source2 =
+                <compilation>
+                    <file name="a.vb">
+                        <![CDATA[
+Imports System
+
+<Assembly: CLSCompliant(True)> 
+<Module: CLSCompliant(True)> 
+
+Namespace N1
+    Public Class B
+    End Class
+End Namespace
+                        ]]>
+                    </file>
+                </compilation>
+
+            Dim comp2 = CreateCompilationWithMscorlibAndReferences(source2, {comp1.EmitToImageReference()}, TestOptions.ReleaseDll.WithConcurrentBuild(False))
+            comp2.AssertNoDiagnostics()
+            comp2.WithOptions(TestOptions.ReleaseDll.WithConcurrentBuild(True)).AssertNoDiagnostics()
+
+            Dim comp3 = comp2.WithOptions(TestOptions.ReleaseModule.WithConcurrentBuild(False))
+            comp3.AssertNoDiagnostics()
+            comp3.WithOptions(TestOptions.ReleaseModule.WithConcurrentBuild(True)).AssertNoDiagnostics()
+        End Sub
+
     End Class
 End Namespace

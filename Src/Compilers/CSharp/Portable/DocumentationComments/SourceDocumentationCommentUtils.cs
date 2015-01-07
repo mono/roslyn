@@ -34,12 +34,12 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             // All declarators in a declaration get the same doc comment.
             // (As a consequence, the same duplicate diagnostics are produced for each declarator.)
-            if (syntaxNode.Kind == SyntaxKind.VariableDeclarator)
+            if (syntaxNode.Kind() == SyntaxKind.VariableDeclarator)
             {
                 CSharpSyntaxNode curr = syntaxNode;
                 while ((object)curr != null)
                 {
-                    SyntaxKind kind = curr.Kind;
+                    SyntaxKind kind = curr.Kind();
                     if (kind == SyntaxKind.FieldDeclaration || kind == SyntaxKind.EventFieldDeclaration)
                     {
                         break;
@@ -58,7 +58,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             bool seenOtherTrivia = false;
             foreach (var trivia in syntaxNode.GetLeadingTrivia().Reverse())
             {
-                switch (trivia.CSharpKind())
+                switch (trivia.Kind())
                 {
                     case SyntaxKind.SingleLineDocumentationCommentTrivia:
                     case SyntaxKind.MultiLineDocumentationCommentTrivia:

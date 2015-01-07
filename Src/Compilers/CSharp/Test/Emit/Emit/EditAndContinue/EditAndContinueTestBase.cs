@@ -13,10 +13,10 @@ using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
 using Microsoft.CodeAnalysis.CSharp.UnitTests;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Test.Utilities;
+using Microsoft.VisualStudio.SymReaderInterop;
 using Roslyn.Test.MetadataUtilities;
 using Roslyn.Test.PdbUtilities;
 using Roslyn.Test.Utilities;
-using Roslyn.Utilities.Pdb;
 using Xunit;
 
 namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
@@ -52,9 +52,9 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
             {
                 foreach (SyntaxKind kind in kinds) 
                 {
-                    if (newNode.CSharpKind() == kind)
+                    if (newNode.IsKind(kind))
                     {
-                        return method0.DeclaringSyntaxReferences.Single().SyntaxTree.GetRoot().DescendantNodes().Single(n => n.CSharpKind() == kind);
+                        return method0.DeclaringSyntaxReferences.Single().SyntaxTree.GetRoot().DescendantNodes().Single(n => n.IsKind(kind));
                     }
                 }
 
@@ -93,7 +93,7 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue.UnitTests
 
         internal static string GetLocalName(SyntaxNode node)
         {
-            switch (node.CSharpKind())
+            switch (node.Kind())
             {
                 case SyntaxKind.VariableDeclarator:
                     return ((VariableDeclaratorSyntax)node).Identifier.ToString();

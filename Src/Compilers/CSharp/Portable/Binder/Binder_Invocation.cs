@@ -21,7 +21,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         private BoundExpression BindMethodGroup(ExpressionSyntax node, bool invoked, bool indexed, DiagnosticBag diagnostics)
         {
-            switch (node.Kind)
+            switch (node.Kind())
             {
                 case SyntaxKind.IdentifierName:
                 case SyntaxKind.GenericName:
@@ -146,7 +146,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
 
             // M(__arglist()) is legal, but M(__arglist(__arglist()) is not!
-            bool isArglist = node.Expression.Kind == SyntaxKind.ArgListExpression;
+            bool isArglist = node.Expression.Kind() == SyntaxKind.ArgListExpression;
             AnalyzedArguments analyzedArguments = AnalyzedArguments.GetInstance();
             BindArgumentsAndNames(node.ArgumentList, diagnostics, analyzedArguments, allowArglist: !isArglist);
 
@@ -850,7 +850,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             if (node != expression)
             {
-                switch (expression.CSharpKind())
+                switch (expression.Kind())
                 {
                     case SyntaxKind.QualifiedName:
                         return ((QualifiedNameSyntax)expression).Right.GetLocation();
@@ -1057,8 +1057,8 @@ namespace Microsoft.CodeAnalysis.CSharp
         private bool TryBindNameofOperator(InvocationExpressionSyntax node, DiagnosticBag diagnostics, out BoundExpression result)
         {
             result = null;
-            if (node.Expression.Kind != SyntaxKind.IdentifierName ||
-                !((IdentifierNameSyntax)node.Expression).Identifier.IsContextualKind(SyntaxKind.NameOfKeyword) ||
+            if (node.Expression.Kind() != SyntaxKind.IdentifierName ||
+                ((IdentifierNameSyntax)node.Expression).Identifier.ContextualKind() != SyntaxKind.NameOfKeyword ||
                 node.ArgumentList.Arguments.Count != 1)
             {
                 return false;
@@ -1106,6 +1106,10 @@ namespace Microsoft.CodeAnalysis.CSharp
             var resolution = ResolveMethodGroup(methodGroup, analyzedArguments: null, isMethodGroupConversion: false, useSiteDiagnostics: ref useSiteDiagnostics);
             diagnostics.Add(methodGroup.Syntax, useSiteDiagnostics);
             diagnostics.AddRange(resolution.Diagnostics);
+            if (resolution.IsExtensionMethodGroup)
+            {
+                diagnostics.Add(ErrorCode.ERR_NameofExtensionMethod, methodGroup.Syntax.Location);
+            }
         }
 
         /// <summary>
@@ -1113,7 +1117,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// </summary>
         private bool CheckSyntaxForNameofArgument(ExpressionSyntax argument, out string name, DiagnosticBag diagnostics, bool top = true)
         {
-            switch (argument.Kind)
+            switch (argument.Kind())
             {
                 case SyntaxKind.IdentifierName:
                     {
@@ -1131,7 +1135,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     {
                         var syntax = (MemberAccessExpressionSyntax)argument;
                         bool ok = true;
-                        switch (syntax.Expression.Kind)
+                        switch (syntax.Expression.Kind())
                         {
                             case SyntaxKind.BaseExpression:
                             case SyntaxKind.ThisExpression:

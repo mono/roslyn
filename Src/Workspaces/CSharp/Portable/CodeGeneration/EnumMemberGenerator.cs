@@ -4,12 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis.CodeGeneration;
-using Microsoft.CodeAnalysis.CodeGeneration.CodeGenerationHelpers;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.CodeGeneration.CSharpCodeGenerationHelpers;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Shared.Utilities;
+
+using static Microsoft.CodeAnalysis.CodeGeneration.CodeGenerationHelpers;
+using static Microsoft.CodeAnalysis.CSharp.CodeGeneration.CSharpCodeGenerationHelpers;
 
 namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
 {
@@ -26,7 +27,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
             {
                 members.Add(member);
             }
-            else if (members.LastOrDefault().CSharpKind() == SyntaxKind.CommaToken)
+            else if (members.LastOrDefault().Kind() == SyntaxKind.CommaToken)
             {
                 members.Add(member);
                 members.Add(SyntaxFactory.Token(SyntaxKind.CommaToken));
@@ -108,11 +109,11 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
                     if (lastMember != null)
                     {
                         var lastExpression = lastMember.EqualsValue.Value;
-                        if (lastExpression.CSharpKind() == SyntaxKind.LeftShiftExpression &&
+                        if (lastExpression.Kind() == SyntaxKind.LeftShiftExpression &&
                             IntegerUtilities.HasOneBitSet(value))
                         {
                             var binaryExpression = (BinaryExpressionSyntax)lastExpression;
-                            if (binaryExpression.Left.CSharpKind() == SyntaxKind.NumericLiteralExpression)
+                            if (binaryExpression.Left.Kind() == SyntaxKind.NumericLiteralExpression)
                             {
                                 var numericLiteral = (LiteralExpressionSyntax)binaryExpression.Left;
                                 if (numericLiteral.Token.ValueText == "1")
@@ -126,7 +127,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
                                 }
                             }
                         }
-                        else if (lastExpression.CSharpKind() == SyntaxKind.NumericLiteralExpression)
+                        else if (lastExpression.Kind() == SyntaxKind.NumericLiteralExpression)
                         {
                             var numericLiteral = (LiteralExpressionSyntax)lastExpression;
                             var numericToken = numericLiteral.Token;

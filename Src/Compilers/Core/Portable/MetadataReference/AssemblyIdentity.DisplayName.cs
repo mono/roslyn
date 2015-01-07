@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.CodeAnalysis.Collections;
 using Roslyn.Utilities;
@@ -173,8 +174,8 @@ namespace Microsoft.CodeAnalysis
             }
 
             int position = 0;
-            string simpleName = TryParseNameToken(displayName, ',', ref position);
-            if (simpleName == null)
+            string simpleName;
+            if (!TryParseNameToken(displayName, ref position, out simpleName))
             {
                 return false;
             }
@@ -191,18 +192,34 @@ namespace Microsoft.CodeAnalysis
 
             while (position < displayName.Length)
             {
-                string propertyName = TryParseNameToken(displayName, '=', ref position);
-                if (propertyName == null)
+                // Parse ',' name '=' value
+                if (displayName[position] != ',')
                 {
                     return false;
                 }
 
-                string propertyValue = TryParseNameToken(displayName, ',', ref position);
-                if (propertyValue == null)
+                position++;
+
+                string propertyName;
+                if (!TryParseNameToken(displayName, ref position, out propertyName))
                 {
                     return false;
                 }
 
+                if (position >= displayName.Length || displayName[position] != '=')
+                {
+                    return false;
+                }
+
+                position++;
+
+                string propertyValue;
+                if (!TryParseNameToken(displayName, ref position, out propertyValue))
+                {
+                    return false;
+                }
+
+                // Process property
                 if (string.Equals(propertyName, "Version", StringComparison.OrdinalIgnoreCase))
                 {
                     if ((seen & AssemblyIdentityParts.Version) != 0)
@@ -259,11 +276,15 @@ namespace Microsoft.CodeAnalysis
                         continue;
                     }
 
-                    ImmutableArray<byte> value = ParseKey(propertyValue);
-                    if (value.Length == 0)
+                    ImmutableArray<byte> value;
+                    if (!TryParsePublicKey(propertyValue, out value))
                     {
                         return false;
                     }
+
+                    // NOTE: Fusion would also set the public key token (as derived from the public key) here.
+                    //       We may need to do this as well for error cases, as Fusion would fail to parse the
+                    //       assembly name if public key token calculation failed.
 
                     publicKey = value;
                     parsedParts |= AssemblyIdentityParts.PublicKey;
@@ -283,18 +304,9 @@ namespace Microsoft.CodeAnalysis
                     }
 
                     ImmutableArray<byte> value;
-                    if (string.Equals(propertyValue, "null", StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(propertyValue, "neutral", StringComparison.OrdinalIgnoreCase))
+                    if (!TryParsePublicKeyToken(propertyValue, out value))
                     {
-                        value = ImmutableArray.Create<byte>();
-                    }
-                    else
-                    {
-                        value = ParseKey(propertyValue);
-                        if (value.Length != PublicKeyTokenSize)
-                        {
-                            return false;
-                        }
+                        return false;
                     }
 
                     publicKeyToken = value;
@@ -381,21 +393,26 @@ namespace Microsoft.CodeAnalysis
             return true;
         }
 
-        private static string TryParseNameToken(string displayName, char terminator, ref int position)
+        private static bool TryParseNameToken(string displayName, ref int position, out string value)
         {
             Debug.Assert(displayName.IndexOf('\0') == -1);
 
             int i = position;
 
             // skip leading whitespace:
-            while (i < displayName.Length && IsWhiteSpace(displayName[i]))
+            while (true)
             {
-                i++;
-            }
+                if (i == displayName.Length)
+                {
+                    value = null;
+                    return false;
+                }
+                else if (!IsWhiteSpace(displayName[i]))
+                {
+                    break;
+                }
 
-            if (i == displayName.Length)
-            {
-                return null;
+                i++;
             }
 
             char quote;
@@ -410,75 +427,94 @@ namespace Microsoft.CodeAnalysis
 
             int valueStart = i;
             int valueEnd = displayName.Length;
-            int escapeCount = 0;
+            bool containsEscapes = false;
 
-            while (i < displayName.Length)
+            while (true)
             {
+                if (i >= displayName.Length)
+                {
+                    i = displayName.Length;
+                    break;
+                }
+
                 char c = displayName[i];
                 if (c == '\\')
                 {
-                    escapeCount++;
+                    containsEscapes = true;
                     i += 2;
                     continue;
                 }
 
-                if (quote == 0)
+                if (quote == '\0')
                 {
-                    if (c == terminator)
+                    if (IsNameTokenTerminator(c))
                     {
-                        int j = i - 1;
-                        while (j >= valueStart && IsWhiteSpace(displayName[j]))
-                        {
-                            j--;
-                        }
-
-                        valueEnd = j + 1;
                         break;
                     }
-
-                    if (IsQuote(c) || IsNameTokenTerminator(c))
+                    else if (IsQuote(c))
                     {
-                        return null;
+                        value = null;
+                        return false;
                     }
                 }
                 else if (c == quote)
                 {
                     valueEnd = i;
                     i++;
-
-                    // skip any whitespace following the quote
-                    while (i < displayName.Length && IsWhiteSpace(displayName[i]))
-                    {
-                        i++;
-                    }
-
-                    if (i < displayName.Length && displayName[i] != terminator)
-                    {
-                        return null;
-                    }
-
                     break;
                 }
 
                 i++;
             }
 
-            Debug.Assert(i >= displayName.Length || IsNameTokenTerminator(displayName[i]));
-            position = (i >= displayName.Length) ? displayName.Length : i + 1;
+            if (quote == '\0')
+            {
+                int j = i - 1;
+                while (j >= valueStart && IsWhiteSpace(displayName[j]))
+                {
+                    j--;
+                }
+
+                valueEnd = j + 1;
+            }
+            else
+            {
+                // skip any whitespace following the quote and check for the terminator
+                while (i < displayName.Length)
+                {
+                    char c = displayName[i];
+                    if (!IsWhiteSpace(c))
+                    {
+                        if (!IsNameTokenTerminator(c))
+                        {
+                            value = null;
+                            return false;
+                        }
+                        break;
+                    }
+
+                    i++;
+                }
+            }
+
+            Debug.Assert(i == displayName.Length || IsNameTokenTerminator(displayName[i]));
+            position = i;
 
             // empty
             if (valueEnd == valueStart)
             {
-                return null;
+                value = null;
+                return false;
             }
 
-            if (escapeCount == 0)
+            if (!containsEscapes)
             {
-                return displayName.Substring(valueStart, valueEnd - valueStart);
+                value = displayName.Substring(valueStart, valueEnd - valueStart);
+                return true;
             }
             else
             {
-                return Unescape(displayName, valueStart, valueEnd);
+                return TryUnescape(displayName, valueStart, valueEnd, out value);
             }
         }
 
@@ -575,23 +611,201 @@ namespace Microsoft.CodeAnalysis
             }
         }
 
-        private static ImmutableArray<byte> ParseKey(string value)
+        private static class PublicKeyDecoder
         {
-            byte[] result = new byte[value.Length / 2];
-            for (int i = 0; i < result.Length; i++)
+            private enum AlgorithmClass
+            {
+                Signature = 1,
+                Hash = 4,
+            }
+
+            private enum AlgorithmSubId
+            {
+                Sha1Hash = 4,
+                MacHash = 5,
+                RipeMdHash = 6,
+                RipeMd160Hash = 7,
+                Ssl3ShaMD5Hash = 8,
+                HmacHash = 9,
+                Tls1PrfHash = 10,
+                HashReplacOwfHash = 11,
+                Sha256Hash = 12,
+                Sha384Hash = 13,
+                Sha512Hash = 14,
+            }
+
+            private struct AlgorithmId
+            {
+                // From wincrypt.h
+                private const int AlgorithmClassOffset = 13;
+                private const int AlgorithmClassMask = 0x7;
+                private const int AlgorithmSubIdOffset = 0;
+                private const int AlgorithmSubIdMask = 0x1ff;
+
+                private readonly uint flags;
+
+                public bool IsSet
+                {
+                    get { return flags != 0; }
+                }
+
+                public AlgorithmClass Class
+                {
+                    get { return (AlgorithmClass)((flags >> AlgorithmClassOffset) & AlgorithmClassMask); }
+                }
+
+                public AlgorithmSubId SubId
+                {
+                    get { return (AlgorithmSubId)((flags >> AlgorithmSubIdOffset) & AlgorithmSubIdMask); }
+                }
+
+                public AlgorithmId(uint flags)
+                {
+                    this.flags = flags;
+                }
+            }
+
+            // From ECMAKey.h
+            private static readonly ImmutableArray<byte> ecmaKey = ImmutableArray.Create(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0 });
+
+            // From strongname.h
+            [StructLayout(LayoutKind.Sequential, Pack = 0)]
+            private unsafe struct PublicKeyHeader
+            {
+                public const int SigAlgIdOffset = 0;
+                public const int HashAlgIdOffset = SigAlgIdOffset + sizeof(uint);
+                public const int PublicKeySizeOffset = HashAlgIdOffset + sizeof(uint);
+                public const int PublicKeyDataOffset = PublicKeySizeOffset + sizeof(uint);
+                public const int Size = PublicKeyDataOffset;
+
+                uint SigAlgId;
+                uint HashAlgId;
+                uint PublicKeySize;
+            }
+
+            // From wincrypt.h
+            private const byte PublicKeyBlob = 0x06;
+
+            // From StrongNameInternal.cpp
+            public static bool TryDecode(byte[] bytes, out ImmutableArray<byte> key)
+            {
+                // The number of public key bytes must be at least large enough for the header and one byte of data.
+                if (bytes.Length < PublicKeyHeader.Size + 1)
+                {
+                    key = default(ImmutableArray<byte>);
+                    return false;
+                }
+
+                // The number of public key bytes must be the same as the size of the header plus the size of the public key data.
+                var dataSize = (uint)BitConverter.ToInt32(bytes, PublicKeyHeader.PublicKeySizeOffset);
+                if (bytes.Length != PublicKeyHeader.Size + dataSize)
+                {
+                    key = default(ImmutableArray<byte>);
+                    return false;
+                }
+
+                // Check for ECMA key
+                if (bytes.Length == ecmaKey.Length)
+                {
+                    for (int i = 0; i < bytes.Length; i++)
+                    {
+                        if (bytes[i] != ecmaKey[i])
+                        {
+                            goto notEcmaKey;
+                        }
+                    }
+
+                    key = ecmaKey;
+                    return true;
+                }
+
+            notEcmaKey:
+                var signatureAlgorithmId = new AlgorithmId((uint)BitConverter.ToInt32(bytes, 0));
+                if (signatureAlgorithmId.IsSet && signatureAlgorithmId.Class != AlgorithmClass.Signature)
+                {
+                    key = default(ImmutableArray<byte>);
+                    return false;
+                }
+
+                var hashAlgorithmId = new AlgorithmId((uint)BitConverter.ToInt32(bytes, 4));
+                if (hashAlgorithmId.IsSet && (hashAlgorithmId.Class != AlgorithmClass.Hash || hashAlgorithmId.SubId < AlgorithmSubId.Sha1Hash))
+                {
+                    key = default(ImmutableArray<byte>);
+                    return false;
+                }
+
+                if (bytes[PublicKeyHeader.PublicKeyDataOffset] != PublicKeyBlob)
+                {
+                    key = default(ImmutableArray<byte>);
+                    return false;
+                }
+
+                key = bytes.AsImmutable();
+                return true;
+            }
+        }
+
+        const int MaxPublicKeyBytes = 2048;
+
+        private static bool TryParsePublicKey(string value, out ImmutableArray<byte> key)
+        {
+            byte[] result;
+            if (value.Length > (MaxPublicKeyBytes * 2) || !TryParseHexBytes(value, out result))
+            {
+                key = default(ImmutableArray<byte>);
+                return false;
+            }
+
+            return PublicKeyDecoder.TryDecode(result, out key);
+        }
+
+        const int PublicKeyTokenBytes = 8;
+
+        private static bool TryParsePublicKeyToken(string value, out ImmutableArray<byte> token)
+        {
+            if (string.Equals(value, "null", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(value, "neutral", StringComparison.OrdinalIgnoreCase))
+            {
+                token = ImmutableArray<byte>.Empty;
+                return true;
+            }
+
+            byte[] result;
+            if (value.Length != (PublicKeyTokenBytes * 2) || !TryParseHexBytes(value, out result))
+            {
+                token = default(ImmutableArray<byte>);
+                return false;
+            }
+
+            token = result.AsImmutable();
+            return true;
+        }
+
+        private static bool TryParseHexBytes(string value, out byte[] result)
+        {
+            if (value.Length == 0 || (value.Length % 2) != 0)
+            {
+                result = null;
+                return false;
+            }
+
+            var bytes = new byte[value.Length / 2];
+            for (int i = 0; i < bytes.Length; i++)
             {
                 int hi = HexValue(value[i * 2]);
                 int lo = HexValue(value[i * 2 + 1]);
 
                 if (hi < 0 || lo < 0)
                 {
-                    return ImmutableArray.Create<byte>();
+                    result = null;
+                    return false;
                 }
 
-                result[i] = (byte)((hi << 4) | lo);
+                bytes[i] = (byte)((hi << 4) | lo);
             }
 
-            return result.AsImmutable();
+            result = bytes;
+            return true;
         }
 
         internal static int HexValue(char c)
@@ -687,7 +901,7 @@ namespace Microsoft.CodeAnalysis
             }
         }
 
-        private static string Unescape(string str, int start, int end)
+        private static bool TryUnescape(string str, int start, int end, out string value)
         {
             var sb = PooledStringBuilder.GetInstance();
 
@@ -697,10 +911,10 @@ namespace Microsoft.CodeAnalysis
                 char c = str[i++];
                 if (c == '\\')
                 {
-                    Debug.Assert(CanBeEscaped(c));
                     if (!Unescape(sb.Builder, str, ref i))
                     {
-                        return null;
+                        value = null;
+                        return false;
                     }
                 }
                 else
@@ -709,7 +923,8 @@ namespace Microsoft.CodeAnalysis
                 }
             }
 
-            return sb.ToStringAndFree();
+            value = sb.ToStringAndFree();
+            return true;
         }
 
         private static bool Unescape(StringBuilder sb, string str, ref int i)

@@ -16,6 +16,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
     Public Class EditAndContinueTestBase
         Inherits BasicTestBase
 
+        ' PDB reader can only be accessed from a single thread, so avoid concurrent compilation:
+        Protected Shared ReadOnly ComSafeDebugDll As VisualBasicCompilationOptions = TestOptions.DebugDll.WithConcurrentBuild(False)
+
         Friend Shared ReadOnly EmptyLocalsProvider As Func(Of MethodDefinitionHandle, EditAndContinueMethodDebugInformation) = Function(token) Nothing
 
         Friend Function ToLocalInfo(local As Cci.ILocalDefinition) As ILVisualizer.LocalInfo
@@ -50,7 +53,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
             Dim locals = ArrayBuilder(Of LocalSymbol).GetInstance()
 
             For Each node In methodSyntax.DescendantNodes()
-                If node.VBKind = SyntaxKind.VariableDeclarator Then
+                If node.Kind = SyntaxKind.VariableDeclarator Then
                     For Each name In DirectCast(node, VariableDeclaratorSyntax).Names
                         Dim local = DirectCast(model.GetDeclaredSymbol(name), LocalSymbol)
                         locals.Add(local)
@@ -74,11 +77,23 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
         End Function
 
         Friend Shared Function GetLocalName(node As SyntaxNode) As String
-            If node.VBKind = SyntaxKind.ModifiedIdentifier Then
+            If node.Kind = SyntaxKind.ModifiedIdentifier Then
                 Return DirectCast(node, ModifiedIdentifierSyntax).Identifier.ToString()
             End If
 
             Throw New NotImplementedException()
+        End Function
+
+        Friend Shared Function GetSyntaxMapByKind(method As MethodSymbol, ParamArray kinds As SyntaxKind()) As Func(Of SyntaxNode, SyntaxNode)
+            Return Function(node As SyntaxNode)
+                       For Each k In kinds
+                           If node.IsKind(k) Then
+                               Return method.DeclaringSyntaxReferences.Single().SyntaxTree.GetRoot().DescendantNodes().Single(Function(n) n.IsKind(k))
+                           End If
+                       Next
+
+                       Return Nothing
+                   End Function
         End Function
 
         Friend Shared Function GetEquivalentNodesMap(method1 As MethodSymbol, method0 As MethodSymbol) As Func(Of SyntaxNode, SyntaxNode)
@@ -140,6 +155,49 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.UnitTests
         Friend Shared Sub CheckEncLog(reader As MetadataReader, ParamArray rows As EditAndContinueLogEntry())
             AssertEx.Equal(rows, reader.GetEditAndContinueLogEntries(), itemInspector:=AddressOf EncLogRowToString)
         End Sub
+
+        Friend Shared Sub CheckEncLogDefinitions(reader As MetadataReader, ParamArray rows As EditAndContinueLogEntry())
+            AssertEx.Equal(rows, reader.GetEditAndContinueLogEntries().Where(Function(entry) IsDefinition(entry)), itemInspector:=AddressOf EncLogRowToString)
+        End Sub
+
+        Friend Shared Function IsDefinition(entry As EditAndContinueLogEntry) As Boolean
+            Dim index As TableIndex
+            Assert.True(MetadataTokens.TryGetTableIndex(entry.Handle.Kind, index))
+
+            Select Case index
+                Case TableIndex.MethodDef,
+                     TableIndex.Field,
+                     TableIndex.Constant,
+                     TableIndex.GenericParam,
+                     TableIndex.GenericParamConstraint,
+                     TableIndex.[Event],
+                     TableIndex.CustomAttribute,
+                     TableIndex.DeclSecurity,
+                     TableIndex.Assembly,
+                     TableIndex.MethodImpl,
+                     TableIndex.Param,
+                     TableIndex.[Property],
+                     TableIndex.TypeDef,
+                     TableIndex.ExportedType,
+                     TableIndex.StandAloneSig,
+                     TableIndex.ClassLayout,
+                     TableIndex.FieldLayout,
+                     TableIndex.FieldMarshal,
+                     TableIndex.File,
+                     TableIndex.ImplMap,
+                     TableIndex.InterfaceImpl,
+                     TableIndex.ManifestResource,
+                     TableIndex.MethodSemantics,
+                     TableIndex.[Module],
+                     TableIndex.NestedClass,
+                     TableIndex.EventMap,
+                     TableIndex.PropertyMap
+                    Return True
+            End Select
+
+            Return False
+        End Function
+
 
         Friend Shared Sub CheckEncMap(reader As MetadataReader, ParamArray [handles] As Handle())
             AssertEx.Equal([handles], reader.GetEditAndContinueMapEntries(), itemInspector:=AddressOf EncMapRowToString)

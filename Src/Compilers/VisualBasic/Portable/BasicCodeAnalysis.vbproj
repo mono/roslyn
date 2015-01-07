@@ -60,6 +60,7 @@
     <DebugType>pdbonly</DebugType>
     <DocumentationFile>Microsoft.CodeAnalysis.VisualBasic.xml</DocumentationFile>
     <NoWarn>42014</NoWarn>
+    <CodeAnalysisRuleSet>..\BasicCodeAnalysisRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <RootNamespace></RootNamespace>
@@ -85,7 +86,7 @@
     <NoWarn>42014</NoWarn>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>..\BasicCodeAnalysisRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(IntermediateOutputPath)BoundNodes.xml.Generated.vb" />
@@ -137,6 +138,7 @@
     <Compile Include="Binding\Binder_Expressions.vb" />
     <Compile Include="Binding\Binder_Imports.vb" />
     <Compile Include="Binding\Binder_Initializers.vb" />
+    <Compile Include="Binding\Binder_InterpolatedString.vb" />
     <Compile Include="Binding\Binder_Invocation.vb" />
     <Compile Include="Binding\Binder_Lambda.vb" />
     <Compile Include="Binding\Binder_Latebound.vb" />
@@ -484,6 +486,7 @@
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_Goto.vb" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_HostObjectMemberReference.vb" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_If.vb" />
+    <Compile Include="Lowering\LocalRewriter\LocalRewriter_InterpolatedString.vb" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_Label.vb" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_Lambda.vb" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_LateAddressOf.vb" />
@@ -568,6 +571,7 @@
     <Compile Include="Parser\ParseStatement.vb" />
     <Compile Include="Parser\ParseTerminal.vb" />
     <Compile Include="Parser\ParseVerify.vb" />
+    <Compile Include="Parser\ParseInterpolatedString.vb" />
     <Compile Include="Parser\ParseXml.vb" />
     <Compile Include="PredefinedPreprocessorSymbols.vb" />
     <Compile Include="Preprocessor\CConst.vb" />
@@ -581,6 +585,7 @@
     <Compile Include="Scanner\QuickTokenAccumulator.vb" />
     <Compile Include="Scanner\Scanner.vb" />
     <Compile Include="Scanner\ScannerBuffer.vb" />
+    <Compile Include="Scanner\ScannerInterpolatedString.vb" />
     <Compile Include="Scanner\ScannerXml.vb" />
     <Compile Include="Scanner\TokenFactories.vb" />
     <Compile Include="Scanner\TokenStream.vb" />
@@ -974,6 +979,7 @@
     <InternalsVisibleToTest Include="Roslyn.Test.Utilities" />
     <InternalsVisibleToTest Include="Roslyn.Scripting.Common.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Scripting.VisualBasic.UnitTests" />
+    <InternalsVisibleToTest Include="Roslyn.VisualStudio.Services.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Services.Editor.VisualBasic.UnitTests" />
   </ItemGroup>
   <ItemGroup>
@@ -995,6 +1001,7 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
+  <Import Project="..\BasicAnalyzerDriver\BasicAnalyzerDriver.projitems" Label="Shared" />
   <ImportGroup Label="Targets">
     <Import Project="..\..\..\Tools\Microsoft.CodeAnalysis.Toolset.Open\Targets\VSL.Imports.targets" />
     <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />

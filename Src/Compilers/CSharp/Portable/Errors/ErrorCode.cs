@@ -316,7 +316,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         WRN_CmpAlwaysFalse = 464,
         WRN_FinalizeMethod = 465,
         ERR_ExplicitImplParams = 466,
-        WRN_AmbigLookupMeth = 467,      //no longer issued in Roslyn, but preserved to keep /nowarn working
+        // WRN_AmbigLookupMeth = 467,      //no longer issued in Roslyn
         //ERR_SameFullNameThisAggThisAgg = 468, no longer used in Roslyn
         WRN_GotoCaseShouldConvert = 469,
         ERR_MethodImplementingAccessor = 470,
@@ -850,7 +850,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         WRN_IllegalPPChecksum = 1695,
         WRN_EndOfPPLineExpected = 1696,
         WRN_ConflictingChecksum = 1697,
-        WRN_AssumedMatchThis = 1698,
+        // WRN_AssumedMatchThis = 1698,     // This error code is unused.
         // WRN_UseSwitchInsteadOfAttribute = 1699,     // This error code is unused.
         WRN_InvalidAssemblyName = 1700,
         WRN_UnifyReferenceMajMin = 1701,
@@ -861,7 +861,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         //ERR_AnonMethNotAllowed = 1706,            Unused in Roslyn. Previously given when a lambda was supplied as an attribute argument.
         // WRN_DelegateNewMethBind = 1707,             // This error code is unused.
         ERR_FixedNeedsLvalue = 1708,
-        WRN_EmptyFileName = 1709,
+        // WRN_EmptyFileName = 1709,        // This error code is unused.
         WRN_DuplicateTypeParamTag = 1710,
         WRN_UnmatchedTypeParamTag = 1711,
         WRN_MissingTypeParamTag = 1712,
@@ -916,7 +916,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         WRN_ReferencedAssemblyReferencesLinkedPIA = 1762,
         ERR_NotNullRefDefaultParameter = 1763,
         ERR_FixedLocalInLambda = 1764,
-        WRN_TypeNotFoundForNoPIAWarning = 1765,
+        // WRN_TypeNotFoundForNoPIAWarning = 1765,  // This error code is unused.
         ERR_MissingMethodOnSourceInterface = 1766,
         ERR_MissingSourceInterface = 1767,
         ERR_GenericsUsedInNoPIAType = 1768,
@@ -1170,8 +1170,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         // ERR_NameIllegallyOverrides3 = 7040, // Not used anymore due to 'Single Meaning' relaxation changes
         ERR_ResourceFileNameNotUnique = 7041,
         ERR_DllImportOnGenericMethod = 7042,
-        ERR_LibraryMethodNotFound = 7043,
-        ERR_LibraryMethodNotUnique = 7044,
+
         ERR_ParameterNotValidForType = 7045,
         ERR_AttributeParameterRequired1 = 7046,
         ERR_AttributeParameterRequired2 = 7047,
@@ -1304,5 +1303,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         ERR_ErrorInReferencedAssembly = 8090,
         ERR_ExternHasConstructorInitializer = 8091,
         ERR_ExpressionOrDeclarationExpected = 8092,
+        ERR_NameofExtensionMethod = 8093,
+        WRN_AlignmentMagnitude = 8094,
     }
 }

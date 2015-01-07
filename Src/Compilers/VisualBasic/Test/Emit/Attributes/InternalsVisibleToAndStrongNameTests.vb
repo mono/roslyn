@@ -4,6 +4,7 @@ Imports System.Collections.Immutable
 Imports System.IO
 Imports System.Reflection.Metadata
 Imports System.Reflection.PortableExecutable
+Imports System.Xml.Linq
 Imports Microsoft.CodeAnalysis
 Imports Microsoft.CodeAnalysis.Collections
 Imports Microsoft.CodeAnalysis.Emit
@@ -1553,6 +1554,79 @@ End Class
 </compilation>, {New VisualBasicCompilationReference(ca)}, options:=TestOptions.ReleaseModule.WithStrongNameProvider(DefaultProvider))
 
         CompileAndVerify(cb, verify:=False).Diagnostics.Verify()
+    End Sub
+
+    <Fact, WorkItem(1072350, "DevDiv")>
+    Public Sub Bug1072350()
+        Dim sourceA As XElement = _
+<compilation name="ClassLibrary2">
+    <file name="a.vb"><![CDATA[
+<Assembly: System.Runtime.CompilerServices.InternalsVisibleTo("X ")>
+Friend Class A
+    Friend Shared I As Integer = 42
+End Class]]>
+    </file>
+</compilation>
+
+        Dim sourceB As XElement = _
+<compilation name="X">
+    <file name="b.vb"><![CDATA[
+Class B
+    Shared Sub Main()
+        System.Console.Write(A.I)
+    End Sub
+End Class]]>
+    </file>
+</compilation>
+
+        Dim ca = CreateCompilationWithMscorlib(sourceA, options:=TestOptions.ReleaseDll)
+        CompileAndVerify(ca)
+
+        Dim cb = CreateCompilationWithMscorlib(sourceB, options:=TestOptions.ReleaseExe, references:={ new VisualBasicCompilationReference(ca) })
+        CompileAndVerify(cb, expectedOutput:="42", emitOptions:=TestEmitters.CCI).Diagnostics.Verify()
+    End Sub
+
+    <Fact, WorkItem(1072339, "DevDiv")>
+    Public Sub Bug1072339()
+        Dim sourceA As XElement = _
+<compilation name="ClassLibrary2">
+    <file name="a.vb"><![CDATA[
+<Assembly: System.Runtime.CompilerServices.InternalsVisibleTo("x")>
+Friend Class A
+    Friend Shared I As Integer = 42
+End Class]]>
+    </file>
+</compilation>
+
+        Dim sourceB As XElement = _
+<compilation name="x">
+    <file name="b.vb"><![CDATA[
+Class B
+    Shared Sub Main()
+        System.Console.Write(A.I)
+    End Sub
+End Class]]>
+    </file>
+</compilation>
+
+        Dim ca = CreateCompilationWithMscorlib(sourceA, options:=TestOptions.ReleaseDll)
+        CompileAndVerify(ca)
+
+        Dim cb = CreateCompilationWithMscorlib(sourceB, options:=TestOptions.ReleaseExe, references:={ new VisualBasicCompilationReference(ca) })
+        CompileAndVerify(cb, expectedOutput:="42", emitOptions:=TestEmitters.CCI).Diagnostics.Verify()
+    End Sub
+
+    <Fact, WorkItem(1095618, "DevDiv")>
+    Public Sub Bug1095618()
+        Dim source As XElement = _
+<compilation name="a">
+    <file name="a.vb"><![CDATA[
+<Assembly: System.Runtime.CompilerServices.InternalsVisibleTo("System.Runtime.Serialization, PublicKey = 10000000000000000400000000000000")>
+    ]]></file>
+</compilation>
+
+        CreateCompilationWithMscorlib(source).VerifyDiagnostics(
+            Diagnostic(ERRID.ERR_FriendAssemblyNameInvalid, "Assembly: System.Runtime.CompilerServices.InternalsVisibleTo(""System.Runtime.Serialization, PublicKey = 10000000000000000400000000000000"")").WithArguments("System.Runtime.Serialization, PublicKey = 10000000000000000400000000000000").WithLocation(1, 2))
     End Sub
 
 End Class

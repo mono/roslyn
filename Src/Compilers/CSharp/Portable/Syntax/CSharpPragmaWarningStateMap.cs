@@ -28,7 +28,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
         {
             foreach (var d in syntaxTree.GetRoot().GetDirectives())
             {
-                if (d.Kind == SyntaxKind.PragmaWarningDirectiveTrivia)
+                if (d.Kind() == SyntaxKind.PragmaWarningDirectiveTrivia)
                 {
                     var w = d as PragmaWarningDirectiveTriviaSyntax;
 
@@ -61,7 +61,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
                 var currentDirective = directiveList[index];
 
                 // Compute the directive state (either Disable or Restore)
-                var directiveState = currentDirective.DisableOrRestoreKeyword.CSharpKind() == SyntaxKind.DisableKeyword ? ReportDiagnostic.Suppress : ReportDiagnostic.Default;
+                var directiveState = currentDirective.DisableOrRestoreKeyword.Kind() == SyntaxKind.DisableKeyword ? ReportDiagnostic.Suppress : ReportDiagnostic.Default;
 
                 // Check if this directive applies for all (e.g., #pragma warning disable)
                 if (currentDirective.ErrorCodes.Count == 0)
@@ -80,12 +80,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
                             continue;
 
                         var errorId = string.Empty;
-                        if (currentErrorCode.Kind == SyntaxKind.NumericLiteralExpression)
+                        if (currentErrorCode.Kind() == SyntaxKind.NumericLiteralExpression)
                         {
                             var token = (currentErrorCode as LiteralExpressionSyntax).Token;
                             errorId = MessageProvider.Instance.GetIdForErrorCode((int)token.Value);
                         }
-                        else if (currentErrorCode.Kind == SyntaxKind.IdentifierName)
+                        else if (currentErrorCode.Kind() == SyntaxKind.IdentifierName)
                         {
                             errorId = (currentErrorCode as IdentifierNameSyntax).Identifier.ValueText;
                         }

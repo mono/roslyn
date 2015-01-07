@@ -6,6 +6,7 @@ using System.Collections.Immutable;
 using System.Threading;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.FxCopAnalyzers;
+using Microsoft.CodeAnalysis.FxCopAnalyzers.Naming;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Xunit;
 
@@ -44,24 +45,11 @@ public class Class6<TTypeParameter>
             AnalyzeDocumentCore(GetCSharpDiagnosticAnalyzer(), documentsAndSpan.Item1[0], diagnosticsBag.Add, null, continueOnAnalyzerException: DiagnosticExtensions.AlwaysCatchAnalyzerExceptions);
             var diagnostics = diagnosticsBag.ToReadOnlyAndFree();
             Assert.True(diagnostics.Length > 0);
-            Assert.Equal(diagnostics[0].ToString(), "info AnalyzerDriver: The Compiler Analyzer '" + GetCSharpDiagnosticAnalyzer().GetType() + "' threw an exception with message 'The method or operation is not implemented.'.");
+            Assert.Equal("info AD0001: The Compiler Analyzer '" + GetCSharpDiagnosticAnalyzer().GetType() + "' threw an exception with message 'The method or operation is not implemented.'.", diagnostics[0].ToString());
         }
 
 #region "Test_Class"
-        internal const string RuleId = "CA1715_Test";
-        internal static readonly DiagnosticDescriptor InterfaceRule = new DiagnosticDescriptor(RuleId,
-                                                                                      FxCopRulesResources.InterfaceNamesShouldStartWithI,
-                                                                                      FxCopRulesResources.InterfaceNamesShouldStartWithI,
-                                                                                      FxCopDiagnosticCategory.Naming,
-                                                                                      DiagnosticSeverity.Warning,
-                                                                                      isEnabledByDefault: true);
-        internal static readonly DiagnosticDescriptor TypeParameterRule = new DiagnosticDescriptor(RuleId,
-                                                                                      FxCopRulesResources.TypeParameterNamesShouldStartWithT,
-                                                                                      FxCopRulesResources.TypeParameterNamesShouldStartWithT,
-                                                                                      FxCopDiagnosticCategory.Naming,
-                                                                                      DiagnosticSeverity.Warning,
-                                                                                      isEnabledByDefault: true);
-        private static readonly ImmutableArray<DiagnosticDescriptor> SupportedRules = ImmutableArray.Create(InterfaceRule, TypeParameterRule);
+        private static readonly ImmutableArray<DiagnosticDescriptor> SupportedRules = ImmutableArray.Create(CA1715DiagnosticAnalyzer.InterfaceRule, CA1715DiagnosticAnalyzer.TypeParameterRule);
 
         [DiagnosticAnalyzer]
         internal class ExceptionThrowingSymbolAnalyzer_ThrowSymbolKindsOfInterest : DiagnosticAnalyzer

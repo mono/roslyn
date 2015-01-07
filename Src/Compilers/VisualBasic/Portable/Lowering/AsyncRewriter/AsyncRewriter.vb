@@ -112,11 +112,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Debug.Assert(TypeOf method Is SynthesizedLambdaMethod)
             Dim containingType As NamedTypeSymbol = method.ContainingType
             While containingType IsNot Nothing
-                Dim sourceNamedType = TryCast(containingType, SourceNamedTypeSymbol)
-                If sourceNamedType IsNot Nothing Then
-                    Return BinderBuilder.CreateBinderForType(DirectCast(sourceNamedType.ContainingModule, SourceModuleSymbol),
-                                                             sourceNamedType.SyntaxReferences(0).SyntaxTree,
-                                                             sourceNamedType)
+                Dim syntaxTree = containingType.Locations.FirstOrDefault()?.SourceTree
+                If syntaxTree IsNot Nothing Then
+                    Return BinderBuilder.CreateBinderForType(
+                        DirectCast(containingType.ContainingModule, SourceModuleSymbol),
+                        syntaxTree,
+                        containingType)
                 End If
                 containingType = containingType.ContainingType
             End While
@@ -163,16 +164,23 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim debuggerHidden = IsDebuggerHidden(Me.Method)
             Dim moveNextAttrs As DebugAttributes = DebugAttributes.CompilerGeneratedAttribute
             If debuggerHidden Then moveNextAttrs = moveNextAttrs Or DebugAttributes.DebuggerHiddenAttribute
-            GenerateMoveNext(Me.OpenMethodImplementation(
+            GenerateMoveNext(
+                Me.OpenMethodImplementation(
                     WellKnownMember.System_Runtime_CompilerServices_IAsyncStateMachine_MoveNext,
                     "MoveNext",
-                    moveNextAttrs, Accessibility.Friend, True))
+                    moveNextAttrs,
+                    Accessibility.Friend,
+                    generateDebugInfo:=True,
+                    hasMethodBodyDependency:=True))
 
             'Add IAsyncStateMachine.SetStateMachine()
             Me.OpenMethodImplementation(
                     WellKnownMember.System_Runtime_CompilerServices_IAsyncStateMachine_SetStateMachine,
                     "System.Runtime.CompilerServices.IAsyncStateMachine.SetStateMachine",
-                    DebugAttributes.DebuggerNonUserCodeAttribute, Accessibility.Private, False)
+                    DebugAttributes.DebuggerNonUserCodeAttribute,
+                    Accessibility.Private,
+                    generateDebugInfo:=False,
+                    hasMethodBodyDependency:=False)
 
             ' SetStateMachine is used to initialize the underlying AsyncMethodBuilder's reference to the boxed copy of the state machine.
             ' If the state machine is a class there is no copy made and thus the initialization is not necessary. 

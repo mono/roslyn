@@ -295,7 +295,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         CompileNamespace(symbol);
                         return (object)null;
                     }
-                    catch (Exception e) if (FatalError.ReportUnlessCanceled(e))
+                    catch (Exception e) when (FatalError.ReportUnlessCanceled(e))
                     {
                         throw ExceptionUtilities.Unreachable;
                     }
@@ -342,7 +342,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         CompileNamedType(symbol);
                         return (object)null;
                     }
-                    catch (Exception e) if (FatalError.Report(e))
+                    catch (Exception e) when (FatalError.Report(e))
                     {
                         throw ExceptionUtilities.Unreachable;
                     }
@@ -549,21 +549,21 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         private void CompileSynthesizedMethods(ImmutableArray<NamedTypeSymbol> additionalTypes, DiagnosticBag diagnostics)
         {
-            TypeCompilationState compilationState = new TypeCompilationState(null, compilation, moduleBeingBuiltOpt);
             foreach (var additionalType in additionalTypes)
             {
+                TypeCompilationState compilationState = new TypeCompilationState(additionalType, compilation, moduleBeingBuiltOpt);
                 foreach (var method in additionalType.GetMethodsToEmit())
                 {
                     method.GenerateMethodBody(compilationState, diagnostics);
                 }
-            }
 
-            if (!diagnostics.HasAnyErrors())
-            {
-                CompileSynthesizedMethods(compilationState);
-            }
+                if (!diagnostics.HasAnyErrors())
+                {
+                    CompileSynthesizedMethods(compilationState);
+                }
 
-            compilationState.Free();
+                compilationState.Free();
+            }
         }
 
         private void CompileSynthesizedMethods(TypeCompilationState compilationState)
@@ -1559,15 +1559,15 @@ namespace Microsoft.CodeAnalysis.CSharp
                 // of the enclosing class. 
                 CSharpSyntaxNode containerNode = constructor.GetNonNullSyntaxNode();
                 SyntaxToken bodyToken;
-                if (containerNode.Kind == SyntaxKind.ClassDeclaration)
+                if (containerNode.Kind() == SyntaxKind.ClassDeclaration)
                 {
                     bodyToken = ((ClassDeclarationSyntax)containerNode).OpenBraceToken;
                 }
-                else if (containerNode.Kind == SyntaxKind.StructDeclaration)
+                else if (containerNode.Kind() == SyntaxKind.StructDeclaration)
                 {
                     bodyToken = ((StructDeclarationSyntax)containerNode).OpenBraceToken;
                 }
-                else if (containerNode.Kind == SyntaxKind.EnumDeclaration)
+                else if (containerNode.Kind() == SyntaxKind.EnumDeclaration)
                 {
                     // We're not going to find any non-default ctors, but we'll look anyway.
                     bodyToken = ((EnumDeclarationSyntax)containerNode).OpenBraceToken;
@@ -1685,7 +1685,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         ConstructorInitializerSyntax initializerSyntax = constructorSyntax.Initializer;
                         if (initializerSyntax != null)
                         {
-                            return initializerSyntax.Kind == SyntaxKind.ThisConstructorInitializer;
+                            return initializerSyntax.Kind() == SyntaxKind.ThisConstructorInitializer;
                         }
                     }
                 }
