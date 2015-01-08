@@ -4,7 +4,7 @@ Roslyn
 Mono compatible copy of Roslyn Source Code
 
 The build requires `master` Mono
-`40810cf0762c5f644169feb1fc7a14f09c724bc0` or newer.
+`f7765134889fe84ad97d92c9d6326a803a4f9f2b` or newer.
 
 C# compiler
 ============
@@ -26,7 +26,7 @@ installation as a subdirectory of
 ## Manual changes needed
 
 After succesfull package restore
-`packages/Microsoft.Net.ToolsetCompilers.0.7.4101501-beta/build/Microsoft.Net.ToolsetCompilers.props`
+`packages/Microsoft.Net.ToolsetCompilers.1.0.0-beta2-20141216-04/build/Microsoft.Net.ToolsetCompilers.props`
 has to be replaced with
 
 ```xml
