@@ -23,6 +23,11 @@ installation as a subdirectory of
 
 	`mono Src/.nuget/NuGet.exe restore Src/Roslyn.sln`
 
+(Remember to run mozroots if you haven't already, e.g., if you're building on
+a fresh VM.  Otherwise, NuGet `restore` may fail with a "SendFailure (Error
+writing headers)" error.  `mozroots --import --sync` is one way to remedy
+this.)
+
 ## Manual changes needed
 
 After succesfull package restore
