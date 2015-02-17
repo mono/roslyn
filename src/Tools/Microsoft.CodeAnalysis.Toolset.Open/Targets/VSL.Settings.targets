@@ -65,8 +65,10 @@
             Condition="Exists('$(RoslynDiagnosticsPropsFilePath)') And ('$(UseRoslynAnalyzers)' == 'true')" />
   </ImportGroup>
   <Target Name="EnsureGlobalNuGets">
+  <!-- Cannot bootstrap using broken csc.exe
     <Error Condition="!$(CscToolPath.Contains('$(ToolsetCompilerPackageName)'))"
            Text="This project requires the $(ToolsetCompilerPackageName) NuGet package to build. Use NuGet Package Restore to download the required files (&quot;powershell .nuget\NuGetRestore.ps1&quot;). The missing file is &quot;$(ToolsetCompilerPropsFilePath)&quot;." />
+  -->
   </Target>
 
   <!-- Common project settings -->
