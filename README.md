@@ -58,7 +58,7 @@ the top level `Binaries/Debug` directory.
 
 ## Build C# workspace (optional)
 
-    xbuild Src/Workspaces/CSharp/Portable/CSharpWorkspace.csproj
+    xbuild src/Workspaces/CSharp/Portable/CSharpWorkspace.csproj
 
 
 ## Welcome to the .NET Compiler Platform ("Roslyn")
