@@ -21,7 +21,14 @@ installation as a subdirectory of
 
 ## Restore packages
 
-	`mono src/.nuget/NuGet.exe restore src/Roslyn.sln`
+	mono src/.nuget/NuGet.exe restore src/Roslyn.sln
+
+On a fresh Mono install [that will fail with a certificate error](http://www.mono-project.com/docs/faq/security/).
+Run
+
+	mozroots --import --sync
+
+first to install the necessary root certificates for NuGet to be able to download files over HTTPS.
 
 ## Manual changes needed
 
