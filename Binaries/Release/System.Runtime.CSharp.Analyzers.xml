@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>System.Runtime.CSharp.Analyzers</name>
+    </assembly>
+    <members>
+        <member name="T:System.Runtime.Analyzers.CSharpTestForEmptyStringsUsingStringLengthAnalyzer">
+            <summary>
+            CA1820: Test for empty strings using string length.
+            <para>
+            Comparing strings using the <see cref="P:System.String.Length"/> property or the <see cref="M:System.String.IsNullOrEmpty(System.String)"/> method is significantly faster than using <see cref="M:System.String.Equals(System.String)"/>.
+            This is because Equals executes significantly more MSIL instructions than either IsNullOrEmpty or the number of instructions executed to retrieve the Length property value and compare it to zero.
+            </para>
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.CSharpDoNotLockOnObjectsWithWeakIdentity">
+            <summary>
+            CA2002: Do not lock on objects with weak identities
+            
+            Cause:
+            A thread that attempts to acquire a lock on an object that has a weak identity could cause hangs.
+            
+            Description:
+            An object is said to have a weak identity when it can be directly accessed across application domain boundaries. 
+            A thread that tries to acquire a lock on an object that has a weak identity can be blocked by a second thread in 
+            a different application domain that has a lock on the same object. 
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.CSharpCA2213DiagnosticAnalyzer">
+            <summary>
+            CA2213: Disposable fields should be disposed
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.CSharpOverloadOperatorEqualsOnOverridingValueTypeEqualsFixer">
+            <summary>
+            CA2231: Overload operator equals on overriding ValueType.Equals
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.CSharpDefineAccessorsForAttributeArgumentsAnalyzer">
+            <summary>
+            CA1019: Define accessors for attribute arguments
+            
+            Cause:
+            In its constructor, an attribute defines arguments that do not have corresponding properties.
+            </summary>
+        </member>
+    </members>
+</doc>

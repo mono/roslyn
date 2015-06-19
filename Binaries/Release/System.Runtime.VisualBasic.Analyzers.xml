@@ -1,0 +1,24 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+System.Runtime.VisualBasic.Analyzers
+</name>
+</assembly>
+<members>
+<member name="T:System.Runtime.Analyzers.BasicTestForEmptyStringsUsingStringLengthAnalyzer">
+ <summary>
+ CA1820: Test for empty strings using string length.
+ <para>
+ Comparing strings using the <see cref="T:System.String"/> property or the <see cref="T:System.String"/> method is significantly faster than using <see cref="T:System.String"/>.
+ This is because Equals executes significantly more MSIL instructions than either IsNullOrEmpty or the number of instructions executed to retrieve the Length property value and compare it to zero.
+ </para>
+ </summary>
+</member>
+<member name="T:System.Runtime.Analyzers.BasicDoNotLockOnObjectsWithWeakIdentity">
+ <summary>
+ CA2002: Do not lock on objects with weak identities
+ </summary>
+</member>
+</members>
+</doc>

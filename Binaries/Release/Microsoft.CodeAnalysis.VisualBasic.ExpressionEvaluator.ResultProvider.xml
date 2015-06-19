@@ -1,0 +1,3942 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.ResultProvider
+</name>
+</assembly>
+<members>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts">
+ <summary>
+ Provides members for determining Syntax facts about characters and Unicode conversions.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsWhitespace(System.Char)">
+ <summary>
+ Determines if Unicode character represents a whitespace.
+ </summary>
+ <param name="c">The Unicode character.</param>
+ <returns>A boolean value set to True if character represents whitespace.</returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsXmlWhitespace(System.Char)">
+ <summary>
+ Determines if Unicode character represents a XML whitespace.
+ </summary>
+ <param name="c">The unicode character</param>
+ <returns>A boolean value set to True if character represents XML whitespace.</returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsNewLine(System.Char)">
+ <summary>
+ Determines if the Unicode character is a newline character.
+ </summary>
+ <param name="c">The Unicode character.</param>
+ <returns>A boolean value set to True if character is a newline character.</returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsColon(System.Char)">
+ <summary>
+ Determines if the unicode character is a colon character.
+ </summary>
+ <param name="c">The unicode character.</param>
+ <returns>A boolean value set to True if character is a colon character.</returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsUnderscore(System.Char)">
+ <summary>
+ Determines if the unicode character is a underscore character.
+ </summary>
+ <param name="c">The unicode character.</param>
+ <returns>A boolean value set to True if character is an underscore character.</returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsHash(System.Char)">
+ <summary>
+ Determines if the unicode character is a hash character.
+ </summary>
+ <param name="c">The unicode character.</param>
+ <returns>A boolean value set to True if character is a hash character.</returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsIdentifierStartCharacter(System.Char)">
+ <summary>
+ Determines if the Unicode character can be the starting character of a Visual Basic identifier.
+ </summary>
+ <param name="c">The Unicode character.</param>
+ <returns>A boolean value set to True if character can be part of a valid start character in an identifier.</returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsIdentifierPartCharacter(System.Char)">
+ <summary>
+ Determines if the Unicode character can be a part of a Visual Basic identifier.
+ </summary>
+ <param name="c">The Unicode character.</param>
+ <returns>A boolean value set to True if character can be part of a valid identifier.</returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsValidIdentifier(System.String)">
+ <summary>
+ Determines if the name is a valid identifier.
+ </summary>
+ <param name="name">The identifier name.</param>
+ <returns>A boolean value set to True if name is valid identifier.</returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.MakeHalfWidthIdentifier(System.String)">
+ <summary>
+ Creates a half width form Unicode character string. 
+ </summary>
+ <param name="text">The text representing the original identifier.  This can be in full width or half width Unicode form.  </param>
+ <returns>A string representing the text in a half width Unicode form.</returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.MatchOneOrAnother(System.Char,System.Char,System.Char)">
+ <summary>
+ matches one char or another.
+ Typical usage is for matching lowercase and uppercase.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.MatchOneOrAnotherOrFullwidth(System.Char,System.Char,System.Char)">
+ <summary>
+ matches one char or another.
+ it will try normal width and then fullwidth variations.
+ Typical usage is for matching lowercase and uppercase.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsReservedKeyword(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind)">
+ <summary>
+ Determine if the kind represents a reserved keyword
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsContextualKeyword(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind)">
+ <summary>
+ Determine if the kind represents a contextual keyword
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsInstanceExpression(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind)">
+ <summary>
+ Determine if the token instance represents 'Me', 'MyBase' or 'MyClass' keywords
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.GetInstanceExpression(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind)">
+ <summary>
+ Return correspondent expression syntax for 'Me', 'MyBase' and 'MyClass' 
+ keywords or SyntaxKind.None for other syntax kinds
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.IsPreprocessorKeyword(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind)">
+ <summary>
+ Determine if the token instance represents a preprocessor keyword
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.GetReservedKeywordKinds">
+ <summary>
+ Get all reserved keywords
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.GetContextualKeywordKinds">
+ <summary>
+ Get contextual keywords
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.GetPunctuationKinds">
+ <summary>
+ Get punctuations
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.GetPreprocessorKeywordKinds">
+ <summary>
+ Get preprocessor keywords
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFacts.GetText(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind)">
+ <summary>
+ Return keyword or punctuation text based on SyntaxKind
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.ObjectDisplay.ObjectDisplay">
+ <summary>
+ Displays a value in the VisualBasic style.
+ </summary>
+ <seealso cref="T:Microsoft.CodeAnalysis.CSharp.Symbols.ObjectDisplay"/>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ObjectDisplay.ObjectDisplay.FormatPrimitive(System.Object,Microsoft.CodeAnalysis.ObjectDisplayOptions)">
+ <summary>
+ Returns a string representation of an object of primitive type.
+ </summary>
+ <param name="obj">A value to display as a string.</param>
+ <param name="options">Options used to customize formatting of an Object value.</param>
+ <returns>A string representation of an object of primitive type (or null if the type is not supported).</returns>
+ <remarks>
+ Handles <see cref="T:System.Boolean"/>, <see cref="T:System.String"/>, <see cref="T:System.Char"/>, <see cref="T:System.SByte"/>
+ <see cref="T:System.Byte"/>, <see cref="T:System.Int16"/>, <see cref="T:System.UInt16"/>, <see cref="T:System.Int32"/>, <see cref="T:System.UInt32"/>,
+ <see cref="T:System.Int64"/>, <see cref="T:System.UInt64"/>, <see cref="T:System.Double"/>, <see cref="T:System.Single"/>, <see cref="T:System.Decimal"/>,
+ <see cref="T:System.DateTime"/>, and <c>Nothing</c>.
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ObjectDisplay.ObjectDisplay.FormatLiteral(System.String,Microsoft.CodeAnalysis.ObjectDisplayOptions)">
+ <summary>
+ Formats string literal.
+ </summary>
+ <param name="value">Literal value.</param>
+ <param name="options">Options used to customize formatting of a literal value.</param>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind">
+ <summary>
+ Enumeration with all Visual Basic syntax node kinds.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EmptyStatement">
+ <summary>
+ A class to represent an empty statement. This can occur when a colon is on a
+ line without anything else.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndIfStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndUsingStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndWithStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndSelectStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndStructureStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndEnumStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndInterfaceStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndClassStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndModuleStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndNamespaceStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndSubStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndFunctionStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndGetStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndSetStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndPropertyStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndOperatorStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndEventStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndAddHandlerStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndRemoveHandlerStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndRaiseEventStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndWhileStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndTryStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndSyncLockStatement">
+ <summary>
+ Represents an "End XXX" statement, where XXX is a single keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CompilationUnit">
+ <summary>
+ Represents an entire source file of VB code.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OptionStatement">
+ <summary>
+ Represents an Option statement, such as "Option Strict On".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ImportsStatement">
+ <summary>
+ Represents an Imports statement, which has one or more imports clauses.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SimpleImportsClause">
+ <summary>
+ Represents the clause of an Imports statement that imports all members of a type or namespace or aliases a type or namespace.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlNamespaceImportsClause">
+ <summary>
+ Defines a XML namespace for XML expressions.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NamespaceBlock">
+ <summary>
+ Represents a Namespace statement, its contents and the End Namespace statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NamespaceStatement">
+ <summary>
+ Represents the beginning statement of a namespace declaration. This node always
+ appears as the Begin of a BlockStatement with Kind=NamespaceBlock.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ModuleBlock">
+ <summary>
+ Represents a declaration of Module, its contents and the End statement that
+ ends it.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StructureBlock">
+ <summary>
+ Represents a declaration of a Structure, its contents and the End statement
+ that ends it.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InterfaceBlock">
+ <summary>
+ Represents a declaration of a Interface, its contents and the End statement
+ that ends it.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ClassBlock">
+ <summary>
+ Represents a declaration of a Class its contents and the End statement that
+ ends it.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EnumBlock">
+ <summary>
+ Represents a declaration of an Enum, its contents and the End Enum statement
+ that ends it.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InheritsStatement">
+ <summary>
+ Represents an Inherits statement in a Class, Structure or Interface.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ImplementsStatement">
+ <summary>
+ Represents an Implements statement in a Class or Structure.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ModuleStatement">
+ <summary>
+ Represents the beginning statement of a Module declaration. This node always
+ appears as the Begin of a TypeBlock with Kind=ModuleDeclarationBlock.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StructureStatement">
+ <summary>
+ Represents the beginning statement of a Structure declaration. This node always
+ appears as the Begin of a TypeBlock with Kind=StructureDeclarationBlock.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InterfaceStatement">
+ <summary>
+ Represents the beginning statement of a Interface declaration. This node always
+ appears as the Begin of a TypeBlock with Kind=InterfaceDeclarationBlock.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ClassStatement">
+ <summary>
+ Represents the beginning statement of a Class declaration. This node always
+ appears as the Begin of a TypeBlock with Kind=ClassDeclarationBlock.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EnumStatement">
+ <summary>
+ Represents the beginning statement of an Enum declaration. This node always
+ appears as the Begin of an EnumBlock with Kind=EnumDeclarationBlock.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TypeParameterList">
+ <summary>
+ Represents the type parameter list in a declaration.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TypeParameter">
+ <summary>
+ Represents a type parameter on a generic type declaration.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TypeParameterSingleConstraintClause">
+ <summary>
+ One of the type parameter constraints clauses. This represents a constraint
+ clause in the form of "As Constraint".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TypeParameterMultipleConstraintClause">
+ <summary>
+ One of the type parameter constraints clauses. This represents a constraint
+ clause in the form of "As { Constraints }".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NewConstraint">
+ <summary>
+ One of the special type parameter constraints: New, Class or Structure. Which
+ kind of special constraint it is can be obtained from the Kind property and is
+ one of: NewConstraint, ReferenceConstraint or ValueConstraint.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ClassConstraint">
+ <summary>
+ One of the special type parameter constraints: New, Class or Structure. Which
+ kind of special constraint it is can be obtained from the Kind property and is
+ one of: NewConstraint, ReferenceConstraint or ValueConstraint.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StructureConstraint">
+ <summary>
+ One of the special type parameter constraints: New, Class or Structure. Which
+ kind of special constraint it is can be obtained from the Kind property and is
+ one of: NewConstraint, ReferenceConstraint or ValueConstraint.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TypeConstraint">
+ <summary>
+ Represents a type parameter constraint that is a type.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EnumMemberDeclaration">
+ <summary>
+ Represents a name and value in an EnumDeclarationBlock.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SubBlock">
+ <summary>
+ Represents a Function or Sub block declaration: A declaration that has a
+ beginning declaration, a body of executable statements and an end statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FunctionBlock">
+ <summary>
+ Represents a Function or Sub block declaration: A declaration that has a
+ beginning declaration, a body of executable statements and an end statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ConstructorBlock">
+ <summary>
+ Represents a constructor block declaration: A declaration that has a beginning
+ declaration, a body of executable statements and an end statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OperatorBlock">
+ <summary>
+ Represents an Operator block member declaration: A declaration that has a
+ beginning declaration, a body of executable statements and an end statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GetAccessorBlock">
+ <summary>
+ Represents an accessor block member declaration: A declaration that has a
+ beginning declaration, a body of executable statements and an end statement.
+ Examples include property accessors and custom event accessors.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SetAccessorBlock">
+ <summary>
+ Represents an accessor block member declaration: A declaration that has a
+ beginning declaration, a body of executable statements and an end statement.
+ Examples include property accessors and custom event accessors.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AddHandlerAccessorBlock">
+ <summary>
+ Represents an accessor block member declaration: A declaration that has a
+ beginning declaration, a body of executable statements and an end statement.
+ Examples include property accessors and custom event accessors.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RemoveHandlerAccessorBlock">
+ <summary>
+ Represents an accessor block member declaration: A declaration that has a
+ beginning declaration, a body of executable statements and an end statement.
+ Examples include property accessors and custom event accessors.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RaiseEventAccessorBlock">
+ <summary>
+ Represents an accessor block member declaration: A declaration that has a
+ beginning declaration, a body of executable statements and an end statement.
+ Examples include property accessors and custom event accessors.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PropertyBlock">
+ <summary>
+ Represents a block property declaration: A declaration that has a beginning
+ declaration, some get or set accessor blocks and an end statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EventBlock">
+ <summary>
+ Represents a custom event declaration: A declaration that has a beginning event
+ declaration, some accessor blocks and an end statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ParameterList">
+ <summary>
+ Represents the parameter list in a method declaration.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SubStatement">
+ <summary>
+ The statement that declares a Sub or Function. If this method has a body, this
+ statement will be the Begin of a BlockStatement with
+ Kind=MethodDeclarationBlock, and the body of the method will be the Body of
+ that BlockStatement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FunctionStatement">
+ <summary>
+ The statement that declares a Sub or Function. If this method has a body, this
+ statement will be the Begin of a BlockStatement with
+ Kind=MethodDeclarationBlock, and the body of the method will be the Body of
+ that BlockStatement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SubNewStatement">
+ <summary>
+ A statement that declares a constructor. This statement will be the Begin of a
+ BlockStatement with Kind=MethodDeclarationBlock, and the body of the method
+ will be the Body of that BlockStatement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DeclareSubStatement">
+ <summary>
+ A Declare statement that declares an external DLL method.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DeclareFunctionStatement">
+ <summary>
+ A Declare statement that declares an external DLL method.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DelegateSubStatement">
+ <summary>
+ A statement that declares a delegate type.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DelegateFunctionStatement">
+ <summary>
+ A statement that declares a delegate type.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EventStatement">
+ <summary>
+ A statement that declares an event. If the event being declared is a custom
+ event, this statement will be the Begin of a PropertyOrEventBlock, and the
+ accessors will be part of the Accessors of that node.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OperatorStatement">
+ <summary>
+ A statement that declares an operator. If this operator has a body, this
+ statement will be the Begin of a BlockStatement with
+ Kind=MethodDeclarationBlock, and the body of the method will be the Body of
+ that BlockStatement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PropertyStatement">
+ <summary>
+ Statement that declares a property. If this property has accessors declared,
+ this statement will be the Begin of a BlockNode, and the accessors will be the
+ Body of that node. Auto properties are property declarations without a
+ PropertyBlock.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GetAccessorStatement">
+ <summary>
+ Represents a Get or Set accessor on a property declaration or an AddHandler,
+ RemoveHandler or RaiseEvent accessor on a custom event declaration. The Kind of
+ the node determines what kind of accessor this is. This statement is always the
+ Begin of a BlockNode, and the body of the accessor is the Body of that node.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SetAccessorStatement">
+ <summary>
+ Represents a Get or Set accessor on a property declaration or an AddHandler,
+ RemoveHandler or RaiseEvent accessor on a custom event declaration. The Kind of
+ the node determines what kind of accessor this is. This statement is always the
+ Begin of a BlockNode, and the body of the accessor is the Body of that node.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AddHandlerAccessorStatement">
+ <summary>
+ Represents a Get or Set accessor on a property declaration or an AddHandler,
+ RemoveHandler or RaiseEvent accessor on a custom event declaration. The Kind of
+ the node determines what kind of accessor this is. This statement is always the
+ Begin of a BlockNode, and the body of the accessor is the Body of that node.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RemoveHandlerAccessorStatement">
+ <summary>
+ Represents a Get or Set accessor on a property declaration or an AddHandler,
+ RemoveHandler or RaiseEvent accessor on a custom event declaration. The Kind of
+ the node determines what kind of accessor this is. This statement is always the
+ Begin of a BlockNode, and the body of the accessor is the Body of that node.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RaiseEventAccessorStatement">
+ <summary>
+ Represents a Get or Set accessor on a property declaration or an AddHandler,
+ RemoveHandler or RaiseEvent accessor on a custom event declaration. The Kind of
+ the node determines what kind of accessor this is. This statement is always the
+ Begin of a BlockNode, and the body of the accessor is the Body of that node.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ImplementsClause">
+ <summary>
+ Represents the "Implements ..." clause on a type member, which describes which
+ interface members this member implements.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.HandlesClause">
+ <summary>
+ Represents the "Handles ..." clause on a method declaration that describes
+ which events this method handles.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.KeywordEventContainer">
+ <summary>
+ Represents event container specified through special keywords "Me", "MyBase" or
+ "MyClass"..
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WithEventsEventContainer">
+ <summary>
+ Represents event container that refers to a WithEvents member.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WithEventsPropertyEventContainer">
+ <summary>
+ Represents event container that refers to a WithEvents member's property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.HandlesClauseItem">
+ <summary>
+ Represents a single handled event in a "Handles ..." clause.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IncompleteMember">
+ <summary>
+ Represents the beginning of a declaration. However, not enough syntax is
+ detected to classify this as a field, method, property or event. This is node
+ always represents a syntax error.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FieldDeclaration">
+ <summary>
+ Represents the declaration of one or more variables or constants, either as
+ local variables or as class/structure members. In the case of a constant, it is
+ represented by having "Const" in the Modifiers (although technically "Const" is
+ not a modifier, it is represented as one in the parse trees.)
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.VariableDeclarator">
+ <summary>
+ Represents the part of a variable or constant declaration statement that
+ associated one or more variable names with a type.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SimpleAsClause">
+ <summary>
+ Represents an "As {type-name}" clause that does not have an initializer or
+ "New". The type has optional attributes associated with it, although attributes
+ are not permitted in all possible places where this node occurs.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AsNewClause">
+ <summary>
+ Represents an "As New {type-name} [arguments] [initializers]" clause in a
+ declaration. The type has optional attributes associated with it, although
+ attributes are not permitted in many places where this node occurs (they are
+ permitted, for example, on automatically implemented properties.)
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ObjectMemberInitializer">
+ <summary>
+ Represents a "With {...} clause used to initialize a new object's members.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ObjectCollectionInitializer">
+ <summary>
+ Represents a "From {...} clause used to initialize a new collection object's
+ elements.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InferredFieldInitializer">
+ <summary>
+ Represent a field initializer in a With {...} initializer where the field name
+ is inferred from the initializer expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NamedFieldInitializer">
+ <summary>
+ Represent a named field initializer in a With {...} initializer, such as ".x =
+ expr".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EqualsValue">
+ <summary>
+ Represents an "= initializer" clause in a declaration for a variable,
+ pararameter or automatic property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.Parameter">
+ <summary>
+ Represent a parameter to a method, property, constructor, etc.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ModifiedIdentifier">
+ <summary>
+ Represents an identifier with optional "?" or "()" or "(,,,)" modifiers, as
+ used in parameter declarations and variable declarations.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ArrayRankSpecifier">
+ <summary>
+ Represents a modifier that describes an array type, without bounds, such as
+ "()" or "(,)".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AttributeList">
+ <summary>
+ Represents a group of attributes within "&lt;" and "&gt;" brackets.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.Attribute">
+ <summary>
+ Represents a single attribute declaration within an attribute list.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AttributeTarget">
+ <summary>
+ Represents a single attribute declaration within an attribute list.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AttributesStatement">
+ <summary>
+ Represents a file-level attribute, in which the attributes have no other
+ syntactic element they are attached to.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExpressionStatement">
+ <summary>
+ Represent an expression in a statement context. This may only be a invocation
+ or await expression in standard code but may be any expression in VB
+ Interactive code.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PrintStatement">
+ <summary>
+ Represent a "? expression" "Print" statement in VB Interactive code.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WhileBlock">
+ <summary>
+ Represents a While...End While statement, including the While, body and End
+ While.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.UsingBlock">
+ <summary>
+ Represents an entire Using...End Using statement, including the Using, body and
+ End Using statements.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SyncLockBlock">
+ <summary>
+ Represents a entire SyncLock...End SyncLock block, including the SyncLock
+ statement, the enclosed statements, and the End SyncLock statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WithBlock">
+ <summary>
+ Represents a With...End With block, include the With statement, the body of the
+ block and the End With statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LocalDeclarationStatement">
+ <summary>
+ Represents the declaration of one or more local variables or constants.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LabelStatement">
+ <summary>
+ Represents a label statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GoToStatement">
+ <summary>
+ Represents a "GoTo" statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IdentifierLabel">
+ <summary>
+ A label for a GoTo, Resume, or On Error statement. An identifier, line number,
+ or next keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NumericLabel">
+ <summary>
+ A label for a GoTo, Resume, or On Error statement. An identifier, line number,
+ or next keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NextLabel">
+ <summary>
+ A label for a GoTo, Resume, or On Error statement. An identifier, line number,
+ or next keyword.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StopStatement">
+ <summary>
+ Represents a "Stop" or "End" statement. The Kind can be used to determine which
+ kind of statement this is.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndStatement">
+ <summary>
+ Represents a "Stop" or "End" statement. The Kind can be used to determine which
+ kind of statement this is.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExitDoStatement">
+ <summary>
+ An exit statement. The kind of block being exited can be found by examining the
+ Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExitForStatement">
+ <summary>
+ An exit statement. The kind of block being exited can be found by examining the
+ Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExitSubStatement">
+ <summary>
+ An exit statement. The kind of block being exited can be found by examining the
+ Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExitFunctionStatement">
+ <summary>
+ An exit statement. The kind of block being exited can be found by examining the
+ Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExitOperatorStatement">
+ <summary>
+ An exit statement. The kind of block being exited can be found by examining the
+ Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExitPropertyStatement">
+ <summary>
+ An exit statement. The kind of block being exited can be found by examining the
+ Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExitTryStatement">
+ <summary>
+ An exit statement. The kind of block being exited can be found by examining the
+ Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExitSelectStatement">
+ <summary>
+ An exit statement. The kind of block being exited can be found by examining the
+ Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExitWhileStatement">
+ <summary>
+ An exit statement. The kind of block being exited can be found by examining the
+ Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ContinueWhileStatement">
+ <summary>
+ Represents a "Continue (block)" statement. THe kind of block referenced can be
+ determined by examining the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ContinueDoStatement">
+ <summary>
+ Represents a "Continue (block)" statement. THe kind of block referenced can be
+ determined by examining the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ContinueForStatement">
+ <summary>
+ Represents a "Continue (block)" statement. THe kind of block referenced can be
+ determined by examining the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ReturnStatement">
+ <summary>
+ Represents a "Return" statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SingleLineIfStatement">
+ <summary>
+ Represents a line If-Then-Else statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SingleLineIfPart">
+ <summary>
+ Represents part of a single line If statement, consisting of a beginning
+ if-statement, followed by a body of statement controlled by that beginning
+ statement. The Kind property returns if this is an SingleLineIf.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SingleLineElseClause">
+ <summary>
+ Represents the Else part of an If statement, consisting of a Else statement,
+ followed by a body of statement controlled by that Else.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MultiLineIfBlock">
+ <summary>
+ Represents a block If...Then...Else...EndIf Statement. The Kind property can be
+ used to determine if it is a block or line If.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ElseIfBlock">
+ <summary>
+ Represents part of an If statement, consisting of a beginning statement (If or
+ ElseIf), followed by a body of statement controlled by that beginning
+ statement. The Kind property returns if this is an If or ElseIf.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ElseBlock">
+ <summary>
+ Represents the Else part of an If statement, consisting of a Else statement,
+ followed by a body of statement controlled by that Else.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IfStatement">
+ <summary>
+ Represents the If part or ElseIf part of a If...End If block (or line If). This
+ statement is always the Begin of a IfPart. The Kind can be examined to
+ determine if this is an If or an ElseIf statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ElseIfStatement">
+ <summary>
+ Represents the If part or ElseIf part of a If...End If block (or line If). This
+ statement is always the Begin of a IfPart. The Kind can be examined to
+ determine if this is an If or an ElseIf statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ElseStatement">
+ <summary>
+ Represents the Else part of a If...End If block (or line If). This statement is
+ always the Begin of a ElsePart.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TryBlock">
+ <summary>
+ Represents an entire Try...Catch...Finally...End Try statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CatchBlock">
+ <summary>
+ Represents a Catch part of an Try...Catch...Finally...End Try statement,
+ consisting of a Catch statement, followed by a body of statements controlled by
+ that Catch statement. The Kind property returns which kind of part this is.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FinallyBlock">
+ <summary>
+ Represents the Finally part of an Try...Catch...Finally...End Try statement,
+ consisting of a Finally statement, followed by a body of statements controlled
+ by the Finally.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TryStatement">
+ <summary>
+ Represents the Try part part of a Try...Catch...Finally...End Try. This
+ statement is always the Begin of a TryPart.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CatchStatement">
+ <summary>
+ Represents the Catch part part of a Try...Catch...Finally...End Try. This
+ statement is always the Begin of a CatchPart.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CatchFilterClause">
+ <summary>
+ Represents the When/Filter clause of a Catch statement
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FinallyStatement">
+ <summary>
+ Represents the Finally part part of a Try...Catch...Finally...End Try. This
+ statement is always the Begin of a FinallyPart.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ErrorStatement">
+ <summary>
+ Represents the "Error" statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OnErrorGoToZeroStatement">
+ <summary>
+ Represents an OnError Goto statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OnErrorGoToMinusOneStatement">
+ <summary>
+ Represents an OnError Goto statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OnErrorGoToLabelStatement">
+ <summary>
+ Represents an OnError Goto statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OnErrorResumeNextStatement">
+ <summary>
+ Represents an OnError Resume Next statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ResumeStatement">
+ <summary>
+ Represents a "Resume" statement. The Kind property can be used to determine if
+ this is a "Resume", "Resume Next" or "Resume label" statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ResumeLabelStatement">
+ <summary>
+ Represents a "Resume" statement. The Kind property can be used to determine if
+ this is a "Resume", "Resume Next" or "Resume label" statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ResumeNextStatement">
+ <summary>
+ Represents a "Resume" statement. The Kind property can be used to determine if
+ this is a "Resume", "Resume Next" or "Resume label" statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SelectBlock">
+ <summary>
+ Represents a Select Case block, including the Select Case that begins it, the
+ contains Case blocks and the End Select.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SelectStatement">
+ <summary>
+ Represents a Select Case statement. This statement always occurs as the Begin
+ of a SelectBlock.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaseBlock">
+ <summary>
+ Represents a case statement and its subsequent block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaseElseBlock">
+ <summary>
+ Represents a case statement and its subsequent block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaseStatement">
+ <summary>
+ Represents a Case or Case Else statement. This statement is always the Begin of
+ a CaseBlock. If this is a Case Else statement, the Kind=CaseElse, otherwise the
+ Kind=Case.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaseElseStatement">
+ <summary>
+ Represents a Case or Case Else statement. This statement is always the Begin of
+ a CaseBlock. If this is a Case Else statement, the Kind=CaseElse, otherwise the
+ Kind=Case.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ElseCaseClause">
+ <summary>
+ The "Else" part in a Case Else statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SimpleCaseClause">
+ <summary>
+ Represents a single value in a Case.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RangeCaseClause">
+ <summary>
+ Represents a range "expression To expression" in a Case.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaseEqualsClause">
+ <summary>
+ Represents a relation clause in a Case statement, such as "Is &gt; expression".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaseNotEqualsClause">
+ <summary>
+ Represents a relation clause in a Case statement, such as "Is &gt; expression".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaseLessThanClause">
+ <summary>
+ Represents a relation clause in a Case statement, such as "Is &gt; expression".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaseLessThanOrEqualClause">
+ <summary>
+ Represents a relation clause in a Case statement, such as "Is &gt; expression".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaseGreaterThanOrEqualClause">
+ <summary>
+ Represents a relation clause in a Case statement, such as "Is &gt; expression".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaseGreaterThanClause">
+ <summary>
+ Represents a relation clause in a Case statement, such as "Is &gt; expression".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SyncLockStatement">
+ <summary>
+ Represents the "SyncLock" statement. This statement always occurs as the Begin
+ of a SyncLockBlock.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ForBlock">
+ <summary>
+ Represents a For or For Each block, including the introducting statement, the
+ body and the "Next" (which can be omitted if a containing For has a Next with
+ multiple variables).
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ForEachBlock">
+ <summary>
+ Represents a For or For Each block, including the introducting statement, the
+ body and the "Next" (which can be omitted if a containing For has a Next with
+ multiple variables).
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ForStatement">
+ <summary>
+ The For statement that begins a For-Next block. This statement always occurs as
+ the Begin of a ForBlock. Most of the time, the End of that ForBlock is the
+ corresponding Next statement. However, multiple nested For statements are ended
+ by a single Next statement with multiple variables, then the inner For
+ statements will have End set to Nothing, and the Next statement is the End of
+ the outermost For statement that is being ended.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ForStepClause">
+ <summary>
+ The Step clause in a For Statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ForEachStatement">
+ <summary>
+ The For Each statement that begins a For Each-Next block. This statement always
+ occurs as the Begin of a ForBlock, and the body of the For Each-Next is the
+ Body of that ForBlock. Most of the time, the End of that ForBlock is the
+ corresponding Next statement. However, multiple nested For statements are ended
+ by a single Next statement with multiple variables, then the inner For
+ statements will have End set to Nothing, and the Next statement is the End of
+ the outermost For statement that is being ended.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NextStatement">
+ <summary>
+ The Next statement that ends a For-Next or For Each-Next block. This statement
+ always occurs as the End of a ForBlock (with Kind=ForBlock or ForEachBlock),
+ and the body of the For-Next is the Body of that ForBlock. The Begin of that
+ ForBlock has the corresponding For or For Each statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.UsingStatement">
+ <summary>
+ The Using statement that begins a Using block. This statement always occurs as
+ the Begin of a UsingBlock, and the body of the Using is the Body of that
+ UsingBlock.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ThrowStatement">
+ <summary>
+ Represents a Throw statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SimpleAssignmentStatement">
+ <summary>
+ Represents a simple, compound, or Mid assignment statement. Which one can be
+ determined by checking the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MidAssignmentStatement">
+ <summary>
+ Represents a simple, compound, or Mid assignment statement. Which one can be
+ determined by checking the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AddAssignmentStatement">
+ <summary>
+ Represents a simple, compound, or Mid assignment statement. Which one can be
+ determined by checking the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SubtractAssignmentStatement">
+ <summary>
+ Represents a simple, compound, or Mid assignment statement. Which one can be
+ determined by checking the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MultiplyAssignmentStatement">
+ <summary>
+ Represents a simple, compound, or Mid assignment statement. Which one can be
+ determined by checking the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DivideAssignmentStatement">
+ <summary>
+ Represents a simple, compound, or Mid assignment statement. Which one can be
+ determined by checking the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IntegerDivideAssignmentStatement">
+ <summary>
+ Represents a simple, compound, or Mid assignment statement. Which one can be
+ determined by checking the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExponentiateAssignmentStatement">
+ <summary>
+ Represents a simple, compound, or Mid assignment statement. Which one can be
+ determined by checking the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LeftShiftAssignmentStatement">
+ <summary>
+ Represents a simple, compound, or Mid assignment statement. Which one can be
+ determined by checking the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RightShiftAssignmentStatement">
+ <summary>
+ Represents a simple, compound, or Mid assignment statement. Which one can be
+ determined by checking the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ConcatenateAssignmentStatement">
+ <summary>
+ Represents a simple, compound, or Mid assignment statement. Which one can be
+ determined by checking the Kind.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MidExpression">
+ <summary>
+ Represents a left-hand side of a MidAssignment statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CallStatement">
+ <summary>
+ Represent an call statement (also known as a invocation statement).
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AddHandlerStatement">
+ <summary>
+ Represents an AddHandler or RemoveHandler statement. The Kind property
+ determines which one.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RemoveHandlerStatement">
+ <summary>
+ Represents an AddHandler or RemoveHandler statement. The Kind property
+ determines which one.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RaiseEventStatement">
+ <summary>
+ Represent a RaiseEvent statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WithStatement">
+ <summary>
+ Represents a "With" statement. This statement always occurs as the
+ BeginStatement of a WithBlock, and the body of the With is the Body of that
+ WithBlock.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ReDimStatement">
+ <summary>
+ Represents a ReDim statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ReDimPreserveStatement">
+ <summary>
+ Represents a ReDim statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RedimClause">
+ <summary>
+ Represents a ReDim statement clause.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EraseStatement">
+ <summary>
+ Represents an "Erase" statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CharacterLiteralExpression">
+ <summary>
+ Represents a literal. The kind of literal is determined by the Kind property:
+ IntegerLiteral, CharacterLiteral, BooleanLiteral, DecimalLiteral,
+ FloatingLiteral, DateLiteral or StringLiteral. The value of the literal can be
+ determined by casting the associated Token to the correct type and getting the
+ value from the token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TrueLiteralExpression">
+ <summary>
+ Represents a literal. The kind of literal is determined by the Kind property:
+ IntegerLiteral, CharacterLiteral, BooleanLiteral, DecimalLiteral,
+ FloatingLiteral, DateLiteral or StringLiteral. The value of the literal can be
+ determined by casting the associated Token to the correct type and getting the
+ value from the token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FalseLiteralExpression">
+ <summary>
+ Represents a literal. The kind of literal is determined by the Kind property:
+ IntegerLiteral, CharacterLiteral, BooleanLiteral, DecimalLiteral,
+ FloatingLiteral, DateLiteral or StringLiteral. The value of the literal can be
+ determined by casting the associated Token to the correct type and getting the
+ value from the token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NumericLiteralExpression">
+ <summary>
+ Represents a literal. The kind of literal is determined by the Kind property:
+ IntegerLiteral, CharacterLiteral, BooleanLiteral, DecimalLiteral,
+ FloatingLiteral, DateLiteral or StringLiteral. The value of the literal can be
+ determined by casting the associated Token to the correct type and getting the
+ value from the token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DateLiteralExpression">
+ <summary>
+ Represents a literal. The kind of literal is determined by the Kind property:
+ IntegerLiteral, CharacterLiteral, BooleanLiteral, DecimalLiteral,
+ FloatingLiteral, DateLiteral or StringLiteral. The value of the literal can be
+ determined by casting the associated Token to the correct type and getting the
+ value from the token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StringLiteralExpression">
+ <summary>
+ Represents a literal. The kind of literal is determined by the Kind property:
+ IntegerLiteral, CharacterLiteral, BooleanLiteral, DecimalLiteral,
+ FloatingLiteral, DateLiteral or StringLiteral. The value of the literal can be
+ determined by casting the associated Token to the correct type and getting the
+ value from the token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NothingLiteralExpression">
+ <summary>
+ Represents a literal. The kind of literal is determined by the Kind property:
+ IntegerLiteral, CharacterLiteral, BooleanLiteral, DecimalLiteral,
+ FloatingLiteral, DateLiteral or StringLiteral. The value of the literal can be
+ determined by casting the associated Token to the correct type and getting the
+ value from the token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ParenthesizedExpression">
+ <summary>
+ Represents a parenthesized expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MeExpression">
+ <summary>
+ Identifies the special instance "Me"
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MyBaseExpression">
+ <summary>
+ Identifies the special instance "MyBase"
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MyClassExpression">
+ <summary>
+ Identifies the special instance "MyClass"
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GetTypeExpression">
+ <summary>
+ Represents a GetType expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TypeOfIsExpression">
+ <summary>
+ Represents a TypeOf...Is or IsNot expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TypeOfIsNotExpression">
+ <summary>
+ Represents a TypeOf...Is or IsNot expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GetXmlNamespaceExpression">
+ <summary>
+ Represents a GetXmlNamespace expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SimpleMemberAccessExpression">
+ <summary>
+ Represents member access (.name) or dictionary access (!name). The Kind
+ property determines which kind of access.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DictionaryAccessExpression">
+ <summary>
+ Represents member access (.name) or dictionary access (!name). The Kind
+ property determines which kind of access.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlElementAccessExpression">
+ <summary>
+ Represents an XML member element access (node.&lt;Element&gt;), attribute
+ access (node.@Attribute) or descendants access (node...&lt;Descendant&gt;). The
+ Kind property determines which kind of access.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlDescendantAccessExpression">
+ <summary>
+ Represents an XML member element access (node.&lt;Element&gt;), attribute
+ access (node.@Attribute) or descendants access (node...&lt;Descendant&gt;). The
+ Kind property determines which kind of access.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlAttributeAccessExpression">
+ <summary>
+ Represents an XML member element access (node.&lt;Element&gt;), attribute
+ access (node.@Attribute) or descendants access (node...&lt;Descendant&gt;). The
+ Kind property determines which kind of access.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InvocationExpression">
+ <summary>
+ Represents an invocation expression consisting of an invocation target and an
+ optional argument list or an array, parameterized property or object default
+ property index.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ObjectCreationExpression">
+ <summary>
+ Represents a New expression that creates a new non-array object, possibly with
+ a "With" or "From" clause.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AnonymousObjectCreationExpression">
+ <summary>
+ Represents a New expression that create an object of anonymous type.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ArrayCreationExpression">
+ <summary>
+ Represents an expression that creates a new array.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CollectionInitializer">
+ <summary>
+ Represents an expression that creates a new array without naming the element
+ type.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PredefinedCastExpression">
+ <summary>
+ Represents a cast to a pre-defined type using a pre-defined cast expression,
+ such as CInt or CLng.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AddExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SubtractExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MultiplyExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DivideExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IntegerDivideExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExponentiateExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LeftShiftExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RightShiftExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ConcatenateExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ModuloExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EqualsExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NotEqualsExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LessThanExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LessThanOrEqualExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GreaterThanOrEqualExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GreaterThanExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IsExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IsNotExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LikeExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OrExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExclusiveOrExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AndExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OrElseExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AndAlsoExpression">
+ <summary>
+ Represents a binary operator. The Kind property classifies the operators into
+ similar kind of operators (arithmetic, relational, logical or string); the
+ exact operation being performed is determined by the Operator property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.UnaryPlusExpression">
+ <summary>
+ Describes a unary operator: Plus, Negate, Not or AddressOf.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.UnaryMinusExpression">
+ <summary>
+ Describes a unary operator: Plus, Negate, Not or AddressOf.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NotExpression">
+ <summary>
+ Describes a unary operator: Plus, Negate, Not or AddressOf.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AddressOfExpression">
+ <summary>
+ Describes a unary operator: Plus, Negate, Not or AddressOf.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.BinaryConditionalExpression">
+ <summary>
+ Represents a conditional expression, If(condition, true-expr, false-expr) or
+ If(expr, nothing-expr).
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TernaryConditionalExpression">
+ <summary>
+ Represents a conditional expression, If(condition, true-expr, false-expr) or
+ If(expr, nothing-expr).
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SingleLineFunctionLambdaExpression">
+ <summary>
+ Represents a single line lambda expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SingleLineSubLambdaExpression">
+ <summary>
+ Represents a single line lambda expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MultiLineFunctionLambdaExpression">
+ <summary>
+ Represents a multi-line lambda expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MultiLineSubLambdaExpression">
+ <summary>
+ Represents a multi-line lambda expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SubLambdaHeader">
+ <summary>
+ Represents the header part of a lambda expression
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FunctionLambdaHeader">
+ <summary>
+ Represents the header part of a lambda expression
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ArgumentList">
+ <summary>
+ Represents a parenthesized argument list.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OmittedArgument">
+ <summary>
+ Represents an omitted argument in an argument list. An omitted argument is not
+ considered a syntax error but a valid case when no argument is required.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SimpleArgument">
+ <summary>
+ Represents an argument that is just an optional argument name and an expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RangeArgument">
+ <summary>
+ Represents a range argument, such as "0 to 5", used in array bounds. The
+ "Value" property represents the upper bound of the range.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.QueryExpression">
+ <summary>
+ This class represents a query expression. A query expression is composed of one
+ or more query operators in a row. The first query operator must be a From or
+ Aggregate.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CollectionRangeVariable">
+ <summary>
+ Describes a single variable of the form "x [As Type] In expression" for use in
+ query expressions.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExpressionRangeVariable">
+ <summary>
+ Describes a single variable of the form "[x [As Type] =] expression" for use in
+ query expressions.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AggregationRangeVariable">
+ <summary>
+ Describes a single variable of the form "[x [As Type] =] aggregation-function"
+ for use in the Into clause of Aggregate or Group By or Group Join query
+ operators.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.VariableNameEquals">
+ <summary>
+ Represents the name and optional type of an expression range variable.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FunctionAggregation">
+ <summary>
+ Represents an invocation of an Aggregation function in the aggregation range
+ variable declaration of a Group By, Group Join or Aggregate query operator.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GroupAggregation">
+ <summary>
+ Represents the use of "Group" as the aggregation function in the in the
+ aggregation range variable declaration of a Group By or Group Join query
+ operator.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FromClause">
+ <summary>
+ Represents a "From" query operator. If this is the beginning of a query, the
+ Source will be Nothing. Otherwise, the Source will be the part of the query to
+ the left of the From.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LetClause">
+ <summary>
+ Represents a "Let" query operator.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AggregateClause">
+ <summary>
+ Represents an Aggregate query operator.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DistinctClause">
+ <summary>
+ Represents the "Distinct" query operator.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WhereClause">
+ <summary>
+ Represents a "Where" query operator.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SkipWhileClause">
+ <summary>
+ Represents a "Skip While" or "Take While" query operator. The Kind property
+ tells which.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TakeWhileClause">
+ <summary>
+ Represents a "Skip While" or "Take While" query operator. The Kind property
+ tells which.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SkipClause">
+ <summary>
+ Represents a "Skip" or "Take" query operator. The Kind property tells which.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TakeClause">
+ <summary>
+ Represents a "Skip" or "Take" query operator. The Kind property tells which.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GroupByClause">
+ <summary>
+ Represents the "Group By" query operator.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.JoinCondition">
+ <summary>
+ Represents the "expression Equals expression" condition in a Join.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SimpleJoinClause">
+ <summary>
+ Represents a Join query operator.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GroupJoinClause">
+ <summary>
+ Represents the "Group Join" query operator.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OrderByClause">
+ <summary>
+ Represents the "Order By" query operator.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AscendingOrdering">
+ <summary>
+ An expression to order by, plus an optional ordering. The Kind indicates
+ whether to order in ascending or descending order.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DescendingOrdering">
+ <summary>
+ An expression to order by, plus an optional ordering. The Kind indicates
+ whether to order in ascending or descending order.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SelectClause">
+ <summary>
+ Represents the "Select" query operator.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlDocument">
+ <summary>
+ Represents an XML Document literal expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlDeclaration">
+ <summary>
+ Represents the XML declaration prologue in an XML literal expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlDeclarationOption">
+ <summary>
+ Represents an XML document prologue option - version, encoding, standalone or
+ whitespace in an XML literal expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlElement">
+ <summary>
+ Represents an XML element with content in an XML literal expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlText">
+ <summary>
+ Represents Xml text.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlElementStartTag">
+ <summary>
+ Represents the start tag of an XML element of the form &lt;element&gt;.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlElementEndTag">
+ <summary>
+ Represents the end tag of an XML element of the form &lt;/element&gt;.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlEmptyElement">
+ <summary>
+ Represents an empty XML element of the form &lt;element /&gt;
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlAttribute">
+ <summary>
+ Represents an XML attribute in an XML literal expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlString">
+ <summary>
+ Represents a string of XML characters embedded as the content of an XML
+ element.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlPrefixName">
+ <summary>
+ Represents an XML name of the form 'name' appearing in GetXmlNamespace().
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlName">
+ <summary>
+ Represents an XML name of the form 'name' or 'namespace:name' appearing in
+ source as part of an XML literal or member access expression or an XML
+ namespace import clause.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlBracketedName">
+ <summary>
+ Represents an XML name of the form &lt;xml-name&gt; appearing in source as part
+ of an XML literal or member access expression or an XML namespace import
+ clause.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlPrefix">
+ <summary>
+ Represents an XML namespace prefix of the form 'prefix:' as in xml:ns="".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlComment">
+ <summary>
+ Represents an XML comment of the form &lt;!-- Comment --&gt; appearing in an
+ XML literal expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlProcessingInstruction">
+ <summary>
+ Represents an XML processing instruction of the form '&lt;? XMLProcessingTarget
+ XMLProcessingValue ?&gt;'.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlCDataSection">
+ <summary>
+ Represents an XML CDATA section in an XML literal expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlEmbeddedExpression">
+ <summary>
+ Represents an embedded expression in an XML literal e.g. '&lt;name&gt;&lt;%=
+ obj.Name =%&gt;&lt;/name&gt;'.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ArrayType">
+ <summary>
+ Represents an array type, such as "A() or "A(,)", without bounds specified for
+ the array.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NullableType">
+ <summary>
+ A type name that represents a nullable type, such as "Integer?".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PredefinedType">
+ <summary>
+ Represents an occurrence of a Visual Basic built-in type such as Integer or
+ String in source code.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IdentifierName">
+ <summary>
+ Represents a type name consisting of a single identifier (which might include
+ brackets or a type character).
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GenericName">
+ <summary>
+ Represents a simple type name with one or more generic arguments, such as "X(Of
+ Y, Z).
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.QualifiedName">
+ <summary>
+ Represents a qualified type name, for example X.Y or X(Of Z).Y.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GlobalName">
+ <summary>
+ Represents a name in the global namespace.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TypeArgumentList">
+ <summary>
+ Represents a parenthesized list of generic type arguments.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CrefReference">
+ <summary>
+ Syntax node class that represents a value of 'cref' attribute inside
+ documentation comment trivia.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CrefSignature">
+ <summary>
+ Represents a parenthesized list of argument types for a signature inside
+ CrefReferenceSyntax syntax.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.YieldStatement">
+ <summary>
+ Represent a Yield statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AwaitExpression">
+ <summary>
+ Represent a Await expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AddHandlerKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AddressOfKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AliasKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AndKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AndAlsoKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AsKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.BooleanKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ByRefKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ByteKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ByValKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CallKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaseKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CatchKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CBoolKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CByteKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CCharKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CDateKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CDecKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CDblKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CharKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CIntKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ClassKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CLngKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CObjKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ConstKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ReferenceKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ContinueKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CSByteKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CShortKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CSngKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CStrKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CTypeKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CUIntKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CULngKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CUShortKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DateKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DecimalKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DeclareKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DefaultKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DelegateKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DimKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DirectCastKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DoKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DoubleKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EachKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ElseKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ElseIfKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EnumKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EraseKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ErrorKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EventKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExitKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FalseKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FinallyKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ForKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FriendKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FunctionKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GetKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GetTypeKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GetXmlNamespaceKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GlobalKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GoToKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.HandlesKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IfKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ImplementsKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ImportsKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InheritsKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IntegerKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InterfaceKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IsKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IsNotKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LetKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LibKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LikeKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LongKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LoopKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MeKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ModKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ModuleKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MustInheritKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MustOverrideKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MyBaseKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MyClassKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NamespaceKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NarrowingKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NextKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NewKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NotKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NothingKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NotInheritableKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NotOverridableKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ObjectKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OfKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OnKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OperatorKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OptionKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OptionalKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OrKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OrElseKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OverloadsKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OverridableKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OverridesKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ParamArrayKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PartialKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PrivateKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PropertyKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ProtectedKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PublicKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RaiseEventKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ReadOnlyKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ReDimKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.REMKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RemoveHandlerKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ResumeKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ReturnKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SByteKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SelectKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SetKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ShadowsKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SharedKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ShortKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SingleKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StaticKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StepKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StopKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StringKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StructureKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SubKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SyncLockKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ThenKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ThrowKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ToKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TrueKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TryKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TryCastKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TypeOfKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.UIntegerKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ULongKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.UShortKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.UsingKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WhenKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WhileKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WideningKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WithKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WithEventsKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WriteOnlyKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XorKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndIfKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GosubKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.VariantKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WendKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AggregateKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AllKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AnsiKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AscendingKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AssemblyKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AutoKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.BinaryKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ByKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CompareKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CustomKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DescendingKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DisableKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DistinctKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EnableKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EqualsKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExplicitKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExternalSourceKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExternalChecksumKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FromKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GroupKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InferKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IntoKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IsFalseKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IsTrueKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.JoinKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.KeyKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MidKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OffKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OrderKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OutKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PreserveKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RegionKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SkipKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StrictKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TakeKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TextKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.UnicodeKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.UntilKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WarningKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WhereKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TypeKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AsyncKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AwaitKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IteratorKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.YieldKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExclamationToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AtToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CommaToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.HashToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AmpersandToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SingleQuoteToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OpenParenToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CloseParenToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OpenBraceToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CloseBraceToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SemicolonToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AsteriskToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PlusToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MinusToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DotToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SlashToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ColonToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LessThanToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LessThanEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LessThanGreaterThanToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GreaterThanToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GreaterThanEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.BackslashToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaretToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ColonEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AmpersandEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AsteriskEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PlusEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MinusEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SlashEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.BackslashEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CaretEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LessThanLessThanToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GreaterThanGreaterThanToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LessThanLessThanEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.GreaterThanGreaterThanEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.QuestionToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DoubleQuoteToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StatementTerminatorToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndOfFileToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EmptyToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SlashGreaterThanToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LessThanSlashToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LessThanExclamationMinusMinusToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.MinusMinusGreaterThanToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LessThanQuestionToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.QuestionGreaterThanToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LessThanPercentEqualsToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PercentGreaterThanToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.BeginCDataToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndCDataToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndOfXmlToken">
+ <summary>
+ Represents a single punctuation mark or operator in a VB program. Which one can
+ be determined from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.BadToken">
+ <summary>
+ Represents a sequence of characters appearing in source with no possible
+ meaning in the Visual Basic language (e.g. the semicolon ';'). This token
+ should only appear in SkippedTokenTrivia as an artifact of parsing error
+ recovery.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlNameToken">
+ <summary>
+ Represents an Xml NCName per Namespaces in XML 1.0
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlTextLiteralToken">
+ <summary>
+ Represents character data in Xml content also known as PCData or in an Xml
+ attribute value. All text is here for now even text that does not need
+ normalization such as comment, pi and cdata text.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlEntityLiteralToken">
+ <summary>
+ Represents character data in Xml content also known as PCData or in an Xml
+ attribute value. All text is here for now even text that does not need
+ normalization such as comment, pi and cdata text.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DocumentationCommentLineBreakToken">
+ <summary>
+ Represents character data in Xml content also known as PCData or in an Xml
+ attribute value. All text is here for now even text that does not need
+ normalization such as comment, pi and cdata text.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IdentifierToken">
+ <summary>
+ Represents an identifier token. This might include brackets around the name and
+ a type character.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IntegerLiteralToken">
+ <summary>
+ Represents an integer literal token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FloatingLiteralToken">
+ <summary>
+ Represents an floating literal token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DecimalLiteralToken">
+ <summary>
+ Represents a Decimal literal token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DateLiteralToken">
+ <summary>
+ Represents an Date literal token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.StringLiteralToken">
+ <summary>
+ Represents an string literal token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CharacterLiteralToken">
+ <summary>
+ Represents an string literal token.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SkippedTokensTrivia">
+ <summary>
+ Represents tokens that were skipped by the parser as part of error recovery,
+ and thus are not part of any syntactic structure.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DocumentationCommentTrivia">
+ <summary>
+ Represents a documentation comment e.g. ''' &lt;Summary&gt; apearing in source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlCrefAttribute">
+ <summary>
+ A symbol referenced by a cref attribute (e.g. in a &lt;see&gt; or
+ &lt;seealso&gt; documentation comment tag). For example, the M in &lt;see
+ cref="M" /&gt;.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlNameAttribute">
+ <summary>
+ A param or type param symbol referenced by a name attribute (e.g. in a
+ &lt;param&gt; or &lt;typeparam&gt; documentation comment tag). For example, the
+ M in &lt;param name="M" /&gt;.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ConditionalAccessExpression">
+ <summary>
+ ExpressionSyntax node representing the object conditionally accessed.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WhitespaceTrivia">
+ <summary>
+ Represents true whitespace: spaces, tabs, newlines and the like.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndOfLineTrivia">
+ <summary>
+ Represents line breaks that are syntactically insignificant.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ColonTrivia">
+ <summary>
+ Represents colons that are syntactically insignificant.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CommentTrivia">
+ <summary>
+ Represents a comment.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LineContinuationTrivia">
+ <summary>
+ Represents an explicit line continuation character at the end of a line, i.e.,
+ _
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DocumentationCommentExteriorTrivia">
+ <summary>
+ Represents a ''' prefix for an XML Documentation Comment.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DisabledTextTrivia">
+ <summary>
+ Represents text in a false preprocessor block
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ConstDirectiveTrivia">
+ <summary>
+ Represents a #Const pre-processing constant declaration appearing in source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.IfDirectiveTrivia">
+ <summary>
+ Represents the beginning of an #If pre-processing directive appearing in
+ source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ElseIfDirectiveTrivia">
+ <summary>
+ Represents the beginning of an #If pre-processing directive appearing in
+ source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ElseDirectiveTrivia">
+ <summary>
+ Represents an #Else pre-processing directive appearing in source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndIfDirectiveTrivia">
+ <summary>
+ Represents an #End If pre-processing directive appearing in source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.RegionDirectiveTrivia">
+ <summary>
+ Represents the beginning of a #Region directive appearing in source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndRegionDirectiveTrivia">
+ <summary>
+ Represents an #End Region directive appearing in source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExternalSourceDirectiveTrivia">
+ <summary>
+ Represents the beginning of a #ExternalSource pre-processing directive
+ appearing in source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndExternalSourceDirectiveTrivia">
+ <summary>
+ Represents an #End ExternalSource pre-processing directive appearing in source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ExternalChecksumDirectiveTrivia">
+ <summary>
+ Represents an #ExternalChecksum pre-processing directive appearing in source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EnableWarningDirectiveTrivia">
+ <summary>
+ Represents #Enable Warning pre-processing directive appearing in source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DisableWarningDirectiveTrivia">
+ <summary>
+ Represents #Disable Warning pre-processing directive appearing in source.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ReferenceDirectiveTrivia">
+ <summary>
+ Represents an #r directive appearing in scripts.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.BadDirectiveTrivia">
+ <summary>
+ Represents an unrecognized pre-processing directive. This occurs when the
+ parser encounters a hash '#' token at the beginning of a physical line but does
+ recognize the text that follows as a valid Visual Basic pre-processing
+ directive.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ImportAliasClause">
+ <summary>
+ Represents an alias identifier followed by an "=" token in an Imports clause.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NameColonEquals">
+ <summary>
+ Represents an identifier name followed by a ":=" token in a named argument.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SimpleDoLoopBlock">
+ <summary>
+ Represents a "Do ... Loop" block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DoWhileLoopBlock">
+ <summary>
+ Represents a "Do ... Loop" block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DoUntilLoopBlock">
+ <summary>
+ Represents a "Do ... Loop" block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DoLoopWhileBlock">
+ <summary>
+ Represents a "Do ... Loop" block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DoLoopUntilBlock">
+ <summary>
+ Represents a "Do ... Loop" block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SimpleDoStatement">
+ <summary>
+ Represents a simple "Do" statement that begins a "Do ... Loop" block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DoWhileStatement">
+ <summary>
+ Represents a "Do While" statement that begins a "Do ... Loop" block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DoUntilStatement">
+ <summary>
+ Represents a "Do Until" statement that begins a "Do ... Loop" block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.SimpleLoopStatement">
+ <summary>
+ Represents a simple "Loop" statement that end a "Do ... Loop" block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LoopWhileStatement">
+ <summary>
+ Represents a "Loop While" statement that end a "Do ... Loop" block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.LoopUntilStatement">
+ <summary>
+ Represents a "Loop Until" statement that end a "Do ... Loop" block.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.WhileClause">
+ <summary>
+ Represents a "While ..." clause of a "Do" or "Loop" statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.UntilClause">
+ <summary>
+ Represents an "Until ..." clause of a "Do" or "Loop" statement.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NameOfKeyword">
+ <summary>
+ Represents a single keyword in a VB program. Which keyword can be determined
+ from the Kind property.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.NameOfExpression">
+ <summary>
+ Represents a NameOf expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InterpolatedStringExpression">
+ <summary>
+ Represents an interpolated string expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InterpolatedStringText">
+ <summary>
+ Represents literal text content in an interpolated string.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.Interpolation">
+ <summary>
+ Represents an embedded expression in an interpolated string expression e.g. '{expression[,alignment][:formatString]}'.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InterpolationAlignmentClause">
+ <summary>
+ Represents an alignment clause ', alignment' of an intepolated string embedded expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InterpolationFormatClause">
+ <summary>
+ Represents a format string clause ':formatString' of an interpolated string embedded expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DollarSignDoubleQuoteToken">
+ <summary>
+ Represents a '$"' token in an interpolated string expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InterpolatedStringTextToken">
+ <summary>
+ Represents literal character data in interpolated string expression.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndOfInterpolatedStringToken">
+ <summary>
+ Represents the end of interpolated string when parsing.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.VisualBasicFormatter">
+ <summary>
+ Computes string representations of <see cref="T:Microsoft.VisualStudio.Debugger.Evaluation.ClrCompilation.DkmClrValue"/> instances.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.VisualBasicFormatter.Instance">
+ <summary>
+ Singleton instance of VisualBasicFormatter (created using default constructor).
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.VisualBasicResultProvider">
+ <summary>
+ Computes expansion of <see cref="T:Microsoft.VisualStudio.Debugger.Evaluation.ClrCompilation.DkmClrValue"/> instances.
+ </summary>
+ <remarks>
+ This class provides implementation for the Visual Basic ResultProvider component.
+ </remarks>
+</member>
+<member name="F:Microsoft.CodeAnalysis.GreenNode.ListKind">
+ <summary>
+ Required by <see cref="T:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind"/>.
+ </summary>
+</member>
+</members>
+</doc>

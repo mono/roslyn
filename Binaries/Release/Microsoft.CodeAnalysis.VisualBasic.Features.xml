@@ -1,0 +1,2755 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+Microsoft.CodeAnalysis.VisualBasic.Features
+</name>
+</assembly>
+<members>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.LambdaUtilities.IsLambda(Microsoft.CodeAnalysis.SyntaxNode)">
+ <summary>
+ Returns true if the specified node represents a lambda.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.LambdaUtilities.GetLambda(Microsoft.CodeAnalysis.SyntaxNode)">
+ <summary>
+ Given a node that represents a lambda body returns a node that represents the lambda.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.LambdaUtilities.GetCorrespondingLambdaBody(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.SyntaxNode)">
+ <summary>
+ SyntaxNode.GetCorrespondingLambdaBody(SyntaxNode)
+ </summary>
+ <remarks>
+ We need to handle case when an old node that represents a lambda body with multiple nodes 
+ of the same kind is mapped to a new node that belongs to the lambda body but is 
+ different from the one that represents the new body.
+ 
+ In that case <paramref name="newLambdaOrPeer"/> isn't lambda representing node (the first range variable of a clause)
+ but its equivalent peer (another range variable of the same clause).
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.LambdaUtilities.IsLambdaBody(Microsoft.CodeAnalysis.SyntaxNode)">
+ <summary>
+ Returns true if the specified <paramref name="node"/> represents a body of a lambda.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.LambdaUtilities.IsLambdaBodyStatementOrExpression(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.SyntaxNode@)">
+ <summary>
+ Returns true if the specified <paramref name="node"/> is part of a lambda body. 
+ Returns the node (<paramref name="lambdaBody"/>) that represents the containing lambda body.
+ </summary>
+ <remarks>
+ VB lambda bodies may be non-contiguous sequences of nodes whose ancestor (parent or grandparent) is a lambda node.
+ Whenever we need to check whether a node is a lambda body node we should use this method.
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.LambdaUtilities.TryGetLambdaBodies(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.SyntaxNode@,Microsoft.CodeAnalysis.SyntaxNode@)">
+ <summary>
+ If the specified node represents a lambda returns a node (or nodes) that represent its body (bodies).
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.LambdaUtilities.TryGetSimpleLambdaBody(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.SyntaxNode@)">
+ <summary>
+ If the specified node represents a "simple" lambda returns a node (or nodes) that represent its body (bodies).
+ Lambda is "simple" if all its body nodes are also its child nodes and vice versa.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.LambdaUtilities.AreEquivalentIgnoringLambdaBodies(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.SyntaxNode)">
+ <summary>
+ Compares content of two nodes ignoring lambda bodies and trivia.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.LambdaUtilities.IsNonUserCodeQueryLambda(Microsoft.CodeAnalysis.SyntaxNode)">
+ <summary>
+ Non-user code lambdas are synthesized lambdas that create an instance of an anonymous type representing a pair of values,
+ or otherwise transform sequences/anonymous types from one form to another without calling user code.
+ TODO: Could we avoid generating proper lambdas for these?
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.LambdaUtilities.IsClosureScope(Microsoft.CodeAnalysis.SyntaxNode)">
+ <summary>
+ Returns true if the specified node can represent a closure scope -- that is a scope of a captured variable.
+ Doesn't validate whether or not the node actually declares any captured variable.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC30002">
+ <summary>
+ Type xxx is not defined
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC30451">
+ <summary>
+ Error 'x' is not declared
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC30456">
+ <summary>
+ xxx is not a member of yyy
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC32016">
+ <summary>
+ 'X' has no parameters and its return type cannot be indexed
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC32042">
+ <summary>
+ Too few type arguments
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC36593">
+ <summary>
+ Expression of type xxx is not queryable
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC32045">
+ <summary>
+ 'A' has no type parameters and so cannot have type arguments.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC30389">
+ <summary>
+ 'A' is not accessible in this context because it is 'Friend'.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC31504">
+ <summary>
+ 'A' cannot be used as an attribute because it does not inherit from 'System.Attribute'.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC36610">
+ <summary>
+ Name 'A' is either not declared or not in the current scope.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC36719">
+ <summary>
+ Cannot initialize the type 'A' with a collection initializer because it does not have an accessible 'Add' method
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC30512">
+ <summary>
+ Option Strict On disallows implicit conversions from 'Integer' to 'String'.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC30390">
+ <summary>
+ 'A' is not accessible in this context because it is 'Private'.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC42309">
+ <summary>
+ XML comment has a tag With a 'cref' attribute that could not be resolved. XML comment will be ignored.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.AddImport.VisualBasicAddImportCodeFixProvider.BC30182">
+ <summary>
+ Type expected.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.FullyQualify.VisualBasicFullyQualifyCodeFixProvider.BC30002">
+ <summary>
+ Type xxx is not defined
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.FullyQualify.VisualBasicFullyQualifyCodeFixProvider.BC30451">
+ <summary>
+ Error 'x' is not declared
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.FullyQualify.VisualBasicFullyQualifyCodeFixProvider.BC30561">
+ <summary>
+ 'reference' is an ambiguous reference between 'identifier' and 'identifier'
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.FullyQualify.VisualBasicFullyQualifyCodeFixProvider.BC40056">
+ <summary>
+ Namespace or type specified in imports cannot be found
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.FullyQualify.VisualBasicFullyQualifyCodeFixProvider.BC32045">
+ <summary>
+ 'A' has no type parameters and so cannot have type arguments.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.Spellcheck.SpellcheckCodeFixProvider.BC30002">
+ <summary>
+ Type xxx is not defined
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.Spellcheck.SpellcheckCodeFixProvider.BC30451">
+ <summary>
+ Error 'x' is not declared
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.Spellcheck.SpellcheckCodeFixProvider.BC30456">
+ <summary>
+ xxx is not a member of yyy
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.Spellcheck.SpellcheckCodeFixProvider.BC32045">
+ <summary>
+ 'A' has no type parameters and so cannot have type arguments.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.ArrayStatements.EraseKeywordRecommender">
+ <summary>
+ Recommends the "Erase" statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.ArrayStatements.PreserveKeywordRecommender">
+ <summary>
+ Recommends the "Preserve" modifier after the ReDim statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.ArrayStatements.ReDimKeywordRecommender">
+ <summary>
+ Recommends the "ReDim" statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.AliasKeywordRecommender">
+ <summary>
+ Recommends the "Alias" keyword in external method declarations.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.AsKeywordRecommender">
+ <summary>
+ Recommends the "As" keyword in all types of declarations.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.AttributeScopesKeywordRecommender">
+ <summary>
+ Recommends the "Assembly" and "Module" keyword for top-level attributes that may exist in a file.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.CharsetModifierKeywordRecommender">
+ <summary>
+ Recommends one of the charset modifiers after a "Declare" keyword
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.ClassKeywordRecommender">
+ <summary>
+ Recommends the "Class" keyword in type declaration contexts
+ </summary>    
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.ConstKeywordRecommender">
+ <summary>
+ Recommends the "Const" keyword for the start of a statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.CustomEventKeywordRecommender">
+ <summary>
+ Recommends the "Custom Event" keyword in type declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.DeclareKeywordRecommender">
+ <summary>
+ Recommends the "Declare" keyword in member declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.DelegateKeywordRecommender">
+ <summary>
+ Recommends the "Delegate" keyword in member declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.DelegateSubFunctionKeywordRecommender">
+ <summary>
+ Recommends the "Function" and "Sub" keywords in external method declarations.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.DimKeywordRecommender">
+ <summary>
+ Recommends the "Dim" keyword in all appropriate contexts.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.EndBlockKeywordRecommender">
+ <summary>
+ Recommends "End [block]" or, if after a End keyword, just the Block.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.EnumKeywordRecommender">
+ <summary>
+ Recommends the "Enum" keyword in type declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.EventKeywordRecommender">
+ <summary>
+ Recommends the "Event" keyword in type declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.ExternalSubFunctionKeywordRecommender">
+ <summary>
+ Recommends the "Function" and "Sub" keywords in external method declarations.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.FunctionKeywordRecommender">
+ <summary>
+ Recommends the "Function" keyword in member declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.GetSetKeywordRecommender">
+ <summary>
+ Recommends the "Get" and "Set" keyword in property declarations.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.ImplementsKeywordRecommender">
+ <summary>
+ Recommends the "Implements" keyword
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.ImportsKeywordRecommender">
+ <summary>
+ Recommends the "Imports" keyword
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.InheritsKeywordRecommender">
+ <summary>
+ Recommends the "Inherits" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.InKeywordRecommender">
+ <summary>
+ Recommends the "In" keyword in all types of declarations.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.InterfaceKeywordRecommender">
+ <summary>
+ Recommends the "Interface" keyword in type declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.IteratorKeywordRecommender">
+ <summary>
+ Recommends the "Iterator" keyword in member declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.LibKeywordRecommender">
+ <summary>
+ Recommends the "Lib" keyword in external method declarations.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.ModifierKeywordsRecommender">
+ <summary>
+ Recommends the "Property" keyword in member declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.ModuleKeywordRecommender">
+ <summary>
+ Recommends the "Module" keyword in type declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.NamespaceKeywordRecommender">
+ <summary>
+ Recommends the "Namespace" keyword in type declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.OperatorKeywordRecommender">
+ <summary>
+ Recommends the "Operator" keyword in member declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.OverloadableOperatorRecommender">
+ <summary>
+ Recommends the various list of operators you can overload after the "Operator" keyword
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.ParameterModifiersKeywordRecommender">
+ <summary>
+ Recommends the ByVal, ByRef, etc keywords.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.PropertyKeywordRecommender">
+ <summary>
+ Recommends the "Property" keyword in member declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.StaticKeywordRecommender">
+ <summary>
+ Recommends the "Static" keyword for the start of a statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.StructureKeywordRecommender">
+ <summary>
+ Recommends the "Structure" keyword in type declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.SubKeywordRecommender">
+ <summary>
+ Recommends the "Sub" keyword in member declaration contexts
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Declarations.ToKeywordRecommender">
+ <summary>
+ Recommends the "To" keyword in array bounds.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.EventHandling.AddHandlerKeywordRecommender">
+ <summary>
+ Recommends the "AddHandler" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.EventHandling.HandlesKeywordRecommender">
+ <summary>
+ Recommends the "Handles" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.EventHandling.RaiseEventKeywordRecommender">
+ <summary>
+ Recommends the "RaiseEvent" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.EventHandling.RemoveHandlerKeywordRecommender">
+ <summary>
+ Recommends the "RemoveHandler" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.AddressOfKeywordRecommender">
+ <summary>
+ Recommends the "AddressOf" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.BinaryOperatorKeywordRecommender">
+ <summary>
+ Recommends binary infix operators that are English text, like "AndAlso", "OrElse", "Like", etc.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.FromKeywordRecommender">
+ <summary>
+ Recommends the "From" keyword when used in a New syntax (such as New foo From)
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.GetTypeKeywordRecommender">
+ <summary>
+ Recommends the "GetType" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.GetXmlNamespaceKeywordRecommender">
+ <summary>
+ Recommends the "GetXmlNamespace" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.GlobalKeywordRecommender">
+ <summary>
+ Recommends the "Global" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.IfKeywordRecommender">
+ <summary>
+ Recommends the "If" keyword when used for the null coalescing or ternary operator
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.KeyKeywordRecommender">
+ <summary>
+ Recommends the "Key" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.LambdaKeywordRecommender">
+ <summary>
+ Recommends the "Sub", "Function", "Async" and "Iterator" keywords in expression contexts that would start a lambda.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.MeKeywordRecommender">
+ <summary>
+ Recommends the "Me" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.MyBaseKeywordRecommender">
+ <summary>
+ Recommends the "MyBase" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.MyClassKeywordRecommender">
+ <summary>
+ Recommends the "MyClass" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.NewKeywordRecommender">
+ <summary>
+ Recommends the "New" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.NothingKeywordRecommender">
+ <summary>
+ Recommends the "Nothing" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.NotKeywordRecommender">
+ <summary>
+ Recommends the "Not" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.TrueFalseKeywordRecommender">
+ <summary>
+ Recommends the "True" and "False" keywords
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.TypeOfKeywordRecommender">
+ <summary>
+ Recommends the "TypeOf" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Expressions.WithKeywordRecommender">
+ <summary>
+ Recommends the "With" keyword when used in a New syntax (such as New foo With)
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OnErrorStatements.ErrorKeywordRecommender">
+ <summary>
+ Recommends "Error" after "On" in a "On Error" statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OnErrorStatements.GoToDestinationsRecommender">
+ <summary>
+ Recommends 0 and -1 as the "destinations" of where to go to after On Error Goto
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OnErrorStatements.GoToKeywordRecommender">
+ <summary>
+ Recommends "GoTo" after "On Error"
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OnErrorStatements.NextKeywordRecommender">
+ <summary>
+ Recommends "Next" after "On Error Resume" or after the "Resume" statement
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OnErrorStatements.OnErrorKeywordRecommender">
+ <summary>
+ Recommends "On Error Resume Next" and "On Error Goto" in a statement context.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OnErrorStatements.ResumeKeywordRecommender">
+ <summary>
+ Recommends "Resume Next" after "On Error", or "Resume" as a standalone statement
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OptionStatements.CompareBinaryTextRecommender">
+ <summary>
+ Recommends the "Binary" and "Text" options that come after "Option Compare"
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OptionStatements.ExplicitOptionsRecommender">
+ <summary>
+ Recommends the "On" and "Off" options that appear after Option Explicit.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OptionStatements.InferOptionsRecommender">
+ <summary>
+ Recommends the "On" and "Off" options that come after "Option Infer"
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OptionStatements.OptionKeywordRecommender">
+ <summary>
+ Recommends the "Option" keyword
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OptionStatements.OptionNamesRecommender">
+ <summary>
+ Recommends the names of options that can appear after an Option keyword, such as Compare or Infer.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OptionStatements.StrictOptionsRecommender">
+ <summary>
+ Recommends the "On" and "Off" options that come after "Option Infer"
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.WarningDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#Disable" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.ConstDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#Const" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.ElseDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#Else" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.ElseIfDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#ElseIf" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.EndIfDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#End If" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.EndRegionDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#End Region" directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.IfDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#If" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.RegionDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#Region" directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.AggregateKeywordRecommender">
+ <summary>
+ Recommends the Aggregate operator.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.AscendingDescendingKeywordRecommender">
+ <summary>
+ Recommends the "Ascending" and "Descending" contextual keywords in a Order By clause.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.DistinctKeywordRecommender">
+ <summary>
+ Recommends the "Distinct" query operator.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.EqualsKeywordRecommender">
+ <summary>
+ Recommends the Equals keyword when in a join syntax.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.FromKeywordRecommender">
+ <summary>
+ Recommends the From keyword to introduce a LINQ query or do a cross-join.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.GroupByKeywordRecommender">
+ <summary>
+ Recommends the "By" keyword for the "Group By" query clause.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.GroupJoinKeywordRecommender">
+ <summary>
+ Recommends the ""Group Join" query clause when it appears inside a normal Join clause.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.GroupKeywordRecommender">
+ <summary>
+ Recommends the "Group" query operator.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.IntoKeywordRecommender">
+ <summary>
+ Recommends the "Into" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.JoinKeywordRecommender">
+ <summary>
+ Recommends the "Join" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.LetKeywordRecommender">
+ <summary>
+ Recommends the Let operator.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.OnKeywordRecommender">
+ <summary>
+ Recommends the "On" keyword.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.OrderByKeywordRecommender">
+ <summary>
+ Recommends the "Order By" query clause.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.SelectKeywordRecommender">
+ <summary>
+ Recommends the "Select" query operator.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.SkipKeywordRecommender">
+ <summary>
+ Recommends the Skip operator for Skip/Skip While.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.TakeKeywordRecommender">
+ <summary>
+ Recommends the Take operator for Take/Take While.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.WhereKeywordRecommender">
+ <summary>
+ Recommends the "Where" query clause.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.WhileKeywordRecommender">
+ <summary>
+ Recommends the While keyword after a Skip/Take query
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.RecommendationHelpers.GetParentOrNull(Microsoft.CodeAnalysis.SyntaxNode)">
+ <summary>
+ Returns the parent of the node given. node may be null, which will cause this function to return null.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.CallKeywordRecommender">
+ <summary>
+ Recommends the "Call" statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.CaseKeywordRecommender">
+ <summary>
+ Recommends the "Case" and possibly "Case Else" keyword inside a Select block
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.CatchKeywordRecommender">
+ <summary>
+ Recommends the "Catch" keyword for the statement context
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.ContinueKeywordRecommender">
+ <summary>
+ Recommends the "Continue" keyword at the start of a statement when in any loop.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.DoKeywordRecommender">
+ <summary>
+ Recommends the "Do" keyword at the start of a statement
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.EachKeywordRecommender">
+ <summary>
+ Recommends the "Each" keyword after the "For" keyword
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.ElseIfKeywordRecommender">
+ <summary>
+ Recommends the "ElseIf" keyword for the statement context
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.ElseKeywordRecommender">
+ <summary>
+ Recommends the "Else" keyword for the statement context.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.EndKeywordRecommender">
+ <summary>
+ Recommends the "End" statement
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.ExitKeywordRecommender">
+ <summary>
+ Recommends the "Exit" keyword at the start of a statement
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.FinallyKeywordRecommender">
+ <summary>
+ Recommends the "Finally" keyword for the statement context
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.ForKeywordRecommender">
+ <summary>
+ Recommends the "For" keyword for the statement context
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.GotoKeywordRecommender">
+ <summary>
+ Recommends the "Goto" keyword
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.IfKeywordRecommender">
+ <summary>
+ Recommends the "If" keyword for the statement context
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.IsKeywordRecommender">
+ <summary>
+ Recommends the "Is" keyword at the beginning of any clause in a "Case" statement
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.LoopKeywordRecommender">
+ <summary>
+ Recommends the "Loop" statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.MidKeywordRecommender">
+ <summary>
+ Recommends the "Mid" keyword for the Mid statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.NextKeywordRecommender">
+ <summary>
+ Recommends the "Next" statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.ReturnKeywordRecommender">
+ <summary>
+ Recommends the "Return" keyword at the start of a statement
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.SelectKeywordRecommender">
+ <summary>
+ Recommends the "Select" keyword at the start of a statement
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.StepKeywordRecommender">
+ <summary>
+ Recommends the "Step" keyword in a For statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.StopKeywordRecommender">
+ <summary>
+ Recommends the "Stop" statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.SyncLockKeywordRecommender">
+ <summary>
+ Recommends the "SyncLock" keyword for the statement context
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.ThenKeywordRecommender">
+ <summary>
+ Recommends the "Then" keyword in an If statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.ThrowKeywordRecommender">
+ <summary>
+ Recommends the "Throw" keyword for the statement context
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.ToKeywordRecommender">
+ <summary>
+ Recommends the "To" keyword in an For.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.TryKeywordRecommender">
+ <summary>
+ Recommends the "Try" keyword for the statement context
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.UntilAndWhileKeywordRecommender">
+ <summary>
+ Recommends the "While" and "Until" keywords as a part of a Do or Loop statements
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.UsingKeywordRecommender">
+ <summary>
+ Recommends the "Using" keyword at the beginning of a statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.WhenKeywordRecommender">
+ <summary>
+ Recommends the "When" keyword for a Catch filter
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.WhileLoopKeywordRecommender">
+ <summary>
+ Recommends the "While" keyword at the start of a statement. "While" as a part of a Do statement is handled in
+ the UntilAndWhileKeywordRecommender.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.WithKeywordRecommender">
+ <summary>
+ Recommends the "With" statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Statements.YieldKeywordRecommender">
+ <summary>
+ Recommends the "Yield" keyword at the beginning of a statement.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Types.BuiltInTypesKeywordRecommender">
+ <summary>
+ Recommends built-in types in various contexts.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Completion.VisualBasicCompletionService.GetCultureSpecificQuirks(System.String)">
+ <summary>
+ In Turkish Locale, both capital 'i's should be considered same. This behavior matches the compiler behavior.
+ If lowered, both 'i's are lowered to small 'i' with dot
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.BreakpointSpans.TryGetEnclosingBreakpointSpan(Microsoft.CodeAnalysis.SyntaxNode,System.Int32,Microsoft.CodeAnalysis.Text.TextSpan@)">
+ <summary>
+ Given a syntax token determines a text span delimited by the closest applicable sequence points 
+ encompassing the token.
+ </summary>
+ <remarks>
+ If the span exists it Is possible To place a breakpoint at the given position.
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.TryComputeWeightedDistance(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.SyntaxNode,System.Double@)">
+ <summary>
+ Calculates distance of two nodes based on their significant parts.
+ Returns false if the nodes don't have any significant parts and should be compared as a whole.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.GetDescendantTokensIgnoringSeparators``1(Microsoft.CodeAnalysis.SyntaxList{``0})">
+ <summary>
+ Enumerates tokens of all nodes in the list.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.GetDescendantTokensIgnoringSeparators``1(Microsoft.CodeAnalysis.SeparatedSyntaxList{``0})">
+ <summary>
+ Enumerates tokens of all nodes in the list. Doesn't include separators.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.ComputeDistance(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.SyntaxNode)">
+ <summary>
+ Calculates the distance between two syntax nodes, disregarding trivia. 
+ </summary>
+ <remarks>
+ Distance is a number within [0, 1], the smaller the more similar the nodes are. 
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.ComputeDistance(Microsoft.CodeAnalysis.SyntaxToken,Microsoft.CodeAnalysis.SyntaxToken)">
+ <summary>
+ Calculates the distance between two syntax tokens, disregarding trivia. 
+ </summary>
+ <remarks>
+ Distance is a number within [0, 1], the smaller the more similar the tokens are. 
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.ComputeDistance(System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.SyntaxToken},System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.SyntaxToken})">
+ <summary>
+ Calculates the distance between two sequences of syntax tokens, disregarding trivia. 
+ </summary>
+ <remarks>
+ Distance is a number within [0, 1], the smaller the more similar the sequences are. 
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.ComputeDistance(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.SyntaxToken},System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.SyntaxToken})">
+ <summary>
+ Calculates the distance between two sequences of syntax tokens, disregarding trivia. 
+ </summary>
+ <remarks>
+ Distance is a number within [0, 1], the smaller the more similar the sequences are. 
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.ComputeDistance(System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.SyntaxNode},System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.SyntaxNode})">
+ <summary>
+ Calculates the distance between two sequences of syntax nodes, disregarding trivia. 
+ </summary>
+ <remarks>
+ Distance is a number within [0, 1], the smaller the more similar the sequences are. 
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.ComputeDistance(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.SyntaxNode},System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.SyntaxNode})">
+ <summary>
+ Calculates the distance between two sequences of syntax nodes, disregarding trivia. 
+ </summary>
+ <remarks>
+ Distance is a number within [0, 1], the smaller the more similar the sequences are. 
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.GetSequenceEdits(System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.SyntaxNode},System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.SyntaxNode})">
+ <summary>
+ Calculates the edits that transform one sequence of syntax nodes to another, disregarding trivia.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.GetSequenceEdits(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.SyntaxNode},System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.SyntaxNode})">
+ <summary>
+ Calculates the edits that transform one sequence of syntax nodes to another, disregarding trivia.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.GetSequenceEdits(System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.SyntaxToken},System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.SyntaxToken})">
+ <summary>
+ Calculates the edits that transform one sequence of syntax tokens to another, disregarding trivia.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.SyntaxComparer.GetSequenceEdits(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.SyntaxToken},System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.SyntaxToken})">
+ <summary>
+ Calculates the edits that transform one sequence of syntax tokens to another, disregarding trivia.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.TopSyntaxComparer.TiedToAncestor(Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.TopSyntaxComparer.Label)">
+ <summary>
+ Return true if it is desirable to report two edits (delete and insert) rather than a move edit
+ when the node changes its parent.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.VisualBasicEditAndContinueAnalyzer.FindMemberDeclaration(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.SyntaxNode)">
+ <returns>
+ <see cref="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.MethodBlockBaseSyntax"/> for methods, constructors, operators and accessors.
+ <see cref="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.PropertyStatementSyntax"/> for auto-properties.
+ <see cref="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.VariableDeclaratorSyntax"/> for fields with simple initialization "Dim a = 1", or "Dim a As New C"
+ <see cref="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.ModifiedIdentifierSyntax"/> for fields with shared AsNew initialization "Dim a, b As New C" or array initializer "Dim a(n), b(n)".
+ A null reference otherwise.
+ </returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.VisualBasicEditAndContinueAnalyzer.TryGetDeclarationBody(Microsoft.CodeAnalysis.SyntaxNode,System.Boolean)">
+ <returns>
+ Given a node representing a declaration (<paramref name="isMember"/> = true) or a top-level edit node (<paramref name="isMember"/> = false) returns:
+ - <see cref="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.MethodBlockBaseSyntax"/> for methods, constructors, operators and accessors.
+ - <see cref="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.ExpressionSyntax"/> for auto-properties and fields with initializer or AsNew clause.
+ - <see cref="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.ArgumentListSyntax"/> for fields with array initializer, e.g. "Dim a(1) As Integer".
+ A null reference otherwise.
+ </returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.VisualBasicEditAndContinueAnalyzer.TryGetActiveTokens(Microsoft.CodeAnalysis.SyntaxNode)">
+ <returns>
+ Methods, operators, constructors, property and event accessors:
+ - We need to return the entire block declaration since the Begin and End statements are covered by breakpoint spans.
+ Field declarations in form of "Dim a, b, c As New C()" 
+ - Breakpoint spans cover "a", "b" and "c" and also "New C()" since the expression may contain lambdas.
+   For simplicity we don't allow moving the new expression independently of the field name. 
+ Field declarations with array initializers "Dim a(n), b(n) As Integer" 
+ - Breakpoint spans cover "a(n)" and "b(n)".
+ </returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.EditAndContinue.VisualBasicEditAndContinueAnalyzer.GetExceptionHandlingRegion(Microsoft.CodeAnalysis.SyntaxNode,System.Boolean@)">
+ <summary>
+ An active statement (leaf or not) inside a "Catch" makes the Catch part readonly.
+ An active statement (leaf or not) inside a "Finally" makes the whole Try/Catch/Finally part read-only.
+ An active statement (non leaf)    inside a "Try" makes the Catch/Finally part read-only.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources">
+<summary>
+  A strongly-typed resource class, for looking up localized strings, etc.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ResourceManager">
+<summary>
+  Returns the cached ResourceManager instance used by this class.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.Culture">
+<summary>
+  Overrides the current thread's CurrentUICulture property for all
+  resource lookups using this strongly typed resource class.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AddhandlerStatement">
+<summary>
+  Looks up a localized string similar to AddHandler statement.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AddressOfKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Creates a delegate procedure instance that references the specified procedure.
+AddressOf &lt;procedureName&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AggregateClause">
+<summary>
+  Looks up a localized string similar to Aggregate clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AggregateQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Applies an aggregation function, such as Sum, Average, or Count to a sequence..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AliasKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Indicates that an external procedure has another name in its DLL..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AllStaticLocalUsagesDefine">
+<summary>
+  Looks up a localized string similar to all static local usages defined in the selection must be included in the selection.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AndAlsoKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Performs a short-circuit logical conjunction on two expressions. Returns True if both operands evaluate to True. If the first expression evaluates to False, the second is not evaluated.
+&lt;result&gt; = &lt;expression1&gt; AndAlso &lt;expression2&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AndKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Performs a logical conjunction on two Boolean expressions, or a bitwise conjunction on two numeric expressions. For Boolean expressions, returns True if both operands evaluate to True. Both expressions are always evaluated.
+&lt;result&gt; = &lt;expression1&gt; And &lt;expression2&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AnsiKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Used in a Declare statement. The Ansi modifier specifies that Visual Basic should marshal all strings to ANSI values, and should look up the procedure without modifying its name during the search. If no character set is specified, ANSI is the default..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ArgumentUsedForByrefParame">
+<summary>
+  Looks up a localized string similar to Argument used for ByRef parameter can&apos;t be extracted out.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AscendingQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies the sort order for an Order By clause in a query. The smallest element will appear first..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AsClause">
+<summary>
+  Looks up a localized string similar to as clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AsKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies a data type in a declaration statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AssemblyKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that an attribute at the beginning of a source file applies to the entire assembly. Otherwise the attribute will apply only to an individual programming element, such as a class or property..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AsyncKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Indicates an asynchronous method that can use the Await operator..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AsyncLambdaKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Defines an asynchronous lambda expression that can use the Await operator. Can be used wherever a delegate type is expected.
+Async Sub/Function(&lt;parameterList&gt;) &lt;expression&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AttributeList">
+<summary>
+  Looks up a localized string similar to attributes.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AutoKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Used in a Declare statement. The Auto modifier specifies that Visual Basic should marshal strings according to .NET Framework rules, and should determine the base character set of the run-time platform and possibly modify the external procedure name if the initial search fails..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.Await">
+<summary>
+  Looks up a localized string similar to Await.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.Awaitable">
+<summary>
+  Looks up a localized string similar to Awaitable.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AwaitableExtension">
+<summary>
+  Looks up a localized string similar to Awaitable, Extension.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AwaitExpression">
+<summary>
+  Looks up a localized string similar to Await expression.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AwaitKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Asynchronously waits for the task to finish..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.BinaryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Sets the string comparison method specified in Option Compare to a strict binary sort order..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ByQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies the element keys used for grouping (in Group By) or sort order (in Order By)..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ByRefKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that an argument is passed in such a way that the called procedure can change the underlying value of the argument in the calling code..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ByValKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that an argument is passed in such a way that the called procedure or property cannot change the underlying value of the argument in the calling code..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CallKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Transfers execution to a Function, Sub, or dynamic-link library (DLL) procedure.
+[Call] &lt;procedureName&gt; [(&lt;argumentList&gt;)].
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CantDetermineValidRangeOf">
+<summary>
+  Looks up a localized string similar to can&apos;t determine valid range of statements to extract out.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CaseElseKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces the statements to run if none of the previous cases in the Select Case statement returns True..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CaseIsKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Followed by a comparison operator and then an expression, Case Is introduces the statements to run if the Select Case expression combined with the Case Is expression evaluates to True..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CaseKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces a value, or set of values, against which the value of an expression in a Select Case statement is to be tested.
+Case {&lt;expression&gt;|&lt;expression1&gt; To &lt;expression2&gt;|[Is] &lt;comparisonOperator&gt; &lt;expression&gt;}.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CastIsRedundant">
+<summary>
+  Looks up a localized string similar to Cast is redundant.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CatchClause">
+<summary>
+  Looks up a localized string similar to Catch clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CatchKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces a statement block to be run if the specified exception occurs inside a Try block..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ChangeTo">
+<summary>
+  Looks up a localized string similar to Change &apos;{0}&apos; to &apos;{1}&apos;..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ClassKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares the name of a class and introduces the definitions of the variables, properties, and methods that make up the class..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CompareKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Sets the default comparison method to use when comparing string data. When set to Text, uses a text sort order that is not case sensitive. When set to Binary, uses a strict binary sort order.
+Option Compare {Binary | Text}.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ConcatKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Generates a string concatenation of two expressions..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ConflictsDetected">
+<summary>
+  Looks up a localized string similar to Conflict(s) detected..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ConstCCKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Defines a conditional compiler constant. Conditional compiler constants are always private to the file in which they appear. The expressions used to initialize them can contain only conditional compiler constants and literals..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ConstKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares and defines one or more constants..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ContainsInvalidSelection">
+<summary>
+  Looks up a localized string similar to contains invalid selection.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ContinueDoKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Transfers execution immediately to the next iteration of the Do loop..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ContinueForKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Transfers execution immediately to the next iteration of the For loop..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ContinueKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Transfers execution immediately to the next iteration of the loop. Can be used in a Do loop, a For loop, or a While loop..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ContinueWhileKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Transfers execution immediately to the next iteration of the While loop..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ConvertToIterator">
+<summary>
+  Looks up a localized string similar to Convert {0} to Iterator.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CorrectNextControlVariable">
+<summary>
+  Looks up a localized string similar to Use the correct control variable.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CovarianceInKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Use &apos;In&apos; for a type that will only be used for ByVal arguments to functions..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CovarianceOutKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Use &apos;Out&apos; for a type that will only be used as a return from functions..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CtypeFunction">
+<summary>
+  Looks up a localized string similar to CType function.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CustomEventKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that an event has additional, specialized code for adding handlers, removing handlers, and raising events..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DeclareKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares a reference to a procedure implemented in an external file..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DefaultKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Identifies a property as the default property of its class, structure, or interface..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DelegateKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Used to declare a delegate. A delegate is a reference type that refers to a shared method of a type or to an instance method of an object. Any procedure that is convertible, or that has matching parameter types and return type may be used to create an instance of this delegate class..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DeleteTheStatement">
+<summary>
+  Looks up a localized string similar to Delete the &apos;{0}&apos; statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.Deprecated">
+<summary>
+  Looks up a localized string similar to Deprecated.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DescendingQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies the sort order for an Order By clause in a query. The largest element will appear first..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DimKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares and allocates storage space for one or more variables.
+Dim {&lt;var&gt; [As [New] dataType [(boundList)]][= initializer]}[, var2].
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DirectcastFunction">
+<summary>
+  Looks up a localized string similar to DirectCast function.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DisableKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Disables reporting of specified warnings in the portion of the source file below the current line..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DistinctQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Restricts the values of a query result to eliminate duplicate values..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DivisionKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Divides two numbers and returns a floating-point result..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DoKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Repeats a block of statements while a Boolean condition is true, or until the condition becomes true.
+Do...Loop {While | Until} &lt;condition&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DoNotChangeThisCodeUseDispose">
+<summary>
+  Looks up a localized string similar to Do not change this code.  Put cleanup code in Dispose(disposing As Boolean) above..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DoUntilKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Repeats a block of statements until a Boolean condition becomes true.
+Do Until &lt;condition&gt;...Loop.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.DoWhileKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Repeats a block of statements while a Boolean condition is true.
+Do While &lt;condition&gt;...Loop.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ElseCCKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces a group of statements in an #If statement that is compiled if no previous condition evaluates to True..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ElseIfCCKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces a condition in an #If statement that is tested if the previous conditional test evaluates to False..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ElseIfKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces a condition in an If statement that is to be tested if the previous conditional test fails..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ElseKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces a group of statements in an If statement that is executed if no previous condition evaluates to True..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EmptyString1">
+<summary>
+  Looks up a localized string similar to .
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EnableKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Enables reporting of specified warnings in the portion of the source file below the current line..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EndBlockKeywordToolTip1">
+<summary>
+  Looks up a localized string similar to Terminates a {0} block..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EndBlockKeywordToolTip2">
+<summary>
+  Looks up a localized string similar to Terminates an {0} block..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EndIfCCKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Terminates the definition of an #If block..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EndKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Stops execution immediately..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EndRegionKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Terminates a #Region block..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EndStatementKeywordToolTip1">
+<summary>
+  Looks up a localized string similar to Terminates the definition of a {0} statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EndStatementKeywordToolTip2">
+<summary>
+  Looks up a localized string similar to Terminates the definition of an {0} statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EnumKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares an enumeration and defines the values of its members..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EqualsKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Compares two expressions and returns True if they are equal. Otherwise, returns False..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EqualsQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies the relationship between element keys to use as the basis of a join operation..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EraseKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Used to release array variables and deallocate the memory used for their elements..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ERR_TooManyArgs1">
+<summary>
+  Looks up a localized string similar to Too many arguments to &apos;{0}&apos;..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ERR_UndefinedType1">
+<summary>
+  Looks up a localized string similar to Type &apos;{0}&apos; is not defined..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ErrorKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Simulates the occurrence of an error..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.EventKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares a user-defined event..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ExitDoKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Exits a Do loop and transfers execution immediately to the statement following the Loop statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ExitForKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Exits a For loop and transfers execution immediately to the statement following the Next statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ExitKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Exits a procedure or block and transfers execution immediately to the statement following the procedure call or block definition.
+Exit {Do | For | Function | Property | Select | Sub | Try | While}.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ExitSelectKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Exits a Select block and transfers execution immediately to the statement following the End Select statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ExitSubKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Exits a Sub procedure and transfers execution immediately to the statement following the call to the Sub procedure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ExitTryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Exits a Try block and transfers execution immediately to the statement following the End Try statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ExitWhileKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Exits a While loop and transfers execution immediately to the statement following the End While statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ExplicitConversionDisplayText">
+<summary>
+  Looks up a localized string similar to Generate narrowing conversion in &apos;{0}&apos;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ExplicitKeywordToolTip">
+<summary>
+  Looks up a localized string similar to When set to On, requires explicit declaration of all variables, using a Dim, Private, Public, or ReDim statement.
+Option Explicit {On | Off}.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ExponentiationKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Raises a number to the power of another number..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.Extension">
+<summary>
+  Looks up a localized string similar to Extension.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ExternFunctionKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that the external procedure being referenced in the Declare statement is a Function..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ExternSubKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that the external procedure being referenced in the Declare statement is a Sub..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.FalseKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Represents a Boolean value that fails a conditional test..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.FinallyClause">
+<summary>
+  Looks up a localized string similar to Finally clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.FinallyKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces a statement block to be run before exiting a Try structure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.FixIncorrectFunctionReturnType">
+<summary>
+  Looks up a localized string similar to Fix Incorrect Function Return Type.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ForEachBlock">
+<summary>
+  Looks up a localized string similar to For Each block.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ForEachKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces a loop that is repeated for each element in a collection..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ForEachStatement">
+<summary>
+  Looks up a localized string similar to For Each statement.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ForKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces a loop that is iterated a specified number of times..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.FreeUnmanagedResourcesTodo">
+<summary>
+  Looks up a localized string similar to TODO: free unmanaged resources (unmanaged objects) and override Finalize() below..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.FriendKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that one or more declared programming elements are accessible only from within the assembly that contains their declaration..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.FromClause">
+<summary>
+  Looks up a localized string similar to From clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.FromCollectionInitializerKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Identifies a list of values as a collection initializer.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.FromQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies a collection and a range variable to use in a query..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.Function1">
+<summary>
+  Looks up a localized string similar to {0} function.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.FunctionAggregation">
+<summary>
+  Looks up a localized string similar to Function aggregation.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.FunctionKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares the name, parameters, and code that define a Function procedure, that is, a procedure that returns a value to the calling code..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.FunctionLambdaKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Defines a lambda expression that calculates and returns a single value. Can be used wherever a delegate type is expected.
+Function(&lt;parameterList&gt;) &lt;expression&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GeneratedeventnameTargets">
+<summary>
+  Looks up a localized string similar to Create event {0} in {1}.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GenericConstraintsClassKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Constrains a generic type parameter to require that any type argument passed to it be a reference type..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GenericConstraintsNewKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies a constructor constraint on a generic type parameter..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GenericConstraintsStructureKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Constrains a generic type parameter to require that any type argument passed to it be a value type..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GetPropertyKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares a Get property procedure that is used to return the current value of a property..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GettypeFunction">
+<summary>
+  Looks up a localized string similar to GetType function.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GetxmlnamespaceFunction">
+<summary>
+  Looks up a localized string similar to GetXmlNamespace function.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GotoKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Branches unconditionally to a specified line in a procedure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GreaterThanKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Compares two expressions and returns True if the first is greater than the second. Otherwise, returns False..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GreaterThanOrEqualsKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Compares two expressions and returns True if the first is greater than or equal to the second. Otherwise, returns False..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GroupByClause">
+<summary>
+  Looks up a localized string similar to Group By clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GroupByQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Groups elements that have a common key..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GroupJoinClause">
+<summary>
+  Looks up a localized string similar to Group Join clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GroupJoinQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Combines the elements of two sequences and groups the results. The join operation is based on matching keys..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GroupRefNameQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Use &apos;Group&apos; to specify that a group named &apos;{0}&apos; should be created..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.GroupRefQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Use &apos;Group&apos; to specify that a group named &apos;Group&apos; should be created..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.HandlesKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares that a procedure handles a specified event..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.IfCCKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Conditionally compiles selected blocks of code, depending on the value of an expression..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.IfKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Conditionally executes a group of statements, depending on the value of an expression..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ImplementAbstractClass">
+<summary>
+  Looks up a localized string similar to Implement Abstract Class.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ImplementsKeywordAfterMethodDeclarationToolTip">
+<summary>
+  Looks up a localized string similar to Indicates that a class or structure member is providing the implementation for a member defined in an interface..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ImplementsKeywordAfterTypeDeclarationToolTip">
+<summary>
+  Looks up a localized string similar to Specifies one or more interfaces, or interface members, that must be implemented in the class or structure definition in which the Implements statement appears..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ImplicitConversionDisplayText">
+<summary>
+  Looks up a localized string similar to Generate widening conversion in &apos;{0}&apos;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ImplicitMemberAccessCantB">
+<summary>
+  Looks up a localized string similar to Implicit member access can&apos;t be included in the selection without containing statement.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.Import">
+<summary>
+  Looks up a localized string similar to Import &apos;{0}&apos;..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ImportsKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Imports all or specified elements of a namespace into a file..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ImportStatement">
+<summary>
+  Looks up a localized string similar to import.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InferKeywordToolTip">
+<summary>
+  Looks up a localized string similar to When set to On, allows the use of local type inference in declaring variables.
+Option Infer {On | Off}.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InForEachKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies the group that the loop variable in a For Each statement is to traverse..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InGlobalKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies the group that the loop variable is to traverse in a For Each statement, or specifies the range variable in a query..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InheritsKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Causes the current class or interface to inherit the attributes, variables, properties, procedures, and events from another class or set of interfaces..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InlineTemporaryVariable">
+<summary>
+  Looks up a localized string similar to Inline temporary variable.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies the group that the range variable is to traverse in a query..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.Insert">
+<summary>
+  Looks up a localized string similar to Insert &apos;{0}&apos;..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InsertAwait">
+<summary>
+  Looks up a localized string similar to Insert &apos;Await&apos;..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InsertMissingCast">
+<summary>
+  Looks up a localized string similar to Insert Missing Cast.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InsertTheMissing">
+<summary>
+  Looks up a localized string similar to Insert the missing &apos;{0}&apos;..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InsertTheMissingEndProper">
+<summary>
+  Looks up a localized string similar to Insert the missing &apos;End Property&apos; statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.IntegerDivisionKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Divides two numbers and returns an integer result..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InterfaceKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares the name of an interface and the definitions of the members of the interface..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.IntoQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies an identifier that can serve as a reference to the results of a join or grouping subexpression..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InvalidSelection">
+<summary>
+  Looks up a localized string similar to Invalid selection.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.InvertIfStatement">
+<summary>
+  Looks up a localized string similar to Invert If statement.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.IsFalseKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Determines whether an expression is false. If instances of any class or structure will be used in an OrElse clause, you must define IsFalse on that class or structure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.IsKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Compares two object reference variables and returns True if the objects are equal.
+&lt;result&gt; = &lt;object1&gt; Is &lt;object2&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.IsNotKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Compares two object reference variables and returns True if the objects are not equal.
+&lt;result&gt; = &lt;object1&gt; IsNot &lt;object2&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.IsTrueKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Determines whether an expression is true. If instances of any class or structure will be used in an OrElse clause, you must define IsTrue on that class or structure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.IteratorKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Indicates an iterator method that can use the Yield statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.IteratorLambdaKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Defines an iterator lambda expression that can use the Yield statement.
+Iterator Function(&lt;parameterList&gt;) As IEnumerable(Of &lt;T&gt;).
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.JoinCondition">
+<summary>
+  Looks up a localized string similar to Join condition.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.JoinQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Combines the elements of two sequences. The join operation is based on matching keys..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.KeyKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Identifies a key field in an anonymous type definition..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.Kind">
+<summary>
+  Looks up a localized string similar to Delete the &apos;{0}&apos; statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.KindLine">
+<summary>
+  Looks up a localized string similar to Move the &apos;{0}&apos; statement to line {1}..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.LambdaExpression">
+<summary>
+  Looks up a localized string similar to Lambda.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.LeftShiftKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Performs an arithmetic left shift on a bit pattern..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.LessThanKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Compares two expressions and returns True if the first is less than the second. Otherwise, returns False..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.LessThanOrEqualsKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Compares two expressions and returns True if the first is less than or equal to the second. Otherwise, returns False..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.LetClause">
+<summary>
+  Looks up a localized string similar to Let clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.LetQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Computes a value for each item in the query, and assigns the value to a new range variable..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.LibKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces a clause that identifies the external file (DLL or code resource) containing an external procedure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.LikeKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Compares a string against a pattern. Wildcards available include ? to match 1 character and * to match 0 or more characters.
+&lt;result&gt; = &lt;string&gt; Like &lt;pattern&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.LoopKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Terminates a loop that is introduced with a Do statement..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.LoopUntilKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Repeats a block of statements until a Boolean condition becomes true.
+Do...Loop Until &lt;condition&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.LoopWhileKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Repeats a block of statements while a Boolean condition is true.
+Do...Loop While &lt;condition&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.MakeAsync">
+<summary>
+  Looks up a localized string similar to Make the containing scope &apos;Async&apos;..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.MakeAsyncFunction">
+<summary>
+  Looks up a localized string similar to Make {0} an Async Function..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.MeKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Provides a way to refer to the current instance of a class or structure, that is, the instance in which the code is running..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.MidStatement">
+<summary>
+  Looks up a localized string similar to Mid statement.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.MinusKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Returns the difference between two numeric expressions, or the negative value of a numeric expression..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ModKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Divides two numbers and returns only the remainder.
+&lt;number1&gt; Mod &lt;number2&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ModuleKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that an attribute at the beginning of a source file applies to the entire module. Otherwise the attribute will apply only to an individual programming element, such as a class or property..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ModuleStatement">
+<summary>
+  Looks up a localized string similar to module.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.MultiplicationKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Multiplies two numbers and returns the product..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.MustInheritKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that a class can be used only as a base class, and that you cannot create an object directly from it..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.MustOverrideKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that a property or procedure is not implemented in the class and must be overridden in a derived class before it can be used..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.MyBaseKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Provides a way to refer to the base class of the current class instance. You cannot use MyBase to call MustOverride base methods..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.MyClassKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Provides a way to refer to the class instance members as originally implemented, ignoring any derived class overrides..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NameCanBeSimplified">
+<summary>
+  Looks up a localized string similar to Name can be simplified.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NameOfFunction">
+<summary>
+  Looks up a localized string similar to NameOf function.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NamespaceKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares the name of a namespace, and causes the source code following the declaration to be compiled within that namespace..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NarrowingKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Indicates that a conversion operator (CType) converts a class or structure to a type that might not be able to hold some of the possible values of the original class or structure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NewField">
+<summary>
+  Looks up a localized string similar to &lt;new field&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NewKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Creates a new object instance..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NewResource">
+<summary>
+  Looks up a localized string similar to &lt;new resource&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NewVariable">
+<summary>
+  Looks up a localized string similar to &lt;new variable&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NextKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Terminates a loop that iterates through the values of a loop variable..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NextStatementControlVariabl">
+<summary>
+  Looks up a localized string similar to next statement control variable doesn&apos;t have matching declaration statement.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NoCommonRootNodeForExtraction">
+<summary>
+  Looks up a localized string similar to No common root node for extraction.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NotAllCodePathReturns">
+<summary>
+  Looks up a localized string similar to Not all code paths return.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NotEqualsKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Compares two expressions and returns True if they are not equal. Otherwise, returns False..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NoteSpaceAndCompletion">
+<summary>
+  Looks up a localized string similar to Note: Space and &apos;=&apos; completion are disabled to avoid potential interference. To insert a name from the list, use tab..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NoteSpaceCompletionIsDisa">
+<summary>
+  Looks up a localized string similar to Note: Space completion is disabled to avoid potential interference. To insert a name from the list, use tab..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NoteUseTabForAutomaticCo">
+<summary>
+  Looks up a localized string similar to Note: Use tab for automatic completion; space completion is disabled to avoid interfering with a new name..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NothingKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Represents the default value of any data type..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NotInheritableKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that a class cannot be used as a base class..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NotKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Performs logical negation on a Boolean expression, or bitwise negation on a numeric expression.
+&lt;result&gt; = Not &lt;expression&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NotOverridableKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that a property or procedure cannot be overridden in a derived class..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NoValidSelectionToPerform">
+<summary>
+  Looks up a localized string similar to No valid selection to perform extraction.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NoValidStatementRangeToEx">
+<summary>
+  Looks up a localized string similar to no valid statement range to extract out.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OffOptionKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Turns a compiler option off..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OfKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Identifies a type parameter on a generic class, structure, interface, delegate, or procedure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OnErrorGotoKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Enables the error-handling routine that starts at the line specified in the line argument.
+The specified line must be in the same procedure as the On Error statement.
+On Error GoTo [&lt;label&gt; | 0 | -1].
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OnErrorResumeNextKeywordToolTip">
+<summary>
+  Looks up a localized string similar to When a run-time error occurs, execution transfers to the statement following the statement or procedure call that resulted in the error..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OnErrorStatement">
+<summary>
+  Looks up a localized string similar to On Error statement.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OnOptionKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Turns a compiler option on..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OnQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies the element keys used to correlate sequences for a join operation..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OperatorCTypeKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Returns the result of explicitly converting an expression to a specified data type, object, structure, class, or interface.
+CType(Object As Expression, Object As Type) As Type.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OperatorKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares the operator symbol, operands, and code that define an operator procedure on a class or structure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OptionalKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that a procedure argument can be omitted when the procedure is called..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OptionKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces a statement that specifies a compiler option that applies to the entire source file..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OptionStatement">
+<summary>
+  Looks up a localized string similar to option.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OrderByQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies the sort order for columns in a query. Can be followed by either the Ascending or the Descending keyword. If neither is specified, Ascending is used..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OrderingClause">
+<summary>
+  Looks up a localized string similar to Ordering clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OrElseKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Performs short-circuit inclusive logical disjunction on two expressions. Returns True if either operand evaluates to True. If the first expression evaluates to True, the second expression is not evaluated.
+&lt;result&gt; = &lt;expression1&gt; OrElse &lt;expression2&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OrganizeImports">
+<summary>
+  Looks up a localized string similar to Organize Imports.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OrganizeImportsWithAccelerator">
+<summary>
+  Looks up a localized string similar to &amp;Organize Imports.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OrKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Performs an inclusive logical disjunction on two Boolean expressions, or a bitwise disjunction on two numeric expressions. For Boolean expressions, returns True if at least one operand evaluates to True. Both expressions are always evaluated.
+&lt;result&gt; = &lt;expression1&gt; Or &lt;expression2&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OverloadsKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that a property or procedure re-declares one or more existing properties or procedures with the same name..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OverridableKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that a property or procedure can be overridden by an identically named property or procedure in a derived class..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OverrideFinalizerTodo">
+<summary>
+  Looks up a localized string similar to TODO: override Finalize() only if Dispose(disposing As Boolean) above has code to free unmanaged resources..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.OverridesKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that a property or procedure overrides an identically named property or procedure inherited from a base class..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ParamArrayKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that a procedure parameter takes an optional array of elements of the specified type..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ParameterList">
+<summary>
+  Looks up a localized string similar to parameters.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ParameterName">
+<summary>
+  Looks up a localized string similar to &lt;parameter name&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.PartialKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Indicates that a method, class, or structure declaration is a partial definition of the method, class, or structure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.PlusKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Returns the sum of two numbers, or the positive value of a numeric expression..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.PreserveKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Prevents the contents of an array from being cleared when the dimensions of the array are changed..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.PrivateKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that one or more declared programming elements are accessible only from within their module, class, or structure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.PropertyAccessor">
+<summary>
+  Looks up a localized string similar to property accessor.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.PropertyKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares the name of a property, and the property procedures used to store and retrieve the value of the property..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ProtectedFriendKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that one or more declared members of a class are accessible from anywhere in the same assembly, their own classes, and derived classes..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ProtectedKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that one or more declared programming elements are accessible only from within their own class or from a derived class..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.PublicKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that one or more declared programming elements have no access restrictions..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.RaiseEventKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies the statements to run when the event is raised by the RaiseEvent statement.
+RaiseEvent(&lt;delegateSignature&gt;)...End RaiseEvent.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.RaiseEventStatementToolTip">
+<summary>
+  Looks up a localized string similar to Triggers an event declared at module level within a class, form, or document.
+RaiseEvent &lt;eventName&gt; [(&lt;argumentList&gt;)].
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ReadOnlyKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that a variable or property can be read but not written to..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ReDimKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Reallocates storage space for an array variable..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.RegionKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Collapses and hides sections of code in Visual Basic files..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.RemoveAndSortImportsWithAccelerator">
+<summary>
+  Looks up a localized string similar to Remove &amp;and Sort Imports.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.RemovehandlerStatement">
+<summary>
+  Looks up a localized string similar to RemoveHandler statement.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.RemoveUnnecessaryCast">
+<summary>
+  Looks up a localized string similar to Remove Unnecessary Cast.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.RemoveUnnecessaryImports">
+<summary>
+  Looks up a localized string similar to Remove Unnecessary Imports.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.RemoveUnnecessaryImportsDiagnosticTitle">
+<summary>
+  Looks up a localized string similar to Imports statement is unnecessary..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.RemoveUnnecessaryImportsWithAccelerator">
+<summary>
+  Looks up a localized string similar to &amp;Remove Unnecessary Imports.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ReplaceReturnWithYield">
+<summary>
+  Looks up a localized string similar to Replace &apos;Return&apos; with &apos;Yield.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ResultAlias">
+<summary>
+  Looks up a localized string similar to &lt;result alias&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ResumeStatement">
+<summary>
+  Looks up a localized string similar to Resume statement.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ReturnKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Returns execution to the code that called the Function, Sub, Get, Set, or Operator procedure.
+Return -or- Return &lt;expression&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.RightShiftKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Performs an arithmetic right shift on a bit pattern.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SelectClause">
+<summary>
+  Looks up a localized string similar to Select clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SelectionCantBeCrossedOve">
+<summary>
+  Looks up a localized string similar to Selection can&apos;t be crossed over preprocessors.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SelectionCantBePartsOfCo">
+<summary>
+  Looks up a localized string similar to Selection can&apos;t be parts of constant initializer expression.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SelectionCantContainThrow">
+<summary>
+  Looks up a localized string similar to Selection can&apos;t contain throw without enclosing catch block.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SelectionDoesntContainAny">
+<summary>
+  Looks up a localized string similar to Selection doesn&apos;t contain any valid node.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SelectionDoesntContainAny0">
+<summary>
+  Looks up a localized string similar to Selection doesn&apos;t contain any valid token.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SelectionMustBePartOfExec">
+<summary>
+  Looks up a localized string similar to Selection must be part of executable statements.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SelectKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Runs one of several groups of statements, depending on the value of an expression..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SelectQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies which columns to include in the result of a query..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SetPropertyKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares a Set property procedure that is used to assign a value to a property..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ShadowsKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that a declared programming element redeclares and hides an identically named element in a base class..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SharedKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that one or more declared programming elements are associated with all instances of a class or structure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SimpleJoinClause">
+<summary>
+  Looks up a localized string similar to Join clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SimplifyMemberAccess">
+<summary>
+  Looks up a localized string similar to Simplify member access &apos;{0}&apos;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SimplifyMeQualification">
+<summary>
+  Looks up a localized string similar to Remove &apos;Me&apos; qualification.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SimplifyName">
+<summary>
+  Looks up a localized string similar to Simplify name &apos;{0}&apos;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SkipQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Skips elements up to a specified position in the collection..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SkipWhileClause">
+<summary>
+  Looks up a localized string similar to Skip While clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SortImportsWithAccelerator">
+<summary>
+  Looks up a localized string similar to &amp;Sort Imports.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.StaticKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that one or more declared local variables are to remain in existence and retain their latest values after the procedure in which they are declared terminates..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.StepKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies how much to increment between each loop iteration..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.StopKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Suspends program execution..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.StrictKeywordToolTip">
+<summary>
+  Looks up a localized string similar to When set to On, restricts implicit data type conversions to only widening conversions.
+Option Strict {On | Off}.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.StructureKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares the name of a structure and introduces the definition of the variables, properties, events, and procedures that make up the structure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.StructureStatement">
+<summary>
+  Looks up a localized string similar to structure.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SubKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Declares the name, parameters, and code that define a Sub procedure, that is, a procedure that does not return a value to the calling code..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SubLambdaKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Defines a lambda expression that can execute statements and does not return a value. Can be used wherever a delegate type is expected.
+Sub(&lt;parameterList&gt;) &lt;statement&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SuppressWithPragma">
+<summary>
+  Looks up a localized string similar to with #Disable directive.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SyncLockBlock">
+<summary>
+  Looks up a localized string similar to SyncLock block.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SyncLockKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Ensures that multiple threads do not execute the statement block at the same time.
+SyncLock &lt;object&gt;...End Synclock.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SyncLockStatement">
+<summary>
+  Looks up a localized string similar to SyncLock statement.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TakeQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Includes elements up to a specified position in the collection..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TakeWhileClause">
+<summary>
+  Looks up a localized string similar to Take While clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TextKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Sets the string comparison method specified in Option Compare to a text sort order that is not case sensitive..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ThenKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Introduces a statement block to be compiled or executed if a tested condition is true..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TheSelectionContainsSyntact">
+<summary>
+  Looks up a localized string similar to the selection contains syntactic errors.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ThisCodeAddedToCorrectlyImplementDisposable">
+<summary>
+  Looks up a localized string similar to This code added by Visual Basic to correctly implement the disposable pattern..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ThrowKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Throws an exception within a procedure so that you can handle it with structured or unstructured exception-handling code..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ToKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Separates the beginning and ending values of a loop counter or array bounds or that of a value match range..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TrueKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Represents a Boolean value that passes a conditional test..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TryBlock">
+<summary>
+  Looks up a localized string similar to Try block.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TrycastFunction">
+<summary>
+  Looks up a localized string similar to TryCast function.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Provides a way to handle some or all possible errors that might occur in a given block of code, while still running the code.
+Try...[Catch]...{Catch | Finally}...End Try.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TypeANameHereToDeclareA">
+<summary>
+  Looks up a localized string similar to Type a name here to declare a new field..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TypeANameHereToDeclareA0">
+<summary>
+  Looks up a localized string similar to Type a name here to declare a parameter. If no preceding keyword is used; &apos;ByVal&apos; will be assumed and the argument will be passed by value..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TypeANewNameForTheColumn">
+<summary>
+  Looks up a localized string similar to Type a new name for the column, followed by &apos;=&apos;. Otherwise, the original column name with be used..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TypeANewVariableName">
+<summary>
+  Looks up a localized string similar to Type a new variable name.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TypeOfKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Determines the run-time type of an object reference variable and compares it to a data type. Returns True or False depending, on whether the two types are compatible.
+&lt;result&gt; = TypeOf &lt;objectExpression&gt; Is &lt;typeName&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.TypeParameterList">
+<summary>
+  Looks up a localized string similar to type parameters.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.UncommentTheFollowingLineIfFinalizeIsOverridden">
+<summary>
+  Looks up a localized string similar to TODO: uncomment the following line if Finalize() is overridden above..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.UnicodeKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Used in a Declare statement. Specifies that Visual Basic should marshal all strings to Unicode values in a call into an external procedure, and should look up the procedure without modifying its name..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.UsingBlock">
+<summary>
+  Looks up a localized string similar to Using block.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.UsingKeywordToolTip">
+<summary>
+  Looks up a localized string similar to A Using block does three things: it creates and initializes variables in the resource list, it runs the code in the block, and it disposes of the variables before exiting. Resources used in the Using block must implement System.IDisposable.
+Using &lt;resource1&gt;[, &lt;resource2&gt;]...End Using.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.UsingStatement">
+<summary>
+  Looks up a localized string similar to Using statement.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WhenKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Adds a conditional test to a Catch statement. Exceptions are caught by that Catch statement only when the conditional test that follows the When keyword evaluates to True..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WhereClause">
+<summary>
+  Looks up a localized string similar to Where clause.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WhereQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies the filtering condition for a range variable in a query..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WhileKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Runs a series of statements as long as a given condition is true..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WhileQueryKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies a condition for Skip and Take operations. Elements will be bypassed or included as long as the condition is true..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WideningKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Indicates that a conversion operator (CType) converts a class or structure to a type that can hold all possible values of the original class or structure..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WithBlock">
+<summary>
+  Looks up a localized string similar to With block.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WithEventsFieldStatement">
+<summary>
+  Looks up a localized string similar to WithEvents field.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WithEventsKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that one or more declared member variables refer to an instance of a class that can raise events.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WithInitializerKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies the declaration of property initializations in an object initializer.
+New &lt;typeName&gt; With {[.&lt;property&gt; = &lt;expression&gt;][,...]}.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WithKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Runs a series of statements that refer to a single object or structure.
+With &lt;object&gt;...End With.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WithStatement">
+<summary>
+  Looks up a localized string similar to With statement.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.WriteOnlyKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Specifies that a property can be written to but not read..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.XorKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Performs a logical exclusion on two Boolean expressions, or a bitwise exclusion on two numeric expressions. For Boolean expressions, returns True if exactly one of the expressions evaluates to True. Both expressions are always evaluated.
+&lt;result&gt; = &lt;expression1&gt; Xor &lt;expression2&gt;.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.YieldKeywordToolTip">
+<summary>
+  Looks up a localized string similar to Produces an element of an IEnumerable or IEnumerator..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.YieldStatement">
+<summary>
+  Looks up a localized string similar to Yield statement.
+</summary>
+</member>
+</members>
+</doc>

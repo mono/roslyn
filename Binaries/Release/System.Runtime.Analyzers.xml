@@ -1,0 +1,397 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>System.Runtime.Analyzers</name>
+    </assembly>
+    <members>
+        <member name="T:System.Runtime.Analyzers.EnumWithFlagsAttributeFixer">
+            <summary>
+            CA1027: Mark enums with FlagsAttribute
+            CA2217: Do not mark enums with FlagsAttribute
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.OverrideMethodsOnComparableTypesAnalyzer">
+            <summary>
+            CA1036: A public or protected type implements the System.IComparable interface and 
+            does not override Object.Equals or does not overload the language-specific operator
+            for equality, inequality, less than, or greater than. The rule does not report a
+            violation if the type inherits only an implementation of the interface.
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.DefineAccessorsForAttributeArgumentsAnalyzer">
+            <summary>
+            CA1019: Define accessors for attribute arguments
+            
+            Cause:
+            In its constructor, an attribute defines arguments that do not have corresponding properties.
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.MarkAttributesWithAttributeUsageAnalyzer">
+            <summary>
+            CA1018: Custom attributes should have AttributeUsage attribute defined.
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.TypesThatOwnDisposableFieldsShouldBeDisposableFixer">
+            <summary>
+            CA1001: Types that own disposable fields should be disposable
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.TypesThatOwnDisposableFieldsShouldBeDisposableAnalyzer">
+            <summary>
+            CA1001: Types that own disposable fields should be disposable
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.UseGenericEventHandler">
+            <summary>
+            CA1003: Use generic event handler instances
+            
+            Recommends that event handlers use <see cref="T:System.EventHandler`1"/>
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.EnumWithFlagsAttributeAnalyzer">
+            <summary>
+            Implements CA1027 and CA2217
+            
+            1) CA1027: Mark enums with FlagsAttribute
+            
+            Cause:
+            The values of a public enumeration are powers of two or are combinations of other values that are defined in the enumeration,
+            and the System.FlagsAttribute attribute is not present.
+            To reduce false positives, this rule does not report a violation for enumerations that have contiguous values.
+            
+            2) CA2217: Do not mark enums with FlagsAttribute
+            
+            Cause:
+            An externally visible enumeration is marked with FlagsAttribute and it has one or more values that are not powers of two or
+            a combination of the other defined values on the enumeration.
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.TestForEmptyStringsUsingStringLengthAnalyzer`1">
+            <summary>
+            CA1820: Test for empty strings using string length.
+            <para>
+            Comparing strings using the <see cref="P:System.String.Length"/> property or the <see cref="M:System.String.IsNullOrEmpty(System.String)"/> method is significantly faster than using <see cref="M:System.String.Equals(System.String)"/>.
+            This is because Equals executes significantly more MSIL instructions than either IsNullOrEmpty or the number of instructions executed to retrieve the Length property value and compare it to zero.
+            </para>
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.AvoidUnsealedAttributesAnalyzer">
+            <summary>
+            CA1813: Seal attribute types for improved performance. Sealing attribute types speeds up performance during reflection on custom attributes.
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.AvoidUnsealedAttributesFixer">
+            <summary>
+            CA1813: Avoid unsealed attributes
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.DoNotLockOnObjectsWithWeakIdentity">
+            <summary>
+            CA2002: Do not lock on objects with weak identities
+            
+            Cause:
+            A thread that attempts to acquire a lock on an object that has a weak identity could cause hangs.
+            
+            Description:
+            An object is said to have a weak identity when it can be directly accessed across application domain boundaries. 
+            A thread that tries to acquire a lock on an object that has a weak identity can be blocked by a second thread in 
+            a different application domain that has a lock on the same object. 
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.AddAssemblyLevelComVisibleFalse">
+            <summary>
+              Looks up a localized string similar to Because {0} exposes externally visible types, mark it with ComVisible(false) at the assembly level and then mark all types within the assembly that should be exposed to COM clients with ComVisible(true)..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.AssembliesShouldBeMarkedWithAssemblyVersionAttribute">
+            <summary>
+              Looks up a localized string similar to Assemblies should be marked with AssemblyVersionAttribute.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.AvoidUnsealedAttributes">
+            <summary>
+              Looks up a localized string similar to Avoid unsealed attributes..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.AvoidUnsealedAttributesCodeFix">
+            <summary>
+              Looks up a localized string similar to Seal attribute type..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.CategoryDesign">
+            <summary>
+              Looks up a localized string similar to Design.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.CategoryGlobalization">
+            <summary>
+              Looks up a localized string similar to Globalization.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.CategoryInteroperability">
+            <summary>
+              Looks up a localized string similar to Interoperability.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.CategoryNaming">
+            <summary>
+              Looks up a localized string similar to Naming.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.CategoryPerformance">
+            <summary>
+              Looks up a localized string similar to Performance.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.CategoryReliability">
+            <summary>
+              Looks up a localized string similar to Reliability.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.CategoryUsage">
+            <summary>
+              Looks up a localized string similar to Usage.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.ChangeAssemblyLevelComVisibleToFalse">
+            <summary>
+              Looks up a localized string similar to Consider changing the ComVisible attribute on {0} to false, and opting in at the type level..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.CreatePropertyAccessorForParameter">
+            <summary>
+              Looks up a localized string similar to Create a property accessor..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.CustomAttrShouldHaveAttributeUsage">
+            <summary>
+              Looks up a localized string similar to Custom attributes should have AttributeUsage attribute defined..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.DefineAccessorsForAttributeArguments">
+            <summary>
+              Looks up a localized string similar to Define accessors for attribute arguments..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.DefineAccessorsForAttributeArgumentsDefault">
+            <summary>
+              Looks up a localized string similar to Add a public read-only property accessor for positional argument &apos;{0}&apos; of attribute &apos;{1}&apos;..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.DefineAccessorsForAttributeArgumentsIncreaseVisibility">
+            <summary>
+              Looks up a localized string similar to If &apos;{0}&apos; is the property accessor for positional argument &apos;{1}&apos;, ensure that property getter is public..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.DefineAccessorsForAttributeArgumentsRemoveSetter">
+            <summary>
+              Looks up a localized string similar to Remove the property setter from &apos;{0}&apos; or reduce its accessibility because it corresponds to positional argument &apos;{1}&apos;..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.DisposableFieldsShouldBeDisposed">
+            <summary>
+              Looks up a localized string similar to Disposable fields should be disposed.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.DoNotLockOnObjectsWithWeakIdentity">
+            <summary>
+              Looks up a localized string similar to Do not lock on objects with weak identity..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.DoNotLockOnWeakIdentity">
+            <summary>
+              Looks up a localized string similar to Do not lock on a reference of type &apos;{0}&apos; as it has weak identity. Replace that with a lock against an object with strong identity..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.DoNotMarkEnumsWithFlags">
+            <summary>
+              Looks up a localized string similar to Do not mark Enum with FlagsAttribute.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.DoNotMarkEnumsWithFlagsCodeFix">
+            <summary>
+              Looks up a localized string similar to Remove FlagsAttribute from enum..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.DoNotMarkEnumsWithFlagsDescription">
+            <summary>
+              Looks up a localized string similar to The enumeration does not appear to contain a consistent set values that can be combined using  the OR (|) and AND (&amp;amp;amp;amp;) operators. Using the Flags attribute on an enumeration suggests that the enumeration values are meant to be combined using the AND and OR operators. Typically, a flags enumeration uses values that are either powers of two, or combine other values that are powers of two..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.DoNotMarkEnumsWithFlagsMessage">
+            <summary>
+              Looks up a localized string similar to &apos;{0}&apos; is marked with FlagsAttribute but a discrete member cannot be found for every settable bit that is used across the range of enum values. Remove FlagsAttribute from the type or define new members for the following (currently missing) values: &apos;{1}&apos;..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.ImplementComparable">
+            <summary>
+              Looks up a localized string similar to Implement Equality and Comparison methods and operators.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.ImplementIDisposableInterface">
+            <summary>
+              Looks up a localized string similar to Implement IDisposable Interface.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.MakeGetterPublic">
+            <summary>
+              Looks up a localized string similar to Make the getter of the property public.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.MakeSetterNonPublic">
+            <summary>
+              Looks up a localized string similar to Make the setter of the property non-public.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.MarkAllAssembliesWithComVisible">
+            <summary>
+              Looks up a localized string similar to Mark all assemblies with ComVisible.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.MarkAllAssembliesWithComVisibleDescription">
+            <summary>
+              Looks up a localized string similar to The System.Runtime.InteropServices.ComVisible attribute indicates whether COM clients can use the library. Good design dictates that developers explicitly indicate COM visibility. The default value for this attribute is &apos;true&apos;. However, the best design is to mark the assembly ComVisible false, and then mark types, interfaces, and individual members as ComVisible true, as appropriate..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.MarkAssembliesWithCLSCompliantAttribute">
+            <summary>
+              Looks up a localized string similar to Mark assemblies with CLSCompliantAttribute.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.MarkAssembliesWithCLSCompliantDescription">
+            <summary>
+              Looks up a localized string similar to Assemblies should explicitly state their CLS compliance using the CLSCompliant attribute. An assembly without this attribute is not CLS-compliant. Assemblies, modules, and types can be CLS-compliant even if some parts of the assembly, module, or type are not CLS-compliant. The following rules apply: 1) If the element is marked CLSCompliant, any noncompliant members must have the CLSCompliant attribute present with its argument set to false. 2) A comparable CLS-compliant alternative member must be supplied f [rest of string was truncated]&quot;;.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.MarkAttributesWithAttributeUsage">
+            <summary>
+              Looks up a localized string similar to Specify AttributeUsage attribute on &apos;{0}&apos; attribute class..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.MarkEnumsWithFlags">
+            <summary>
+              Looks up a localized string similar to Mark Enum with FlagsAttribute.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.MarkEnumsWithFlagsCodeFix">
+            <summary>
+              Looks up a localized string similar to Apply FlagsAttribute to enum..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.MarkEnumsWithFlagsDescription">
+            <summary>
+              Looks up a localized string similar to The enumeration appears to be made up of combinable flags. If this true, apply the Flags attribute to the enumeration..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.MarkEnumsWithFlagsMessage">
+            <summary>
+              Looks up a localized string similar to The constituent members of &apos;{0}&apos; appear to represent flags that can be combined rather than discrete values. If this is correct, mark the enumeration with FlagsAttribute..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.OverloadOperatorEqualsOnIComparableInterface">
+            <summary>
+              Looks up a localized string similar to Overload operator Equals and comparison operators when implementing System.IComparable.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.OverloadOperatorEqualsOnIComparableInterfaceDescription">
+            <summary>
+              Looks up a localized string similar to Types that implement IComparable should redefine Equals and comparison operators to keep the meanings of less than, greater than, and equals consistent throughout the type..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.OverloadOperatorEqualsOnOverridingValueTypeEquals">
+            <summary>
+              Looks up a localized string similar to Overload operator equals on overriding ValueType.Equals.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.OverloadOperatorEqualsOnOverridingValueTypeEquals1">
+            <summary>
+              Looks up a localized string similar to Overload operator equals on overriding ValueType.Equals.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.OverloadOperatorEqualsOnOverridingValueTypeEqualsDescription">
+            <summary>
+              Looks up a localized string similar to Value types that redefine System.ValueType.Equals should redefine the equality operator as well to ensure that these members return the same results. This helps ensure that types that rely on Equals (such as ArrayList and Hashtable) behave in a manner that is expected and consistent with the equality operator..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.SealAttributeTypesForImprovedPerf">
+            <summary>
+              Looks up a localized string similar to Seal attribute types for improved performance. Sealing attribute types speeds up performance during reflection on custom attributes..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.StringComparisonShouldBeOrdinalDescription">
+            <summary>
+              Looks up a localized string similar to For non-linguistic comparisons, StringComparison.Ordinal or StringComparison.OrdinalIgnoreCase should be used instead of the linguistically-sensitive StringComparison.InvariantCulture..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.StringComparisonShouldBeOrdinalOrOrdinalIgnoreCase">
+            <summary>
+              Looks up a localized string similar to String comparison should use StringComparison.Ordinal or StringComparison.OrdinalIgnoreCase.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.TestForEmptyStringsUsingStringLength">
+            <summary>
+              Looks up a localized string similar to Test for empty strings using &apos;string.Length&apos; property or &apos;string.IsNullOrEmpty&apos; method instead of an Equality check..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.TestForEmptyStringsUsingStringLengthDescription">
+            <summary>
+              Looks up a localized string similar to Comparing strings using the string.Length property or the string.IsNullOrEmpty method is significantly faster than using string.Equals. This is because Equals executes significantly more MSIL instructions than either IsNullOrEmpty or the number of instructions executed to retrieve the Length property value and compare it to zero..
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.TypeOwnsDisposableFieldButIsNotDisposable">
+            <summary>
+              Looks up a localized string similar to Type &apos;{0}&apos; owns disposable fields but is not disposable.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.TypesThatOwnDisposableFieldsShouldBeDisposable">
+            <summary>
+              Looks up a localized string similar to Types that own disposable fields should be disposable.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Analyzers.SystemRuntimeAnalyzersResources.UseGenericEventHandlerInstances">
+            <summary>
+              Looks up a localized string similar to Use System.EventHandler&lt;T&gt; where T inherits System.EventArgs or use System.EventHandler.
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.DisposableFieldsShouldBeDisposedFixer">
+            <summary>
+            CA2213: Disposable fields should be disposed
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.DisposableFieldsShouldBeDisposedAnalyzer">
+            <summary>
+            CA2213: Disposable fields should be disposed
+            
+            TODO: this needs to be re-implemented because it requires flow analysis to determine if the
+            dispose operations occur on every path through the dispose method. Flow analysis
+            is not yet implemented.
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.OverloadOperatorEqualsOnOverridingValueTypeEqualsFixer">
+            <summary>
+            CA2231: Overload operator equals on overriding ValueType.Equals
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Analyzers.OverloadOperatorEqualsOnOverridingValueTypeEqualsAnalyzer">
+            <summary>
+            CA2231: Complain if the type implements Equals without overloading the equality operator.
+            </summary>
+        </member>
+    </members>
+</doc>

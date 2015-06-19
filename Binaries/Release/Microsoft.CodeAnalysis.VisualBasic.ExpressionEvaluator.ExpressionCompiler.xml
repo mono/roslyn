@@ -1,0 +1,290 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.ExpressionCompiler
+</name>
+</assembly>
+<members>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.ParametersAndLocalsBinder.BuildNameToSymbolMap(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.ParameterSymbol},System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.LocalSymbol})">
+ <remarks>
+ Currently, if there are duplicate names, the last one will win.
+ CONSIDER: We could create a multi-dictionary to let lookup fail "naturally".
+ CONSIDER: It would be nice to capture this behavior with a test.
+ </remarks>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.SuppressDiagnosticsBinder">
+ <summary>
+ Causes all diagnostics related to <see cref="T:System.ObsoleteAttribute"/>
+ and <see cref="T:Windows.Foundation.MetadataDeprecatedAttribute"/> 
+ to be suppressed.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.CompilationContext.#ctor(Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation,Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE.MetadataDecoder,Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.LocalSymbol},Microsoft.CodeAnalysis.ExpressionEvaluator.InScopeHoistedLocals,Microsoft.CodeAnalysis.ExpressionEvaluator.MethodDebugInfo,Microsoft.CodeAnalysis.VisualBasic.Syntax.ExecutableStatementSyntax)">
+ <summary>
+ Create a context to compile expressions within a method scope.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.CompilationContext.CompileGetLocals(System.String,Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.ExpressionEvaluator.LocalAndMethod},System.Boolean,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.ExpressionEvaluator.Alias},Microsoft.CodeAnalysis.CodeGen.CompilationTestData,Microsoft.CodeAnalysis.DiagnosticBag)">
+ <summary>
+ Generate a class containing methods that represent
+ the set of arguments and locals at the current scope.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.CompilationContext.TryParseDottedName(System.String,Microsoft.CodeAnalysis.VisualBasic.Syntax.NameSyntax@)">
+ <summary>
+ We don't want to use the real scanner because we want to treat keywords as identifiers.
+ Since the inputs are so simple, we'll just do the scanning ourselves.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.CompilationContext.GetDisplayClassVariables(Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.LocalSymbol},Microsoft.CodeAnalysis.ExpressionEvaluator.InScopeHoistedLocals,System.Collections.Immutable.ImmutableArray{System.String}@,System.Collections.Immutable.ImmutableDictionary{System.String,Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.DisplayClassVariable}@,System.Collections.Immutable.ImmutableHashSet{System.String}@)">
+ <summary>
+ Return a mapping of captured variables (parameters, locals, and "Me") to locals.
+ The mapping is needed to expose the original local identifiers (those from source)
+ in the binder.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.CompilationContext.IsDisplayClassInstanceLocalName(System.String)">
+ <summary>
+ Test whether the name is for a local holding an instance of a display class.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.CompilationContext.IsDisplayClassInstanceFieldName(System.String)">
+ <summary>
+ Test whether the name is for a field holding an instance of a display class
+ (i.e. a hoisted display class instance local).
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.CompilationContext.GetDisplayClassInstances(System.Collections.Generic.HashSet{Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol},Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.CompilationContext.DisplayClassInstanceAndFields},System.Int32)">
+ <summary>
+ Return the set of display class instances that can be reached from the given local.
+ A particular display class may be reachable from multiple locals.  In those cases,
+ the instance from the shortest path (fewest intermediate fields) is returned.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.CompilationContext.GetSubstitutedSourceMethod(Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,System.Boolean)">
+ <summary>
+ Identifies the method in which binding should occur.
+ </summary>
+ <param name="candidateSubstitutedSourceMethod">
+ The symbol of the method that is currently on top of the callstack, with
+ EE type parameters substituted in place of the original type parameters.
+ </param>
+ <param name="sourceMethodMustBeInstance">
+ True if "Me" is available via a display class in the current context
+ </param>
+ <returns>
+ If <paramref name="candidateSubstitutedSourceMethod"/> is compiler-generated,
+ then we will attempt to determine which user-derived method caused it to be
+ generated.  For example, if <paramref name="candidateSubstitutedSourceMethod"/>
+ is a state machine MoveNext method, then we will try to find the iterator or
+ async method for which it was generated.  if we are able to find the original
+ method, then we will substitute in the EE type parameters.  Otherwise, we will
+ return <paramref name="candidateSubstitutedSourceMethod"/>.
+ </returns>
+ <remarks>
+ In the event that the original method is overloaded, we may not be able to determine
+ which overload actually corresponds to the state machine.  In particular, we do not
+ have information about the signature of the original method (i.e. number of parameters,
+ parameter types and ref-kinds, return type).  However, we conjecture that this
+ level of uncertainty is acceptable, since parameters are managed by a separate binder
+ in the synthesized binder chain and we have enough information to check the other method
+ properties that are used during binding (e.g. static-ness, generic arity, type parameter
+ constraints).
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EvaluationContext.CreateTypeContext(Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.VisualBasicMetadataContext,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.ExpressionEvaluator.MetadataBlock},System.Guid,System.Int32)">
+ <summary>
+ Create a context for evaluating expressions at a type scope.
+ </summary>
+ <param name="previous">Previous context, if any, for possible re-use.</param>
+ <param name="metadataBlocks">Module metadata.</param>
+ <param name="moduleVersionId">Module containing type.</param>
+ <param name="typeToken">Type metadata token.</param>
+ <returns>Evaluation context.</returns>
+ <remarks>
+ No locals since locals are associated with methods, not types.
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EvaluationContext.CreateMethodContext(Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.VisualBasicMetadataContext,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.ExpressionEvaluator.MetadataBlock},System.Lazy{System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.ExpressionEvaluator.AssemblyReaders}},System.Object,System.Guid,System.Int32,System.Int32,System.UInt32,System.Int32)">
+ <summary>
+ Create a context for evaluating expressions within a method scope.
+ </summary>
+ <param name="previous">Previous context, if any, for possible re-use.</param>
+ <param name="metadataBlocks">Module metadata.</param>
+ <param name="symReader"><see cref="T:Microsoft.DiaSymReader.ISymUnmanagedReader"/> for PDB associated with <paramref name="moduleVersionId"/>.</param>
+ <param name="moduleVersionId">Module containing method.</param>
+ <param name="methodToken">Method metadata token.</param>
+ <param name="methodVersion">Method version.</param>
+ <param name="ilOffset">IL offset of instruction pointer in method.</param>
+ <param name="localSignatureToken">Method local signature token.</param>
+ <returns>Evaluation context.</returns>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EvaluationContext.IsDteeEntryPoint(Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol)">
+ <summary>
+ When using DTEE with the hosting process enabled, if the assembly being debugged doesn't have
+ a Main method, the debugger will actually stop in a driver method in the hosting process.
+ As in the native EE, we detect such methods by name (respecting case).
+ </summary>
+ <remarks>
+ Logic copied from ProcedureContext::IsDteeEntryPoint.
+ Friend for testing.
+ </remarks>
+ <seealso cref="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EvaluationContext.SynthesizeMethodDebugInfoForDtee(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.ExpressionEvaluator.AssemblyReaders})"/>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EvaluationContext.SynthesizeMethodDebugInfoForDtee(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.ExpressionEvaluator.AssemblyReaders})">
+ <summary>
+ When using DTEE with the hosting process enabled, if the assembly being debugged doesn't have
+ a Main method, the debugger will actually stop in a driver method in the hosting process.
+ (This condition is detected by <see cref="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EvaluationContext.IsDteeEntryPoint(Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol)"/>.)
+ 
+ Since such driver methods have no knowledge of the assembly being debugged, we synthesize 
+ imports to bring symbols from the target assembly into scope (for convenience).  In particular,
+ we import the root namespace of any assembly that isn't obviously a framework assembly and
+ any namespace containing a module type.
+ </summary>
+ <remarks>
+ Logic copied from ProcedureContext::LoadImportsAndDefaultNamespaceForDteeEntryPoint.
+ Friend for testing.
+ </remarks>
+ <seealso cref="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EvaluationContext.IsDteeEntryPoint(Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol)"/>
+ <seealso cref="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE.PENamedTypeSymbol.TypeKind"/>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EvaluationContext.GetLocals(Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.VisualBasic.Symbols.LocalSymbol},Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,System.Collections.Immutable.ImmutableArray{System.String},System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.LocalInfo{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol}})">
+ <summary>
+ Returns symbols for the locals emitted in the original method,
+ based on the local signatures from the IL and the names and
+ slots from the PDB. The actual locals are needed to ensure the
+ local slots in the generated method match the original.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EvaluationContext.GetStaticLocals(Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.VisualBasic.Symbols.LocalSymbol},Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,System.Reflection.Metadata.MethodDefinitionHandle,Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE.MetadataDecoder)">
+ <summary>
+ Include static locals for the given method. Static locals
+ are represented as fields on the containing class named
+ "$STATIC$[methodname]$[methodsignature]$[localname]".
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EvaluationContext.GetMissingAssemblyIdentitiesHelper(Microsoft.CodeAnalysis.VisualBasic.ERRID,System.Collections.Generic.IReadOnlyList{System.Object},Microsoft.CodeAnalysis.VisualBasic.Symbols.NamespaceSymbol)">
+ <remarks>
+ Friend for testing.
+ </remarks>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.Resources">
+<summary>
+  A strongly-typed resource class, for looking up localized strings, etc.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.Resources.ResourceManager">
+<summary>
+  Returns the cached ResourceManager instance used by this class.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.Resources.Culture">
+<summary>
+  Overrides the current thread's CurrentUICulture property for all
+  resource lookups using this strongly typed resource class.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.Resources.InvalidDebuggerStatement">
+<summary>
+  Looks up a localized string similar to Statements of type &apos;{0}&apos; are not allowed in the Immediate window..
+</summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.SymbolExtensions.GetUnmangledName(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeParameterSymbol)">
+ <summary>
+ In VB, the type parameters of state machine classes (i.e. for implementing async
+ or iterator methods) are mangled.  We unmangle them here so that the unmangled
+ names will bind properly.  (Code gen only uses the ordinal, so the name shouldn't
+ affect behavior).
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EEDisplayClassFieldLocalSymbol">
+ <summary>
+ A display class field representing a local, exposed
+ as a local on the original method.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.DisplayClassVariable">
+ <summary>
+ A field in a display class that represents a captured variable:
+ either a local, a parameter, or "me".
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EEMethodSymbol._generateMethodBody">
+ <summary>
+ Invoked at most once to generate the method body.
+ (If the compilation has no errors, it will be invoked
+ exactly once, otherwise it may be skipped.)
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EEMethodSymbol.GetBoundMethodBody(Microsoft.CodeAnalysis.DiagnosticBag,Microsoft.CodeAnalysis.VisualBasic.Binder@)">
+ <remarks>
+ The corresponding C# method, 
+ <see cref="M:Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator.EEMethodSymbol.GenerateMethodBody(Microsoft.CodeAnalysis.CSharp.TypeCompilationState,Microsoft.CodeAnalysis.DiagnosticBag)"/>, 
+ invokes the <see cref="T:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter"/> and the <see cref="T:Microsoft.CodeAnalysis.VisualBasic.LambdaRewriter"/> explicitly.
+ In VB, the caller (of this method) does that.
+ </remarks>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.PlaceholderMethodSymbol">
+ <summary>
+ Represents an intrinsic debugger method with byref return type.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.SimpleTypeParameterSymbol">
+ <summary>
+ A simple type parameter with no constraints.
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.SynthesizedContextMethodSymbol">
+ <summary>
+ A synthesized instance method used for binding expressions outside 
+ of a method - specifically, binding DebuggerDisplayAttribute expressions.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.SyntaxHelpers.ParseExpression(System.String,Microsoft.CodeAnalysis.DiagnosticBag,System.Boolean,System.Collections.ObjectModel.ReadOnlyCollection{System.String}@)">
+ <summary>
+ Parse expression. Returns null if there are any errors.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.SyntaxHelpers.ParseStatement(System.String,Microsoft.CodeAnalysis.DiagnosticBag)">
+ <summary>
+ Parse statement. Returns null if there are any errors.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.SyntaxHelpers.ParseFormatSpecifiers(Microsoft.CodeAnalysis.ArrayBuilder{System.String},System.String,System.Int32,Microsoft.CodeAnalysis.DiagnosticBag)">
+ <summary>
+ Return set of identifier tokens, with leading And
+ trailing spaces And comma separators removed.
+ </summary>
+ <remarks>
+ The native VB EE didn't support format specifiers.
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.SyntaxHelpers.ParseDebuggerExpression(System.String,System.Boolean)">
+ <summary>
+ Parse a debugger expression (e.g. possibly including pseudo-variables).
+ </summary>
+ <param name="text">The input string</param>
+ <remarks>
+ It would be better if this method returned ExpressionStatementSyntax, but this is the best we can do for
+ the time being due to issues in the binder resolving ambiguities between invocations and array access.
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.SyntaxHelpers.IsSupportedDebuggerStatement(Microsoft.CodeAnalysis.VisualBasic.Syntax.StatementSyntax)">
+ <summary>
+ This list is based on the statements found in StatementAnalyzer::IsSupportedStatement
+ (vb\language\debugger\statementanalyzer.cpp).
+ We'll add to that list some additional statements that can easily be supported by the new implementation
+ (include all compound assignments, not just "+=", etc). 
+ For now, we'll leave out single line If statements, as the parsing for those would require extra
+ complexity on the EE side (ParseStatementInMethodBody should handle them, but it doesn't...).
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.VisualBasicInstructionDecoder.Instance">
+ <summary>
+ Singleton instance of <see cref="T:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.VisualBasicInstructionDecoder"/> (created using default constructor).
+ </summary>
+</member>
+</members>
+</doc>
