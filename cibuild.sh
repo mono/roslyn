@@ -47,7 +47,7 @@ done
 
 run_xbuild()
 {
-    xbuild /v:m /p:SignAssembly=true /p:DebugSymbols=false "$@"
+    xbuild /v:m /p:SignAssembly=false /p:DebugSymbols=false "$@"
     if [ $? -ne 0 ]; then
         echo Compilation failed
         exit 1
