@@ -1188,7 +1188,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// A symbol representing the implicit Script class. This is null if the class is not
         /// defined in the compilation.
         /// </summary>
-        public new NamedTypeSymbol ScriptClass
+        internal new NamedTypeSymbol ScriptClass
         {
             get { return _scriptClass.Value; }
         }
