@@ -258,7 +258,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Formatting
             if (currentToken.Kind() == SyntaxKind.OpenBraceToken &&
                 currentTokenParentParent != null && (currentTokenParentParent is MemberDeclarationSyntax || currentTokenParentParent is AccessorDeclarationSyntax))
             {
-                if (optionSet.GetOption(CSharpFormattingOptions.NewLinesForBracesInMethods))
+                if (optionSet.GetOption(currentTokenParentParent is BasePropertyDeclarationSyntax || currentTokenParentParent is AccessorDeclarationSyntax ?
+                    CSharpFormattingOptions.NewLinesForBracesInProperties : CSharpFormattingOptions.NewLinesForBracesInMethods))
                 {
                     return CreateAdjustNewLinesOperation(1, AdjustNewLinesOption.PreserveLines);
                 }

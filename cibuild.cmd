@@ -3,7 +3,7 @@
 REM Parse Arguments.
 
 set RoslynRoot=%~dp0
-set BuildConfiguration=Debug
+set BuildConfiguration=Release
 :ParseArguments
 if "%1" == "" goto :DoneParsing
 if /I "%1" == "/?" call :Usage && exit /b 1
