@@ -839,7 +839,7 @@ namespace Microsoft.CodeAnalysis
         /// A symbol representing the implicit Script class. This is null if the class is not
         /// defined in the compilation.
         /// </summary>
-        internal INamedTypeSymbol ScriptClass { get { return CommonScriptClass; } }
+        public INamedTypeSymbol ScriptClass { get { return CommonScriptClass; } }
         internal abstract INamedTypeSymbol CommonScriptClass { get; }
 
         /// <summary>
