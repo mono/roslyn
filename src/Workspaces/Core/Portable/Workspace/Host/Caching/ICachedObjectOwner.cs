@@ -2,7 +2,7 @@
 
 namespace Microsoft.CodeAnalysis.Host
 {
-    internal interface ICachedObjectOwner
+    public interface ICachedObjectOwner
     {
         object CachedObject { get; set; }
     }

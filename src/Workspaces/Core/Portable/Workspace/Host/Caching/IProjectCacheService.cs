@@ -7,7 +7,7 @@ namespace Microsoft.CodeAnalysis.Host
     /// <summary>
     /// Service used to enable recoverable object caches for a given <see cref="ProjectId"/>
     /// </summary>
-    internal interface IProjectCacheService : IWorkspaceService
+    public interface IProjectCacheService : IWorkspaceService
     {
         IDisposable EnableCaching(ProjectId key);
     }
@@ -21,7 +21,7 @@ namespace Microsoft.CodeAnalysis.Host
     /// and putting them into a conditional weak table greatly increases GC costs in
     /// clr.dll!PromoteDependentHandle.
     /// </summary>
-    internal interface IProjectCacheHostService : IProjectCacheService
+    public interface IProjectCacheHostService : IProjectCacheService
     {
         /// <summary>
         /// If caching is enabled for <see cref="ProjectId"/> key, the instance is added to 
