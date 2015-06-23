@@ -197,12 +197,12 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                     });
 
                     // Subscribe for exceptions from lazily evaluated localizable strings in the descriptors.
-                    foreach (var descriptor in supportedDiagnostics)
-                    {
-                        descriptor.Title.OnException += handler;
-                        descriptor.MessageFormat.OnException += handler;
-                        descriptor.Description.OnException += handler;
-                    }
+                    //foreach (var descriptor in supportedDiagnostics)
+                    //{
+                    //    descriptor.Title.OnException += handler;
+                    //    descriptor.MessageFormat.OnException += handler;
+                    //    descriptor.Description.OnException += handler;
+                    //}
                 }
 
                 return Tuple.Create(supportedDiagnostics, handler);
