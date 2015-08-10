@@ -86,7 +86,7 @@ namespace Microsoft.CodeAnalysis
 
         internal virtual MetadataFileReferenceResolver GetExternalMetadataResolver(TouchedFileLogger touchedFiles)
         {
-            return new LoggingMetadataReferencesResolver(Arguments.ReferencePaths, Arguments.BaseDirectory, touchedFiles);
+            return CreateLoggingMetadataResolver(touchedFiles);
         }
 
         /// <summary>
@@ -111,14 +111,18 @@ namespace Microsoft.CodeAnalysis
             {
                 // when compiling into an assembly (csc/vbc) we only allow #r that match references given on command line:
                 referenceDirectiveResolver = new ExistingReferencesResolver(
+                    CreateLoggingMetadataResolver(touchedFiles),
                     resolved.Where(r => r.Properties.Kind == MetadataImageKind.Assembly).OfType<PortableExecutableReference>().AsImmutable(),
-                    Arguments.ReferencePaths,
-                    Arguments.BaseDirectory,
-                    assemblyIdentityComparer,
-                    touchedFiles);
+                    assemblyIdentityComparer);
             }
 
             return resolved;
+        }
+
+        private MetadataFileReferenceResolver CreateLoggingMetadataResolver(TouchedFileLogger logger)
+        {
+            MetadataFileReferenceResolver resolver = new RelativePathReferenceResolver(Arguments.ReferencePaths, Arguments.BaseDirectory);
+            return (logger == null) ? resolver : new LoggingMetadataReferencesResolver(resolver, logger);
         }
 
         /// <summary>
@@ -359,20 +363,16 @@ namespace Microsoft.CodeAnalysis
             try
             {
                 Func<ImmutableArray<Diagnostic>> getAnalyzerDiagnostics = null;
+                ConcurrentSet<Diagnostic> analyzerExceptionDiagnostics = null;
                 if (!analyzers.IsDefaultOrEmpty)
                 {
                     analyzerCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                     analyzerManager = new AnalyzerManager();
-                    var analyzerExceptionDiagnostics = new ConcurrentSet<Diagnostic>();
+                    analyzerExceptionDiagnostics = new ConcurrentSet<Diagnostic>();
                     Action<Diagnostic> addExceptionDiagnostic = diagnostic => analyzerExceptionDiagnostics.Add(diagnostic);
                     var analyzerOptions = new AnalyzerOptions(ImmutableArray<AdditionalText>.CastUp(additionalTextFiles));
-                    analyzerDriver = AnalyzerDriver.Create(compilation, analyzers, analyzerOptions, analyzerManager, addExceptionDiagnostic, Arguments.ReportAnalyzer, out compilation, analyzerCts.Token);
-
-                    getAnalyzerDiagnostics = () =>
-                        {
-                            var analyzerDiagnostics = analyzerDriver.GetDiagnosticsAsync().Result;
-                            return analyzerDiagnostics.AddRange(analyzerExceptionDiagnostics);
-                        };
+                    analyzerDriver = AnalyzerDriver.CreateAndAttachToCompilation(compilation, analyzers, analyzerOptions, analyzerManager, addExceptionDiagnostic, Arguments.ReportAnalyzer, out compilation, analyzerCts.Token);
+                    getAnalyzerDiagnostics = () => analyzerDriver.GetDiagnosticsAsync().Result;
                 }
 
                 // Print the diagnostics produced during the parsing stage and exit if there were any errors.
@@ -391,7 +391,7 @@ namespace Microsoft.CodeAnalysis
                 // NOTE: as native compiler does, we generate the documentation file
                 // NOTE: 'in place', replacing the contents of the file if it exists
 
-                string finalOutputPath;
+                string finalPeFilePath;
                 string finalPdbFilePath;
                 string finalXmlFilePath;
 
@@ -426,15 +426,15 @@ namespace Microsoft.CodeAnalysis
 
                     string outputName = GetOutputFileName(compilation, cancellationToken);
 
-                    finalOutputPath = Path.Combine(Arguments.OutputDirectory, outputName);
-                    finalPdbFilePath = Arguments.PdbPath ?? Path.ChangeExtension(finalOutputPath, ".pdb");
+                    finalPeFilePath = Path.Combine(Arguments.OutputDirectory, outputName);
+                    finalPdbFilePath = Arguments.PdbPath ?? Path.ChangeExtension(finalPeFilePath, ".pdb");
 
                     // NOTE: Unlike the PDB path, the XML doc path is not embedded in the assembly, so we don't need to pass it to emit.
                     var emitOptions = Arguments.EmitOptions.
                         WithOutputNameOverride(outputName).
                         WithPdbFilePath(finalPdbFilePath);
 
-                    using (var peStreamProvider = new CompilerEmitStreamProvider(this, finalOutputPath))
+                    using (var peStreamProvider = new CompilerEmitStreamProvider(this, finalPeFilePath))
                     using (var pdbStreamProviderOpt = Arguments.EmitPdb ? new CompilerEmitStreamProvider(this, finalPdbFilePath) : null)
                     {
                         emitResult = compilation.Emit(
@@ -454,7 +454,7 @@ namespace Microsoft.CodeAnalysis
                                 touchedFilesLogger.AddWritten(finalPdbFilePath);
                             }
 
-                            touchedFilesLogger.AddWritten(finalOutputPath);
+                            touchedFilesLogger.AddWritten(finalPeFilePath);
                         }
                     }
                 }
@@ -467,6 +467,11 @@ namespace Microsoft.CodeAnalysis
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
+
+                if (analyzerExceptionDiagnostics != null && ReportErrors(analyzerExceptionDiagnostics, consoleOutput, errorLogger))
+                {
+                    return Failed;
+                }
 
                 bool errorsReadingAdditionalFiles = false;
                 foreach (var additionalFile in additionalTextFiles)

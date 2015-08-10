@@ -519,6 +519,10 @@
   <data name="UpdatingAStatementAroundActive" xml:space="preserve">
     <value>Updating a '{0}' statement around an active statement will prevent the debug session from continuing.</value>
   </data>
+  <data name="UpdatingStateMachineMethodAroundActive" xml:space="preserve">
+    <value>Updating async or iterator modifier around an active statement will prevent the debug session from continuing.</value>
+    <comment>{Locked="async"}{Locked="iterator"} "async" and "iterator" are C#/VB keywords and should not be localized.</comment>
+  </data>    
   <data name="ModifyingAGenericMethodWillPrevent" xml:space="preserve">
     <value>Modifying a generic method will prevent the debug session from continuing.</value>
   </data>
@@ -654,7 +658,7 @@ Do you want to continue?</value>
     <value>User Diagnostic Analyzer Failure.</value>
   </data>
   <data name="UserDiagnosticAnalyzerThrows" xml:space="preserve">
-    <value>The User Diagnostic Analyzer '{0}' threw an exception of type '{1}' with message '{2}'.</value>
+    <value>Analyzer '{0}' threw an exception of type '{1}' with message '{2}'.</value>
   </data>
   <data name="UserDiagnosticAnalyzerThrowsDescription" xml:space="preserve">
     <value>Analyzer '{0}' threw the following exception:

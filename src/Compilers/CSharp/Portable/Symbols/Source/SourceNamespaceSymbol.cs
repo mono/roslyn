@@ -338,7 +338,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                         {
                             if ((object)constituent != (object)this)
                             {
-                                // For whatever reason native compiler only detects conflicts agains types.
+                                // For whatever reason native compiler only detects conflicts against types.
                                 // It doesn't complain when source declares a type with the same name as 
                                 // a namespace in added module, but complains when source declares a namespace 
                                 // with the same name as a type in added module.
@@ -437,6 +437,38 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                     }
                 }
             }
+        }
+
+        internal override bool IsDefinedInSourceTree(SyntaxTree tree, TextSpan? definedWithinSpan, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (this.IsGlobalNamespace)
+            {
+                return true;
+            }
+
+            // Check if any namespace declaration block intersects with the given tree/span.
+            foreach (var syntaxRef in this.DeclaringSyntaxReferences)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (syntaxRef.SyntaxTree != tree)
+                {
+                    continue;
+                }
+
+                if (!definedWithinSpan.HasValue)
+                {
+                    return true;
+                }
+
+                var syntax = syntaxRef.GetSyntax(cancellationToken);
+                if (syntax.FullSpan.IntersectsWith(definedWithinSpan.Value))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private struct NameToSymbolMapBuilder

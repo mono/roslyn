@@ -91,7 +91,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Setup
             // Initialize the PortableShim linked into the Workspaces layer.
             Roslyn.Utilities.PortableShim.Initialize();
 
-            // Initialize the PortableShim linekd into the Compilers layer via reflection.
+            // Initialize the PortableShim linked into the Compilers layer via reflection.
             var compilerPortableShim = compilerAssembly.GetType("Roslyn.Utilities.PortableShim", throwOnError: false);
             var initializeMethod = compilerPortableShim?.GetMethod(nameof(Roslyn.Utilities.PortableShim.Initialize), BindingFlags.Static | BindingFlags.NonPublic);
             initializeMethod?.Invoke(null, null);
@@ -143,7 +143,6 @@ namespace Microsoft.VisualStudio.LanguageServices.Setup
             this.ComponentModel.GetService<VisualStudioDiagnosticListTable>();
             this.ComponentModel.GetService<VisualStudioTodoListTable>();
 
-            this.ComponentModel.GetService<VisualStudioTodoTaskList>();
             this.ComponentModel.GetService<HACK_ThemeColorFixer>();
             this.ComponentModel.GetExtensions<IReferencedSymbolsPresenter>();
             this.ComponentModel.GetExtensions<INavigableItemsPresenter>();

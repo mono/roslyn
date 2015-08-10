@@ -2054,7 +2054,7 @@ class C
     static void Main()
     {
         Action<string> g = null;
-        var h = (Foo<string>) + g;
+        var h = Foo + g;
     }
 
     static void Foo<T>(T y) { }
@@ -3202,7 +3202,7 @@ class Program
 
         [WorkItem(529698)]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsInlineTemporary)]
-        public void InlineCompundAssignmentIntoInitializer()
+        public void InlineCompoundAssignmentIntoInitializer()
         {
             Test(
             @"

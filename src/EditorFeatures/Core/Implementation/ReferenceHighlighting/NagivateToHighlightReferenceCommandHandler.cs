@@ -17,25 +17,25 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.ReferenceHighlighting
 {
     [ExportCommandHandler(PredefinedCommandHandlerNames.NavigateToHighlightedReference,
        ContentTypeNames.RoslynContentType)]
-    internal partial class NagivateToHighlightReferenceCommandHandler :
+    internal partial class NavigateToHighlightReferenceCommandHandler :
         ICommandHandler<NavigateToHighlightedReferenceCommandArgs>
     {
         private readonly IOutliningManagerService _outliningManagerService;
         private readonly IViewTagAggregatorFactoryService _tagAggregatorFactory;
 
         [ImportingConstructor]
-        public NagivateToHighlightReferenceCommandHandler(
+        public NavigateToHighlightReferenceCommandHandler(
             IOutliningManagerService outliningManagerService,
             IViewTagAggregatorFactoryService tagAggregatorFactory)
         {
             if (outliningManagerService == null)
             {
-                throw new ArgumentNullException("outliningManagerService");
+                throw new ArgumentNullException(nameof(outliningManagerService));
             }
 
             if (tagAggregatorFactory == null)
             {
-                throw new ArgumentNullException("tagAggregatorFactory");
+                throw new ArgumentNullException(nameof(tagAggregatorFactory));
             }
 
             _outliningManagerService = outliningManagerService;
@@ -44,7 +44,7 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.ReferenceHighlighting
 
         public CommandState GetCommandState(NavigateToHighlightedReferenceCommandArgs args, Func<CommandState> nextHandler)
         {
-            using (var tagAggregator = _tagAggregatorFactory.CreateTagAggregator<AbstractNavigatableReferenceHighlightingTag>(args.TextView))
+            using (var tagAggregator = _tagAggregatorFactory.CreateTagAggregator<NavigableHighlightTag>(args.TextView))
             {
                 var tagUnderCursor = FindTagUnderCaret(tagAggregator, args.TextView);
                 return tagUnderCursor == null ? CommandState.Unavailable : CommandState.Available;
@@ -53,7 +53,7 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.ReferenceHighlighting
 
         public void ExecuteCommand(NavigateToHighlightedReferenceCommandArgs args, Action nextHandler)
         {
-            using (var tagAggregator = _tagAggregatorFactory.CreateTagAggregator<AbstractNavigatableReferenceHighlightingTag>(args.TextView))
+            using (var tagAggregator = _tagAggregatorFactory.CreateTagAggregator<NavigableHighlightTag>(args.TextView))
             {
                 var tagUnderCursor = FindTagUnderCaret(tagAggregator, args.TextView);
 
@@ -77,7 +77,7 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.ReferenceHighlighting
         }
 
         private static IEnumerable<SnapshotSpan> GetTags(
-            ITagAggregator<AbstractNavigatableReferenceHighlightingTag> tagAggregator,
+            ITagAggregator<NavigableHighlightTag> tagAggregator,
             SnapshotSpan span)
         {
             return tagAggregator.GetTags(span)
@@ -108,7 +108,7 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.ReferenceHighlighting
         }
 
         private SnapshotSpan? FindTagUnderCaret(
-            ITagAggregator<AbstractNavigatableReferenceHighlightingTag> tagAggregator,
+            ITagAggregator<NavigableHighlightTag> tagAggregator,
             ITextView textView)
         {
             // We always want to be working with the surface buffer here, so this line is correct

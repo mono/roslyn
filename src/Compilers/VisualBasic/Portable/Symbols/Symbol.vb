@@ -452,13 +452,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' accessors and the backing field for an automatically implemented property.
         ''' 
         ''' NOTE: there are scenarios in which ImplicitlyDefinedBy is called while bound members 
-        '''       are not yet published. Ths typically happens if ImplicitlyDefinedBy while binding members.
+        '''       are not yet published. This typically happens if ImplicitlyDefinedBy while binding members.
         '''       In such case, if callee needs to refer to a member of enclosing type it must 
         '''       do that in the context of unpublished members that caller provides 
         '''       (asking encompassing type for members will cause infinite recursion).
         ''' 
         ''' NOTE: There could be several threads trying to bind and publish members, only one will succeed.
-        '''       Reporting ImplicitlyDefinedBy withing the set of members known to the caller guarantees
+        '''       Reporting ImplicitlyDefinedBy within the set of members known to the caller guarantees
         '''       that if particular thread succeeds it will not have information that refers to something
         '''       built by another thread and discarded.
         ''' </summary>
@@ -800,9 +800,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         ' Returns true if some or all of the symbol is defined in the given source tree.
         Friend Overridable Function IsDefinedInSourceTree(tree As SyntaxTree, definedWithinSpan As TextSpan?, Optional cancellationToken As CancellationToken = Nothing) As Boolean
+            Dim declaringReferences = Me.DeclaringSyntaxReferences
+            If Me.IsImplicitlyDeclared AndAlso declaringReferences.Length = 0 Then
+                Return Me.ContainingSymbol.IsDefinedInSourceTree(tree, definedWithinSpan, cancellationToken)
+            End If
+
             ' Default implementation: go through all locations and check for the definition.
             ' This is overridden for certain special cases (e.g., the implicit default constructor).
-            For Each syntaxRef In Me.DeclaringSyntaxReferences
+            For Each syntaxRef In declaringReferences
                 cancellationToken.ThrowIfCancellationRequested()
 
                 If syntaxRef.SyntaxTree Is tree AndAlso

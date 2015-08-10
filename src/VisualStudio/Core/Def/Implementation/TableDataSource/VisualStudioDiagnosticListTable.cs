@@ -49,6 +49,11 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.TableDataSource
 
         private ITableDataSource GetCurrentDataSource()
         {
+            if (_errorList == null)
+            {
+                return _liveTableSource;
+            }
+
             return _errorList.AreOtherErrorSourceEntriesShown ? (ITableDataSource)_liveTableSource : _buildTableSource;
         }
 
@@ -127,9 +132,9 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.TableDataSource
             private readonly Workspace _workspace;
             private readonly ExternalErrorDiagnosticUpdateSource _buildErrorSource;
 
-            public BuildTableDataSource(Workspace workspce, ExternalErrorDiagnosticUpdateSource errorSource)
+            public BuildTableDataSource(Workspace workspace, ExternalErrorDiagnosticUpdateSource errorSource)
             {
-                _workspace = workspce;
+                _workspace = workspace;
                 _buildErrorSource = errorSource;
 
                 ConnectToBuildUpdateSource(errorSource);

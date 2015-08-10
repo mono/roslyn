@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.CodeAnalysis.Editor.Interactive;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
-using Microsoft.VisualStudio.InteractiveWindow;
 using Microsoft.VisualStudio.InteractiveWindow.Commands;
 using Microsoft.VisualStudio.InteractiveWindow.Shell;
 
@@ -20,7 +21,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Interactive
         private readonly IViewClassifierAggregatorService _classifierAggregator;
         private readonly IContentTypeRegistryService _contentTypeRegistry;
         private readonly IInteractiveWindowCommandsFactory _commandsFactory;
-        private readonly IInteractiveWindowCommand[] _commands;
+        private readonly ImmutableArray<IInteractiveWindowCommand> _commands;
 
         // TODO: support multi-instance windows
         // single instance of the Interactive Window
@@ -39,7 +40,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Interactive
             _classifierAggregator = classifierAggregator;
             _contentTypeRegistry = contentTypeRegistry;
             _vsWorkspace = workspace;
-            _commands = commands;
+            _commands = FilterCommands(commands, contentType: PredefinedInteractiveCommandsContentTypes.InteractiveCommandContentTypeName);
             _vsInteractiveWindowFactory = interactiveWindowFactory;
             _commandsFactory = commandsFactory;
         }
@@ -53,6 +54,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Interactive
         protected abstract Guid LanguageServiceGuid { get; }
         protected abstract Guid Id { get; }
         protected abstract string Title { get; }
+        protected abstract void LogSession(string key, string value);
 
         protected IInteractiveWindowCommandsFactory CommandsFactory
         {
@@ -62,7 +64,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Interactive
             }
         }
 
-        protected IInteractiveWindowCommand[] Commands
+        protected ImmutableArray<IInteractiveWindowCommand> Commands
         {
             get
             {
@@ -78,13 +80,19 @@ namespace Microsoft.VisualStudio.LanguageServices.Interactive
             vsWindow.SetLanguage(LanguageServiceGuid, evaluator.ContentType);
 
             // the tool window now owns the engine:
-            vsWindow.InteractiveWindow.TextView.Closed += new EventHandler((_, __) => evaluator.Dispose());
+            vsWindow.InteractiveWindow.TextView.Closed += new EventHandler((_, __) => 
+            {
+                LogSession(LogMessage.Window, LogMessage.Close);
+                evaluator.Dispose();
+            });
             // vsWindow.AutoSaveOptions = true;
 
             var window = vsWindow.InteractiveWindow;
 
             // fire and forget:
             window.InitializeAsync();
+
+            LogSession(LogMessage.Window, LogMessage.Create);
 
             return vsWindow;
         }
@@ -101,7 +109,16 @@ namespace Microsoft.VisualStudio.LanguageServices.Interactive
 
             _vsInteractiveWindow.Show(focus);
 
+            LogSession(LogMessage.Window, LogMessage.Open);
+
             return _vsInteractiveWindow;
+        }
+
+        private static ImmutableArray<IInteractiveWindowCommand> FilterCommands(IInteractiveWindowCommand[] commands, string contentType)
+        {
+            return commands.Where(
+                c => c.GetType().GetCustomAttributes(typeof(ContentTypeAttribute), inherit: true).Any(
+                    a => ((ContentTypeAttribute)a).ContentTypes == contentType)).ToImmutableArray();
         }
     }
 }

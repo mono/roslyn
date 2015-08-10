@@ -41,6 +41,14 @@ namespace Microsoft.CodeAnalysis.Diagnostics.EngineV1
             public event EventHandler<ProjectAnalyzerReferenceChangedEventArgs> ProjectAnalyzerReferenceChanged;
 
             /// <summary>
+            /// Return <see cref="DiagnosticAnalyzer"/>s for the given <see cref="Project"/>.
+            /// </summary>
+            public IEnumerable<DiagnosticAnalyzer> GetAnalyzers(Project project)
+            {
+                return _hostStates.GetAnalyzers(project.Language).Concat(_projectStates.GetAnalyzers(project));
+            }
+
+            /// <summary>
             /// Return <see cref="StateSet"/>s for the given <see cref="ProjectId"/>. 
             /// This will never create new <see cref="StateSet"/> but will return ones already created.
             /// </summary>
@@ -125,8 +133,8 @@ namespace Microsoft.CodeAnalysis.Diagnostics.EngineV1
                     {
                         // TODO: 
                         // #1, all de -duplication should move to HostAnalyzerManager
-                        // #2, not sure whether de-duplicatoin of analyzer itself makes sense. this can only happen
-                        //     if user delibrately put same analyzer twice.
+                        // #2, not sure whether de-duplication of analyzer itself makes sense. this can only happen
+                        //     if user deliberately put same analyzer twice.
                         if (builder.ContainsKey(analyzer))
                         {
                             continue;
@@ -170,7 +178,10 @@ namespace Microsoft.CodeAnalysis.Diagnostics.EngineV1
                     {
                         var state = stateSet.GetState((StateType)i);
 
-                        Contract.Requires(set.Add(ValueTuple.Create(state.Language, state.Name)));
+                        if (!(set.Add(ValueTuple.Create(state.Language, state.Name))))
+                        {
+                            Contract.Fail();
+                        }
                     }
                 }
             }

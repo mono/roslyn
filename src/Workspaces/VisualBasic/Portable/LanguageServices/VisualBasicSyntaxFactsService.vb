@@ -662,7 +662,17 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Return Nothing
                 End If
 
-                Return TextSpan.FromBounds(method.BlockStatement.Span.End, method.EndBlockStatement.SpanStart)
+                ' We don't want to include the BlockStatement or any trailing trivia up to and including its statement
+                ' terminator in the span. Instead, we use the start of the first statement's leading trivia (if any) up
+                ' to the start of the EndBlockStatement. If there aren't any statements in the block, we use the start
+                ' of the EndBlockStatements leading trivia.
+
+                Dim firstStatement = method.Statements.FirstOrDefault()
+                Dim spanStart = If(firstStatement IsNot Nothing,
+                                   firstStatement.FullSpan.Start,
+                                   method.EndBlockStatement.FullSpan.Start)
+
+                Return TextSpan.FromBounds(spanStart, method.EndBlockStatement.SpanStart)
             End If
 
             Return Nothing
@@ -852,7 +862,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return GetDisplayName(node, DisplayNameOptions.IncludeNamespaces)
         End Function
 
-        Private Const dotToken As String = "."
+        Private Const s_dotToken As String = "."
 
         Public Function GetDisplayName(node As SyntaxNode, options As DisplayNameOptions, Optional rootNamespace As String = Nothing) As String Implements ISyntaxFactsService.GetDisplayName
             If node Is Nothing Then
@@ -889,14 +899,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 ' root namespace (if any)
                 If Not containsGlobalKeyword AndAlso Not String.IsNullOrEmpty(rootNamespace) Then
                     builder.Append(rootNamespace)
-                    builder.Append(dotToken)
+                    builder.Append(s_dotToken)
                 End If
             End If
             While Not names.IsEmpty()
                 Dim name = names.Pop()
                 If name IsNot Nothing Then
                     builder.Append(name)
-                    builder.Append(dotToken)
+                    builder.Append(s_dotToken)
                 End If
             End While
             names.Free()
@@ -944,7 +954,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         containsGlobalKeyword = True
                         Return GetName(qualified.Right, options, containsGlobalKeyword) ' don't use the Global prefix if specified
                     Else
-                        Return GetName(qualified.Left, options, containsGlobalKeyword) + dotToken + GetName(qualified.Right, options, containsGlobalKeyword)
+                        Return GetName(qualified.Left, options, containsGlobalKeyword) + s_dotToken + GetName(qualified.Right, options, containsGlobalKeyword)
                     End If
             End Select
 

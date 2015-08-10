@@ -5,12 +5,9 @@ Imports System.IO
 Imports System.Reflection
 Imports System.Runtime.InteropServices
 Imports Microsoft.CodeAnalysis
-Imports Microsoft.CodeAnalysis.Diagnostics
+Imports Microsoft.CodeAnalysis.Scripting
 Imports Microsoft.CodeAnalysis.VisualBasic
 Imports Microsoft.VisualStudio.Shell.Interop
-Imports Microsoft.CodeAnalysis.Scripting
-Imports Roslyn.Utilities
-Imports VisualBasicInteractive.BasicInteractive
 
 Friend NotInheritable Class Vbi
     Inherits VisualBasicCompiler
@@ -24,7 +21,7 @@ Friend NotInheritable Class Vbi
     Public Shared Function Main(args As String()) As Integer
         Try
             Dim responseFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, InteractiveResponseFileName)
-            Return ScriptCompilerUtil.RunInteractive(New Vbi(responseFile, Directory.GetCurrentDirectory(), args, New SimpleAnalyzerAssemblyLoader()), Console.Out)
+            Return ScriptCompilerUtil.RunInteractive(New Vbi(responseFile, Directory.GetCurrentDirectory(), args, New NotImplementedAnalyzerLoader()), Console.Out)
         Catch ex As Exception
             Console.WriteLine(ex.ToString())
             Return Failed
@@ -33,7 +30,10 @@ Friend NotInheritable Class Vbi
 
     Friend Overrides Function GetExternalMetadataResolver(touchedFiles As TouchedFileLogger) As MetadataFileReferenceResolver
         ' We don't log touched files atm.
-        Return New GacFileResolver(Arguments.ReferencePaths, Arguments.BaseDirectory, GacFileResolver.Default.Architectures, CultureInfo.CurrentCulture)
+        Return New DesktopMetadataReferenceResolver(
+            New RelativePathReferenceResolver(Arguments.ReferencePaths, Arguments.BaseDirectory),
+            Nothing,
+            New GacFileResolver(GacFileResolver.Default.Architectures, CultureInfo.CurrentCulture))
     End Function
 
     Public Overrides Sub PrintLogo(consoleOutput As TextWriter)

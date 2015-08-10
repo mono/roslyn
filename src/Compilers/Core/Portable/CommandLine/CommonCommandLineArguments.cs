@@ -173,7 +173,7 @@ namespace Microsoft.CodeAnalysis
         /// <summary>
         /// Arguments following script argument separator "--" or null if <see cref="IsInteractive"/> is false.
         /// </summary>
-        internal ImmutableArray<string> ScriptArguments { get; set; }
+        public ImmutableArray<string> ScriptArguments { get; internal set; }
 
         /// <summary>
         /// Source file paths.
@@ -392,13 +392,9 @@ namespace Microsoft.CodeAnalysis
         private AnalyzerFileReference ResolveAnalyzerReference(CommandLineAnalyzerReference reference, IAnalyzerAssemblyLoader analyzerLoader)
         {
             string resolvedPath = FileUtilities.ResolveRelativePath(reference.FilePath, basePath: null, baseDirectory: BaseDirectory, searchPaths: ReferencePaths, fileExists: PortableShim.File.Exists);
-            if (PortableShim.File.Exists(resolvedPath))
+            if (resolvedPath != null)
             {
                 resolvedPath = FileUtilities.TryNormalizeAbsolutePath(resolvedPath);
-            }
-            else
-            {
-                resolvedPath = null;
             }
 
             if (resolvedPath != null)

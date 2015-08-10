@@ -18,7 +18,7 @@ namespace Roslyn.Utilities
     /// from moving to the 4.6 framework until post VS 2015.
     /// 
     /// This puts us in a difficult position.  These APIs are necessary for us to have our public API set
-    /// in the DLLS we prefer (non Desktop variants) but we can't use them directly when targetting 
+    /// in the DLLS we prefer (non Desktop variants) but we can't use them directly when targeting 
     /// the 4.5 framework.  Putting the APIs into the Desktop variants would create instant legacy for 
     /// the Roslyn project that we'd have to maintain forever (even if it was just as assemblies with
     /// only type forward entries).  This is not a place we'd like to be in.  
@@ -58,6 +58,12 @@ namespace Roslyn.Utilities
             Touch(SearchOption.Type);
             Touch(Thread.Type);
             Touch(XPath.Extensions.Type);
+            Touch(HashAlgorithm.Type);
+            Touch(SHA1.Type);
+            Touch(SHA256.Type);
+            Touch(SHA512.Type);
+            Touch(SHA384.Type);
+            Touch(MD5.Type);
         }
 
         private static void Touch(Type type)
@@ -70,11 +76,13 @@ namespace Roslyn.Utilities
             internal const string System_Diagnostics_FileVersionInfo = "System.Diagnostics.FileVersionInfo, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
             internal const string System_IO_FileSystem = "System.IO.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
             internal const string System_IO_FileSystem_Primitives = "System.IO.FileSystem.Primitives, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+            internal const string System_Reflection = "System.Reflection, Version=4.0.10.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
             internal const string System_Runtime = "System.Runtime, Version=4.0.20.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
             internal const string System_Runtime_Extensions = "System.Runtime.Extensions, Version=4.0.10.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+            internal const string System_Security_Cryptography_Primitives = "System.Security.Cryptography.Primitives, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+            internal const string System_Security_Cryptography_Algorithms = "System.Security.Cryptography.Algorithms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
             internal const string System_Threading_Thread = "System.Threading.Thread, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
             internal const string System_Xml_XPath_XDocument = "System.Xml.XPath.XDocument, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
-            internal const string System_Reflection = "System.Reflection, Version=4.0.10.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
         }
 
         private static class DesktopNames
@@ -86,7 +94,7 @@ namespace Roslyn.Utilities
         {
             internal const string TypeName = "System.Environment";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_Runtime_Extensions}",
                 desktopName: TypeName);
 
@@ -105,7 +113,7 @@ namespace Roslyn.Utilities
         {
             internal const string TypeName = "System.IO.Path";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_Runtime_Extensions}",
                 desktopName: TypeName);
 
@@ -134,7 +142,7 @@ namespace Roslyn.Utilities
         {
             internal const string TypeName = "System.IO.File";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_IO_FileSystem}",
                 desktopName: TypeName);
 
@@ -173,7 +181,7 @@ namespace Roslyn.Utilities
         {
             internal const string TypeName = "System.IO.Directory";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_IO_FileSystem}",
                 desktopName: TypeName);
 
@@ -205,7 +213,7 @@ namespace Roslyn.Utilities
         {
             internal const string TypeName = "System.IO.FileMode";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_IO_FileSystem_Primitives}",
                 desktopName: TypeName);
 
@@ -226,7 +234,7 @@ namespace Roslyn.Utilities
         {
             internal const string TypeName = "System.IO.FileAccess";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_IO_FileSystem_Primitives}",
                 desktopName: TypeName);
 
@@ -241,7 +249,7 @@ namespace Roslyn.Utilities
         {
             internal const string TypeName = "System.IO.FileShare";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_IO_FileSystem_Primitives}",
                 desktopName: TypeName);
 
@@ -264,20 +272,20 @@ namespace Roslyn.Utilities
         {
             internal const string TypeName = "System.IO.FileOptions";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_IO_FileSystem}",
                 desktopName: TypeName);
 
             internal static readonly object None = Enum.ToObject(Type, 0);
 
-            internal static readonly object Asynchronous = Enum.ToObject(Type,  1073741824);
+            internal static readonly object Asynchronous = Enum.ToObject(Type, 1073741824);
         }
 
         internal static class SearchOption
         {
             internal const string TypeName = "System.IO.SearchOption";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_IO_FileSystem}",
                 desktopName: TypeName);
 
@@ -290,7 +298,7 @@ namespace Roslyn.Utilities
         {
             internal const string TypeName = "System.IO.FileStream";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_IO_FileSystem}",
                 desktopName: TypeName);
 
@@ -360,7 +368,7 @@ namespace Roslyn.Utilities
 
             internal static readonly string DesktopName = $"{TypeName}, System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_Diagnostics_FileVersionInfo}",
                 desktopName: DesktopName);
 
@@ -378,7 +386,7 @@ namespace Roslyn.Utilities
         {
             internal const string TypeName = "System.Threading.Thread";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_Threading_Thread}",
                 desktopName: TypeName);
 
@@ -395,7 +403,7 @@ namespace Roslyn.Utilities
         {
             internal const string TypeName = "System.Runtime.CompilerServices.RuntimeHelpers";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_Runtime}",
                 desktopName: TypeName);
 
@@ -430,7 +438,7 @@ namespace Roslyn.Utilities
             {
                 internal const string TypeName = "System.Xml.XPath.Extensions";
 
-                internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+                internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                     contractName: $"{TypeName}, {CoreNames.System_Runtime}",
                     desktopName: $"{TypeName}, {DesktopNames.System_Xml_Linq}");
 
@@ -447,8 +455,6 @@ namespace Roslyn.Utilities
         /// </summary>
         internal static class Proposed
         {
-
-
         }
 
         internal static class Misc
@@ -471,7 +477,7 @@ namespace Roslyn.Utilities
         {
             private const string TypeName = "System.Reflection.Assembly";
 
-            internal static readonly Type Type = ReflectionUtil.GetTypeFromEither(
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
                 contractName: $"{TypeName}, {CoreNames.System_Reflection}",
                 desktopName: TypeName);
 
@@ -479,6 +485,112 @@ namespace Roslyn.Utilities
                 .GetTypeInfo()
                 .GetDeclaredMethod("GetType", typeof(string), typeof(bool), typeof(bool))
                 .CreateDelegate<Func<System.Reflection.Assembly, string, bool, bool, Type>>();
+        }
+
+        internal static class HashAlgorithm
+        {
+            private const string TypeName = "System.Security.Cryptography.HashAlgorithm";
+
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
+                contractName: $"{TypeName}, {CoreNames.System_Security_Cryptography_Primitives}",
+                desktopName: TypeName);
+
+            private static readonly MethodInfo s_computeHash_byte = Type
+                .GetTypeInfo()
+                .GetDeclaredMethod(nameof(ComputeHash), new[] { typeof(byte[]) });
+
+            private static readonly MethodInfo s_computeHash_byte_int_int = Type
+                .GetTypeInfo()
+                .GetDeclaredMethod(nameof(ComputeHash), new[] { typeof(byte[]), typeof(int), typeof(int) });
+
+            private static readonly MethodInfo s_computeHash_stream = Type
+                .GetTypeInfo()
+                .GetDeclaredMethod(nameof(ComputeHash), new[] { typeof(Stream) });
+
+            internal static byte[] ComputeHash(object hashInstance, byte[] buffer)
+            {
+                return (byte[])s_computeHash_byte.Invoke(hashInstance, new object[] { buffer });
+            }
+
+            internal static byte[] ComputeHash(object hashInstance, byte[] buffer, int offset, int count)
+            {
+                return (byte[])s_computeHash_byte_int_int.Invoke(hashInstance, new object[] { buffer, offset, count });
+            }
+
+            internal static byte[] ComputeHash(object hashInstance, Stream inputStream)
+            {
+                return (byte[])s_computeHash_stream.Invoke(hashInstance, new object[] { inputStream });
+            }
+        }
+
+        internal static class SHA1
+        {
+            private const string TypeName = "System.Security.Cryptography.SHA1";
+
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
+                contractName: $"{TypeName}, {CoreNames.System_Security_Cryptography_Algorithms}",
+                desktopName: TypeName);
+
+            internal static readonly Func<IDisposable> Create = Type
+                .GetTypeInfo()
+                .GetDeclaredMethod(nameof(Create), new Type[] { })
+                .CreateDelegate<Func<IDisposable>>();
+        }
+
+        internal static class SHA256
+        {
+            private const string TypeName = "System.Security.Cryptography.SHA256";
+
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
+                contractName: $"{TypeName}, {CoreNames.System_Security_Cryptography_Algorithms}",
+                desktopName: TypeName);
+
+            internal static readonly Func<IDisposable> Create = Type
+                .GetTypeInfo()
+                .GetDeclaredMethod(nameof(Create), new Type[] { })
+                .CreateDelegate<Func<IDisposable>>();
+        }
+
+        internal static class SHA384
+        {
+            private const string TypeName = "System.Security.Cryptography.SHA384";
+
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
+                contractName: $"{TypeName}, {CoreNames.System_Security_Cryptography_Algorithms}",
+                desktopName: TypeName);
+
+            internal static readonly Func<IDisposable> Create = Type
+                .GetTypeInfo()
+                .GetDeclaredMethod(nameof(Create), new Type[] { })
+                .CreateDelegate<Func<IDisposable>>();
+        }
+
+        internal static class SHA512
+        {
+            private const string TypeName = "System.Security.Cryptography.SHA512";
+
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
+                contractName: $"{TypeName}, {CoreNames.System_Security_Cryptography_Algorithms}",
+                desktopName: TypeName);
+
+            internal static readonly Func<IDisposable> Create = Type
+                .GetTypeInfo()
+                .GetDeclaredMethod(nameof(Create), new Type[] { })
+                .CreateDelegate<Func<IDisposable>>();
+        }
+
+        internal static class MD5
+        {
+            private const string TypeName = "System.Security.Cryptography.MD5";
+
+            internal static readonly Type Type = ReflectionUtilities.GetTypeFromEither(
+                contractName: $"{TypeName}, {CoreNames.System_Security_Cryptography_Algorithms}",
+                desktopName: TypeName);
+
+            internal static readonly Func<IDisposable> Create = Type
+                .GetTypeInfo()
+                .GetDeclaredMethod(nameof(Create), new Type[] { })
+                .CreateDelegate<Func<IDisposable>>();
         }
     }
 }
