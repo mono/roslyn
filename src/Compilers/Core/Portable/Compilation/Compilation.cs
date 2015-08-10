@@ -842,7 +842,7 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         public INamedTypeSymbol ScriptClass { get { return CommonScriptClass; } }
         
-		public abstract INamedTypeSymbol CommonScriptClass { get; }
+		protected abstract INamedTypeSymbol CommonScriptClass { get; }
 
         /// <summary>
         /// Returns a new ArrayTypeSymbol representing an array type tied to the base types of the
