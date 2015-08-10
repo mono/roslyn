@@ -734,7 +734,7 @@ Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.ResultProvider
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EqualsValue">
  <summary>
  Represents an "= initializer" clause in a declaration for a variable,
- pararameter or automatic property.
+ parameter or automatic property.
  </summary>
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.Parameter">
@@ -1164,14 +1164,14 @@ Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.ResultProvider
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ForBlock">
  <summary>
- Represents a For or For Each block, including the introducting statement, the
+ Represents a For or For Each block, including the introducing statement, the
  body and the "Next" (which can be omitted if a containing For has a Next with
  multiple variables).
  </summary>
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ForEachBlock">
  <summary>
- Represents a For or For Each block, including the introducting statement, the
+ Represents a For or For Each block, including the introducing statement, the
  body and the "Next" (which can be omitted if a containing For has a Next with
  multiple variables).
  </summary>

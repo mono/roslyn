@@ -1026,7 +1026,7 @@ Microsoft.CodeAnalysis.VisualBasic
   - remaining constructor statements (empty for a submission)
  </returns>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.InitializerRewriter.RewriteInitializersAsStatements(Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.BoundInitializer})">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.InitializerRewriter.RewriteInitializersAsStatements(Microsoft.CodeAnalysis.VisualBasic.Symbols.SynthesizedInteractiveInitializerMethod,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.BoundInitializer})">
  <summary>
  Rewrites GlobalStatementInitializers to ExpressionStatements and gets the initializers for fields and properties.
  </summary>
@@ -1034,7 +1034,7 @@ Microsoft.CodeAnalysis.VisualBasic
  Initializers for fields and properties cannot be rewritten to their final form at this place because they might need 
  to be rewritten to replace their placeholder expressions to the final locals or temporaries (e.g. in case of a field
  declaration with "AsNew" and multiple variable names. The final rewriting will during local rewriting.
- The statement list returned by this function can be copied into all constructors without reprocessing it.
+ The statement list returned by this function can be copied into the initializer without reprocessing it.
  </remarks>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.InitializerRewriter.HasExplicitMeConstructorCall(Microsoft.CodeAnalysis.VisualBasic.BoundBlock,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol,System.Boolean@)">
@@ -1662,7 +1662,7 @@ Microsoft.CodeAnalysis.VisualBasic
  <param name="syntaxNode">Location to use for various synthetic nodes and symbols.</param>
  <param name="delegateInvoke">The Invoke method to "implement".</param>
  <param name="methodGroup">The method group with the only method in it.</param>
- <param name="delegateRelaxation">Delegate relaxation to store withing the new BoundLambda node.</param>
+ <param name="delegateRelaxation">Delegate relaxation to store within the new BoundLambda node.</param>
  <param name="diagnostics"></param>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Binder.ReportDiagnosticAndProduceBadExpression(Microsoft.CodeAnalysis.DiagnosticBag,Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxNode,Microsoft.CodeAnalysis.VisualBasic.ERRID,System.Object[])">
@@ -1892,10 +1892,10 @@ Microsoft.CodeAnalysis.VisualBasic
  The Imports binder handles binding of Imports statements in files, and also the project-level imports.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Binder.ImportsBinder.AllowAliasWithUseSiteError(Microsoft.CodeAnalysis.DiagnosticInfo)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Binder.ImportsBinder.ShouldReportUseSiteErrorForAlias(Microsoft.CodeAnalysis.DiagnosticInfo)">
  <summary>
- Checks use site error and returns True in case the alias should still be created for the
- type with this site error. In current implementation checks for errors ##36924, 36925
+ Checks use site error and returns True in case it should be reported for the alias. 
+ In current implementation checks for errors #36924 and #36925
  </summary>
 </member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.Binder.ProcessedFieldOrPropertyInitializers">
@@ -1911,15 +1911,14 @@ Microsoft.CodeAnalysis.VisualBasic
  binding of the initializers. 
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Binder.BindFieldAndPropertyInitializers(Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceMemberContainerTypeSymbol,System.Collections.Immutable.ImmutableArray{System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.FieldOrPropertyInitializer}},Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,Microsoft.CodeAnalysis.VisualBasic.Binder.ProcessedFieldOrPropertyInitializers@,Microsoft.CodeAnalysis.DiagnosticBag)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Binder.BindFieldAndPropertyInitializers(Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceMemberContainerTypeSymbol,System.Collections.Immutable.ImmutableArray{System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.FieldOrPropertyInitializer}},Microsoft.CodeAnalysis.VisualBasic.Symbols.SynthesizedInteractiveInitializerMethod,Microsoft.CodeAnalysis.DiagnosticBag)">
  <summary>
  Binds all field initializers of a <see cref="T:Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceNamedTypeSymbol"/>.
  </summary>
  <param name="symbol">The named type symbol where the field initializers are declared.</param>
- <param name="scriptCtorOpt">Script constructor or Nothing if not binding top-level statements.</param>
+ <param name="scriptInitializerOpt">Script initializer or Nothing if not binding top-level statements.</param>
  <param name="initializers">The initializers itself. For each partial type declaration there is an array of 
  field initializers</param>
- <param name="processedFieldInitializers">The structure storing the list of processed field initializers.</param>
  <param name="diagnostics">The diagnostics.</param>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Binder.BindArrayFieldImplicitInitializer(Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceFieldSymbol,Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.VisualBasic.BoundInitializer},Microsoft.CodeAnalysis.DiagnosticBag)">
@@ -9913,7 +9912,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  Get all the members of this symbol that have a particular name.
  </summary>
  <returns>An ImmutableArray containing all the members of this symbol with the given name. If there are
- no members with this name, returns an empty ImmutableArray. The result is deteministic (i.e. the same
+ no members with this name, returns an empty ImmutableArray. The result is deterministic (i.e. the same
  from call to call and from compilation to compilation). Members of the same kind appear in the result
  in the same order in which they appeared at their origin (metadata or source).
  Never returns Nothing.</returns>
@@ -10863,7 +10862,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.QuickAttributeChecker.AddAlias(Microsoft.CodeAnalysis.VisualBasic.Syntax.SimpleImportsClauseSyntax)">
  <summary>
- Process an alias clause and any imputed mappings from it.
+ Process an alias clause and any imported mappings from it.
  E.g., If you have an alias Ex=Blah.Extension, add any mapping for Extension to those for Ex.
  Note that although, in VB, an alias cannot reference another alias, this code doesn't not attempt
  to distinguish between aliases and regular names, as that would add complexity to the data structure
@@ -11712,7 +11711,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  'Safe' version of GetDeclaredBase takes into account bases being resolved to make sure 
  we avoid infinite loops in some scenarios. Note that the cycle is being broken not when
  we detect it, but when we detect it on the 'smallest' type of the cycle, this brings stability 
- in multithreaded scenarios while still ensures that we don't loop more than twices.
+ in multithreaded scenarios while still ensures that we don't loop more than twice.
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceNamedTypeSymbol.CheckBaseConstraints">
@@ -12085,11 +12084,6 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.Symbols.SynthesizedMyGroupCollectionPropertySymbol">
  <summary>
  Represents a compiler "MyGroupCollection" property.
- </summary>
-</member>
-<member name="T:Microsoft.CodeAnalysis.VisualBasic.Symbols.SynthesizedSubmissionConstructorSymbol">
- <summary>
- This class represents a compiler generated parameterless constructor 
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.SynthesizedSubmissionConstructorSymbol.#ctor(Microsoft.CodeAnalysis.SyntaxReference,Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol,System.Boolean,Microsoft.CodeAnalysis.VisualBasic.Binder,Microsoft.CodeAnalysis.DiagnosticBag)">
@@ -17277,13 +17271,13 @@ End Class
  accessors and the backing field for an automatically implemented property.
  
  NOTE: there are scenarios in which ImplicitlyDefinedBy is called while bound members 
-       are not yet published. Ths typically happens if ImplicitlyDefinedBy while binding members.
+       are not yet published. This typically happens if ImplicitlyDefinedBy while binding members.
        In such case, if callee needs to refer to a member of enclosing type it must 
        do that in the context of unpublished members that caller provides 
        (asking encompassing type for members will cause infinite recursion).
  
  NOTE: There could be several threads trying to bind and publish members, only one will succeed.
-       Reporting ImplicitlyDefinedBy withing the set of members known to the caller guarantees
+       Reporting ImplicitlyDefinedBy within the set of members known to the caller guarantees
        that if particular thread succeeds it will not have information that refers to something
        built by another thread and discarded.
  </summary>
@@ -18362,19 +18356,19 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  Helper method to create a bound sequence to represent the idea:
  "compute this value, and then compute this side effects while discarding results"
 
- A Bound sequence is generated for the provided expr and sideeffects, say {se1, se2, se3}, as follows:
+ A Bound sequence is generated for the provided expr and side-effects, say {se1, se2, se3}, as follows:
 
  If expr is of void type:
-     BoundSequence { sideeffects: { expr, se1, se2, se3 }, valueOpt: Nothing }
+     BoundSequence { side-effects: { expr, se1, se2, se3 }, valueOpt: Nothing }
  
  ElseIf expr is a constant:
-     BoundSequence { sideeffects: { se1, se2, se3 }, valueOpt: expr }
+     BoundSequence { side-effects: { se1, se2, se3 }, valueOpt: expr }
  
  Else
-     BoundSequence { sideeffects: { tmp = expr, se1, se2, se3 }, valueOpt: tmp }
+     BoundSequence { side-effects: { tmp = expr, se1, se2, se3 }, valueOpt: tmp }
  </summary>
  <remarks>
- NOTE: Supporting cases where sideeffects change the value (or to detects such cases)
+ NOTE: Supporting cases where side-effects change the value (or to detect such cases)
  NOTE: could be complicated. We do not support this currently and instead require
  NOTE: value expr to be not LValue.
  </remarks>
@@ -18635,16 +18629,16 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  <summary>
  Splits nullable operand into a hasValueExpression and an expression that represents underlying value (returned).
  
- Underlying value can be called after calling hasValueExpr without duplicated sideeffects.
- Note that hasValueExpr is guaranteed to have NO SIDEEFFECTS, while result value is 
+ Underlying value can be called after calling hasValueExpr without duplicated side-effects.
+ Note that hasValueExpr is guaranteed to have NO SIDE-EFFECTS, while result value is 
  expected to be called exactly ONCE. That is the normal pattern in operator lifting.
  
- All necessary temps and sideeffecting initializations are appended to temps and inits
+ All necessary temps and side-effecting initializations are appended to temps and inits
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.CaptureNullableIfNeeded(Microsoft.CodeAnalysis.VisualBasic.BoundExpression,Microsoft.CodeAnalysis.VisualBasic.Symbols.SynthesizedLocal@,Microsoft.CodeAnalysis.VisualBasic.BoundExpression@,System.Boolean)">
  <summary>
- Returns a NOT-SIDEEFFECTING expression that represents results of the operand
+ Returns a NOT-SIDE-EFFECTING expression that represents results of the operand
  If such transformation requires a temp, the temp and its initializing expression
  are returned in temp/init
  </summary>
@@ -18672,13 +18666,13 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.HasNoValue(Microsoft.CodeAnalysis.VisualBasic.BoundExpression)">
  <summary>
- returns true when expression has NO SIDEEFFECTS and is known to produce nullable NULL
+ returns true when expression has NO SIDE-EFFECTS and is known to produce nullable NULL
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.HasValue(Microsoft.CodeAnalysis.VisualBasic.BoundExpression)">
  <summary>
  Returns true when expression is known to produce nullable NOT-NULL
- NOTE: unlike HasNoValue case, HasValue expressions may have sideeffects.
+ NOTE: unlike HasNoValue case, HasValue expressions may have side-effects.
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.MakeBinaryExpression(Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxNode,Microsoft.CodeAnalysis.VisualBasic.BinaryOperatorKind,Microsoft.CodeAnalysis.VisualBasic.BoundExpression,Microsoft.CodeAnalysis.VisualBasic.BoundExpression,System.Boolean,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol)">
@@ -18713,7 +18707,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.GetSideeffects(Microsoft.CodeAnalysis.VisualBasic.BoundExpression)">
  <summary>
  Returns an expression that can be used instead of the original one when
- we want to run the expression for sideeffects only (i.e. we intend to ignore result).
+ we want to run the expression for side-effects only (i.e. we intend to ignore result).
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.RewriteCollectionInitializerExpression(Microsoft.CodeAnalysis.VisualBasic.BoundCollectionInitializerExpression,Microsoft.CodeAnalysis.VisualBasic.BoundExpression,Microsoft.CodeAnalysis.VisualBasic.BoundExpression)">
@@ -19608,8 +19602,8 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.Scanner._sb">
  <summary>
- DO NOT USE DIRECTLY. 
- USE GetScratch() 
+ DO NOT USE DIRECTLY.
+ USE GetScratch()
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.Scanner.GetDisabledTextAt(Microsoft.CodeAnalysis.Text.TextSpan)">
@@ -19617,13 +19611,13 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  Gets a chunk of text as a DisabledCode node.
  </summary>
  <param name="span">The range of text.</param>
- <returns>The DisabledCode node.</returns> 
+ <returns>The DisabledCode node.</returns>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.Scanner.ScanNewlineAsStatementTerminator(System.Char,Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.VisualBasicSyntaxNode})">
  <summary>
  Accept a CR/LF pair or either in isolation as a newline.
  Make it a statement separator
- </summary>        
+ </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.Scanner.ScanNewlineAsTrivia(System.Char)">
  <summary>
@@ -53569,7 +53563,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  The most encompassed type in a set of types is the one type that is encompassed
  by all other types in the set. If no single type is encompassed by all other types,
  then the set has no most encompassed type. In intuitive terms, the most encompassed
- type is the “smallest” type in the set—the one type that can be converted from each
+ type is the "smallest" type in the set—the one type that can be converted from each
  of the other types through a narrowing conversion.
  </summary>
 </member>
@@ -53578,7 +53572,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  The most encompassing type in a set of types is the one type that encompasses
  all other types in the set. If no single type encompasses all other types, then
  the set has no most encompassing type. In intuitive terms, the most encompassing
- type is the “largest” type in the set—the one type to which each of the other
+ type is the "largest" type in the set—the one type to which each of the other
  types can be converted through a widening conversion.
  </summary>
 </member>
@@ -67246,7 +67240,7 @@ Parse the input for leading trivia.
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EqualsValue">
  <summary>
  Represents an "= initializer" clause in a declaration for a variable,
- pararameter or automatic property.
+ parameter or automatic property.
  </summary>
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.Parameter">
@@ -67676,14 +67670,14 @@ Parse the input for leading trivia.
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ForBlock">
  <summary>
- Represents a For or For Each block, including the introducting statement, the
+ Represents a For or For Each block, including the introducing statement, the
  body and the "Next" (which can be omitted if a containing For has a Next with
  multiple variables).
  </summary>
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ForEachBlock">
  <summary>
- Represents a For or For Each block, including the introducting statement, the
+ Represents a For or For Each block, including the introducing statement, the
  body and the "Next" (which can be omitted if a containing For has a Next with
  multiple variables).
  </summary>
@@ -76263,19 +76257,19 @@ Parse the input for leading trivia.
   Looks up a localized string similar to #R is only allowed in scripts.
 </summary>
 </member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_ReImplementatingWinRTInterface4">
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_ReImplementingWinRTInterface4">
 <summary>
   Looks up a localized string similar to &apos;{0}.{1}&apos; is already implemented by the base class &apos;{2}&apos;. Re-implementation of Windows Runtime Interface &apos;{3}&apos; is not allowed.
 </summary>
 </member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_ReImplementatingWinRTInterface5">
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_ReImplementingWinRTInterface5">
 <summary>
   Looks up a localized string similar to &apos;{0}.{1}&apos; from &apos;implements {2}&apos; is already implemented by the base class &apos;{3}&apos;. Re-implementation of Windows Runtime Interface &apos;{4}&apos; is not allowed.
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_RemoveParamWrongForWinRT">
 <summary>
-  Looks up a localized string similar to In a Windows Runtime event, the type of the ‘RemoveHandler’ method parameter must be &apos;EventRegistrationToken&apos;.
+  Looks up a localized string similar to In a Windows Runtime event, the type of the &apos;RemoveHandler&apos; method parameter must be &apos;EventRegistrationToken&apos;.
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_RequiredAttributeConstConversion2">
@@ -80604,7 +80598,7 @@ Parse the input for leading trivia.
  </summary>
  <param name="nodeOrToken">The source SyntaxNodeOrToke.</param>
  <param name="kind">The SyntaxKind to test for.</param>
- <returns>A boolean value if nodeoOrToken is of specified kind; otherwise false.</returns>
+ <returns>A boolean value if nodeOrToken is of specified kind; otherwise false.</returns>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasicExtensions.IndexOf``1(Microsoft.CodeAnalysis.SyntaxList{``0},Microsoft.CodeAnalysis.VisualBasic.SyntaxKind)">
  <summary>

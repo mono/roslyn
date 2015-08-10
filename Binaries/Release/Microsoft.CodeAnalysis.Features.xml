@@ -255,27 +255,58 @@
             A description to present to the user for this completion item.
             </summary>
         </member>
-        <member name="T:Microsoft.CodeAnalysis.Completion.CompletionItemGroup">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionItemRules.GetTextChange(Microsoft.CodeAnalysis.Completion.CompletionItem,System.Nullable{System.Char},System.String)">
             <summary>
-            A group of items to be presented to a user in a completion list.
+            The text change that will be made when this item is committed.  The text change includes
+            both the span of text to replace (respective to the original document text when this
+            completion item was created) and the text to replace it with.  The span will be adjusted
+            automatically by the completion engine to fit on the current text using "EdgeInclusive"
+            semantics.
             </summary>
         </member>
-        <member name="P:Microsoft.CodeAnalysis.Completion.CompletionItemGroup.IsExclusive">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionItemRules.IsCommitCharacter(Microsoft.CodeAnalysis.Completion.CompletionItem,System.Char,System.String)">
             <summary>
-            True if this group is exclusive.  If a group is exclusive, then only those items in that
-            group will be presented to the user.  If a group is non-exclusive, then all other
+            Returns true if the character is one that can commit the specified completion item. A
+            character will be checked to see if it should filter an item.  If not, it will be checked
+            to see if it should commit that item.  If it does neither, then completion will be
+            dismissed.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionItemRules.IsFilterCharacter(Microsoft.CodeAnalysis.Completion.CompletionItem,System.Char,System.String)">
+            <summary>
+            Returns true if the character typed should be used to filter the specified completion
+            item.  A character will be checked to see if it should filter an item.  If not, it will be
+            checked to see if it should commit that item.  If it does neither, then completion will
+            be dismissed.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionItemRules.SendEnterThroughToEditor(Microsoft.CodeAnalysis.Completion.CompletionItem,System.String,Microsoft.CodeAnalysis.Options.OptionSet)">
+            <summary>
+            Returns true if the enter key that was typed should also be sent through to the editor
+            after committing the provided completion item.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Completion.CompletionList">
+            <summary>
+            A completion list to be presented to the user.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Completion.CompletionList.IsExclusive">
+            <summary>
+            True if this list is exclusive.  If a list is exclusive, then only those items in that
+            group list will be presented to the user.  If a list is non-exclusive, then all other
             completion providers will be asked to augment the list of items it has provided.
             
-            If multiple groups are marked as exclusive, only the first one returned from a provider
+            If multiple lists are marked as exclusive, only the first one returned from a provider
             will be used.  Providers can be ordered using the OrderAttribute.
             </summary>
         </member>
-        <member name="P:Microsoft.CodeAnalysis.Completion.CompletionItemGroup.Items">
+        <member name="P:Microsoft.CodeAnalysis.Completion.CompletionList.Items">
             <summary>
-            The list of completion items to present to the user.  Can not be empty.
+            The completion items to present to the user.  Can not be empty.
             </summary>
         </member>
-        <member name="P:Microsoft.CodeAnalysis.Completion.CompletionItemGroup.Builder">
+        <member name="P:Microsoft.CodeAnalysis.Completion.CompletionList.Builder">
             <summary>
             A completion builder to present to the user.  Can be null if no builder need be
             presented.  A builder is generally useful when the location in source where completion is
@@ -284,12 +315,12 @@
             in an unimpeded manner.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionService.GetCompletionItemGroupsAsync(Microsoft.CodeAnalysis.Document,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.Providers.ICompletionProvider},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionService.GetCompletionListAsync(Microsoft.CodeAnalysis.Document,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.CompletionListProvider},System.Threading.CancellationToken)">
             <summary>
-            Returns the CompletionItemGroups for the specified position in the document.
+            Returns the <see cref="T:Microsoft.CodeAnalysis.Completion.CompletionList"/> for the specified position in the document.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionService.IsCompletionTriggerCharacterAsync(Microsoft.CodeAnalysis.Document,System.Int32,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.Providers.ICompletionProvider},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionService.IsCompletionTriggerCharacterAsync(Microsoft.CodeAnalysis.Document,System.Int32,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.CompletionListProvider},System.Threading.CancellationToken)">
             <summary>
             Returns true if the character at the specific position in the text snapshot should
             trigger completion. Implementers of this will be called on the main UI thread and should
@@ -311,12 +342,6 @@
             If the <see cref="P:Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo.TriggerReason"/> was <see
             cref="F:Microsoft.CodeAnalysis.Completion.CompletionTriggerReason.TypeCharCommand"/> then this was the character that was
             typed or deleted by backspace.  Otherwise it is null.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo.IsAugment">
-            <summary>
-            Returns true if the reason completion was triggered was to augment an existing list of
-            completion items.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo.IsDebugger">
@@ -354,9 +379,9 @@
             Returns the default set of completion providers for this completion service.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.ICompletionService.GetDefaultCompletionRules">
+        <member name="M:Microsoft.CodeAnalysis.Completion.ICompletionService.GetCompletionRules">
             <summary>
-            Returns the default set of completion rules for this completion service.
+            Returns the set of completion rules for this completion service.
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.Completion.ICompletionService.ClearMRUCache">
@@ -364,12 +389,12 @@
             Clears the most-recently-used cache used by completion.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.ICompletionService.GetGroupsAsync(Microsoft.CodeAnalysis.Document,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.Providers.ICompletionProvider},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.ICompletionService.GetCompletionListAsync(Microsoft.CodeAnalysis.Document,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.CompletionListProvider},System.Threading.CancellationToken)">
             <summary>
-            Returns the CompletionItemGroups for the specified position in the document.
+            Returns the <see cref="T:Microsoft.CodeAnalysis.Completion.CompletionList"/> for the specified position in the document.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.ICompletionService.IsTriggerCharacter(Microsoft.CodeAnalysis.Text.SourceText,System.Int32,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.Providers.ICompletionProvider},Microsoft.CodeAnalysis.Options.OptionSet)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.ICompletionService.IsTriggerCharacter(Microsoft.CodeAnalysis.Text.SourceText,System.Int32,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.CompletionListProvider},Microsoft.CodeAnalysis.Options.OptionSet)">
             <summary>
             Returns true if the character at the specific position in the document should trigger
             completion.
@@ -430,46 +455,59 @@
             <param name="linkedContextSymbolLists">The symbols recommended in linked documents</param>
             <returns>The list of projects each recommended symbol did NOT appear in.</returns>
         </member>
-        <member name="T:Microsoft.CodeAnalysis.Completion.Providers.ICompletionProvider">
+        <member name="M:Microsoft.CodeAnalysis.Completion.Providers.TextCompletionProvider.GetCompletionList(Microsoft.CodeAnalysis.Text.SourceText,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,System.Threading.CancellationToken)">
+            <summary>
+            Returns a CompletionItemGroup for the specified position in the text.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Completion.CompletionListProvider">
             <summary>
             Extensibility interface for clients who want to participate in completion inside an editor.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Providers.ICompletionProvider.GetGroupAsync(Microsoft.CodeAnalysis.Document,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionListProvider.ProduceCompletionListAsync(Microsoft.CodeAnalysis.Completion.CompletionListContext)">
             <summary>
-            Returns a CompletionItemGroup for the specified position in the document.
+            Implement to register the items and other details for a <see cref="T:Microsoft.CodeAnalysis.Completion.CompletionList"/>
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Providers.ICompletionProvider.IsTriggerCharacter(Microsoft.CodeAnalysis.Text.SourceText,System.Int32,Microsoft.CodeAnalysis.Options.OptionSet)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionListProvider.IsTriggerCharacter(Microsoft.CodeAnalysis.Text.SourceText,System.Int32,Microsoft.CodeAnalysis.Options.OptionSet)">
             <summary>
             Returns true if the character at the specific position in the text snapshot should
             trigger completion. Implementers of this will be called on the main UI thread and should
             only do minimal textual checks to determine if they should be presented.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Providers.ICompletionProvider.IsFilterCharacter(Microsoft.CodeAnalysis.Completion.CompletionItem,System.Char,System.String)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionRules.MatchesFilterText(Microsoft.CodeAnalysis.Completion.CompletionItem,System.String,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,Microsoft.CodeAnalysis.Completion.CompletionFilterReason)">
             <summary>
-            Returns true if the character typed should be used to filter the specified completion
-            item.  A character will be checked to see if it should filter an item.  If not, it will be
-            checked to see if it should commit that item.  If it does neither, then completion will
-            be dismissed.
+            Returns true if the completion item matches the filter text typed so far.  Returns 'true'
+            iff the completion item matches and should be included in the filtered completion
+            results, or false if it should not be.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Providers.ICompletionProvider.IsCommitCharacter(Microsoft.CodeAnalysis.Completion.CompletionItem,System.Char,System.String)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionRules.IsBetterFilterMatch(Microsoft.CodeAnalysis.Completion.CompletionItem,Microsoft.CodeAnalysis.Completion.CompletionItem,System.String,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,Microsoft.CodeAnalysis.Completion.CompletionFilterReason)">
             <summary>
-            Returns true if the character is one that can commit the specified completion item. A
-            character will be checked to see if it should filter an item.  If not, it will be checked
-            to see if it should commit that item.  If it does neither, then completion will be
-            dismissed.
+            Returns true if item1 is a better completion item than item2 given the provided filter
+            text, or false if it is not better.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Providers.ICompletionProvider.SendEnterThroughToEditor(Microsoft.CodeAnalysis.Completion.CompletionItem,System.String)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionRules.ShouldSoftSelectItem(Microsoft.CodeAnalysis.Completion.CompletionItem,System.String,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo)">
             <summary>
-            Returns true if the enter key that was typed should also be sent through to the editor
-            after committing the provided completion item.
+            Returns true if the completion item should be "soft" selected, or false if it should be "hard"
+            selected.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Providers.ICompletionProvider.GetTextChange(Microsoft.CodeAnalysis.Completion.CompletionItem,System.Nullable{System.Char},System.String)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionRules.CompletionItemCommitted(Microsoft.CodeAnalysis.Completion.CompletionItem)">
+            <summary>
+            Called by completion engine when a completion item is committed.  Completion rules can
+            use this information to affect future calls to MatchesFilterText or IsBetterFilterMatch.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionRules.ItemsMatch(Microsoft.CodeAnalysis.Completion.CompletionItem,Microsoft.CodeAnalysis.Completion.CompletionItem)">
+            <summary>
+            Returns true if item1 and item2 are similar enough that only one should be shown in the completion list; otherwise, false.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionRules.GetTextChange(Microsoft.CodeAnalysis.Completion.CompletionItem,System.Nullable{System.Char},System.String)">
             <summary>
             The text change that will be made when this item is committed.  The text change includes
             both the span of text to replace (respective to the original document text when this
@@ -478,55 +516,35 @@
             semantics.
             </summary>
         </member>
-        <member name="P:Microsoft.CodeAnalysis.Completion.Providers.ICurrentWorkingDirectoryDiscoveryService.CurrentDirectory">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionRules.IsCommitCharacter(Microsoft.CodeAnalysis.Completion.CompletionItem,System.Char,System.String)">
             <summary>
-            Gets the full path of the current directory.
+            Returns true if the character is one that can commit the specified completion item. A
+            character will be checked to see if it should filter an item.  If not, it will be checked
+            to see if it should commit that item.  If it does neither, then completion will be
+            dismissed.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Providers.ITextCompletionProvider.GetGroup(Microsoft.CodeAnalysis.Text.SourceText,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionRules.IsFilterCharacter(Microsoft.CodeAnalysis.Completion.CompletionItem,System.Char,System.String)">
             <summary>
-            Returns a CompletionItemGroup for the specified position in the text.
+            Returns true if the character typed should be used to filter the specified completion
+            item.  A character will be checked to see if it should filter an item.  If not, it will be
+            checked to see if it should commit that item.  If it does neither, then completion will
+            be dismissed.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Providers.ITextCompletionProvider.GetAugmentGroup(Microsoft.CodeAnalysis.Text.SourceText,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionRules.SendEnterThroughToEditor(Microsoft.CodeAnalysis.Completion.CompletionItem,System.String,Microsoft.CodeAnalysis.Options.OptionSet)">
             <summary>
-            Called if another completion provider has provided a completion group to give this
-            provider an opportunity to add elements to that group, even if it would not have
-            produced elements otherwise.
+            Returns true if the enter key that was typed should also be sent through to the editor
+            after committing the provided completion item.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Rules.ICompletionRules.MatchesFilterText(Microsoft.CodeAnalysis.Completion.CompletionItem,System.String,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,Microsoft.CodeAnalysis.Completion.CompletionFilterReason)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerHelper.CreateAnalyzerExceptionDiagnostic(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,System.Exception)">
             <summary>
-            Returns true if the completion item matches the filter text typed so far.  Returns 'true'
-            iff the completion item matches and should be included in the filtered completion
-            results, false if it should not be, and null if the determination should be left to the
-            next <see cref="T:Microsoft.CodeAnalysis.Completion.Rules.ICompletionRules"/> to determine.
+            Create a diagnostic for exception thrown by the given analyzer.
             </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Rules.ICompletionRules.IsBetterFilterMatch(Microsoft.CodeAnalysis.Completion.CompletionItem,Microsoft.CodeAnalysis.Completion.CompletionItem,System.String,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,Microsoft.CodeAnalysis.Completion.CompletionFilterReason)">
-            <summary>
-            Returns 'true' if item1 is a better completion item than item2 given the provided filter
-            text, 'false' if it is not better, and 'null' if the determination should be left to the
-            next <see cref="T:Microsoft.CodeAnalysis.Completion.Rules.ICompletionRules"/> to determine.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Rules.ICompletionRules.ShouldSoftSelectItem(Microsoft.CodeAnalysis.Completion.CompletionItem,System.String,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo)">
-            <summary>
-            Returns true if the completion item should be "soft" selected, false if it should be "hard"
-            selected, and null if the determination should be left to the next <see cref="T:Microsoft.CodeAnalysis.Completion.Rules.ICompletionRules"/> to determine.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Rules.ICompletionRules.CompletionItemComitted(Microsoft.CodeAnalysis.Completion.CompletionItem)">
-            <summary>
-            Called by completion engine when a completion item is committed.  Completion rules can
-            use this information to affect future calls to MatchesFilterText or IsBetterFilterMatch.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Rules.ICompletionRules.ItemsMatch(Microsoft.CodeAnalysis.Completion.CompletionItem,Microsoft.CodeAnalysis.Completion.CompletionItem)">
-            <summary>
-            Returns true if item1 and item2 are similar enough that only one should be shown in the completion list.
-            Null if left to the next <see cref="T:Microsoft.CodeAnalysis.Completion.Rules.ICompletionRules"/> to determine.
-            </summary>
+            <remarks>
+            Keep this method in sync with "AnalyzerExecutor.CreateAnalyzerExceptionDiagnostic".
+            </remarks>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.AbstractHostDiagnosticUpdateSource">
             <summary>
@@ -538,25 +556,6 @@
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerUpdateArgsId">
             <summary>
             Base type of a type that is used as <see cref="P:Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs.Id"/> for live diagnostic
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Diagnostics.HostDiagnosticAnalyzerPackage">
-            <summary>
-            Information on vsix that contains diagnostic analyzers
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerService.SynchronizeWithBuildAsync(Microsoft.CodeAnalysis.Project,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticData})">
-            <summary>
-            Synchronize build errors with live error.
-            
-            no cancellationToken since this can't be cancelled
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerService.SynchronizeWithBuildAsync(Microsoft.CodeAnalysis.Document,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticData})">
-            <summary>
-            Synchronize build errors with live error
-            
-            no cancellationToken since this can't be cancelled
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.EngineV1.DiagnosticIncrementalAnalyzer.ProjectAnalyzerReferenceChangedEventArgs">
@@ -575,6 +574,11 @@
         <member name="E:Microsoft.CodeAnalysis.Diagnostics.EngineV1.DiagnosticIncrementalAnalyzer.StateManager.ProjectAnalyzerReferenceChanged">
             <summary>
             This will be raised whenever <see cref="T:Microsoft.CodeAnalysis.Diagnostics.EngineV1.DiagnosticIncrementalAnalyzer.StateManager"/> finds <see cref="P:Microsoft.CodeAnalysis.Project.AnalyzerReferences"/> change
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.EngineV1.DiagnosticIncrementalAnalyzer.StateManager.GetAnalyzers(Microsoft.CodeAnalysis.Project)">
+            <summary>
+            Return <see cref="T:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer"/>s for the given <see cref="T:Microsoft.CodeAnalysis.Project"/>.
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.Diagnostics.EngineV1.DiagnosticIncrementalAnalyzer.StateManager.GetStateSets(Microsoft.CodeAnalysis.ProjectId)">
@@ -653,11 +657,23 @@
             this is not finished form. as refactoring going on, this class will become more stateless in respect to caller, and less dependency on owner.
             </summary>
         </member>
-        <member name="F:Microsoft.CodeAnalysis.Diagnostics.EngineV1.DiagnosticAnalyzerDriver.s_analyzerGateMap">
+        <member name="T:Microsoft.CodeAnalysis.Diagnostics.HostDiagnosticAnalyzerPackage">
             <summary>
-            Map containing unique gate objects per-analyzer instance.
-            We need to guard against concurrent callbacks into analyzers from different diagnostic clients.
-            Additionally, certain diagnostic clients, such as FixAll occurrences, may request diagnostics for multiple documents in parallel.
+            Information on vsix that contains diagnostic analyzers
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerService.SynchronizeWithBuildAsync(Microsoft.CodeAnalysis.Project,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticData})">
+            <summary>
+            Synchronize build errors with live error.
+            
+            no cancellationToken since this can't be cancelled
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerService.SynchronizeWithBuildAsync(Microsoft.CodeAnalysis.Document,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticData})">
+            <summary>
+            Synchronize build errors with live error
+            
+            no cancellationToken since this can't be cancelled
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.BuildToolId">
@@ -725,6 +741,11 @@
             map to compiler diagnostic analyzer descriptor.
             </summary>
         </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.HostAnalyzerManager._compilationWithAnalyzersMap">
+            <summary>
+            Map from project to <see cref="T:Microsoft.CodeAnalysis.Diagnostics.CompilationWithAnalyzers"/> instance to be used for computing analyzer diagnostics.
+            </summary>
+        </member>
         <member name="F:Microsoft.CodeAnalysis.Diagnostics.HostAnalyzerManager.s_assemblyLoader">
             <summary>
             Loader for VSIX-based analyzers.
@@ -743,6 +764,11 @@
         <member name="M:Microsoft.CodeAnalysis.Diagnostics.HostAnalyzerManager.GetDiagnosticDescriptors(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer)">
             <summary>
             Return <see cref="P:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer.SupportedDiagnostics"/> of given <paramref name="analyzer"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.HostAnalyzerManager.IsAnalyzerSuppressed(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Project)">
+            <summary>
+            Return true if the given <paramref name="analyzer"/> is suppressed for the given project.
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.Diagnostics.HostAnalyzerManager.GetHostDiagnosticAnalyzersPerReference(System.String)">
@@ -1167,234 +1193,32 @@
             IDE-only project based diagnostic analyzer.
             </summary>
         </member>
-        <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor">
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerCategory.None">
             <summary>
-            Contains the core execution logic for callbacks into analyzers.
+            Invalid value, analyzer must support at least one or more of the subsequent analysis categories.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.Create(Microsoft.CodeAnalysis.Compilation,Microsoft.CodeAnalysis.Diagnostics.AnalyzerOptions,System.Action{Microsoft.CodeAnalysis.Diagnostic},System.Action{System.Exception,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostic},System.Func{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,System.Boolean},Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager,System.Func{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,System.Object},System.Boolean,System.Threading.CancellationToken)">
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerCategory.SyntaxAnalysis">
             <summary>
-            Creates <see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor"/> to execute analyzer actions with given arguments
-            </summary>
-            <param name="compilation">Compilation to be used in the analysis.</param>
-            <param name="analyzerOptions">Analyzer options.</param>
-            <param name="addDiagnostic">Delegate to add analyzer diagnostics.</param>
-            <param name="onAnalyzerException">
-            Optional delegate which is invoked when an analyzer throws an exception.
-            Delegate can do custom tasks such as report the given analyzer exception diagnostic, report a non-fatal watson for the exception, etc.
-            </param>
-            <param name="isCompilerAnalyzer">Delegate to determine if the given analyzer is compiler analyzer. 
-            We need to special case the compiler analyzer at few places for performance reasons.</param>
-            <param name="analyzerManager">Analyzer manager to fetch supported diagnostics.</param>
-            <param name="getAnalyzerGate">
-            Delegate to fetch the gate object to guard all callbacks into the analyzer.
-            It should return a unique gate object for the given analyzer instance for non-concurrent analyzers, and null otherwise.
-            All analyzer callbacks for non-concurrent analyzers will be guarded with a lock on the gate.
-            </param>
-            <param name="logExecutionTime">Flag indicating whether we need to log analyzer execution time.</param>
-            <param name="cancellationToken">Cancellation token.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.CreateForSupportedDiagnostics(System.Action{System.Exception,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostic},Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager,System.Boolean,System.Threading.CancellationToken)">
-            <summary>
-            Creates <see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor"/> to fetch <see cref="P:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer.SupportedDiagnostics"/>.
-            </summary>
-            <param name="onAnalyzerException">
-            Optional delegate which is invoked when an analyzer throws an exception.
-            Delegate can do custom tasks such as report the given analyzer exception diagnostic, report a non-fatal watson for the exception, etc.
-            </param>
-            <param name="analyzerManager">Analyzer manager to fetch supported diagnostics.</param>
-            <param name="logExecutionTime">Flag indicating whether we need to log analyzer execution time.</param>
-            <param name="cancellationToken">Cancellation token.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteInitializeMethod(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.HostSessionStartAnalysisScope)">
-            <summary>
-            Executes the <see cref="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext)"/> for the given analyzer.
-            </summary>
-            <param name="analyzer">Analyzer to get session wide analyzer actions.</param>
-            <param name="sessionScope">Session scope to store register session wide analyzer actions.</param>
-            <remarks>
-            Note that this API doesn't execute any <see cref="T:Microsoft.CodeAnalysis.Diagnostics.CompilationStartAnalyzerAction"/> registered by the Initialize invocation.
-            Use <see cref="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteCompilationStartActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.CompilationStartAnalyzerAction},Microsoft.CodeAnalysis.Diagnostics.HostCompilationStartAnalysisScope)"/> API
-            to get execute these actions to get the per-compilation analyzer actions.
-            </remarks>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteCompilationStartActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.CompilationStartAnalyzerAction},Microsoft.CodeAnalysis.Diagnostics.HostCompilationStartAnalysisScope)">
-            <summary>
-            Executes the compilation start actions.
-            </summary>
-            <param name="actions"><see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions"/> whose compilation start actions are to be executed.</param>
-            <param name="compilationScope">Compilation scope to store the analyzer actions.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteCompilationActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.CompilationAnalyzerAction})">
-            <summary>
-            Executes compilation actions or compilation end actions.
-            </summary>
-            <param name="compilationActions">Compilation actions to be executed.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSymbolActions(Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.ISymbol})">
-            <summary>
-            Executes the symbol actions on the given symbols.
-            </summary>
-            <param name="actions"><see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions"/> whose symbol actions are to be executed.</param>
-            <param name="symbols">Symbols to be analyzed.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSymbolActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.SymbolAnalyzerAction},System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.ISymbol})">
-            <summary>
-            Executes the symbol actions on the given symbols.
-            </summary>
-            <param name="symbolActions">Symbol actions to be executed.</param>
-            <param name="symbols">Symbols to be analyzed.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSymbolActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.SymbolAnalyzerAction},Microsoft.CodeAnalysis.ISymbol,System.Action{Microsoft.CodeAnalysis.Diagnostic})">
-            <summary>
-            Executes the symbol actions on the given symbol.
-            </summary>
-            <param name="symbolActions">Symbol actions to be executed.</param>
-            <param name="symbol">Symbol to be analyzed.</param>
-            <param name="overriddenAddDiagnostic">Optional overridden add diagnostic delegate.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSemanticModelActions(Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions,Microsoft.CodeAnalysis.SemanticModel)">
-            <summary>
-            Executes the semantic model actions on the given semantic model.
-            </summary>
-            <param name="actions"><see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions"/> whose semantic model actions are to be executed.</param>
-            <param name="semanticModel">Semantic model to analyze.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSemanticModelActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.SemanticModelAnalyzerAction},Microsoft.CodeAnalysis.SemanticModel)">
-            <summary>
-            Executes the semantic model actions on the given semantic model.
-            </summary>
-            <param name="semanticModelActions">Semantic model actions to be executed.</param>
-            <param name="semanticModel">Semantic model to analyze.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSyntaxTreeActions(Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions,Microsoft.CodeAnalysis.SyntaxTree)">
-            <summary>
-            Executes the syntax tree actions on the given syntax tree.
-            </summary>
-            <param name="actions"><see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions"/> whose syntax tree actions are to be executed.</param>
-            <param name="tree">Syntax tree to analyze.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSyntaxTreeActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.SyntaxTreeAnalyzerAction},Microsoft.CodeAnalysis.SyntaxTree)">
-            <summary>
-            Executes the syntax tree actions on the given syntax tree.
-            </summary>
-            <param name="syntaxTreeActions">Syntax tree actions to be executed.</param>
-            <param name="tree">Syntax tree to analyze.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSyntaxNodeActions``1(Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.SyntaxNode},Microsoft.CodeAnalysis.SemanticModel,System.Func{Microsoft.CodeAnalysis.SyntaxNode,``0})">
-            <summary>
-            Executes the syntax node actions on the given syntax nodes.
-            </summary>
-            <param name="actions"><see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions"/> whose code block start actions and end actions are to be executed.</param>
-            <param name="nodes">Syntax nodes to be analyzed.</param>
-            <param name="semanticModel">SemanticModel to be used in the analysis.</param>
-            <param name="getKind">Delegate to compute language specific syntax kind for a syntax node.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteCodeBlockActions``1(Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.DeclarationInfo},Microsoft.CodeAnalysis.SemanticModel,System.Func{Microsoft.CodeAnalysis.SyntaxNode,``0})">
-            <summary>
-            Executes the given code block actions on all the executable code blocks for each declaration info in <paramref name="declarationsInNode"/>.
-            </summary>
-            <param name="actions"><see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions"/> whose code block start actions and end actions are to be executed.</param>
-            <param name="declarationsInNode">Declarations to be analyzed.</param>
-            <param name="semanticModel">SemanticModel to be shared amongst all actions.</param>
-            <param name="getKind">Delegate to compute language specific syntax kind for a syntax node.</param>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager">
-            <summary>
-            Manages properties of analyzers (such as registered actions, supported diagnostics) for analyzer host's lifetime
-            and executes the callbacks into the analyzers.
-            
-            It ensures the following for the lifetime of analyzer host:
-            1) <see cref="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext)"/> is invoked only once per-analyzer.
-            2) <see cref="P:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer.SupportedDiagnostics"/> is invoked only once per-analyzer.
-            3) <see cref="T:Microsoft.CodeAnalysis.Diagnostics.CompilationStartAnalyzerAction"/> registered during Initialize are invoked only once per-compilation per-<see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager.AnalyzerAndOptions"/>
-            </summary>
-            <remarks>
-            TODO: Consider moving <see cref="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager._compilationScopeMap"/> and relevant APIs <see cref="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager.GetCompilationAnalysisScopeAsync(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.HostSessionStartAnalysisScope,Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor)"/> and
-            <see cref="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager.GetAnalyzerHasDependentCompilationEndAsync(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor)"/> out of the AnalyzerManager and into analyzer drivers.
-            </remarks>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager.Instance">
-            <summary>
-            Gets the default instance of the AnalyzerManager for the lifetime of the analyzer host process.
+            Analyzer reports syntax diagnostics (i.e. registers a SyntaxTree action).
             </summary>
         </member>
-        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager._descriptorCache">
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerCategory.SemanticSpanAnalysis">
             <summary>
-            Cache descriptors for each diagnostic analyzer. We do this since <see cref="P:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer.SupportedDiagnostics"/> is
-            a property rather than metadata. We expect it to be cheap and immutable, but we can't force them to be so, we cache them
-            and ask only once.
+            Analyzer reports semantic diagnostics and also supports incremental span based method body analysis.
+            An analyzer can support incremental method body analysis if edits within a method body only affect the diagnostics reported by the analyzer on the edited method body.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager.GetAnalyzerActionsAsync(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor)">
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerCategory.SemanticDocumentAnalysis">
             <summary>
-            Get all the analyzer actions to execute for the given analyzer against a given compilation.
-            The returned actions include the actions registered during <see cref="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext)"/> method as well as
-            the actions registered during <see cref="T:Microsoft.CodeAnalysis.Diagnostics.CompilationStartAnalyzerAction"/> for the given compilation.
+            Analyzer reports semantic diagnostics but doesn't support incremental span based method body analysis.
+            It needs to re-analyze the whole document for reporting semantic diagnostics even for method body editing scenarios.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager.GetAnalyzerHasDependentCompilationEndAsync(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor)">
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerCategory.ProjectAnalysis">
             <summary>
-            Returns true if analyzer registered a compilation start action during <see cref="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext)"/>
-            which registered a compilation end action and at least one other analyzer action, that the end action depends upon.
+            Analyzer reports project diagnostics (i.e. registers a Compilation action and/or Compilation end action diagnostics).
             </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager.GetSupportedDiagnosticDescriptors(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor)">
-            <summary>
-            Return <see cref="P:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer.SupportedDiagnostics"/> of given <paramref name="analyzer"/>.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager.ClearAnalyzerState(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer})">
-            <summary>
-            This method should be invoked when the analyzer host is disposing off the analyzers.
-            It unregisters the exception handler hooked up to the descriptors' LocalizableString fields and subsequently removes the cached descriptors for the analyzers.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager.IsDiagnosticAnalyzerSuppressed(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.CompilationOptions,System.Func{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,System.Boolean},Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor)">
-            <summary>
-            Returns true if all the diagnostics that can be produced by this analyzer are suppressed through options.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerAnalysisContext">
-            <summary>
-            Scope for setting up analyzers for an entire session, automatically associating actions with analyzers.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerCompilationStartAnalysisContext">
-            <summary>
-            Scope for setting up analyzers for a compilation, automatically associating actions with analyzers.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerCodeBlockStartAnalysisContext`1">
-            <summary>
-            Scope for setting up analyzers for a code block, automatically associating actions with analyzers.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Diagnostics.HostSessionStartAnalysisScope">
-            <summary>
-            Scope for setting up analyzers for an entire session, capable of retrieving the actions.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Diagnostics.HostCompilationStartAnalysisScope">
-            <summary>
-            Scope for setting up analyzers for a compilation, capable of retrieving the actions.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Diagnostics.HostCodeBlockStartAnalysisScope`1">
-            <summary>
-            Scope for setting up analyzers for a code block, capable of retrieving the actions.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions">
-            <summary>
-            Actions registered by a particular analyzer.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions.Append(Microsoft.CodeAnalysis.Diagnostics.AnalyzerActions)">
-            <summary>
-            Append analyzer actions from <paramref name="otherActions"/> to actions from this instance.
-            </summary>
-            <param name="otherActions">Analyzer actions to append</param>.
         </member>
         <member name="T:Microsoft.CodeAnalysis.EditAndContinue.TraceLog">
             <summary>
@@ -1751,6 +1575,199 @@
         <member name="F:Microsoft.CodeAnalysis.EditAndContinue.SessionReadOnlyReason.StoppedAtException">
             <summary>
             The program is stopped at exception. No edits allowed.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.ExtractMethod.OperationStatusFlag">
+            <summary>
+            status code for extract method operations
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.ExtractMethod.OperationStatusFlag.Succeeded">
+            <summary>
+            operation has succeeded
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.ExtractMethod.OperationStatusFlag.Suggestion">
+            <summary>
+            operation has succeeded with a span that is different than original span
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.ExtractMethod.OperationStatusFlag.BestEffort">
+            <summary>
+            operation has failed but can provide some best effort result
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.Extensions.GetTokenWithAnnotation(Microsoft.CodeAnalysis.SemanticDocument,Microsoft.CodeAnalysis.SyntaxAnnotation)">
+            <summary>
+            get tokens with given annotation in current document
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.Extensions.ResolveType``1(Microsoft.CodeAnalysis.SemanticModel,``0)">
+            <summary>
+            resolve the given symbol against compilation this snapshot has
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.Extensions.HasDiagnostics(Microsoft.CodeAnalysis.SyntaxNode)">
+            <summary>
+            check whether node contains error for itself but not from its child node
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.Succeeded">
+            <summary>
+            True if the extract method operation succeeded.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.SucceededWithSuggestion">
+            <summary>
+            True if the extract method operation is possible if the original span is adjusted.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.Document">
+            <summary>
+            The transformed document that was produced as a result of the extract method operation.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.Reasons">
+            <summary>
+            The reasons why the extract method operation did not succeed.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.MethodDeclarationNode">
+            <summary>
+            the generated method node that contains the extracted code.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.InvocationNameToken">
+            <summary>
+            The name token for the invocation node that replaces the extracted code.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.Status">
+            <summary>
+            internal status of result. more fine grained reason why it is failed. 
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.ExtractMethod.ITriviaSavedResult">
+            <summary>
+            contains information to restore trivia later on to the annotated tree
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ITriviaSavedResult.Root">
+            <summary>
+            root node of the annotated tree.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.ITriviaSavedResult.RestoreTrivia(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.ExtractMethod.AnnotationResolver,Microsoft.CodeAnalysis.ExtractMethod.TriviaResolver)">
+            <summary>
+            restore saved trivia to given tree
+            </summary>
+            <param name="root">root node to the annotated tree</param>
+            <param name="annotationResolver">it provides a custom way of resolving annotations to retrieve right tokens to attach trivia</param>
+            <param name="triviaResolver">it provides a custom way of creating trivia list between two tokens</param>
+            <returns>root node to a trivia restored tree</returns>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.ExtractMethod.ISyntaxTriviaService">
+            <summary>
+            syntax trivia related services
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.ISyntaxTriviaService.SaveTriviaAroundSelection(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            save trivia around span and let user restore trivia later
+            </summary>
+            <param name="root">root node of a tree</param>
+            <param name="textSpan">selection whose trivia around its edges will be saved</param>
+            <returns>object that holds onto enough information to restore trivia later</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.Analyzer.GetFlowAnalysisNodeRange">
+            <summary>
+            convert text span to node range for the flow analysis API
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.Analyzer.ContainsReturnStatementInSelectedCode(System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.SyntaxNode})">
+            <summary>
+            check whether selection contains return statement or not
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.Analyzer.CreateFromSymbol(Microsoft.CodeAnalysis.Compilation,Microsoft.CodeAnalysis.ISymbol,Microsoft.CodeAnalysis.ITypeSymbol,Microsoft.CodeAnalysis.ExtractMethod.VariableStyle,System.Boolean)">
+            <summary>
+            create VariableInfo type
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.Analyzer.GetIndexOfVariableInfoToUseAsReturnValue(System.Collections.Generic.IList{Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.VariableInfo})">
+            <summary>
+            among variables that will be used as parameters at the extracted method, check whether one of the parameter can be used as return
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.Analyzer.GetRangeVariableType(Microsoft.CodeAnalysis.SemanticModel,Microsoft.CodeAnalysis.IRangeVariableSymbol)">
+            <summary>
+            get type of the range variable symbol
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.Analyzer.ReadOnlyFieldAllowed">
+            <summary>
+            check whether the selection is at the placed where read-only field is allowed to be extracted out
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.AnalyzerResult.UseInstanceMember">
+            <summary>
+            used to determine whether static can be used
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.AnalyzerResult.EndOfSelectionReachable">
+            <summary>
+            used to determine whether "return" statement needs to be inserted
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.AnalyzerResult.SemanticDocument">
+            <summary>
+            document this result is based on
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.AnalyzerResult.AwaitTaskReturn">
+            <summary>
+            flag to show whether task return type is due to await
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.AnalyzerResult.ReturnType">
+            <summary>
+            return type
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.AnalyzerResult.Status">
+            <summary>
+            analyzer result operation status
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.VariableSymbol">
+            <summary>
+            temporary symbol until we have a symbol that can hold onto both local and parameter symbol
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.VariableSymbol.OriginalTypeHadAnonymousTypeOrDelegate">
+            <summary>
+            return true if original type had anonymous type or delegate somewhere in the type
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.VariableSymbol.OriginalType">
+            <summary>
+            get the original type with anonymous type removed
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.OperationStatus.Create``1(Microsoft.CodeAnalysis.ExtractMethod.OperationStatus,``0)">
+            <summary>
+            create operation status with the given data
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.ExtractMethod.OperationStatus`1">
+            <summary>
+            operation status paired with data
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.ExtractMethod.SelectionResult">
+            <summary>
+            clean up this code when we do selection validator work.
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.FeaturesResources">
@@ -2836,6 +2853,11 @@
               Looks up a localized string similar to Updating &apos;{0}&apos; will prevent the debug session from continuing..
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.UpdatingStateMachineMethodAroundActive">
+            <summary>
+              Looks up a localized string similar to Updating async or iterator modifier around an active statement will prevent the debug session from continuing..
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.UpdatingTheAliasOfDeclareStatement">
             <summary>
               Looks up a localized string similar to Updating the alias of Declare Statement will prevent the debug session from continuing..
@@ -2918,7 +2940,7 @@
         </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.UserDiagnosticAnalyzerThrows">
             <summary>
-              Looks up a localized string similar to The User Diagnostic Analyzer &apos;{0}&apos; threw an exception of type &apos;{1}&apos; with message &apos;{2}&apos;..
+              Looks up a localized string similar to Analyzer &apos;{0}&apos; threw an exception of type &apos;{1}&apos; with message &apos;{2}&apos;..
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.UserDiagnosticAnalyzerThrowsDescription">
@@ -3103,199 +3125,6 @@
             </summary>
             <remarks>A good link is: http://mef.codeplex.com/wikipage?title=Exports%20and%20Metadata
             </remarks>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.ExtractMethod.OperationStatusFlag">
-            <summary>
-            status code for extract method operations
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.ExtractMethod.OperationStatusFlag.Succeeded">
-            <summary>
-            operation has succeeded
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.ExtractMethod.OperationStatusFlag.Suggestion">
-            <summary>
-            operation has succeeded with a span that is different than original span
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.ExtractMethod.OperationStatusFlag.BestEffort">
-            <summary>
-            operation has failed but can provide some best effort result
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.Extensions.GetTokenWithAnnotation(Microsoft.CodeAnalysis.SemanticDocument,Microsoft.CodeAnalysis.SyntaxAnnotation)">
-            <summary>
-            get tokens with given annotation in current document
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.Extensions.ResolveType``1(Microsoft.CodeAnalysis.SemanticModel,``0)">
-            <summary>
-            resolve the given symbol against compilation this snapshot has
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.Extensions.HasDiagnostics(Microsoft.CodeAnalysis.SyntaxNode)">
-            <summary>
-            check whether node contains error for itself but not from its child node
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.Succeeded">
-            <summary>
-            True if the extract method operation succeeded.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.SucceededWithSuggestion">
-            <summary>
-            True if the extract method operation is possible if the original span is adjusted.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.Document">
-            <summary>
-            The transformed document that was produced as a result of the extract method operation.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.Reasons">
-            <summary>
-            The reasons why the extract method operation did not succeed.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.MethodDeclarationNode">
-            <summary>
-            the generated method node that contains the extracted code.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.InvocationNameToken">
-            <summary>
-            The name token for the invocation node that replaces the extracted code.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ExtractMethodResult.Status">
-            <summary>
-            internal status of result. more fine grained reason why it is failed. 
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.ExtractMethod.ITriviaSavedResult">
-            <summary>
-            contains information to restore trivia later on to the annotated tree
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.ITriviaSavedResult.Root">
-            <summary>
-            root node of the annotated tree.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.ITriviaSavedResult.RestoreTrivia(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.ExtractMethod.AnnotationResolver,Microsoft.CodeAnalysis.ExtractMethod.TriviaResolver)">
-            <summary>
-            restore saved trivia to given tree
-            </summary>
-            <param name="root">root node to the annotated tree</param>
-            <param name="annotationResolver">it provides a custom way of resolving annotations to retrieve right tokens to attach trivia</param>
-            <param name="triviaResolver">it provides a custom way of creating trivia list between two tokens</param>
-            <returns>root node to a trivia restored tree</returns>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.ExtractMethod.ISyntaxTriviaService">
-            <summary>
-            syntax trivia related services
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.ISyntaxTriviaService.SaveTriviaAroundSelection(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            save trivia around span and let user restore trivia later
-            </summary>
-            <param name="root">root node of a tree</param>
-            <param name="textSpan">selection whose trivia around its edges will be saved</param>
-            <returns>object that holds onto enough information to restore trivia later</returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.Analyzer.GetFlowAnalysisNodeRange">
-            <summary>
-            convert text span to node range for the flow analysis API
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.Analyzer.ContainsReturnStatementInSelectedCode(System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.SyntaxNode})">
-            <summary>
-            check whether selection contains return statement or not
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.Analyzer.CreateFromSymbol(Microsoft.CodeAnalysis.Compilation,Microsoft.CodeAnalysis.ISymbol,Microsoft.CodeAnalysis.ITypeSymbol,Microsoft.CodeAnalysis.ExtractMethod.VariableStyle,System.Boolean)">
-            <summary>
-            create VariableInfo type
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.Analyzer.GetIndexOfVariableInfoToUseAsReturnValue(System.Collections.Generic.IList{Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.VariableInfo})">
-            <summary>
-            among variables that will be used as parameters at the extracted method, check whether one of the parameter can be used as return
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.Analyzer.GetRangeVariableType(Microsoft.CodeAnalysis.SemanticModel,Microsoft.CodeAnalysis.IRangeVariableSymbol)">
-            <summary>
-            get type of the range variable symbol
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.Analyzer.ReadOnlyFieldAllowed">
-            <summary>
-            check whether the selection is at the placed where read-only field is allowed to be extracted out
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.AnalyzerResult.UseInstanceMember">
-            <summary>
-            used to determine whether static can be used
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.AnalyzerResult.EndOfSelectionReachable">
-            <summary>
-            used to determine whether "return" statement needs to be inserted
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.AnalyzerResult.SemanticDocument">
-            <summary>
-            document this result is based on
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.AnalyzerResult.AwaitTaskReturn">
-            <summary>
-            flag to show whether task return type is due to await
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.AnalyzerResult.ReturnType">
-            <summary>
-            return type
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.AnalyzerResult.Status">
-            <summary>
-            analyzer result operation status
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.VariableSymbol">
-            <summary>
-            temporary symbol until we have a symbol that can hold onto both local and parameter symbol
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.VariableSymbol.OriginalTypeHadAnonymousTypeOrDelegate">
-            <summary>
-            return true if original type had anonymous type or delegate somewhere in the type
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.ExtractMethod.MethodExtractor.VariableSymbol.OriginalType">
-            <summary>
-            get the original type with anonymous type removed
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.ExtractMethod.OperationStatus.Create``1(Microsoft.CodeAnalysis.ExtractMethod.OperationStatus,``0)">
-            <summary>
-            create operation status with the given data
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.ExtractMethod.OperationStatus`1">
-            <summary>
-            operation status paired with data
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.ExtractMethod.SelectionResult">
-            <summary>
-            clean up this code when we do selection validator work.
-            </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.MetadataAsSource.AbstractMetadataAsSourceService.GetFormattingRules(Microsoft.CodeAnalysis.Document)">
             <summary>
@@ -3506,12 +3335,6 @@
             Events for Non Roslyn text buffer changes.
             
             It raises events for buffers opened in a view in host.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Host.FileTracker">
-            <summary>
-            A class that tracks file changes on disk and invokes user actions
-            when changes happen.
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.DeclarationInfo">

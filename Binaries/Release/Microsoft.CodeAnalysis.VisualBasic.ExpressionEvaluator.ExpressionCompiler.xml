@@ -165,7 +165,7 @@ Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.ExpressionCompiler
  "$STATIC$[methodname]$[methodsignature]$[localname]".
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EvaluationContext.GetMissingAssemblyIdentitiesHelper(Microsoft.CodeAnalysis.VisualBasic.ERRID,System.Collections.Generic.IReadOnlyList{System.Object},Microsoft.CodeAnalysis.VisualBasic.Symbols.NamespaceSymbol)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.EvaluationContext.GetMissingAssemblyIdentitiesHelper(Microsoft.CodeAnalysis.VisualBasic.ERRID,System.Collections.Generic.IReadOnlyList{System.Object},Microsoft.CodeAnalysis.VisualBasic.Symbols.NamespaceSymbol,Microsoft.CodeAnalysis.AssemblyIdentity)">
  <remarks>
  Friend for testing.
  </remarks>

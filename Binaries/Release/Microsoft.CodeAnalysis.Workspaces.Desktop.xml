@@ -10,9 +10,9 @@
             if the stream contains invalid UTF-8 bytes.
             </summary>
         </member>
-        <member name="F:Microsoft.CodeAnalysis.Text.EncodedStringText.s_defaultEncoding">
+        <member name="F:Microsoft.CodeAnalysis.Text.EncodedStringText.s_defaultFallbackEncoding">
             <summary>
-            Encoding to use when UTF-8 fails. If available, we use CodePage 1252. If not, we use Latin1.
+            Encoding to use when UTF-8 fails and default OS ANSI encoding is not available. If available, we use CodePage 1252. If not, we use Latin1.
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.Create(System.IO.Stream,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm)">
@@ -86,14 +86,6 @@
             Handler for <see cref="E:System.AppDomain.AssemblyResolve"/>. Delegates to <see cref="M:Microsoft.CodeAnalysis.AbstractAnalyzerAssemblyLoader.AssemblyResolveInternal(System.ResolveEventArgs)"/>
             and prevents exceptions from leaking out.
             </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.FusionAssemblyIdentity.ToAssemblyName(Microsoft.CodeAnalysis.FusionAssemblyIdentity.IAssemblyName)">
-            <summary>
-            Converts <see cref="T:Microsoft.CodeAnalysis.FusionAssemblyIdentity.IAssemblyName"/> to <see cref="T:System.Reflection.AssemblyName"/> with possibly missing name components.
-            </summary>
-            <returns>
-            An <see cref="T:System.Reflection.AssemblyName"/> whose fields are be null if not present in <paramref name="nameObject"/>.
-            </returns>
         </member>
         <member name="M:Microsoft.CodeAnalysis.FusionAssemblyIdentity.ToAssemblyIdentity(Microsoft.CodeAnalysis.FusionAssemblyIdentity.IAssemblyName)">
             <summary>
@@ -187,13 +179,10 @@
             with the bitness of the currently executing process.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Scripting.GacFileResolver.#ctor(System.Collections.Generic.IEnumerable{System.String},System.String,System.Collections.Immutable.ImmutableArray{System.Reflection.ProcessorArchitecture},System.Globalization.CultureInfo)">
+        <member name="M:Microsoft.CodeAnalysis.Scripting.GacFileResolver.#ctor(System.Collections.Immutable.ImmutableArray{System.Reflection.ProcessorArchitecture},System.Globalization.CultureInfo)">
             <summary>
             Constructs an instance of a <see cref="T:Microsoft.CodeAnalysis.Scripting.GacFileResolver"/>
             </summary>
-            <param name="assemblySearchPaths">An ordered set of fully qualified 
-            paths which are searched when resolving assembly names.</param>
-            <param name="baseDirectory">Directory used when resolving relative paths.</param>
             <param name="architectures">Supported architectures used to filter GAC assemblies.</param>
             <param name="preferredCulture">A culture to use when choosing the best assembly from 
             among the set filtered by <paramref name="architectures"/></param>
@@ -207,13 +196,6 @@
             <summary>
             CultureInfo used when resolving assembly references.
             </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.AssemblyIdentityExtensions.ToAssemblyName(Microsoft.CodeAnalysis.AssemblyIdentity)">
-            <summary>
-            Converts this identity to <see cref="T:System.Reflection.AssemblyName"/>.
-            </summary>
-            <returns>A new instance of <see cref="T:System.Reflection.AssemblyName"/>.</returns>
-            <exception cref="T:System.Globalization.CultureNotFoundException">The culture specified in <see cref="P:Microsoft.CodeAnalysis.AssemblyIdentity.CultureName"/> is not available on the current platform.</exception>
         </member>
         <member name="T:Microsoft.CodeAnalysis.SimpleAnalyzerAssemblyLoader">
             <summary>
@@ -464,17 +446,6 @@
             Open a project file and all referenced projects.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildWorkspace.ProjectAlreadyReferencesProject(System.Collections.Generic.Dictionary{Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.ProjectInfo},Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.ProjectId)">
-            <summary>
-            Returns true if the project identified by <paramref name="fromProject"/> has a reference (even indirectly)
-            on the project identified by <paramref name="targetProject"/>.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildWorkspace.GetProjectMetadata(System.String,System.Collections.Immutable.ImmutableArray{System.String},System.Collections.Generic.IDictionary{System.String,System.String},System.Threading.CancellationToken)">
-            <summary>
-            Gets a MetadataReference to a project's output assembly.
-            </summary>
-        </member>
         <member name="T:Microsoft.CodeAnalysis.MSBuild.BuildTargets">
             <summary>
             Defines a list of build targets and operations to modify that list.
@@ -550,11 +521,6 @@
             Gets the corresponding extension for a source file of a given kind.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.MSBuild.IProjectFile.GetPropertyValue(System.String)">
-            <summary>
-            Gets a specific project file property.
-            </summary>
-        </member>
         <member name="M:Microsoft.CodeAnalysis.MSBuild.IProjectFile.AddDocument(System.String,System.String)">
             <summary>
             Add a source document to a project file.
@@ -628,19 +594,9 @@
             The assembly name of the output.
             </summary>
         </member>
-        <member name="P:Microsoft.CodeAnalysis.MSBuild.ProjectFileInfo.CompilationOptions">
+        <member name="P:Microsoft.CodeAnalysis.MSBuild.ProjectFileInfo.CommandLineArgs">
             <summary>
-            The compilation options for this project.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.MSBuild.ProjectFileInfo.ParseOptions">
-            <summary>
-            The parse options for this project.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.MSBuild.ProjectFileInfo.CodePage">
-            <summary>
-            The codepage for this project.
+            The command line args used to compile the project.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.MSBuild.ProjectFileInfo.Documents">
@@ -656,16 +612,6 @@
         <member name="P:Microsoft.CodeAnalysis.MSBuild.ProjectFileInfo.ProjectReferences">
             <summary>
             References to other projects.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.MSBuild.ProjectFileInfo.MetadataReferences">
-            <summary>
-            References to other metadata files; libraries and executables.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.MSBuild.ProjectFileInfo.AnalyzerReferences">
-            <summary>
-            References to analyzer assembly files; contains diagnostic analyzers.
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.MSBuild.ProjectFileReference">
@@ -692,6 +638,70 @@
                 Key = Value
                 [more keys/values]
             EndType
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader">
+            <summary>
+            An API for loading msbuild project files.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.#ctor(Microsoft.CodeAnalysis.Workspace,System.Collections.Immutable.ImmutableDictionary{System.String,System.String})">
+            <summary>
+            Create a new instance of an <see cref="T:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.Properties">
+            <summary>
+            The MSBuild properties used when interpreting project files.
+            These are the same properties that are passed to msbuild via the /property:&lt;n&gt;=&lt;v&gt; command line argument.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.LoadMetadataForReferencedProjects">
+            <summary>
+            Determines if metadata from existing output assemblies is loaded instead of opening referenced projects.
+            If the referenced project is already opened, the metadata will not be loaded.
+            If the metadata assembly cannot be found the referenced project will be opened instead.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.SkipUnrecognizedProjects">
+            <summary>
+            Determines if unrecognized projects are skipped when solutions or projects are opened.
+            
+            An project is unrecognized if it either has 
+              a) an invalid file path, 
+              b) a non-existent project file,
+              c) has an unrecognized file extension or 
+              d) a file extension associated with an unsupported language.
+            
+            If unrecognized projects cannot be skipped a corresponding exception is thrown.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.AssociateFileExtensionWithLanguage(System.String,System.String)">
+            <summary>
+            Associates a project file extension with a language name.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.LoadSolutionInfoAsync(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,Microsoft.CodeAnalysis.ProjectId},System.Threading.CancellationToken)">
+            <summary>
+            Loads the <see cref="T:Microsoft.CodeAnalysis.SolutionInfo"/> for the specified solution file, including all projects referenced by the solution file and 
+            all the projects referenced by the project files.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.LoadProjectInfoAsync(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,Microsoft.CodeAnalysis.ProjectId},System.Threading.CancellationToken)">
+            <summary>
+            Loads the <see cref="T:Microsoft.CodeAnalysis.ProjectInfo"/> from the specified project file and all referenced projects.
+            The first <see cref="T:Microsoft.CodeAnalysis.ProjectInfo"/> in the result corresponds to the specified project file.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.ProjectAlreadyReferencesProject(Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.LoadState,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.ProjectId)">
+            <summary>
+            Returns true if the project identified by <paramref name="fromProject"/> has a reference (even indirectly)
+            on the project identified by <paramref name="targetProject"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.GetProjectMetadata(System.String,System.Collections.Immutable.ImmutableArray{System.String},System.Collections.Generic.IDictionary{System.String,System.String},System.Threading.CancellationToken)">
+            <summary>
+            Gets a MetadataReference to a project's output assembly.
             </summary>
         </member>
         <member name="F:Roslyn.Utilities.FileKey.FullPath">

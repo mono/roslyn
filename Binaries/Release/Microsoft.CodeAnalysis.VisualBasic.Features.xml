@@ -2068,7 +2068,7 @@ Do...Loop While &lt;condition&gt;.
   Looks up a localized string similar to Terminates a loop that iterates through the values of a loop variable..
 </summary>
 </member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NextStatementControlVariabl">
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.NextStatementControlVariable">
 <summary>
   Looks up a localized string similar to next statement control variable doesn&apos;t have matching declaration statement.
 </summary>
