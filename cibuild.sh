@@ -14,6 +14,7 @@ XUNIT_VERSION=2.0.0-alpha-build2576
 BUILD_CONFIGURATION=Release
 OS_NAME=$(uname -s)
 USE_CACHE=true
+MONO_ARGS='--debug=mdb-optimizations --attach=disable'
 
 # There are some stability issues that are causing Jenkins builds to fail at an 
 # unacceptable rate.  To temporarily work around that we are going to retry the 
@@ -55,15 +56,41 @@ do
     esac
 done
 
+restore_nuget()
+{
+
+    local package_name="nuget.18.zip"
+    local target="/tmp/$package_name"
+    echo "Installing NuGet Packages $target"
+    if [ -f $target ]; then
+        if [ "$USE_CACHE" = "true" ]; then
+            echo "Already installed"
+            return
+        fi
+    fi
+
+    pushd /tmp/
+
+    rm $package_name 2>/dev/null
+    curl -O https://dotnetci.blob.core.windows.net/roslyn/$package_name
+    unzip -uoq $package_name -d ~/
+    if [ $? -ne 0 ]; then
+        echo "Unable to download NuGet packages"
+        exit 1
+    fi
+
+    popd
+
+}
+
 run_msbuild()
 {
     local is_good=false
     
     for i in `seq 1 $RETRY_COUNT`
     do
-        o=$(mono packages/Microsoft.Build.Mono.Debug.14.1.0.0-prerelease/lib/MSBuild.exe /v:m /p:SignAssembly=false /p:DebugSymbols=false "$@")
+        mono $MONO_ARGS ~/.nuget/packages/Microsoft.Build.Mono.Debug/14.1.0-prerelease/lib/MSBuild.exe /v:m /p:SignAssembly=false /p:DebugSymbols=false "$@"
         if [ $? -eq 0 ]; then
-            echo "$o"
             is_good=true
             break
         fi
@@ -72,7 +99,6 @@ run_msbuild()
     done
 
     if [ "$is_good" != "true" ]; then
-        echo "$o"
         echo Build failed
         exit 1
     fi
@@ -85,7 +111,7 @@ run_nuget()
     local is_good=false
     for i in `seq 1 $RETRY_COUNT`
     do
-        mono .nuget/NuGet.exe "$@"
+        mono $MONO_ARGS .nuget/NuGet.exe "$@"
         if [ $? -eq 0 ]; then
             is_good=true
             break
@@ -102,32 +128,17 @@ run_nuget()
 compile_toolset()
 {
     echo Compiling the toolset compilers
-    echo -e "\tCompiling the C# compiler"
-    run_msbuild src/Compilers/CSharp/csc/csc.csproj /p:Configuration=$BUILD_CONFIGURATION
-    echo -e "\tCompiling the VB compiler"
-    run_msbuild src/Compilers/VisualBasic/vbc/vbc.csproj /p:Configuration=$BUILD_CONFIGURATION
+    echo -e "Compiling the C# compiler"
+    run_msbuild src/Compilers/CSharp/CscCore/CscCore.csproj /p:Configuration=$BUILD_CONFIGURATION
+    echo -e "Compiling the VB compiler"
+    run_msbuild src/Compilers/VisualBasic/VbcCore/VbcCore.csproj /p:Configuration=$BUILD_CONFIGURATION
 }
 
 # Save the toolset binaries from Binaries/BUILD_CONFIGURATION to Binaries/Bootstrap
 save_toolset()
 {
-    local compiler_binaries=(
-        csc.exe
-        Microsoft.CodeAnalysis.dll
-        Microsoft.CodeAnalysis.CSharp.dll
-        System.Collections.Immutable.dll
-        System.Reflection.Metadata.dll
-        vbc.exe
-        Microsoft.CodeAnalysis.VisualBasic.dll)
-
     mkdir Binaries/Bootstrap
-    for i in ${compiler_binaries[@]}; do
-        cp Binaries/$BUILD_CONFIGURATION/${i} Binaries/Bootstrap/${i}
-        if [ $? -ne 0 ]; then
-            echo Saving bootstrap binaries failed
-            exit 1
-        fi
-    done
+    cp Binaries/$BUILD_CONFIGURATION/core-clr/* Binaries/Bootstrap
 }
 
 # Clean out all existing binaries.  This ensures the bootstrap phase forces
@@ -135,13 +146,18 @@ save_toolset()
 clean_roslyn()
 {
     echo Cleaning the enlistment
-    mono packages/Microsoft.Build.Mono.Debug.14.1.0.0-prerelease/lib/MSBuild.exe /v:m /t:Clean build/Toolset.sln /p:Configuration=$BUILD_CONFIGURATION
+    mono $MONO_ARGS ~/.nuget/packages/Microsoft.Build.Mono.Debug/14.1.0-prerelease/lib/MSBuild.exe /v:m /t:Clean build/Toolset.sln /p:Configuration=$BUILD_CONFIGURATION
     rm -rf Binaries/$BUILD_CONFIGURATION
 }
 
 build_roslyn()
 {    
-    local bootstrapArg=/p:BootstrapBuildPath=$(pwd)/Binaries/Bootstrap
+    local bootstrapArg=""
+
+    if [ "$OS_NAME" == "Linux" ]; then
+      bootstrapArg="/p:CscToolPath=$(pwd)/Binaries/Bootstrap /p:CscToolExe=csc \
+/p:VbcToolPath=$(pwd)/Binaries/Bootstrap /p:VbcToolExe=vbc"
+    fi
 
     echo Building CrossPlatform.sln
     run_msbuild $bootstrapArg CrossPlatform.sln /p:Configuration=$BUILD_CONFIGURATION
@@ -152,6 +168,7 @@ install_mono_toolset()
 {
     local target=/tmp/$1
     echo "Installing Mono toolset $1"
+
     if [ -d $target ]; then
         if [ "$USE_CACHE" = "true" ]; then
             echo "Already installed"
@@ -189,9 +206,9 @@ set_mono_path()
     fi
 
     if [ "$OS_NAME" = "Darwin" ]; then
-        MONO_TOOLSET_NAME=mono.mac.1
+        MONO_TOOLSET_NAME=mono.mac.3
     elif [ "$OS_NAME" = "Linux" ]; then
-        MONO_TOOLSET_NAME=mono.linux.1
+        MONO_TOOLSET_NAME=mono.linux.3
     else
         echo "Error: Unsupported OS $OS_NAME"
         exit 1
@@ -203,7 +220,7 @@ set_mono_path()
 
 test_roslyn()
 {
-    local xunit_runner=packages/xunit.runners.$XUNIT_VERSION/tools/xunit.console.x86.exe
+    local xunit_runner=~/.nuget/packages/xunit.runners/$XUNIT_VERSION/tools/xunit.console.x86.exe
     local test_binaries=(
         Roslyn.Compilers.CSharp.CommandLine.UnitTests
         Roslyn.Compilers.CSharp.Syntax.UnitTests
@@ -214,7 +231,7 @@ test_roslyn()
 
     for i in "${test_binaries[@]}"
     do
-        mono $xunit_runner Binaries/$BUILD_CONFIGURATION/$i.dll -xml Binaries/$BUILD_CONFIGURATION/$i.TestResults.xml -noshadow
+        mono $MONO_ARGS $xunit_runner Binaries/$BUILD_CONFIGURATION/$i.dll -xml Binaries/$BUILD_CONFIGURATION/$i.TestResults.xml -noshadow
         if [ $? -ne 0 ]; then
             any_failed=true
         fi
@@ -226,13 +243,10 @@ test_roslyn()
     fi
 }
 
-# NuGet on mono crashes about every 5th time we run it.  This is causing
-# Linux runs to fail frequently enough that we need to employ a
-# temporary work around.
-echo Restoring NuGet packages
-run_nuget restore Roslyn.sln
-run_nuget install xunit.runners -PreRelease -Version $XUNIT_VERSION -OutputDirectory packages
+echo Clean out the enlistment
+git clean -dxf . 
 
+restore_nuget
 set_mono_path
 which mono
 compile_toolset

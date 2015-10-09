@@ -253,6 +253,7 @@ namespace Microsoft.CodeAnalysis.ExpressionEvaluator
         internal static CompileResult CompileExpressionWithRetry(
             ImmutableArray<MetadataBlock> metadataBlocks,
             string expr,
+            ImmutableArray<Alias> aliases,
             ExpressionCompiler.CreateContextDelegate createContext,
             DkmUtilities.GetMetadataBytesPtrFunction getMetaDataBytesPtr,
             out string errorMessage,
@@ -269,7 +270,7 @@ namespace Microsoft.CodeAnalysis.ExpressionEvaluator
                     var compileResult = context.CompileExpression(
                         expr,
                         DkmEvaluationFlags.TreatAsExpression,
-                        ImmutableArray<Alias>.Empty,
+                        aliases,
                         diagnostics,
                         out resultProperties,
                         td);
@@ -411,6 +412,7 @@ namespace Microsoft.CodeAnalysis.ExpressionEvaluator
                         win32Resources: null,
                         manifestResources: null,
                         options: EmitOptions.Default,
+                        debugEntryPoint: null,
                         testData: null,
                         getHostDiagnostics: null,
                         cancellationToken: default(CancellationToken));

@@ -52,15 +52,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Extensions
 
         <Extension()>
         Public Function Parenthesize(expression As ExpressionSyntax) As ParenthesizedExpressionSyntax
-            Dim leadingTrivia = expression.GetLeadingTrivia()
-            Dim trailingTrivia = expression.GetTrailingTrivia()
-
-            Dim strippedExpression = expression.WithoutLeadingTrivia().WithoutTrailingTrivia()
-
-            Return SyntaxFactory.ParenthesizedExpression(strippedExpression) _
-                         .WithLeadingTrivia(leadingTrivia) _
-                         .WithTrailingTrivia(trailingTrivia) _
-                         .WithAdditionalAnnotations(Simplifier.Annotation)
+            Return SyntaxFactory.ParenthesizedExpression(expression.WithoutTrivia()) _
+                                .WithTriviaFrom(expression) _
+                                .WithAdditionalAnnotations(Simplifier.Annotation)
         End Function
 
 
@@ -220,15 +214,18 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Extensions
             targetType As ITypeSymbol,
             <Out> ByRef isResultPredefinedCast As Boolean) As ExpressionSyntax
 
-            ' Parenthesize the expression, except for collection initializer where parenthesizing changes the semantics.
-            Dim parenthesized = If(expression.Kind = SyntaxKind.CollectionInitializer,
-                expression,
-                expression.Parenthesize())
+            ' Parenthesize the expression, except for collection initializers and interpolated strings,
+            ' where parenthesizing changes semantics.
+            Dim newExpression = expression
 
-            Dim leadingTrivia = parenthesized.GetLeadingTrivia()
-            Dim trailingTrivia = parenthesized.GetTrailingTrivia()
+            If Not expression.IsKind(SyntaxKind.CollectionInitializer, SyntaxKind.InterpolatedStringExpression) Then
+                newExpression = expression.Parenthesize()
+            End If
 
-            Dim stripped = parenthesized.WithoutLeadingTrivia().WithoutTrailingTrivia()
+            Dim leadingTrivia = newExpression.GetLeadingTrivia()
+            Dim trailingTrivia = newExpression.GetTrailingTrivia()
+
+            Dim stripped = newExpression.WithoutLeadingTrivia().WithoutTrailingTrivia()
 
             Dim castKeyword = targetType.SpecialType.GetPredefinedCastKeyword()
             If castKeyword = SyntaxKind.None Then
@@ -1385,6 +1382,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Extensions
 
             If type.IsUnboundGenericType Then
                 ' Don't simplify unbound generic type "Nullable(Of )".
+                Return False
+            End If
+
+            If InsideNameOfExpression(name) Then
+                ' Nullable(Of T) can't be simplified to T? in nameof expresions.
                 Return False
             End If
 

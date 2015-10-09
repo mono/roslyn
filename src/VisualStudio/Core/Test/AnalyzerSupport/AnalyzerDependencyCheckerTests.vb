@@ -1,5 +1,6 @@
 ﻿' Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+Imports System.Collections.Immutable
 Imports System.IO
 Imports System.Text
 Imports Microsoft.CodeAnalysis
@@ -832,6 +833,49 @@ public class A
             Assert.False(ignorableAssemblyList.Includes(alpha))
         End Sub
 
+        <Fact, WorkItem(3020, "https://github.com/dotnet/roslyn/issues/3020")>
+        Public Sub IgnorableAssemblyNameList_IncludesItem_Prefix()
+            Dim ignorableAssemblyList = New IgnorableAssemblyNameList(ImmutableHashSet.Create("Alpha"))
+
+            Dim alphaBeta As AssemblyIdentity = Nothing
+            AssemblyIdentity.TryParseDisplayName("Alpha.Beta, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", alphaBeta)
+
+            Assert.False(ignorableAssemblyList.Includes(alphaBeta))
+        End Sub
+
+        <Fact, WorkItem(3020, "https://github.com/dotnet/roslyn/issues/3020")>
+        Public Sub IgnorableAssemblyNameList_IncludesItem_WholeName()
+            Dim ignorableAssemblyList = New IgnorableAssemblyNameList(ImmutableHashSet.Create("Alpha"))
+
+            ' No version
+            Dim alpha As AssemblyIdentity = Nothing
+            AssemblyIdentity.TryParseDisplayName("Alpha", alpha)
+
+            Assert.True(ignorableAssemblyList.Includes(alpha))
+
+            ' With a version.
+            alpha = Nothing
+            AssemblyIdentity.TryParseDisplayName("Alpha, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", alpha)
+
+            Assert.True(ignorableAssemblyList.Includes(alpha))
+
+            ' Version doesn't matter.
+            alpha = Nothing
+            AssemblyIdentity.TryParseDisplayName("Alpha, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", alpha)
+
+            Assert.True(ignorableAssemblyList.Includes(alpha))
+        End Sub
+
+        <Fact, WorkItem(3020, "https://github.com/dotnet/roslyn/issues/3020")>
+        Public Sub IgnorableAssemblyNameList_DoesNotIncludeItem()
+            Dim ignorableAssemblyList = New IgnorableAssemblyNameList(ImmutableHashSet.Create("Beta"))
+
+            Dim alpha As AssemblyIdentity = Nothing
+            AssemblyIdentity.TryParseDisplayName("Alpha, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", alpha)
+
+            Assert.False(ignorableAssemblyList.Includes(alpha))
+        End Sub
+
         Private Function BuildLibrary(directory As DisposableDirectory, fileContents As String, libraryName As String, ParamArray referenceNames As String()) As String
             Dim sourceFile = directory.CreateFile(libraryName + ".cs").WriteAllText(fileContents).Path
             Dim tempOut = Path.Combine(directory.Path, libraryName + ".out")
@@ -847,7 +891,7 @@ public class A
 
             Dim arguments = $"/C ""{s_CSharpCompilerExecutable}"" /nologo /t:library /out:{libraryOut} {references} {sourceFile} > {tempOut}"
 
-            Dim output = RunAndGetOutput("cmd", arguments, expectedRetCode:=0)
+            Dim output = ProcessUtilities.RunAndGetOutput("cmd", arguments, expectedRetCode:=0)
 
             Return libraryOut
         End Function

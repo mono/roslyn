@@ -7894,6 +7894,32 @@ public class Test
                 );
         }
 
+        [Fact, WorkItem(4424, "https://github.com/dotnet/roslyn/issues/4424")]
+        public void TieBreakOnNumberOfDeclaredParameters_06()
+        {
+            string source1 = @"
+class Test
+{
+    static void Fn(string x = """", string y = """", params object[] p) 
+    { 
+        System.Console.WriteLine(1); 
+    }
+
+    static void Fn(string x, params object[] p)
+    { 
+        System.Console.WriteLine(2); 
+    }
+
+    static void Main()
+    { Fn(""Hello"", p: ""World""); }
+}
+";
+
+            var compilation = CreateCompilationWithMscorlib(source1, options: TestOptions.DebugExe);
+
+            CompileAndVerify(compilation, expectedOutput: @"2");
+        }
+
         [Fact, WorkItem(1099752, "DevDiv"), WorkItem(2291, "https://github.com/dotnet/roslyn/issues/2291")]
         public void BetterErrorMessage_01()
         {
@@ -8146,6 +8172,70 @@ namespace ClassLibraryOverloadResolution
     //             dict.Should();
     Diagnostic(ErrorCode.ERR_AmbigCall, "Should").WithArguments("FluentAssertions.AssertionExtensions.Should<TKey, TValue>(System.Collections.Generic.IDictionary<TKey, TValue>)", "Extensions.TestExtensions.Should<TKey, TValue>(System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>)").WithLocation(34, 18)
                 );
+        }
+
+        [Fact, WorkItem(4970, "https://github.com/dotnet/roslyn/issues/4970")]
+        public void GenericExtensionMethodWithConstraintsAsADelegate()
+        {
+            var source =
+@"
+using System;
+
+public interface IDetail<T>
+{
+
+}
+
+public interface IMaster<T>
+{
+
+}
+
+public class MyClass
+{
+    static void Main()
+    {
+        Principal aPrincipal = new Principal();
+        Test(aPrincipal.RemoveDetail);
+        Test(aPrincipal.RemoveDetail<Principal,Permission>);
+
+        Action<Permission> a;
+        a = aPrincipal.RemoveDetail;
+        a(null);
+        a = aPrincipal.RemoveDetail<Principal,Permission>;
+        a(null);
+    }
+
+    static void Test(Action<Permission> a)
+    {
+        a(null);
+    }    
+}
+
+public class Permission : IDetail<Principal>
+{
+
+}
+
+public class Principal : IMaster<Permission>
+{
+}
+
+public static class Class
+{
+    public static void RemoveDetail<TMaster, TChild>(this TMaster master, TChild child)
+        where TMaster : class, IMaster<TChild>
+        where TChild : class, IDetail<TMaster>
+    {
+        System.Console.WriteLine(""RemoveDetail"");
+    }
+}";
+            var compilation = CreateCompilationWithMscorlib45(source, options:TestOptions.ReleaseExe);
+            CompileAndVerify(compilation, expectedOutput:
+@"RemoveDetail
+RemoveDetail
+RemoveDetail
+RemoveDetail");
         }
     }
 }

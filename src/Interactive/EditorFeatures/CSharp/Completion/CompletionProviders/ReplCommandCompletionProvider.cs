@@ -1,11 +1,9 @@
 // Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Completion;
-using Microsoft.CodeAnalysis.Completion.Providers;
 using Microsoft.CodeAnalysis.CSharp.Completion.Providers;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Extensions.ContextQuery;
@@ -13,16 +11,19 @@ using Microsoft.CodeAnalysis.Editor.Implementation.Interactive;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.VisualStudio.InteractiveWindow;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 using Microsoft.VisualStudio.InteractiveWindow.Commands;
 using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.Editor.CSharp.Completion.CompletionProviders
 {
-    [Order(Before = PredefinedCompletionProviderNames.Keyword)]
     [ExportCompletionProvider("ReplCommandCompletionProvider", LanguageNames.CSharp)]
-    internal class ReplCommandCompletionProvider : AbstractCompletionProvider
+    [TextViewRole(PredefinedInteractiveTextViewRoles.InteractiveTextViewRole)]
+    [Order(Before = PredefinedCompletionProviderNames.Keyword)]
+    internal class ReplCommandCompletionProvider : CompletionListProvider
     {
         private async Task<TextSpan> GetTextChangeSpanAsync(Document document, int position, CancellationToken cancellationToken)
         {
@@ -58,9 +59,12 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.Completion.CompletionProviders
             return CompletionUtilities.IsTriggerAfterSpaceOrStartOfWordCharacter(text, characterPosition, options);
         }
 
-        protected override async Task<IEnumerable<CompletionItem>> GetItemsWorkerAsync(
-            Document document, int position, CompletionTriggerInfo triggerInfo, CancellationToken cancellationToken)
+        public override async Task ProduceCompletionListAsync(CompletionListContext context)
         {
+            var document = context.Document;
+            var position = context.Position;
+            var cancellationToken = context.CancellationToken;
+
             if (document != null && document.SourceCodeKind == SourceCodeKind.Interactive)
             {
                 // the provider might be invoked in non-interactive context:
@@ -76,8 +80,7 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.Completion.CompletionProviders
                         if (tree.IsBeforeFirstToken(position, cancellationToken) &&
                             tree.IsPreProcessorKeywordContext(position, cancellationToken))
                         {
-                            var textChangeSpan = await this.GetTextChangeSpanAsync(document, position, cancellationToken).ConfigureAwait(false);
-                            var list = new List<CompletionItem>();
+                            var filterSpan = await this.GetTextChangeSpanAsync(document, position, cancellationToken).ConfigureAwait(false);
 
                             IInteractiveWindowCommands commands = window.GetInteractiveCommands();
                             if (commands != null)
@@ -86,19 +89,15 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.Completion.CompletionProviders
                                 {
                                     foreach (var commandName in command.Names)
                                     {
-                                        list.Add(new CompletionItem(
-                                            this, commandName, textChangeSpan, c => Task.FromResult(command.Description.ToSymbolDisplayParts()), glyph: Glyph.Intrinsic));
+                                        context.AddItem(new CompletionItem(
+                                            this, commandName, filterSpan, c => Task.FromResult(command.Description.ToSymbolDisplayParts()), glyph: Glyph.Intrinsic));
                                     }
                                 }
                             }
-
-                            return list;
                         }
                     }
                 }
             }
-
-            return SpecializedCollections.EmptyEnumerable<CompletionItem>();
         }
     }
 }

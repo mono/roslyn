@@ -1394,6 +1394,7 @@ End Class
             Const source =
 "Imports System
 Imports System.Diagnostics.Contracts
+Imports Microsoft.VisualBasic
 Class C
     Function F() As Object
         Return 1
@@ -1406,10 +1407,15 @@ Class C
     Shared Function H() As Object
         Return 3
     End Function
-    Shared Sub M(o As C, i As Integer, a As Action)
+    Default Public ReadOnly Property Item(ByVal str As String) As String
+        Get
+            Return Format(""No!"")
+        End Get
+    End Property
+    Shared Sub M(o As C, i As Integer, a As Action, obj As Object)
     End Sub
 End Class"
-            Dim compilation0 = CreateCompilationWithMscorlib({source}, options:=TestOptions.DebugDll)
+            Dim compilation0 = CreateCompilationWithMscorlib45AndVBRuntime({Parse(source)}, options:=TestOptions.DebugDll)
             Dim runtime = CreateRuntimeInstance(compilation0)
             Dim context = CreateMethodContext(
                 runtime,
@@ -1425,6 +1431,8 @@ End Class"
             CheckResultProperties(context, "If(a, Sub() i -= 4)", DkmClrCompilationResultFlags.PotentialSideEffect Or DkmClrCompilationResultFlags.ReadOnlyResult)
             CheckResultProperties(context, "New C() With {.P = 1}", DkmClrCompilationResultFlags.ReadOnlyResult)
             CheckResultProperties(context, "New C() With {.P = H()}", DkmClrCompilationResultFlags.PotentialSideEffect Or DkmClrCompilationResultFlags.ReadOnlyResult)
+            CheckResultProperties(context, "obj(""Test"")", DkmClrCompilationResultFlags.PotentialSideEffect)
+            CheckResultProperties(context, "obj.Item(""Test"")", DkmClrCompilationResultFlags.PotentialSideEffect)
         End Sub
 
         <Fact>
@@ -1959,6 +1967,7 @@ End Class"
 "DirectCast(Function()
     Dim e1 As E(Of T) = Nothing
     Try
+        e1 = Nothing
     Catch e2 As E(Of T)
         e1 = e2
     End Try
@@ -1980,28 +1989,30 @@ End Function, Func(Of E(Of T)))()")
             Next
             methodData.VerifyIL(
 "{
-  // Code size       22 (0x16)
+  // Code size       24 (0x18)
   .maxstack  2
   .locals init (E(Of T) V_0, //e1
-  E(Of T) V_1) //e2
+                E(Of T) V_1) //e2
   IL_0000:  ldnull
   IL_0001:  stloc.0
   .try
-{
-  IL_0002:  leave.s    IL_0014
-}
+  {
+    IL_0002:  ldnull
+    IL_0003:  stloc.0
+    IL_0004:  leave.s    IL_0016
+  }
   catch E(Of T)
-{
-  IL_0004:  dup
-  IL_0005:  call       ""Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)""
-  IL_000a:  stloc.1
-  IL_000b:  ldloc.1
-  IL_000c:  stloc.0
-  IL_000d:  call       ""Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()""
-  IL_0012:  leave.s    IL_0014
-}
-  IL_0014:  ldloc.0
-  IL_0015:  ret
+  {
+    IL_0006:  dup
+    IL_0007:  call       ""Sub Microsoft.VisualBasic.CompilerServices.ProjectData.SetProjectError(System.Exception)""
+    IL_000c:  stloc.1
+    IL_000d:  ldloc.1
+    IL_000e:  stloc.0
+    IL_000f:  call       ""Sub Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError()""
+    IL_0014:  leave.s    IL_0016
+  }
+  IL_0016:  ldloc.0
+  IL_0017:  ret
 }")
         End Sub
 
@@ -2668,7 +2679,7 @@ End Class
   // Code size        4 (0x4)
   .maxstack  2
   IL_0000:  ldarg.1
-  IL_0001:  dup
+  IL_0001:  ldarg.1
   IL_0002:  add.ovf
   IL_0003:  ret
 }")
@@ -4578,6 +4589,61 @@ End Class"
                 ilOffset:=ExpressionCompilerTestHelpers.NoILOffset,
                 localSignatureToken:=localSignatureToken)
             Assert.Same(previous, context)
+        End Sub
+
+        <WorkItem(3939, "https://github.com/dotnet/roslyn/issues/3939")>
+        <Fact>
+        Public Sub NameofInstanceInSharedContext()
+            Const source = "
+Class C
+    Private X As Integer
+    Shared Function M() As String
+        Return Nameof(X)
+    End Function
+End Class
+"
+            Dim resultProperties As ResultProperties = Nothing
+            Dim errorMessage As String = Nothing
+            Dim testData = Evaluate(
+                source,
+                OutputKind.DynamicallyLinkedLibrary,
+                methodName:="C.M",
+                expr:="Nameof(X)",
+                resultProperties:=resultProperties,
+                errorMessage:=errorMessage)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL("
+{
+  // Code size        6 (0x6)
+  .maxstack  1
+  .locals init (String V_0) //M
+  IL_0000:  ldstr      ""X""
+  IL_0005:  ret
+}
+")
+        End Sub
+
+        <WorkItem(3939, "https://github.com/dotnet/roslyn/issues/3939")>
+        <Fact>
+        Public Sub NameofInstanceInSharedContext_ExplicitMe()
+            Const source = "
+Class C
+    Private X As Integer
+    Shared Function M() As String
+        Return Nameof(X)
+    End Function
+End Class
+"
+            Dim resultProperties As ResultProperties = Nothing
+            Dim errorMessage As String = Nothing
+            Dim testData = Evaluate(
+                source,
+                OutputKind.DynamicallyLinkedLibrary,
+                methodName:="C.M",
+                expr:="Nameof(Me.X)",
+                resultProperties:=resultProperties,
+                errorMessage:=errorMessage)
+            Assert.Equal("(1) : error BC30043: 'Me' is valid only within an instance method.", errorMessage)
         End Sub
 
     End Class
