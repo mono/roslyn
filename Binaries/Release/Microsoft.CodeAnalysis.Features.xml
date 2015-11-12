@@ -4,6 +4,13 @@
         <name>Microsoft.CodeAnalysis.Features</name>
     </assembly>
     <members>
+        <member name="T:Roslyn.Utilities.DesktopShim">
+            <summary>
+            This is a bridge for APIs that are only available on Desktop 
+            and NOT on CoreCLR. The compiler currently targets .NET 4.5 and CoreCLR
+            so this shim is necessary for switching on the dependent behavior.
+            </summary>
+        </member>
         <member name="M:Microsoft.CodeAnalysis.AddMissingReference.AbstractAddMissingReferenceCodeFixProvider`1.FindNodes(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.Diagnostic)">
             <summary>
             Find all the identifier names in the given location, any of these could be the symbols triggering the diagnostic.
@@ -60,6 +67,11 @@
             Use this helper to register multiple fixes (<paramref name="actions"/>) each of which addresses / fixes the same set of supplied <paramref name="diagnostics"/>.
             </summary>
         </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeFixes.FixMultipleCodeAction">
+            <summary>
+            Fix multiple occurrences code action.
+            </summary>
+        </member>
         <member name="T:Microsoft.CodeAnalysis.CodeFixes.FixAllCodeAction">
             <summary>
             Fix all occurrences code action.
@@ -110,9 +122,31 @@
             Contains computed information for a given <see cref="T:Microsoft.CodeAnalysis.CodeFixes.FixAllProvider"/>, such as supported diagnostic Ids and supported <see cref="T:Microsoft.CodeAnalysis.CodeFixes.FixAllScope"/>.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.CodeFixes.FixAllProviderInfo.Create(Microsoft.CodeAnalysis.CodeFixes.CodeFixProvider)">
+        <member name="M:Microsoft.CodeAnalysis.CodeFixes.FixAllProviderInfo.Create(System.Object)">
+            <summary>
+            Gets an optional <see cref="T:Microsoft.CodeAnalysis.CodeFixes.FixAllProviderInfo"/> for the given code fix provider or suppression fix provider.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CodeFixes.FixAllProviderInfo.CreateWithCodeFixer(Microsoft.CodeAnalysis.CodeFixes.CodeFixProvider)">
             <summary>
             Gets an optional <see cref="T:Microsoft.CodeAnalysis.CodeFixes.FixAllProviderInfo"/> for the given code fix provider.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CodeFixes.FixAllProviderInfo.CreateWithSuppressionFixer(Microsoft.CodeAnalysis.CodeFixes.Suppression.ISuppressionFixProvider)">
+            <summary>
+            Gets an optional <see cref="T:Microsoft.CodeAnalysis.CodeFixes.FixAllProviderInfo"/> for the given suppression fix provider.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CodeFixes.IFixMultipleOccurrencesService.GetFix(System.Collections.Immutable.ImmutableDictionary{Microsoft.CodeAnalysis.Document,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostic}},Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.CodeFixes.CodeFixProvider,Microsoft.CodeAnalysis.CodeFixes.FixAllProvider,System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get the fix multiple occurrences code fix for the given diagnostics with source locations.
+            NOTE: This method does not apply the fix to the workspace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CodeFixes.IFixMultipleOccurrencesService.GetFix(System.Collections.Immutable.ImmutableDictionary{Microsoft.CodeAnalysis.Project,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostic}},Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.CodeFixes.CodeFixProvider,Microsoft.CodeAnalysis.CodeFixes.FixAllProvider,System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get the fix multiple occurrences code fix for the given diagnostics with source locations.
+            NOTE: This method does not apply the fix to the workspace.
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.CodeFixes.ICodeFixProviderFactory">
@@ -120,10 +154,55 @@
             CodeFixProvider factory. if an analyzer reference implements this, we call this to get CodeFixProviders
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.CodeFixes.IFixAllGetFixesService.GetFixAllOperationsAsync(Microsoft.CodeAnalysis.CodeFixes.FixAllProvider,Microsoft.CodeAnalysis.CodeFixes.FixAllContext)">
+        <member name="M:Microsoft.CodeAnalysis.CodeFixes.IFixAllGetFixesService.GetFixAllOperationsAsync(Microsoft.CodeAnalysis.CodeFixes.FixAllProvider,Microsoft.CodeAnalysis.CodeFixes.FixAllContext,System.Boolean)">
             <summary>
             Computes the fix all occurrences code fix, brings up the preview changes dialog for the fix and
             returns the code action operations corresponding to the fix.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CodeFixes.IFixAllGetFixesService.GetFixAllChangedSolutionAsync(Microsoft.CodeAnalysis.CodeFixes.FixAllProvider,Microsoft.CodeAnalysis.CodeFixes.FixAllContext)">
+            <summary>
+            Computes the fix all occurrences code fix and returns the changed solution.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeFixes.Suppression.AbstractSuppressionCodeFixProvider.IPragmaBasedCodeAction">
+            <summary>
+            Suppression code action based on pragma add/remove/edit.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeFixes.Suppression.AbstractSuppressionCodeFixProvider.PragmaBatchFixHelpers">
+            <summary>
+            Helper methods for pragma suppression add/remove batch fixers.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeFixes.Suppression.AbstractSuppressionCodeFixProvider.PragmaHelpers">
+            <summary>
+            Helper methods for pragma based suppression code actions.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeFixes.Suppression.AbstractSuppressionCodeFixProvider.RemoveSuppressionCodeAction">
+            <summary>
+            Base type for remove suppression code actions.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeFixes.Suppression.AbstractSuppressionCodeFixProvider.RemoveSuppressionCodeAction.BatchFixer">
+            <summary>
+            Batch fixer for pragma suppression removal code action.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeFixes.Suppression.AbstractSuppressionCodeFixProvider.RemoveSuppressionCodeAction.AttributeRemoveAction">
+            <summary>
+            Code action to remove suppress message attributes for remove suppression.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeFixes.Suppression.AbstractSuppressionCodeFixProvider.RemoveSuppressionCodeAction.PragmaRemoveAction">
+            <summary>
+            Code action to edit/remove/add the pragma directives for removing diagnostic suppression.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeFixes.Suppression.AbstractSuppressionCodeFixProvider.PragmaWarningBatchFixAllProvider">
+            <summary>
+            Batch fixer for pragma suppress code action.
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.CodeFixes.Suppression.ExportSuppressionFixProviderAttribute">
@@ -141,16 +220,29 @@
             The source languages this provider can provide fixes for.  See <see cref="T:Microsoft.CodeAnalysis.LanguageNames"/>.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.CodeFixes.Suppression.ISuppressionFixProvider.CanBeSuppressed(Microsoft.CodeAnalysis.Diagnostic)">
+        <member name="M:Microsoft.CodeAnalysis.CodeFixes.Suppression.ISuppressionFixProvider.CanBeSuppressedOrUnsuppressed(Microsoft.CodeAnalysis.Diagnostic)">
             <summary>
-            Returns true if the given diagnostic can be suppressed.
+            Returns true if the given diagnostic can be suppressed or unsuppressed.
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.CodeFixes.Suppression.ISuppressionFixProvider.GetSuppressionsAsync(Microsoft.CodeAnalysis.Document,Microsoft.CodeAnalysis.Text.TextSpan,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Diagnostic},System.Threading.CancellationToken)">
             <summary>
-            Gets one or more suppression fixes for the specified diagnostics represented as a list of <see cref="T:Microsoft.CodeAnalysis.CodeActions.CodeAction"/>'s.
+            Gets one or more add suppression or remove suppression fixes for the specified diagnostics represented as a list of <see cref="T:Microsoft.CodeAnalysis.CodeActions.CodeAction"/>'s.
             </summary>
             <returns>A list of zero or more potential <see cref="T:Microsoft.CodeAnalysis.CodeFixes.CodeFix"/>'es. It is also safe to return null if there are none.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CodeFixes.Suppression.ISuppressionFixProvider.GetSuppressionsAsync(Microsoft.CodeAnalysis.Project,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Diagnostic},System.Threading.CancellationToken)">
+            <summary>
+            Gets one or more add suppression or remove suppression fixes for the specified no-location diagnostics represented as a list of <see cref="T:Microsoft.CodeAnalysis.CodeActions.CodeAction"/>'s.
+            </summary>
+            <returns>A list of zero or more potential <see cref="T:Microsoft.CodeAnalysis.CodeFixes.CodeFix"/>'es. It is also safe to return null if there are none.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CodeFixes.Suppression.ISuppressionFixProvider.GetFixAllProvider">
+            <summary>
+            Gets an optional <see cref="T:Microsoft.CodeAnalysis.CodeFixes.FixAllProvider"/> that can fix all/multiple occurrences of diagnostics fixed by this fix provider.
+            Return null if the provider doesn't support fix all/multiple occurrences.
+            Otherwise, you can return any of the well known fix all providers from <see cref="T:Microsoft.CodeAnalysis.CodeFixes.WellKnownFixAllProviders"/> or implement your own fix all provider.
+            </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.CodeRefactorings.CodeRefactoringContextExtensions.RegisterRefactorings(Microsoft.CodeAnalysis.CodeRefactorings.CodeRefactoringContext,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.CodeActions.CodeAction})">
             <summary>
@@ -315,9 +407,10 @@
             in an unimpeded manner.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionService.GetCompletionListAsync(Microsoft.CodeAnalysis.Document,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.CompletionListProvider},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.CompletionService.GetCompletionListAsync(Microsoft.CodeAnalysis.Document,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,Microsoft.CodeAnalysis.Options.OptionSet,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.CompletionListProvider},System.Threading.CancellationToken)">
             <summary>
-            Returns the <see cref="T:Microsoft.CodeAnalysis.Completion.CompletionList"/> for the specified position in the document.
+            Returns the <see cref="T:Microsoft.CodeAnalysis.Completion.CompletionList"/> for the specified <paramref name="position"/>
+            in the <paramref name="document"/>.
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.Completion.CompletionService.IsCompletionTriggerCharacterAsync(Microsoft.CodeAnalysis.Document,System.Int32,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.CompletionListProvider},System.Threading.CancellationToken)">
@@ -342,16 +435,6 @@
             If the <see cref="P:Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo.TriggerReason"/> was <see
             cref="F:Microsoft.CodeAnalysis.Completion.CompletionTriggerReason.TypeCharCommand"/> then this was the character that was
             typed or deleted by backspace.  Otherwise it is null.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo.IsDebugger">
-            <summary>
-             Returns true if completion was triggered by the debugger.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo.IsImmediateWindow">
-            <summary>
-            Return true if completion is running in the Immediate Window.
             </summary>
         </member>
         <member name="F:Microsoft.CodeAnalysis.Completion.CompletionTriggerReason.InvokeCompletionCommand">
@@ -389,7 +472,7 @@
             Clears the most-recently-used cache used by completion.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.ICompletionService.GetCompletionListAsync(Microsoft.CodeAnalysis.Document,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.CompletionListProvider},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Completion.ICompletionService.GetCompletionListAsync(Microsoft.CodeAnalysis.Document,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,Microsoft.CodeAnalysis.Options.OptionSet,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Completion.CompletionListProvider},System.Threading.CancellationToken)">
             <summary>
             Returns the <see cref="T:Microsoft.CodeAnalysis.Completion.CompletionList"/> for the specified position in the document.
             </summary>
@@ -454,11 +537,6 @@
             <param name="expectedSymbols">The symbols recommended in the active context.</param>
             <param name="linkedContextSymbolLists">The symbols recommended in linked documents</param>
             <returns>The list of projects each recommended symbol did NOT appear in.</returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Completion.Providers.TextCompletionProvider.GetCompletionList(Microsoft.CodeAnalysis.Text.SourceText,System.Int32,Microsoft.CodeAnalysis.Completion.CompletionTriggerInfo,System.Threading.CancellationToken)">
-            <summary>
-            Returns a CompletionItemGroup for the specified position in the text.
-            </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Completion.CompletionListProvider">
             <summary>
@@ -555,7 +633,38 @@
         </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerUpdateArgsId">
             <summary>
-            Base type of a type that is used as <see cref="P:Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs.Id"/> for live diagnostic
+            Base type of a type that is used as <see cref="P:Microsoft.CodeAnalysis.Common.UpdatedEventArgs.Id"/> for live diagnostic
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Diagnostics.HostDiagnosticAnalyzerPackage">
+            <summary>
+            Information on vsix that contains diagnostic analyzers
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticUpdateSourceRegistrationService">
+            <summary>
+            A service that let people to register new IDiagnosticUpdateSource
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticUpdateSourceRegistrationService.Register(Microsoft.CodeAnalysis.Diagnostics.IDiagnosticUpdateSource)">
+            <summary>
+            Register new IDiagnosticUpdateSource
+            
+            Currently, it doesn't support unregister since our event is asynchronous and unregistering source that deal with asynchronous event is not straight forward.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerService.SynchronizeWithBuildAsync(Microsoft.CodeAnalysis.Project,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticData})">
+            <summary>
+            Synchronize build errors with live error.
+            
+            no cancellationToken since this can't be cancelled
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerService.SynchronizeWithBuildAsync(Microsoft.CodeAnalysis.Document,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticData})">
+            <summary>
+            Synchronize build errors with live error
+            
+            no cancellationToken since this can't be cancelled
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.EngineV1.DiagnosticIncrementalAnalyzer.ProjectAnalyzerReferenceChangedEventArgs">
@@ -657,25 +766,6 @@
             this is not finished form. as refactoring going on, this class will become more stateless in respect to caller, and less dependency on owner.
             </summary>
         </member>
-        <member name="T:Microsoft.CodeAnalysis.Diagnostics.HostDiagnosticAnalyzerPackage">
-            <summary>
-            Information on vsix that contains diagnostic analyzers
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerService.SynchronizeWithBuildAsync(Microsoft.CodeAnalysis.Project,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticData})">
-            <summary>
-            Synchronize build errors with live error.
-            
-            no cancellationToken since this can't be cancelled
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerService.SynchronizeWithBuildAsync(Microsoft.CodeAnalysis.Document,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticData})">
-            <summary>
-            Synchronize build errors with live error
-            
-            no cancellationToken since this can't be cancelled
-            </summary>
-        </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.BuildToolId">
             <summary>
             Support ErrorSource information.
@@ -741,14 +831,9 @@
             map to compiler diagnostic analyzer descriptor.
             </summary>
         </member>
-        <member name="F:Microsoft.CodeAnalysis.Diagnostics.HostAnalyzerManager._compilationWithAnalyzersMap">
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.HostAnalyzerManager._descriptorCache">
             <summary>
-            Map from project to <see cref="T:Microsoft.CodeAnalysis.Diagnostics.CompilationWithAnalyzers"/> instance to be used for computing analyzer diagnostics.
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.Diagnostics.HostAnalyzerManager.s_assemblyLoader">
-            <summary>
-            Loader for VSIX-based analyzers.
+            Cache from <see cref="T:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer"/> instance to its supported descriptors.
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.Diagnostics.HostAnalyzerManager.GetAnalyzerReferenceIdentity(Microsoft.CodeAnalysis.Diagnostics.AnalyzerReference)">
@@ -906,47 +991,51 @@
             </summary>
             <param name="projectId"></param>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetSpecificCachedDiagnosticsAsync(Microsoft.CodeAnalysis.Solution,System.Object,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetSpecificCachedDiagnosticsAsync(Microsoft.CodeAnalysis.Solution,System.Object,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             Get previously-computed (and potentially stale) diagnostics associated with a particular combination of
             analysis classification (syntax/semantics/project), document/project, and analyzer.
             </summary>
             <param name="solution">The solution.</param>
             <param name="id">Matched against values supplied in a <see cref="T:Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs"/> to <see cref="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerService.RaiseDiagnosticsUpdated(System.Object,Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs)"/>.</param>
+            <param name="includeSuppressedDiagnostics">Flag indicating whether diagnostics with source suppressions (pragma/SuppressMessageAttribute) should be included.</param>
             <param name="cancellationToken"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetCachedDiagnosticsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetCachedDiagnosticsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             Get previously-computed (and potentially stale) diagnostics associated with a particular document, project, or solution.
             </summary>
             <param name="solution">The solution. If projectId and documentId are both null, returned diagnostics are for the entire solution.</param>
             <param name="projectId">If projectId is non null and documentId is null, returned diagnostics are for that project only.</param>
             <param name="documentId">If documentId is non null, returned diagnostics are for that document only.</param>
+            <param name="includeSuppressedDiagnostics">Flag indicating whether diagnostics with source suppressions (pragma/SuppressMessageAttribute) should be included.</param>
             <param name="cancellationToken"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetSpecificDiagnosticsAsync(Microsoft.CodeAnalysis.Solution,System.Object,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetSpecificDiagnosticsAsync(Microsoft.CodeAnalysis.Solution,System.Object,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             Get diagnostics associated with a particular combination of
             analysis classification (syntax/semantics/project), document/project, and analyzer.
             </summary>
             <param name="solution">The solution.</param>
             <param name="id">Matched against values supplied in a <see cref="T:Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs"/> to <see cref="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerService.RaiseDiagnosticsUpdated(System.Object,Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs)"/>.</param>
+            <param name="includeSuppressedDiagnostics">Flag indicating whether diagnostics with source suppressions (pragma/SuppressMessageAttribute) should be included.</param>
             <param name="cancellationToken"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetDiagnosticsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetDiagnosticsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             Get diagnostics associated with a particular document, project, or solution.
             </summary>
             <param name="solution">The solution. If projectId and documentId are both null, returned diagnostics are for the entire solution.</param>
             <param name="projectId">If projectId is non null and documentId is null, returned diagnostics are for that project only.</param>
             <param name="documentId">If documentId is non null, returned diagnostics are for that document only.</param>
+            <param name="includeSuppressedDiagnostics">Flag indicating whether diagnostics with source suppressions (pragma/SuppressMessageAttribute) should be included.</param>
             <param name="cancellationToken"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetDiagnosticsForIdsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Collections.Immutable.ImmutableHashSet{System.String},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetDiagnosticsForIdsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Collections.Immutable.ImmutableHashSet{System.String},System.Boolean,System.Threading.CancellationToken)">
             <summary>
             Get diagnostics matching one of a set of diagnostic IDs associated with a particular document, project, or solution.
             </summary>
@@ -954,35 +1043,39 @@
             <param name="projectId">If projectId is non null and documentId is null, returned diagnostics are for that project only.</param>
             <param name="documentId">If documentId is non null, returned diagnostics are for that document only.</param>
             <param name="diagnosticIds">The diagnostic IDs to match.</param>
+            <param name="includeSuppressedDiagnostics">Flag indicating whether diagnostics with source suppressions (pragma/SuppressMessageAttribute) should be included.</param>
             <param name="cancellationToken"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetProjectDiagnosticsForIdsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,System.Collections.Immutable.ImmutableHashSet{System.String},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetProjectDiagnosticsForIdsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,System.Collections.Immutable.ImmutableHashSet{System.String},System.Boolean,System.Threading.CancellationToken)">
             <summary>
             Get diagnostics matching one of a set of diagnostic IDs that are not associated with a particular document.
             </summary>
             <param name="solution">The solution. If projectId is null, returned diagnostics are for the entire solution.</param>
             <param name="projectId">If projectId is non null, returned diagnostics are for that project only.</param>
             <param name="diagnosticIds">The diagnostic IDs to match.</param>
+            <param name="includeSuppressedDiagnostics">Flag indicating whether diagnostics with source suppressions (pragma/SuppressMessageAttribute) should be included.</param>
             <param name="cancellationToken"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.TryAppendDiagnosticsForSpanAsync(Microsoft.CodeAnalysis.Document,Microsoft.CodeAnalysis.Text.TextSpan,System.Collections.Generic.List{Microsoft.CodeAnalysis.Diagnostics.DiagnosticData},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.TryAppendDiagnosticsForSpanAsync(Microsoft.CodeAnalysis.Document,Microsoft.CodeAnalysis.Text.TextSpan,System.Collections.Generic.List{Microsoft.CodeAnalysis.Diagnostics.DiagnosticData},System.Boolean,System.Threading.CancellationToken)">
             <summary>
             Add diagnostics local to a span to a list of diagnostics.
             </summary>
             <param name="document">The document containing the span.</param>
             <param name="range">The span for which to produce diagnostics.</param>
             <param name="diagnostics">The list of diagnostics to be augmented.</param>
+            <param name="includeSuppressedDiagnostics">Flag indicating whether diagnostics with source suppressions (pragma/SuppressMessageAttribute) should be included.</param>
             <param name="cancellationToken"></param>
             <returns>True if the set of results is complete, false if getting a complete set requires running per-document actions.</returns>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetDiagnosticsForSpanAsync(Microsoft.CodeAnalysis.Document,Microsoft.CodeAnalysis.Text.TextSpan,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.BaseDiagnosticIncrementalAnalyzer.GetDiagnosticsForSpanAsync(Microsoft.CodeAnalysis.Document,Microsoft.CodeAnalysis.Text.TextSpan,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             Get diagnostics local to a span.
             </summary>
             <param name="document">The document containing the span.</param>
             <param name="range">The span for which to produce diagnostics.</param>
+            <param name="includeSuppressedDiagnostics">Flag indicating whether diagnostics with source suppressions (pragma/SuppressMessageAttribute) should be included.</param>
             <param name="cancellationToken"></param>
             <returns></returns>
         </member>
@@ -1015,29 +1108,31 @@
             it is string[] because DiagnosticDescriptor expects string[]. 
             </summary>
         </member>
-        <member name="F:Microsoft.CodeAnalysis.Diagnostics.DiagnosticData.MappedFilePath">
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedKind.DiagnosticsRemoved">
             <summary>
-            Null if path is not mapped and <see cref="F:Microsoft.CodeAnalysis.Diagnostics.DiagnosticData.OriginalFilePath"/> contains the actual path.
-            Note that the value might be a relative path. In that case <see cref="F:Microsoft.CodeAnalysis.Diagnostics.DiagnosticData.OriginalFilePath"/> should be used
-            as a base path for path resolution.
+            Called when the diagnostic analyzer engine decides to remove existing diagnostics.
+            For example, this can happen when a document is removed from a solution.  In that
+            case the analyzer engine will delete all diagnostics associated with that document.
+            Any layers caching diagnostics should listen for these events to know when to 
+            delete their cached items entirely.
             </summary>
         </member>
-        <member name="P:Microsoft.CodeAnalysis.Diagnostics.DiagnosticData.TextSpan">
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedKind.DiagnosticsCreated">
             <summary>
-            return TextSpan if it exists, otherwise it will throw
-            
-            some diagnostic data such as created from build will have original line/column but not text span
-            in those cases, use GetTextSpan method instead to calculate one from original line/column
+            Called when a new set of (possibly empty) diagnostics have been produced.  This
+            happens through normal editing and processing of files as diagnostic analyzers
+            produce new diagnostics for documents and projects.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IAnalyzerDriverService.GetDeclarationsInSpan(Microsoft.CodeAnalysis.SemanticModel,Microsoft.CodeAnalysis.Text.TextSpan,System.Boolean,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IAnalyzerDriverService.ComputeDeclarationsInSpan(Microsoft.CodeAnalysis.SemanticModel,Microsoft.CodeAnalysis.Text.TextSpan,System.Boolean,System.Collections.Generic.List{Microsoft.CodeAnalysis.DeclarationInfo},System.Threading.CancellationToken)">
             <summary>
-            Gets the <see cref="T:Microsoft.CodeAnalysis.DeclarationInfo"/> for all the declarations whose span overlaps with the given <paramref name="span"/>.
+            Computes the <see cref="T:Microsoft.CodeAnalysis.DeclarationInfo"/> for all the declarations whose span overlaps with the given <paramref name="span"/>.
             </summary>
             <param name="model">The semantic model for the document.</param>
             <param name="span">Span to get declarations.</param>
             <param name="getSymbol">Flag indicating whether <see cref="P:Microsoft.CodeAnalysis.DeclarationInfo.DeclaredSymbol"/> should be computed for the returned declaration infos.
             If false, then <see cref="P:Microsoft.CodeAnalysis.DeclarationInfo.DeclaredSymbol"/> is always null.</param>
+            <param name="builder">Builder to add computed declarations.</param>
             <param name="cancellationToken">Cancellation token.</param>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.IBuiltInAnalyzer">
@@ -1046,45 +1141,45 @@
             We will record non-fatal-watson if any analyzer with this interface throws an exception.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.Reanalyze(Microsoft.CodeAnalysis.Workspace,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.ProjectId},System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.DocumentId})">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.Reanalyze(Microsoft.CodeAnalysis.Workspace,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.ProjectId},System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.DocumentId},System.Boolean)">
             <summary>
             re-analyze given projects and documents
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetSpecificCachedDiagnosticsAsync(Microsoft.CodeAnalysis.Workspace,System.Object,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetSpecificCachedDiagnosticsAsync(Microsoft.CodeAnalysis.Workspace,System.Object,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             get specific diagnostics currently stored in the source. returned diagnostic might be out-of-date if solution has changed but analyzer hasn't run for the new solution.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetCachedDiagnosticsAsync(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetCachedDiagnosticsAsync(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             get diagnostics currently stored in the source. returned diagnostic might be out-of-date if solution has changed but analyzer hasn't run for the new solution.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetSpecificDiagnosticsAsync(Microsoft.CodeAnalysis.Solution,System.Object,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetSpecificDiagnosticsAsync(Microsoft.CodeAnalysis.Solution,System.Object,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             get specific diagnostics for the given solution. all diagnostics returned should be up-to-date with respect to the given solution.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetDiagnosticsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetDiagnosticsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             get diagnostics for the given solution. all diagnostics returned should be up-to-date with respect to the given solution.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetDiagnosticsForIdsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Collections.Immutable.ImmutableHashSet{System.String},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetDiagnosticsForIdsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Collections.Immutable.ImmutableHashSet{System.String},System.Boolean,System.Threading.CancellationToken)">
             <summary>
             get diagnostics of the given diagnostic ids from the given solution. all diagnostics returned should be up-to-date with respect to the given solution.
-            Note that for project case, this method returns diagnostics from all project documents as well. Use <see cref="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetProjectDiagnosticsForIdsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,System.Collections.Immutable.ImmutableHashSet{System.String},System.Threading.CancellationToken)"/>
+            Note that for project case, this method returns diagnostics from all project documents as well. Use <see cref="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetProjectDiagnosticsForIdsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,System.Collections.Immutable.ImmutableHashSet{System.String},System.Boolean,System.Threading.CancellationToken)"/>
             if you want to fetch only project diagnostics without source locations.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetProjectDiagnosticsForIdsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,System.Collections.Immutable.ImmutableHashSet{System.String},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetProjectDiagnosticsForIdsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,System.Collections.Immutable.ImmutableHashSet{System.String},System.Boolean,System.Threading.CancellationToken)">
             <summary>
             get project diagnostics (diagnostics with no source location) of the given diagnostic ids from the given solution. all diagnostics returned should be up-to-date with respect to the given solution.
-            Note that this method doesn't return any document diagnostics. Use <see cref="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetDiagnosticsForIdsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Collections.Immutable.ImmutableHashSet{System.String},System.Threading.CancellationToken)"/> to also fetch those.
+            Note that this method doesn't return any document diagnostics. Use <see cref="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetDiagnosticsForIdsAsync(Microsoft.CodeAnalysis.Solution,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Collections.Immutable.ImmutableHashSet{System.String},System.Boolean,System.Threading.CancellationToken)"/> to also fetch those.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.TryAppendDiagnosticsForSpanAsync(Microsoft.CodeAnalysis.Document,Microsoft.CodeAnalysis.Text.TextSpan,System.Collections.Generic.List{Microsoft.CodeAnalysis.Diagnostics.DiagnosticData},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.TryAppendDiagnosticsForSpanAsync(Microsoft.CodeAnalysis.Document,Microsoft.CodeAnalysis.Text.TextSpan,System.Collections.Generic.List{Microsoft.CodeAnalysis.Diagnostics.DiagnosticData},System.Boolean,System.Threading.CancellationToken)">
             <summary>
             try to return up to date diagnostics for the given span for the document.
             
@@ -1092,7 +1187,7 @@
              otherwise, false indicating there are some missing diagnostics in the diagnostic list
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetDiagnosticsForSpanAsync(Microsoft.CodeAnalysis.Document,Microsoft.CodeAnalysis.Text.TextSpan,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzerService.GetDiagnosticsForSpanAsync(Microsoft.CodeAnalysis.Document,Microsoft.CodeAnalysis.Text.TextSpan,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             return up to date diagnostics for the given span for the document
             
@@ -1133,9 +1228,14 @@
             Event to get notified as new diagnostics are discovered by IDiagnosticUpdateSource
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticService.GetDiagnostics(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Object,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticService.GetDiagnostics(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Object,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             Get current diagnostics stored in IDiagnosticUpdateSource
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticService.GetDiagnosticsUpdatedEventArgs(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Threading.CancellationToken)">
+            <summary>
+            Get current UpdatedEventArgs stored in IDiagnosticUpdateSource
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticUpdateSource">
@@ -1153,7 +1253,7 @@
             Return true if the source supports GetDiagnostics API otherwise, return false so that the engine can cache data from DiagnosticsUpdated in memory
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticUpdateSource.GetDiagnostics(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Object,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticUpdateSource.GetDiagnostics(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.ProjectId,Microsoft.CodeAnalysis.DocumentId,System.Object,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             Get diagnostics stored in the source
             </summary>
@@ -1164,13 +1264,11 @@
             This includes the analyzers included through VSIX installations.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IWorkspaceVenusSpanMappingService.GetAdjustedDiagnosticSpan(Microsoft.CodeAnalysis.DocumentId,Microsoft.CodeAnalysis.Location,Microsoft.CodeAnalysis.Text.TextSpan@,Microsoft.CodeAnalysis.FileLinePositionSpan@,Microsoft.CodeAnalysis.FileLinePositionSpan@)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.IWorkspaceDiagnosticAnalyzerProviderService.GetAnalyzerAssemblyLoader">
             <summary>
-            Given the original location of the diagnostic and the mapped line info based on line directives in source,
-            apply any necessary adjustments to these diagnostic spans and returns the effective source span for the diagnostic.
-            For example, for Venus, we might change the mapped location to be the location in the primary buffer.
-            Additionally, if the secondary buffer location is outside visible user code, then the original location is also adjusted to be within visible user code.
+            Gets the loader for VSIX based analyzer assemblies.
             </summary>
+            <returns></returns>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.ISupportLiveUpdate">
             <summary>
@@ -1220,13 +1318,34 @@
             Analyzer reports project diagnostics (i.e. registers a Compilation action and/or Compilation end action diagnostics).
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.Common.UpdatedEventArgs.Id">
+            <summary>
+            The identity of update group. 
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Common.UpdatedEventArgs.Workspace">
+            <summary>
+            Workspace this update is associated with
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Common.UpdatedEventArgs.ProjectId">
+            <summary>
+            projectId this update is associated with
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Common.UpdatedEventArgs.DocumentId">
+            <summary>
+            documentId this update is associated with
+            </summary>
+        </member>
         <member name="T:Microsoft.CodeAnalysis.EditAndContinue.TraceLog">
             <summary>
             Fixed size rolling tracing log. 
             </summary>
             <remarks>
-            Recent entries are captured in a memory dump. 
-            All entries are printed out to <see cref="T:System.Diagnostics.Trace"/> output or <see cref="T:System.Diagnostics.Debug"/> output.
+            Recent entries are captured in a memory dump.
+            If DEBUG is defined, all entries written to <see cref="M:Microsoft.CodeAnalysis.EditAndContinue.TraceLog.DebugWrite(System.String)"/> or
+            <see cref="M:Microsoft.CodeAnalysis.EditAndContinue.TraceLog.DebugWrite(System.String,System.Object[])"/> are print to <see cref="T:System.Diagnostics.Debug"/> output.
             </remarks>
         </member>
         <member name="M:Microsoft.CodeAnalysis.EditAndContinue.AbstractEditAndContinueAnalyzer.FindMemberDeclaration(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.SyntaxNode)">
@@ -1988,7 +2107,7 @@
         </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.ChangeTo">
             <summary>
-              Looks up a localized string similar to Change &apos;{0}&apos; to &apos;{1}.{2}&apos;..
+              Looks up a localized string similar to Change &apos;{0}&apos; to &apos;{1}&apos;..
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.ChangingCapturedVariableScope">
@@ -2029,6 +2148,11 @@
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.Class">
             <summary>
               Looks up a localized string similar to class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.ComputingFixAllOccurrences">
+            <summary>
+              Looks up a localized string similar to Computing fix all occurrences code fix....
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.Constant">
@@ -2131,6 +2255,11 @@
               Looks up a localized string similar to enum value.
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.ErrorCategory">
+            <summary>
+              Looks up a localized string similar to Roslyn.HostError.
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.ErrorOrUnknownType">
             <summary>
               Looks up a localized string similar to The selection contains an error or unknown type..
@@ -2191,6 +2320,11 @@
               Looks up a localized string similar to field.
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.FixAllOccurrences">
+            <summary>
+              Looks up a localized string similar to Fix all occurrences.
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.FixAllTitle_Document">
             <summary>
               Looks up a localized string similar to Document.
@@ -2204,6 +2338,26 @@
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.FixAllTitle_Solution">
             <summary>
               Looks up a localized string similar to Solution.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.Generate_0_1">
+            <summary>
+              Looks up a localized string similar to Generate {0} &apos;{1}&apos;.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.Generate_0_1_in_new_file">
+            <summary>
+              Looks up a localized string similar to Generate {0} &apos;{1}&apos; in new file.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.Generate_nested_0_1">
+            <summary>
+              Looks up a localized string similar to Generate nested {0} &apos;{1}&apos;.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.Generate_type">
+            <summary>
+              Looks up a localized string similar to Generate type.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.GenerateAbstractMethod">
@@ -2264,16 +2418,6 @@
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.GenerateFieldIn">
             <summary>
               Looks up a localized string similar to Generate field &apos;{0}&apos; in &apos;{1}&apos;.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.GenerateForIn">
-            <summary>
-              Looks up a localized string similar to Generate {0} for &apos;{1}&apos; in &apos;{2}&apos;.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.GenerateForInNewFile">
-            <summary>
-              Looks up a localized string similar to Generate {0} for &apos;{1}&apos; in &apos;{2}&apos; (in new file).
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.GenerateGetHashCode">
@@ -2486,6 +2630,11 @@
               Looks up a localized string similar to method.
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.MethodReferencedImplicitly">
+            <summary>
+              Looks up a localized string similar to Method referenced implicitly.
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.ModifyingACatchFinallyHandler">
             <summary>
               Looks up a localized string similar to Modifying a catch/finally handler with an active statement in the try block will prevent the debug session from continuing..
@@ -2571,6 +2720,11 @@
               Looks up a localized string similar to The selection contains no active statement..
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.NonInvokedMethodCannotBeReplacedWithProperty">
+            <summary>
+              Looks up a localized string similar to Non-invoked method cannot be replaced with property..
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.NotAccessingCapturedVariableInLambda">
             <summary>
               Looks up a localized string similar to Ceasing to access captured variable &apos;{0}&apos; in {1} will prevent the debug session from continuing..
@@ -2589,6 +2743,11 @@
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.NoteTabTwiceToInsertTheSnippet">
             <summary>
               Looks up a localized string similar to Note: Tab twice to insert the &apos;{0}&apos; snippet..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.OnlyMethodsWithASingleArgumentCanBeReplacedWithAProperty">
+            <summary>
+              Looks up a localized string similar to Only methods with a single argument can be replaced with a property..
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.Operator">
@@ -2646,6 +2805,16 @@
               Looks up a localized string similar to Remarks:.
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.RemoveSuppressionEquivalenceKeyPrefix">
+            <summary>
+              Looks up a localized string similar to Remove Suppression.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.RemoveSuppressionForId">
+            <summary>
+              Looks up a localized string similar to Remove Suppression {0}.
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.RemoveUnnecessaryCast">
             <summary>
               Looks up a localized string similar to Remove Unnecessary Cast.
@@ -2664,6 +2833,16 @@
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.RenamingCapturedVariable">
             <summary>
               Looks up a localized string similar to Renaming a captured variable, from &apos;{0}&apos; to &apos;{1}&apos; will prevent the debug session from continuing..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.Replace0and1WithProperty">
+            <summary>
+              Looks up a localized string similar to Replace &apos;{0}&apos; and &apos;{1}&apos; with property.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.Replace0WithProperty">
+            <summary>
+              Looks up a localized string similar to Replace &apos;{0}&apos; with property.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.RepresentsAnObjectWhoseOperations">
@@ -2738,12 +2917,12 @@
         </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.SuppressWithGlobalSuppressMessage">
             <summary>
-              Looks up a localized string similar to with SuppressMessageAttribute (separate file).
+              Looks up a localized string similar to in Suppression File.
             </summary>
         </member>
-        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.SuppressWithLocalSuppressMessage">
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.SuppressWithPragma">
             <summary>
-              Looks up a localized string similar to with SuppressMessageAttribute.
+              Looks up a localized string similar to in Source.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.TextForSystemVoid">
@@ -2781,6 +2960,11 @@
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.ToDetectRedundantCalls">
             <summary>
               Looks up a localized string similar to To detect redundant calls.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.TriageCodeActionTitleForTriagedDiagnostic">
+            <summary>
+              Looks up a localized string similar to Re-triage {0}(currently &apos;{1}&apos;).
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.TypeConstraint">
@@ -2933,6 +3117,11 @@
               Looks up a localized string similar to Updating the variance of &apos;{0}&apos; will prevent the debug session from continuing..
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.UseAutoProperty">
+            <summary>
+              Looks up a localized string similar to Use auto property.
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.UserDiagnosticAnalyzerFailure">
             <summary>
               Looks up a localized string similar to User Diagnostic Analyzer Failure..
@@ -2954,10 +3143,83 @@
               Looks up a localized string similar to You can use the navigation bar to switch context..
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.WRN_AnalyzerCannotBeCreated">
+            <summary>
+              Looks up a localized string similar to An instance of analyzer {0} cannot be created from {1}: {2}..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.WRN_NoAnalyzerInAssembly">
+            <summary>
+              Looks up a localized string similar to The assembly {0} does not contain any analyzers..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.WRN_UnableToLoadAnalyzer">
+            <summary>
+              Looks up a localized string similar to Unable to load Analyzer assembly {0}: {1}.
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.YouCanOnlyChangeTheSignatureOfAConstructorIndexerMethodOrDelegate">
             <summary>
               Looks up a localized string similar to You can only change the signature of a constructor, indexer, method or delegate..
             </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Navigation.NavigationOptions.PreferProvisionalTab">
+            <summary>
+            This option can be passed to the <see cref="T:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService"/> APIs to request that a provisional (or preview) tab 
+            be used for any document that needs to be opened, if one is available.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService.CanNavigateToSpan(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.DocumentId,Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Determines whether it is possible to navigate to the given position in the specified document.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService.CanNavigateToLineAndOffset(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.DocumentId,System.Int32,System.Int32)">
+            <summary>
+            Determines whether it is possible to navigate to the given line/offset in the specified document.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService.CanNavigateToPosition(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.DocumentId,System.Int32,System.Int32)">
+            <summary>
+            Determines whether it is possible to navigate to the given virtual position in the specified document.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService.TryNavigateToSpan(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.DocumentId,Microsoft.CodeAnalysis.Text.TextSpan,Microsoft.CodeAnalysis.Options.OptionSet)">
+            <summary>
+            Navigates to the given position in the specified document, opening it if necessary.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService.TryNavigateToLineAndOffset(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.DocumentId,System.Int32,System.Int32,Microsoft.CodeAnalysis.Options.OptionSet)">
+            <summary>
+            Navigates to the given line/offset in the specified document, opening it if necessary.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService.TryNavigateToPosition(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.DocumentId,System.Int32,System.Int32,Microsoft.CodeAnalysis.Options.OptionSet)">
+            <summary>
+            Navigates to the given virtual position in the specified document, opening it if necessary.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Navigation.ISymbolNavigationService.TryNavigateToSymbol(Microsoft.CodeAnalysis.ISymbol,Microsoft.CodeAnalysis.Project,Microsoft.CodeAnalysis.Options.OptionSet,System.Threading.CancellationToken)">
+            <summary>
+            Navigate to the first source location of a given symbol.
+            </summary>
+            <param name="project">A project context with which to generate source for symbol
+            if it has no source locations</param>
+            <param name="symbol">The symbol to navigate to</param>
+            <param name="options">A set of options. If these options are not supplied the
+            current set of options from the project's workspace will be used.</param>
+            <param name="cancellationToken">The token to check for cancellation</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Navigation.ISymbolNavigationService.TrySymbolNavigationNotify(Microsoft.CodeAnalysis.ISymbol,Microsoft.CodeAnalysis.Solution)">
+            <returns>True if the navigation was handled, indicating that the caller should not 
+            perform the navigation.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Navigation.ISymbolNavigationService.WouldNavigateToSymbol(Microsoft.CodeAnalysis.ISymbol,Microsoft.CodeAnalysis.Solution,System.String@,System.Int32@,System.Int32@)">
+            <returns>True if the navigation would be handled.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RemoveUnnecessaryImports.IRemoveUnnecessaryImportsService.RemoveUnnecessaryImportsAsync(Microsoft.CodeAnalysis.Document,System.Threading.CancellationToken)">
+            <returns>Returns the rewritten document, or the document passed in if no changes were made. If cancellation
+            was observed, it returns null.</returns>
         </member>
         <member name="F:Microsoft.CodeAnalysis.Shared.Options.OrganizerOptions.WarnOnBuildErrors">
             <summary>
@@ -3115,6 +3377,12 @@
             The pattern matched the CamelCased candidate string.
             </summary>
         </member>
+        <member name="T:Microsoft.CodeAnalysis.Shared.TestHooks.AsynchronousOperationListener.DiagnosticAsyncToken">
+            <summary>
+            Stores the source information for an <see cref="T:Microsoft.CodeAnalysis.Shared.TestHooks.IAsyncToken"/> value.  Helpful when 
+            tracking down tokens which aren't properly disposed.
+            </summary>
+        </member>
         <member name="T:Microsoft.CodeAnalysis.Shared.TestHooks.FeatureMetadata">
             <summary>
             This interface declares a contract for MEF to import metadata in a strongly-typed fashion.
@@ -3124,6 +3392,17 @@
             this interface's properties (FeatureName will be set to "Outlining")
             </summary>
             <remarks>A good link is: http://mef.codeplex.com/wikipage?title=Exports%20and%20Metadata
+            </remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Shared.TestHooks.AsynchronousOperationWaiter.WaitAllAsync(System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Shared.TestHooks.IAsynchronousOperationWaiter})">
+            <summary>
+            Wait for all of the <see cref="T:Microsoft.CodeAnalysis.Shared.TestHooks.IAsynchronousOperationWaiter"/> instances to finish their
+            work.
+            </summary>
+            <remarks>
+            This is a very handy method for debugging hangs in the unit test.  Set a break point in the 
+            loop, dig into the waiters and see all of the active <see cref="T:Microsoft.CodeAnalysis.Shared.TestHooks.IAsyncToken"/> values 
+            representing the remaining work.
             </remarks>
         </member>
         <member name="M:Microsoft.CodeAnalysis.MetadataAsSource.AbstractMetadataAsSourceService.GetFormattingRules(Microsoft.CodeAnalysis.Document)">
@@ -3156,52 +3435,22 @@
             Helpers shared by both the text service and the editor service
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService.CanNavigateToSpan(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.DocumentId,Microsoft.CodeAnalysis.Text.TextSpan)">
+        <member name="M:Microsoft.CodeAnalysis.Notification.INotificationService.SendNotification(System.String,System.String,Microsoft.CodeAnalysis.Notification.NotificationSeverity)">
             <summary>
-            Determines whether it is possible to navigate to the given position in the specified document.
+            Displays a message box with an OK button to the user.
             </summary>
+            <param name="message">The message shown within the message box.</param>
+            <param name="title">The title bar to be shown in the message box. May be ignored by some implementations.</param>
+            <param name="severity">The severity of the message.</param>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService.CanNavigateToLineAndOffset(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.DocumentId,System.Int32,System.Int32)">
+        <member name="M:Microsoft.CodeAnalysis.Notification.INotificationService.ConfirmMessageBox(System.String,System.String,Microsoft.CodeAnalysis.Notification.NotificationSeverity)">
             <summary>
-            Determines whether it is possible to navigate to the given line/offset in the specified document.
+            Displays a message box with a yes/no question to the user.
             </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService.CanNavigateToPosition(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.DocumentId,System.Int32,System.Int32)">
-            <summary>
-            Determines whether it is possible to navigate to the given virtual position in the specified document.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService.TryNavigateToSpan(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.DocumentId,Microsoft.CodeAnalysis.Text.TextSpan,System.Boolean)">
-            <summary>
-            Navigates to the given position in the specified document, opening it if necessary.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService.TryNavigateToLineAndOffset(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.DocumentId,System.Int32,System.Int32,System.Boolean)">
-            <summary>
-            Navigates to the given line/offset in the specified document, opening it if necessary.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Navigation.IDocumentNavigationService.TryNavigateToPosition(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.DocumentId,System.Int32,System.Int32,System.Boolean)">
-            <summary>
-            Navigates to the given virtual position in the specified document, opening it if necessary.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Navigation.ISymbolNavigationService.TryNavigateToSymbol(Microsoft.CodeAnalysis.ISymbol,Microsoft.CodeAnalysis.Project,System.Boolean)">
-            <summary>
-            Navigate to the first source location of a given symbol.
-            </summary>
-            <param name="project">A project context with which to generate source for symbol
-            if it has no source locations</param>
-            <param name="symbol">The symbol to navigate to</param>
-            <param name="usePreviewTab">Indicates whether a preview tab should be used if the
-            containing document is opened in a new tab. Defaults to false.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Navigation.ISymbolNavigationService.TrySymbolNavigationNotify(Microsoft.CodeAnalysis.ISymbol,Microsoft.CodeAnalysis.Solution)">
-            <returns>True if the navigation was handled, indicating that the caller should not 
-            perform the navigation.</returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Navigation.ISymbolNavigationService.WouldNavigateToSymbol(Microsoft.CodeAnalysis.ISymbol,Microsoft.CodeAnalysis.Solution,System.String@,System.Int32@,System.Int32@)">
-            <returns>True if the navigation would be handled.</returns>
+            <param name="message">The message shown within the message box.</param>
+            <param name="title">The title bar to be shown in the message box. May be ignored by some implementations.</param>
+            <param name="severity">The severity of the message.</param>
+            <returns>true if yes was clicked, false otherwise.</returns>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Organizing.IOrganizingService">
             <summary>
@@ -3240,10 +3489,6 @@
             This service provides a way to extract all the folders under a given project, or find the default namespace if it exists.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.RemoveUnnecessaryImports.IRemoveUnnecessaryImportsService.RemoveUnnecessaryImports(Microsoft.CodeAnalysis.Document,Microsoft.CodeAnalysis.SemanticModel,Microsoft.CodeAnalysis.SyntaxNode,System.Threading.CancellationToken)">
-            <returns>Returns the rewritten document, or the document passed in if no changes were made. If cancellation
-            was observed, it returns null.</returns>
-        </member>
         <member name="M:Microsoft.CodeAnalysis.SolutionCrawler.IIncrementalAnalyzer.DocumentResetAsync(Microsoft.CodeAnalysis.Document,System.Threading.CancellationToken)">
             <summary>
             Resets all the document state cached by the analyzer.
@@ -3274,7 +3519,7 @@
             Provide a way to control solution crawler.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.SolutionCrawler.ISolutionCrawlerService.Reanalyze(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.SolutionCrawler.IIncrementalAnalyzer,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.ProjectId},System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.DocumentId})">
+        <member name="M:Microsoft.CodeAnalysis.SolutionCrawler.ISolutionCrawlerService.Reanalyze(Microsoft.CodeAnalysis.Workspace,Microsoft.CodeAnalysis.SolutionCrawler.IIncrementalAnalyzer,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.ProjectId},System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.DocumentId},System.Boolean)">
             <summary>
             Ask solution crawler to re-analyze given <see cref="T:Microsoft.CodeAnalysis.ProjectId"/>s or/and <see cref="T:Microsoft.CodeAnalysis.DocumentId"/>s 
             in given <see cref="T:Microsoft.CodeAnalysis.Workspace"/> with given <see cref="T:Microsoft.CodeAnalysis.SolutionCrawler.IIncrementalAnalyzer"/>.

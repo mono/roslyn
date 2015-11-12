@@ -4,15 +4,18 @@
         <name>Microsoft.CodeAnalysis.Workspaces.Desktop</name>
     </assembly>
     <members>
-        <member name="F:Microsoft.CodeAnalysis.Text.EncodedStringText.s_fallbackEncoding">
+        <member name="F:Microsoft.CodeAnalysis.Text.EncodedStringText.s_utf8Encoding">
             <summary>
             Encoding to use when there is no byte order mark (BOM) on the stream. This encoder may throw a <see cref="T:System.Text.DecoderFallbackException"/>
             if the stream contains invalid UTF-8 bytes.
             </summary>
         </member>
-        <member name="F:Microsoft.CodeAnalysis.Text.EncodedStringText.s_defaultFallbackEncoding">
+        <member name="F:Microsoft.CodeAnalysis.Text.EncodedStringText.s_fallbackEncoding">
             <summary>
-            Encoding to use when UTF-8 fails and default OS ANSI encoding is not available. If available, we use CodePage 1252. If not, we use Latin1.
+            Encoding to use when UTF-8 fails. We try to find the following, in order, if available:
+                1. The default ANSI codepage
+                2. CodePage 1252.
+                3. Latin1.
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.Create(System.IO.Stream,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm)">
@@ -85,116 +88,6 @@
             <summary>
             Handler for <see cref="E:System.AppDomain.AssemblyResolve"/>. Delegates to <see cref="M:Microsoft.CodeAnalysis.AbstractAnalyzerAssemblyLoader.AssemblyResolveInternal(System.ResolveEventArgs)"/>
             and prevents exceptions from leaking out.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.FusionAssemblyIdentity.ToAssemblyIdentity(Microsoft.CodeAnalysis.FusionAssemblyIdentity.IAssemblyName)">
-            <summary>
-            Converts <see cref="T:Microsoft.CodeAnalysis.FusionAssemblyIdentity.IAssemblyName"/> to <see cref="T:System.Reflection.AssemblyName"/> with all metadata fields filled.
-            </summary>
-            <returns>
-            Assembly name with Version, Culture and PublicKeyToken components filled in:
-            "SimpleName, Version=#.#.#.#, Culture=XXX, PublicKeyToken=XXXXXXXXXXXXXXXX".
-            In addition Retargetable flag and ContentType are set.
-            </returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.FusionAssemblyIdentity.ToAssemblyNameObject(System.Reflection.AssemblyName)">
-            <summary>
-            Converts <see cref="T:System.Reflection.AssemblyName"/> to an equivalent <see cref="T:Microsoft.CodeAnalysis.FusionAssemblyIdentity.IAssemblyName"/>.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.FusionAssemblyIdentity.ToAssemblyNameObject(System.String)">
-            <summary>
-            Creates <see cref="T:Microsoft.CodeAnalysis.FusionAssemblyIdentity.IAssemblyName"/> object by parsing given display name.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.FusionAssemblyIdentity.GetBestMatch(System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.FusionAssemblyIdentity.IAssemblyName},System.String)">
-            <summary>
-            Selects the candidate assembly with the largest version number.  Uses culture as a tie-breaker if it is provided.
-            All candidates are assumed to have the same name and must include versions and cultures.  
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.GlobalAssemblyCache">
-            <summary>
-            Provides APIs to enumerate and look up assemblies stored in the Global Assembly Cache.
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.GlobalAssemblyCache.CurrentArchitectures">
-            <summary>
-            Represents the current Processor architecture
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.GlobalAssemblyCache.GetAssemblyIdentities(System.Reflection.AssemblyName,System.Collections.Immutable.ImmutableArray{System.Reflection.ProcessorArchitecture})">
-            <summary>
-            Enumerates assemblies in the GAC returning those that match given partial name and
-            architecture.
-            </summary>
-            <param name="partialName">Optional partial name.</param>
-            <param name="architectureFilter">Optional architecture filter.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.GlobalAssemblyCache.GetAssemblyIdentities(System.String,System.Collections.Immutable.ImmutableArray{System.Reflection.ProcessorArchitecture})">
-            <summary>
-            Enumerates assemblies in the GAC returning those that match given partial name and
-            architecture.
-            </summary>
-            <param name="partialName">The optional partial name.</param>
-            <param name="architectureFilter">The optional architecture filter.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.GlobalAssemblyCache.GetAssemblySimpleNames(System.Collections.Immutable.ImmutableArray{System.Reflection.ProcessorArchitecture})">
-            <summary>
-            Enumerates assemblies in the GAC returning their simple names.
-            </summary>
-            <param name="architectureFilter">Optional architecture filter.</param>
-            <returns>Unique simple names of GAC assemblies.</returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.GlobalAssemblyCache.ResolvePartialName(System.String,System.Collections.Immutable.ImmutableArray{System.Reflection.ProcessorArchitecture},System.Globalization.CultureInfo)">
-            <summary>
-            Looks up specified partial assembly name in the GAC and returns the best matching <see cref="T:Microsoft.CodeAnalysis.AssemblyIdentity"/>.
-            </summary>
-            <param name="displayName">The display name of an assembly</param>
-            <param name="architectureFilter">The optional processor architecture</param>
-            <param name="preferredCulture">The optional preferred culture information</param>
-            <returns>An assembly identity or null, if <paramref name="displayName"/> can't be resolved.</returns>
-            <exception cref="T:System.ArgumentNullException"><paramref name="displayName"/> is null.</exception>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.GlobalAssemblyCache.ResolvePartialName(System.String,System.String@,System.Collections.Immutable.ImmutableArray{System.Reflection.ProcessorArchitecture},System.Globalization.CultureInfo)">
-            <summary>
-            Looks up specified partial assembly name in the GAC and returns the best matching <see cref="T:Microsoft.CodeAnalysis.AssemblyIdentity"/>.
-            </summary>
-            <param name="displayName">The display name of an assembly</param>
-            <param name="location">Full path name of the resolved assembly</param>
-            <param name="architectureFilter">The optional processor architecture</param>
-            <param name="preferredCulture">The optional preferred culture information</param>
-            <returns>An assembly identity or null, if <paramref name="displayName"/> can't be resolved.</returns>
-            <exception cref="T:System.ArgumentNullException"><paramref name="displayName"/> is null.</exception>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Scripting.GacFileResolver">
-            <summary>
-            Extends MetadataFileReferenceResolver to enable resolution of assembly
-            simple names in the GAC.
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.Scripting.GacFileResolver.Default">
-            <summary>
-            A resolver that is configured to resolve against the GAC associated
-            with the bitness of the currently executing process.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Scripting.GacFileResolver.#ctor(System.Collections.Immutable.ImmutableArray{System.Reflection.ProcessorArchitecture},System.Globalization.CultureInfo)">
-            <summary>
-            Constructs an instance of a <see cref="T:Microsoft.CodeAnalysis.Scripting.GacFileResolver"/>
-            </summary>
-            <param name="architectures">Supported architectures used to filter GAC assemblies.</param>
-            <param name="preferredCulture">A culture to use when choosing the best assembly from 
-            among the set filtered by <paramref name="architectures"/></param>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Scripting.GacFileResolver.Architectures">
-            <summary>
-            Architecture filter used when resolving assembly references.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Scripting.GacFileResolver.PreferredCulture">
-            <summary>
-            CultureInfo used when resolving assembly references.
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.SimpleAnalyzerAssemblyLoader">
@@ -391,6 +284,12 @@
             </summary>
             <param name="properties">An optional set of MSBuild properties used when interpreting project files.
             These are the same properties that are passed to msbuild via the /property:&lt;n&gt;=&lt;v&gt; command line argument.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildWorkspace.Create(Microsoft.CodeAnalysis.Host.HostServices)">
+            <summary>
+            Create a new instance of a workspace that can be populated by opening solution and project files.
+            </summary>
+            <param name="hostServices">The <see cref="T:Microsoft.CodeAnalysis.Host.HostServices"/> used to configure this workspace.</param>
         </member>
         <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildWorkspace.Create(System.Collections.Generic.IDictionary{System.String,System.String},Microsoft.CodeAnalysis.Host.HostServices)">
             <summary>
@@ -681,13 +580,13 @@
             Associates a project file extension with a language name.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.LoadSolutionInfoAsync(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,Microsoft.CodeAnalysis.ProjectId},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.LoadSolutionInfoAsync(System.String,System.Threading.CancellationToken)">
             <summary>
             Loads the <see cref="T:Microsoft.CodeAnalysis.SolutionInfo"/> for the specified solution file, including all projects referenced by the solution file and 
             all the projects referenced by the project files.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.LoadProjectInfoAsync(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,Microsoft.CodeAnalysis.ProjectId},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.LoadProjectInfoAsync(System.String,System.Collections.Immutable.ImmutableDictionary{System.String,Microsoft.CodeAnalysis.ProjectId},System.Threading.CancellationToken)">
             <summary>
             Loads the <see cref="T:Microsoft.CodeAnalysis.ProjectInfo"/> from the specified project file and all referenced projects.
             The first <see cref="T:Microsoft.CodeAnalysis.ProjectInfo"/> in the result corresponds to the specified project file.
@@ -702,6 +601,27 @@
         <member name="M:Microsoft.CodeAnalysis.MSBuild.MSBuildProjectLoader.GetProjectMetadata(System.String,System.Collections.Immutable.ImmutableArray{System.String},System.Collections.Generic.IDictionary{System.String,System.String},System.Threading.CancellationToken)">
             <summary>
             Gets a MetadataReference to a project's output assembly.
+            </summary>
+        </member>
+        <member name="M:Roslyn.Utilities.StreamExtensions.TryReadAll(System.IO.Stream,System.Byte[],System.Int32,System.Int32)">
+            <summary>
+            Attempts to read all of the requested bytes from the stream into the buffer
+            </summary>
+            <returns>
+            The number of bytes read. Less than <paramref name="count" /> will
+            only be returned if the end of stream is reached before all bytes can be read.
+            </returns>
+            <remarks>
+            Unlike <see cref="M:System.IO.Stream.Read(System.Byte[],System.Int32,System.Int32)"/> it is not guaranteed that
+            the stream position or the output buffer will be unchanged if an exception is
+            returned.
+            </remarks>
+        </member>
+        <member name="T:Roslyn.Utilities.CoreClrShim">
+            <summary>
+            This is a bridge for APIs that are only available on CoreCLR or .NET 4.6
+            and NOT on .NET 4.5. The compiler currently targets .NET 4.5 and CoreCLR
+            so this shim is necessary for switching on the dependent behavior.
             </summary>
         </member>
         <member name="F:Roslyn.Utilities.FileKey.FullPath">

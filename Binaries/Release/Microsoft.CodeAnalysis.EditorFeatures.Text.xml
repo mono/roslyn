@@ -137,6 +137,11 @@
             Determines whether the specified line is empty or contains whitespace only.
             </summary>
         </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Shared.Extensions.ITextSnapshotLineExtensions.StartsWith(Microsoft.VisualStudio.Text.ITextSnapshotLine,System.Int32,System.String,System.Boolean)">
+            <summary>
+            Checks if the given line at the given snapshot index starts with the provided value.
+            </summary>
+        </member>
         <member name="M:Microsoft.CodeAnalysis.Text.Shared.Extensions.TextSpanExtensions.ToSpan(Microsoft.CodeAnalysis.Text.TextSpan)">
             <summary>
             Convert a <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> instance to an <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/>.
