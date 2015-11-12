@@ -165,6 +165,16 @@ Microsoft.CodeAnalysis.VisualBasic
  Should this lambda be treated as a single line lambda?
  </summary>
 </member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.BoundTreeVisitor.VisitExpressionWithStackGuard(System.Int32@,Microsoft.CodeAnalysis.VisualBasic.BoundExpression)">
+ <summary>
+ Consumers must provide implementation for <see cref="M:Microsoft.CodeAnalysis.VisualBasic.BoundTreeVisitor.VisitExpressionWithoutStackGuard(Microsoft.CodeAnalysis.VisualBasic.BoundExpression)"/>.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.BoundTreeVisitor.VisitExpressionWithoutStackGuard(Microsoft.CodeAnalysis.VisualBasic.BoundExpression)">
+ <summary>
+ We should be intentional about behavior of derived classes regarding guarding against stack overflow. 
+ </summary>
+</member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Analyzer.AnalyzeMethodBody(Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,Microsoft.CodeAnalysis.VisualBasic.BoundBlock,Microsoft.CodeAnalysis.DiagnosticBag)">
  <summary>
  Analyses method body for error conditions such as definite assignments, unreachable code etc...
@@ -828,7 +838,7 @@ Microsoft.CodeAnalysis.VisualBasic
  Note that data flow API should never report compiler generated variables 
  as well as those should not generate any diagnostics (like being unassigned, etc...).
  
- But when the analysis is used for iterators or anync captures it should process 
+ But when the analysis is used for iterators or async captures it should process 
  compiler generated locals as well...
  </summary>
 </member>
@@ -1697,13 +1707,13 @@ Microsoft.CodeAnalysis.VisualBasic
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Binder.BadExpression(Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxNode,Microsoft.CodeAnalysis.VisualBasic.BoundNode,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol)">
  <summary>
- Create a BoundBadExpression node for the given childexpression, which is preserved as a sub-expression. 
+ Create a BoundBadExpression node for the given child-expression, which is preserved as a sub-expression. 
  No ResultKind is associated
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Binder.BadExpression(Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxNode,Microsoft.CodeAnalysis.VisualBasic.BoundNode,Microsoft.CodeAnalysis.VisualBasic.LookupResultKind,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol)">
  <summary>
- Create a BoundBadExpression node for the given childexpression, which is preserved as a sub-expression. 
+ Create a BoundBadExpression node for the given child-expression, which is preserved as a sub-expression. 
  A ResultKind explains why the node is bad.
  </summary>
 </member>
@@ -2902,7 +2912,7 @@ Figure out the set of best candidates in the following preference order:
  </summary>
  <remarks>
  The binding of the loop body and the next variables cannot happen before the local type inference has
- completed, which happens in the specialized binding functions for for each and for loops. Otherwise we would
+ completed, which happens in the specialized binding functions for foreach and for loops. Otherwise we would
  loose the diagnostics from the type inference.
  </remarks>
  <param name="loopBody">The loop body.</param>
@@ -3666,7 +3676,7 @@ Figure out the set of best candidates in the following preference order:
  in lowering
  </summary>
 </member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.WithBlockBinder.WithBlockInfo.ExpressionHasByRefMeReference">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.WithBlockBinder.WithBlockInfo.ExpressionHasByRefMeReference(System.Int32)">
  <summary>
  If With statement expression is being used from nested lambda there are some restrictions
  to the usage of Me reference in this expression. As these restrictions are only to be checked 
@@ -4382,7 +4392,7 @@ For more explanation of Kind, Symbol, Error - see LookupResult.
     a non-accessible result - this kind of result means that search continues into further scopes of lower priority for
                       a viable result. An error is attached with the inaccessibility errors. Non-accessible results take priority over
                       non-viable results.
-    a non-viable result - a result that that means that the search continues into further scopes of lower priority for
+    a non-viable result - a result that means that the search continues into further scopes of lower priority for
                           a viable or non-accessible result. An error is attached with the error that indicates
                           why the result is non-viable.
     a bad symbol that stops further lookup -  this kind of result prevents lookup into further scopes of lower priority.
@@ -5179,25 +5189,15 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  An ArrayTypeSymbol represents an array type, such as Integer() or Object(,).
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.#ctor(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.CustomModifier},System.Int32,Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.CreateVBArray(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.CustomModifier},System.Int32,Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation)">
  <summary>
  Create a new ArrayTypeSymbol.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.#ctor(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.CustomModifier},System.Int32,Microsoft.CodeAnalysis.VisualBasic.Symbols.AssemblySymbol)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.CreateVBArray(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.CustomModifier},System.Int32,Microsoft.CodeAnalysis.VisualBasic.Symbols.AssemblySymbol)">
  <summary>
  Create a new ArrayTypeSymbol.
  </summary>
-</member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.#ctor(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.CustomModifier},System.Int32,Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol})">
- <summary>
- Create a new ArrayTypeSymbol.
- </summary>
- <param name="elementType">The element type of this array type.</param>
- <param name="customModifiers"> The custom modifiers, if any</param>
- <param name="rank">The rank of this array type.</param>
- <param name="systemArray">Symbol for System.Array</param>
- <param name="interfaces">Symbols for the interfaces of this array. Should be IList(Of ElementType) and possibly IReadOnlyList(Of ElementType) or Nothing.</param>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.CustomModifiers">
  <summary>
@@ -5208,6 +5208,36 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  <summary>
  Returns the number of dimensions of this array. A regular single-dimensional array
  has rank 1, a two-dimensional array has rank 2, etc.
+ </summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.IsSZArray">
+ <summary>
+ Is this zero-based one-dimensional array, i.e. SZArray in CLR terms.
+ </summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.Sizes">
+ <summary>
+ Specified sizes for dimensions, by position. The length can be less than <see cref="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.Rank"/>,
+ meaning that some trailing dimensions don't have the size specified.
+ The most common case is none of the dimensions have the size specified - an empty array is returned.
+ </summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.LowerBounds">
+ <summary>
+ Specified lower bounds for dimensions, by position. The length can be less than <see cref="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.Rank"/>,
+ meaning that some trailing dimensions don't have the lower bound specified.
+ The most common case is all dimensions are zero bound - a null array is returned in this case.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.HasSameSizesAndLowerBoundsAs(Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol)">
+ <summary>
+ Note, <see cref="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.Rank"/> equality should be checked separately!!!
+ </summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.HasDefaultSizesAndLowerBounds">
+ <summary>
+ Normally VB arrays have default sizes and lower bounds - sizes are not specified and all dimensions are zero bound.
+ This property should return false for any deviations.
  </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.ElementType">
@@ -5307,6 +5337,24 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  substitution had no effect, return Me. 
  !!! Only code implementing construction of generic types is allowed to call this method !!!
  !!! All other code should use Construct methods.                                        !!! 
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.SZOrMDArray.InternalSubstituteTypeParameters(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution)">
+ <summary>
+ Substitute the given type substitution within this type, returning a new type. If the
+ substitution had no effect, return Me. 
+ !!! Only code implementing construction of generic types is allowed to call this method !!!
+ !!! All other code should use Construct methods.                                        !!! 
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.SZArray">
+ <summary>
+ Represents SZARRAY - zero-based one-dimensional array 
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Symbols.ArrayTypeSymbol.MDArray">
+ <summary>
+ Represents MDARRAY - multi-dimensional array (possibly of rank 1)
  </summary>
 </member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.Symbols.VisualBasicAttributeData">
@@ -6073,6 +6121,11 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  then the type parameter itself is consider the type argument.
  </summary>
 </member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol.TypeArgumentsCustomModifiers">
+ <summary>
+ Returns custom modifiers for the type arguments that have been substituted for the type parameters. 
+ </summary>
+</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol.ConstructedFrom">
  <summary>
  Returns the type symbol that this type was constructed from. This type symbol
@@ -6154,7 +6207,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol.DelegateInvokeMethod">
  <summary>
  For delegate types, gets the delegate's invoke method.  Returns null on
- all other kinds of types.  Note that is is possible to have an ill-formed 
+ all other kinds of types.  Note that it is possible to have an ill-formed 
  delegate type imported from metadata which does not have an Invoke method.
  Such a type will be classified as a delegate but its DelegateInvokeMethod
  would be null.
@@ -6902,16 +6955,13 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  is required. Thus, the base implementation throws an exception instead of being MustOverride.
  </remarks>
 </member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.ParameterSymbol.HasByRefBeforeCustomModifiers">
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.ParameterSymbol.CountOfCustomModifiersPrecedingByRef">
  <summary>
  The CLI spec says that custom modifiers must precede the ByRef type code in the encoding of a parameter.
  Unfortunately, the managed C++ compiler emits them in the reverse order.  In order to avoid breaking
- interop scenarios, we need to support such signatures.  When this flag Is set, we need to reverse the
- emit order.
+ interop scenarios, we need to support such signatures. 
+ Should be 0 for non-ref parameters.
  </summary>
- <remarks>
- We support before (correct) And after (incorrect, but works), but Not in between.
- </remarks>
 </member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.Symbols.PropertySymbol">
  <summary>
@@ -9049,7 +9099,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
           T1.M1 -> { T1,  T1..ctor, Attr1, Attr1..ctor, ... }
  
  we cannot just check if T1.M1 exists in the collection of referenced symbols and not 
- add dependant symbols if it does; the reason is that T1.M1 may be added by a concurrent 
+ add dependent symbols if it does; the reason is that T1.M1 may be added by a concurrent 
  thread, but its dependencies may not be added by that thread yet. So we need to 
  calculate all dependencies and try add all the symbols together.
  
@@ -9160,9 +9210,10 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  Represents a field or property initializer. Holds the symbol and the syntax for the initialization.
  </summary>
 </member>
-<member name="F:Microsoft.CodeAnalysis.VisualBasic.Symbols.FieldOrPropertyInitializer.FieldsOrProperty">
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.Symbols.FieldOrPropertyInitializer.FieldsOrProperties">
  <summary>
- The fields or a property being initialized, or Nothing if this represents an executable statement in script code.
+ The fields or properties being initialized, or Nothing if this represents an executable statement in script code.
+ We can get into a multiple properties case when multiple WithEvents fields are initialized with As New ...
  </summary>
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.Symbols.FieldOrPropertyInitializer.Syntax">
@@ -9225,7 +9276,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 </member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.Symbols.InstanceErrorTypeSymbol">
  <summary>
- The base class for potentially constructable (i.e. with known arity) error type symbols
+ The base class for potentially constructible (i.e. with known arity) error type symbols
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.InstanceErrorTypeSymbol.InternalSubstituteTypeParameters(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution)">
@@ -10214,6 +10265,13 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.OverriddenMembersResult`1.InaccessibleMembers">
  <summary>
  Members that would be in OverriddenMembers if they were accessible.
+ </summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.OverriddenMembersResult`1.OverriddenMember">
+ <summary>
+ It Is Not suitable to call this method on a <see cref="T:Microsoft.CodeAnalysis.VisualBasic.Symbols.OverriddenMembersResult`1"/> object
+ associated with a member within substituted type, <see cref="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.OverriddenMembersResult`1.GetOverriddenMember(`0,`0)"/>
+ should be used instead.
  </summary>
 </member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.Symbols.PEOrSourceOrMergedNamespaceSymbol">
@@ -11843,7 +11901,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceNamespaceSymbol.HasMultipleSpellings">
  <summary>
- Does this namespace have multiple different different case-sensitive spellings
+ Does this namespace have multiple different case-sensitive spellings
  (i.e., "Namespace FOO" and "Namespace foo". Includes parent namespace(s).
  </summary>
 </member>
@@ -12544,7 +12602,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.SynthesizedAttributeData.Create(Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,Microsoft.CodeAnalysis.WellKnownMember,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.TypedConstant},System.Collections.Immutable.ImmutableArray{System.Collections.Generic.KeyValuePair{System.String,Microsoft.CodeAnalysis.TypedConstant}})">
  <summary>
- Synthesizes attribtue data for given constructor symbol.
+ Synthesizes attribute data for given constructor symbol.
  If the constructor has UseSiteErrors and the attribute is optional returns Nothing.
  </summary>
 </member>
@@ -12988,7 +13046,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  </summary>
  <remarks>
  When derived class contains "Handles" methods that refer to a 
- WithEvents property in a base class, derived calss needs to add a 
+ WithEvents property in a base class, derived class needs to add a 
  synthetic override for the base WithEvent property. 
  We need the override so that we could inject code sequences that 
  remove old handlers and add new handlers when something is assigned 
@@ -13140,7 +13198,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  True if the parameter has a default value that should be supplied as the argument value by a caller for which the argument value has not been explicitly specified.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.SynthesizedParameterSymbolWithCustomModifiers.#ctor(Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol,System.Int32,System.Boolean,System.String,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.CustomModifier},System.Boolean)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.SynthesizedParameterSymbolWithCustomModifiers.#ctor(Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol,System.Int32,System.Boolean,System.String,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.CustomModifier},System.UInt16)">
  <summary>
  Initializes a new instance of the <see cref="T:Microsoft.CodeAnalysis.VisualBasic.Symbols.SynthesizedParameterSymbolWithCustomModifiers" /> class.
  </summary>
@@ -13382,7 +13440,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  targetGenericDefinition.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution.Create(Microsoft.CodeAnalysis.VisualBasic.Symbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeParameterSymbol[],Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol[],System.Boolean)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution.Create(Microsoft.CodeAnalysis.VisualBasic.Symbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeParameterSymbol[],Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeWithModifiers[],System.Boolean)">
  <summary>
  Create a substitution. If the substitution is the identity substitution, Nothing is returned.
  </summary>
@@ -13394,7 +13452,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  <param name="args">Corresponding type arguments.</param>
  <returns></returns>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution.Create(Microsoft.CodeAnalysis.VisualBasic.Symbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeParameterSymbol},System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol},System.Boolean)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution.Create(Microsoft.CodeAnalysis.VisualBasic.Symbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeParameterSymbol},System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeWithModifiers},System.Boolean)">
  <summary>
  Create a substitution. If the substitution is the identity substitution, Nothing is returned.
  </summary>
@@ -13406,7 +13464,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  <param name="args">Corresponding type arguments.</param>
  <returns></returns>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution.Concat(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution,Microsoft.CodeAnalysis.VisualBasic.Symbol,System.Collections.Immutable.ImmutableArray{System.Collections.Generic.KeyValuePair{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeParameterSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol}})">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution.Concat(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution,Microsoft.CodeAnalysis.VisualBasic.Symbol,System.Collections.Immutable.ImmutableArray{System.Collections.Generic.KeyValuePair{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeParameterSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeWithModifiers}})">
  <summary>
  Private helper to make sure identity substitutions are injected for types between 
  targetGenericDefinition and parent.TargetGenericDefinition.
@@ -13419,7 +13477,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  </summary>
  <param name="alphaRenamedTypeParameters">Alpha-renamed type parameters.</param>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution.CreateAdditionalMethodTypeParameterSubstitution(Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol})">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution.CreateAdditionalMethodTypeParameterSubstitution(Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeWithModifiers})">
  <summary>
  Create TypeSubstitution that can be used to substitute method's type parameters
  in types involved in method's signature. 
@@ -13444,7 +13502,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  if the adjustedParent is Nothing, Nothing is returned.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution.PrivateAdjustForConstruct(Microsoft.CodeAnalysis.ArrayBuilder{System.Collections.Generic.KeyValuePair{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeParameterSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol}},Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution.PrivateAdjustForConstruct(Microsoft.CodeAnalysis.ArrayBuilder{System.Collections.Generic.KeyValuePair{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeParameterSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeWithModifiers}},Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution)">
  <summary>
  This has the following effects:
      1) The passed in additionalSubstitution is used on each type argument.
@@ -13455,7 +13513,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  Returns True if the set of pairs have changed, False otherwise.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution.Create(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution,Microsoft.CodeAnalysis.VisualBasic.Symbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol},System.Boolean)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution.Create(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution,Microsoft.CodeAnalysis.VisualBasic.Symbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeWithModifiers},System.Boolean)">
  <summary>
  Create substitution for targetGenericDefinition based on its type 
  arguments (matched to type parameters by position) and TypeSubstitution
@@ -13710,12 +13768,25 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  from outer-most to inner-most type.
  </summary>
 </member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbolExtensions.GetAllTypeArgumentsWithModifiers(Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol)">
+ <summary>
+ Return all of the type arguments and their modifiers in this type and enclosing types,
+ from outer-most to inner-most type.
+ </summary>
+</member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbolExtensions.HasNameQualifier(Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol,System.String,System.StringComparison)">
  <summary>
  Return true if the fully qualified name of the type's containing symbol
  matches the given name. This method avoids string concatenations
  in the common case where the type is a top-level type.
  </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeWithModifiers.AsTypeSymbolOnly">
+ <summary>
+ Extract type under assumption that there should be no custom modifiers.
+ The method asserts otherwise.
+ </summary>
+ <returns></returns>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.UnboundGenericType.Create(Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol)">
  <summary>
@@ -13962,17 +14033,17 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.CodeGen.CodeGenerator.HasHome(Microsoft.CodeAnalysis.VisualBasic.BoundFieldAccess)">
  <summary>
- Special HasHome for fields. Fields have homes when they are writeable.
+ Special HasHome for fields. Fields have homes when they are writable.
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.CodeGen.CodeGenerator.AllowedToTakeRef(Microsoft.CodeAnalysis.VisualBasic.BoundExpression,Microsoft.CodeAnalysis.VisualBasic.CodeGen.CodeGenerator.AddressKind)">
  <summary>
- Checks if it is allowed to take a writeable reference to expression according to VB rules.
+ Checks if it is allowed to take a writable reference to expression according to VB rules.
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.CodeGen.CodeGenerator.AllowedToTakeRef(Microsoft.CodeAnalysis.VisualBasic.BoundLocal,Microsoft.CodeAnalysis.VisualBasic.CodeGen.CodeGenerator.AddressKind)">
  <summary>
- Checks if it is allowed to take a writeable reference to expression according to VB rules.
+ Checks if it is allowed to take a writable reference to expression according to VB rules.
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.CodeGen.CodeGenerator.AllowedToTakeRef(Microsoft.CodeAnalysis.VisualBasic.BoundFieldAccess,Microsoft.CodeAnalysis.VisualBasic.CodeGen.CodeGenerator.AddressKind)">
@@ -14047,7 +14118,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.CodeGen.CodeGenerator.GetRawData(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.BoundExpression})">
  <summary>
  Produces a serialized blob of all constant initializers.
- Nonconstant initializers are matched with a zero of corresponding size.
+ Non-constant initializers are matched with a zero of corresponding size.
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.CodeGen.CodeGenerator.IsMultidimensionalInitializer(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.BoundExpression})">
@@ -14160,6 +14231,15 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  </summary>
  <remarks></remarks>
 </member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.ExprContext">
+ <summary>
+ context of expression evaluation. 
+ it will affect inference of stack behavior
+ it will also affect when expressions can be dup-reused
+     Example:
+         Foo(x, ref x)     x cannot be duped as it is used in different context  
+ </summary>
+</member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.Analyzer">
  <summary>
  Analyses the tree trying to figure which locals may live on stack. It is 
@@ -14170,28 +14250,13 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  so when situation gets complicated we just refuse to schedule and move on.
  </summary>
 </member>
-<member name="T:Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.Analyzer.ExprContext">
- <summary>
- context of expression evaluation. 
- it will affect inference of stack behavior
- it will also affect when expressions can be dup-reused
-     Example:
-         Foo(x, ref x)     x cannot be duped as it is used in different context  
- </summary>
-</member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.Analyzer._empty">
  <summary>
  fake local that represents the eval stack. when we need to ensure that eval
  stack is not blocked by stack Locals, we record an access to empty.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.Analyzer.ReuseOrVisit(Microsoft.CodeAnalysis.VisualBasic.BoundExpression,Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.Analyzer.ExprContext)">
- <summary>
- Recursively rewrites the node or simply replaces it with a dup node
- if we have just seen exactly same node.
- </summary>
-</member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.Analyzer.LhsUsesStackWhenAssignedTo(Microsoft.CodeAnalysis.VisualBasic.BoundNode,Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.Analyzer.ExprContext)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.Analyzer.LhsUsesStackWhenAssignedTo(Microsoft.CodeAnalysis.VisualBasic.BoundNode,Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.ExprContext)">
  <summary>
  here we have a case of indirect assignment:  *t1 = expr;
  normally we would need to push t1 and that will cause spilling of t2
@@ -14265,20 +14330,26 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.LocalDefUseSpan.ConflictsWith(Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.LocalDefUseSpan)">
  <summary>
- That said, when current and other use spans are regular spans we can have 
- only 2 conflict cases:
-      [1, 3) conflicts with [0, 2) 
-      [1, 3) conflicts with [2, 4) 
+ when current And other use spans are regular spans we can have only 2 conflict cases:
+ [1, 3) conflicts with [0, 2)
+ [1, 3) conflicts with [2, 4)
  
- specifically: 
-      [1, 3) does not conflict with [0, 1) 
+ NOTE: With regular spans, it is not possible for two spans to share an edge point 
+ unless they belong to the same local. (because we cannot aceess two real locals at the same time)
  
- NOTE: with regular spans, it is not possible to have start1 == start2 or 
- end1 == end2 since at the same node we can access only one real local.
+ specifically:
+ [1, 3) does Not conflict with [0, 1)   since such spans would need to belong to the same local
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.LocalDefUseSpan.ConflictsWithDummy(Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.LocalDefUseSpan)">
+ <summary>
+ Dummy locals represent implicit control flow
+ it is not allowed for a regular local span to cross into or 
+ be immediately adjacent to a dummy span.
  
- However at the same node we can access one or more dummy locals. So we can 
- have start1 == start2 and end1 == end2 scenarios, but only if the other span 
- is a span of a dummy. 
+ specifically:
+ [1, 3) does conflict with [0, 1)   since that would imply a value flowing into or out of a span surrounded by a branch/label
+ 
  </summary>
 </member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.CodeGen.StackScheduler.Rewriter">
@@ -14306,7 +14377,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCommandLineArguments.ParseOptions">
  <summary>
- Set and Get  the Visual Basic parse parse options.
+ Set and Get the Visual Basic parse options.
  </summary>
  <returns>The currently set Visual Basic parse options.</returns>
 </member>
@@ -14332,7 +14403,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  Gets the current command line parser.
  </summary>
 </member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCommandLineParser.Interactive">
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCommandLineParser.ScriptRunner">
  <summary>
  Gets the current interactive command line parser.
  </summary>
@@ -14341,7 +14412,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  <summary>
  Creates a new command line parser.
  </summary>
- <param name="isInteractive">An optional parameter indicating indicating whether to create a interactive command line parser.</param>
+ <param name="isScriptRunner">An optional parameter indicating whether to create a interactive command line parser.</param>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCommandLineParser.RegularFileExtension">
  <summary>
@@ -14361,7 +14432,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  </summary>
  <param name="args">A collection of strings representing the command line arguments.</param>
  <param name="baseDirectory">The base directory used for qualifying file locations.</param>
- <param name="sdkDirectory">The directory to search for mscorlib.</param>
+ <param name="sdkDirectory">The directory to search for mscorlib, or Nothing if not available.</param>
  <param name="additionalReferenceDirectories">A string representing additional reference paths.</param>
  <returns>A CommandLineArguments object representing the parsed command line.</returns>
 </member>
@@ -14374,7 +14445,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCommandLineParser.InternalDefinesToPublicSymbols(System.Collections.Immutable.ImmutableDictionary{System.String,Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.CConst})">
  <summary>
- Converts ImmutableDictionary of definitions used internallyinto IReadOnlyDictionary of definitions 
+ Converts ImmutableDictionary of definitions used internally into IReadOnlyDictionary of definitions 
  returned to a caller (of public API)
  </summary>
 </member>
@@ -14825,7 +14896,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  <param name="options">The compiler options to use.</param>
  <returns>A new compilation.</returns>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.CreateSubmission(System.String,Microsoft.CodeAnalysis.SyntaxTree,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.MetadataReference},Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions,Microsoft.CodeAnalysis.Compilation,System.Type,System.Type)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.CreateScriptCompilation(System.String,Microsoft.CodeAnalysis.SyntaxTree,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.MetadataReference},Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions,Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation,System.Type,System.Type)">
  <summary> 
  Creates a new compilation that can be used in scripting. 
  </summary>
@@ -14853,7 +14924,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  the New compilation is going to use the updated version, while the current compilation will be using the previous (it doesn't change).
  </remarks>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.WithPreviousSubmission(Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.WithScriptCompilationInfo(Microsoft.CodeAnalysis.VisualBasic.VisualBasicScriptCompilationInfo)">
  <summary>
  Returns a new compilation with the given compilation set as the previous submission. 
  </summary>
@@ -14862,24 +14933,6 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  <summary>
  Returns a new compilation with a given event queue.
  </summary>
-</member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.GetSubmissionResultType(System.Boolean@)">
- <summary>
- Returns the type of the submission return value.
- </summary>
- <param name="hasValue">
- Whether the submission is considered to have a value. 
- This information can be used for example in a REPL implementation to determine whether to print out the result of a submission execution.
- </param>
- <returns>
- Returns a static type of the expression of the last expression or call statement if there is any,
- a symbol for <see cref="T:System.Void"/> otherwise.
- </returns>
- <remarks>
- Note that the return type is System.Void for both compilations "System.Console.WriteLine()" and "?System.Console.WriteLine()",
- and <paramref name="hasValue"/> is <c>False</c> for the former and <c>True</c> for the latter.
- </remarks>
- <exception cref="T:System.InvalidOperationException">The compilation doesn't represent a submission (<see cref="P:Microsoft.CodeAnalysis.Compilation.IsSubmission"/> return false).</exception>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.SyntaxTrees">
  <summary>
@@ -15132,9 +15185,14 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  using an exact equality comparison. No unification Or further resolution is performed.
  </remarks>
 </member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.ReferenceManager.AssemblyDataForFile.CachedSymbols">
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.ReferenceManager.AssemblyDataForFile.CachedSymbols">
  <summary>
  Guarded by <see cref="F:Microsoft.CodeAnalysis.CommonReferenceManager.SymbolCacheAndReferenceManagerStateGuard"/>.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.ReferenceManager.AssemblyDataForFile._compilationImportOptions">
+ <summary>
+ Import options of the compilation being built.
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.ReferenceManager.IsSourceAssemblySymbolCreated(Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation)">
@@ -17500,7 +17558,7 @@ End Class
  has executed <see cref="M:Microsoft.CodeAnalysis.VisualBasic.Symbol.DecodeWellKnownAttribute(Microsoft.CodeAnalysis.DecodeWellKnownAttributeArguments{Microsoft.CodeAnalysis.VisualBasic.Syntax.AttributeSyntax,Microsoft.CodeAnalysis.VisualBasic.Symbols.VisualBasicAttributeData,Microsoft.CodeAnalysis.VisualBasic.Symbols.AttributeLocation}@)"/> for attributes applied on the symbol and has stored the decoded data in the
  lazyCustomAttributesBag on the symbol. Bound attributes haven't been stored on the bag yet.
  
- Post-validation for attributes that is dependant on other attributes can be done here.
+ Post-validation for attributes that is dependent on other attributes can be done here.
  
  This method should not have any side effects on the symbol, i.e. it SHOULD NOT change the symbol state.
  </remarks>
@@ -17613,7 +17671,7 @@ End Class
 </member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.LocalizableErrorArgument">
  <summary>
- The LocalizableErrorArgument class contains members members that allows formatting and serialization of error arguments.
+ The LocalizableErrorArgument class contains members that allows formatting and serialization of error arguments.
  Message IDs may refer to strings that need to be localized.   This struct makes an IFormattable wrapper around a MessageID
  </summary>
 </member>
@@ -17851,7 +17909,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
 </member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.AsyncRewriter.SpillFieldAllocator">
  <summary>
- Spill field allocator controls allocation and reusage of the set of fields 
+ Spill field allocator controls allocation and reuse of the set of fields 
  used to spilling expressions; current implementation allows reuse of fields 
  of the same type on high-level statement level
  </summary>
@@ -17899,7 +17957,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  A lot of code is #If False disabled until it can be tested. 
  </remarks>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionLambdaRewriter.RewriteLambda(Microsoft.CodeAnalysis.VisualBasic.BoundLambda,Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol,Microsoft.CodeAnalysis.VisualBasic.TypeCompilationState,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution,Microsoft.CodeAnalysis.DiagnosticBag,System.Collections.Generic.HashSet{Microsoft.CodeAnalysis.VisualBasic.BoundNode})">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.ExpressionLambdaRewriter.RewriteLambda(Microsoft.CodeAnalysis.VisualBasic.BoundLambda,Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol,Microsoft.CodeAnalysis.VisualBasic.TypeCompilationState,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution,Microsoft.CodeAnalysis.DiagnosticBag,System.Collections.Generic.HashSet{Microsoft.CodeAnalysis.VisualBasic.BoundNode},System.Int32)">
  <summary>
  Rewrite a bound lambda into a bound node that will create the corresponding expression tree at run time.
  </summary>
@@ -18003,7 +18061,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  Then we make frame, or compiler-generated class, represented by an instance of
  LambdaRewriter.Frame for each scope with captured variables.  The generated frames are kept
  in LambdaRewriter.frames.  Each frame is given a single field for each captured
- variable in the corresponding scope.  These are are maintained in LambdaRewriter.proxies.
+ variable in the corresponding scope.  These are maintained in LambdaRewriter.proxies.
  
  Finally, we walk and rewrite the input bound tree, keeping track of the following:
  (1) The current set of active frame pointers, in LambdaRewriter.framePointers
@@ -18788,6 +18846,13 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.RewriteStringConcatenationOneExpr(Microsoft.CodeAnalysis.VisualBasic.SyntheticBoundNodeFactory,Microsoft.CodeAnalysis.VisualBasic.BoundExpression)">
  <summary>
  Strangely enough there is such a thing as unary concatenation and it must be rewritten.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.HasSideEffects(Microsoft.CodeAnalysis.VisualBasic.BoundStatement)">
+ <summary>
+ Is there any code to execute in the given statement that could have side-effects,
+ such as throwing an exception? This implementation is conservative, in the sense
+ that it may return true when the statement actually may have no side effects.
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.VisitUsingStatement(Microsoft.CodeAnalysis.VisualBasic.BoundUsingStatement)">
@@ -22536,7 +22601,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  true. Multiple statements must be separated by colons.
  </param>
  <param name="elseClause">
- An "Else" clause to be executed if the condition expression evalues as false.
+ An "Else" clause to be executed if the condition expression evaluates as false.
  </param>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.SyntaxFactory.SingleLineElseClause(Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.KeywordSyntax,Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.VisualBasicSyntaxNode})">
@@ -28555,7 +28620,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.SingleLineIfStatementSyntax.ElseClause">
  <summary>
- An "Else" clause to be executed if the condition expression evalues as false.
+ An "Else" clause to be executed if the condition expression evaluates as false.
  </summary>
  <remarks>
  This child is optional. If it is not present, then Nothing is returned.
@@ -33966,7 +34031,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  true. Multiple statements must be separated by colons.
  </param>
  <param name="elseClause">
- An "Else" clause to be executed if the condition expression evalues as false.
+ An "Else" clause to be executed if the condition expression evaluates as false.
  </param>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.ContextAwareSyntaxFactory.SingleLineElseClause(Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.KeywordSyntax,Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.VisualBasicSyntaxNode})">
@@ -44303,7 +44368,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.Syntax.SingleLineIfStatementSyntax.ElseClause">
  <summary>
- An "Else" clause to be executed if the condition expression evalues as false.
+ An "Else" clause to be executed if the condition expression evaluates as false.
  </summary>
  <remarks>
  This child is optional. If it is not present, then Nothing is returned.
@@ -53602,7 +53667,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.OverloadResolution.CollectUserDefinedOperators(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol,System.String,Microsoft.CodeAnalysis.MethodKind,Microsoft.CodeAnalysis.VisualBasic.OverloadResolution.OperatorInfo,Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.VisualBasic.Symbols.MethodSymbol})">
  <summary>
- Returns True if we should stop climbing inheritence hierarchy.
+ Returns True if we should stop climbing inheritance hierarchy.
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.OverloadResolution.GetTypeToLookForOperatorsIn(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol,System.Collections.Generic.HashSet{Microsoft.CodeAnalysis.DiagnosticInfo}@)">
@@ -54540,7 +54605,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  <param name="newList">The new list.</param>
  <param name="ignoreChildNode">
  If specified called for every child syntax node (not token) that is visited during the comparison. 
- It it returns true the child is recursively visited, otherwise the child and its subtree is disregarded.
+ It returns true the child is recursively visited, otherwise the child and its subtree is disregarded.
  </param>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.AreEquivalent``1(Microsoft.CodeAnalysis.SeparatedSyntaxList{``0},Microsoft.CodeAnalysis.SeparatedSyntaxList{``0},System.Func{Microsoft.CodeAnalysis.VisualBasic.SyntaxKind,System.Boolean})">
@@ -54551,7 +54616,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  <param name="newList">The new list.</param>
  <param name="ignoreChildNode">
  If specified called for every child syntax node (not token) that is visited during the comparison. 
- It it returns true the child is recursively visited, otherwise the child and its subtree is disregarded.
+ It returns true the child is recursively visited, otherwise the child and its subtree is disregarded.
  </param>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.SyntaxTree(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.ParseOptions,System.String,System.Text.Encoding)">
@@ -59770,7 +59835,7 @@ Parse the input for leading trivia.
  true. Multiple statements must be separated by colons.
  </param>
  <param name="elseClause">
- An "Else" clause to be executed if the condition expression evalues as false.
+ An "Else" clause to be executed if the condition expression evaluates as false.
  </param>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.SingleLineIfStatement(Microsoft.CodeAnalysis.VisualBasic.Syntax.ExpressionSyntax,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.StatementSyntax},Microsoft.CodeAnalysis.VisualBasic.Syntax.SingleLineElseClauseSyntax)">
@@ -59785,7 +59850,7 @@ Parse the input for leading trivia.
  true. Multiple statements must be separated by colons.
  </param>
  <param name="elseClause">
- An "Else" clause to be executed if the condition expression evalues as false.
+ An "Else" clause to be executed if the condition expression evaluates as false.
  </param>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.SingleLineIfStatement(Microsoft.CodeAnalysis.VisualBasic.Syntax.ExpressionSyntax)">
@@ -67517,13 +67582,13 @@ Parse the input for leading trivia.
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TryStatement">
  <summary>
- Represents the Try part part of a Try...Catch...Finally...End Try. This
+ Represents the Try part of a Try...Catch...Finally...End Try. This
  statement is always the Begin of a TryPart.
  </summary>
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CatchStatement">
  <summary>
- Represents the Catch part part of a Try...Catch...Finally...End Try. This
+ Represents the Catch part of a Try...Catch...Finally...End Try. This
  statement is always the Begin of a CatchPart.
  </summary>
 </member>
@@ -67534,7 +67599,7 @@ Parse the input for leading trivia.
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FinallyStatement">
  <summary>
- Represents the Finally part part of a Try...Catch...Finally...End Try. This
+ Represents the Finally part of a Try...Catch...Finally...End Try. This
  statement is always the Begin of a FinallyPart.
  </summary>
 </member>
@@ -70161,7 +70226,7 @@ Parse the input for leading trivia.
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DocumentationCommentTrivia">
  <summary>
- Represents a documentation comment e.g. ''' &lt;Summary&gt; apearing in source.
+ Represents a documentation comment e.g. ''' &lt;Summary&gt; appearing in source.
  </summary>
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlCrefAttribute">
@@ -70398,7 +70463,7 @@ Parse the input for leading trivia.
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InterpolationAlignmentClause">
  <summary>
- Represents an alignment clause ', alignment' of an intepolated string embedded expression.
+ Represents an alignment clause ', alignment' of an interpolated string embedded expression.
  </summary>
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InterpolationFormatClause">
@@ -70762,11 +70827,6 @@ Parse the input for leading trivia.
  Get a reference to the given node.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxTree.ParsedSyntaxTree.ToString">
- <summary>
- Returns a <see cref="T:System.String" /> that represents the source code of this parsed tree.
- </summary>
-</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxTree.Options">
  <summary>
  The options used by the parser to produce the syntax tree.
@@ -70959,7 +71019,7 @@ Parse the input for leading trivia.
  make two types identical.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.TypeUnification.CanUnifyHelper(Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution@)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.TypeUnification.CanUnifyHelper(Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeWithModifiers,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeWithModifiers,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution@)">
  <summary>
  Determine whether there is any substitution of type parameters that will
  make two types identical.
@@ -70979,7 +71039,7 @@ Parse the input for leading trivia.
  Two types will not unify if they have different custom modifiers.
  </remarks>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.TypeUnification.AddSubstitution(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution@,Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeParameterSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSymbol)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.TypeUnification.AddSubstitution(Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeSubstitution@,Microsoft.CodeAnalysis.VisualBasic.Symbols.NamedTypeSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeParameterSymbol,Microsoft.CodeAnalysis.VisualBasic.Symbols.TypeWithModifiers)">
  <summary>
  Add a type parameter -> type argument substitution to a TypeSubstitution object, returning a new TypeSubstitution object
  ByRef.
@@ -71113,11 +71173,6 @@ Parse the input for leading trivia.
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ChainingSpeculativeModelIsNotSupported">
 <summary>
   Looks up a localized string similar to Chaining speculative semantic model is not supported. You should create a speculative model from the non-speculative ParentModel..
-</summary>
-</member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.CompilationDoesNotRepresentInteractiveSubmission">
-<summary>
-  Looks up a localized string similar to This compilation doesn&apos;t represent an interactive submission..
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.CompilationVisualBasic">
@@ -72549,6 +72604,11 @@ Parse the input for leading trivia.
   Looks up a localized string similar to Conversion from &apos;Date&apos; to &apos;Double&apos; requires calling the &apos;Date.ToOADate&apos; method..
 </summary>
 </member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_DebugEntryPointNotSourceMethodDefinition">
+<summary>
+  Looks up a localized string similar to Debug entry point must be a definition of a method declared in the current compilation..
+</summary>
+</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_DeclaresCantBeInGeneric">
 <summary>
   Looks up a localized string similar to &apos;Declare&apos; statements are not allowed in generic types or types contained in generic types..
@@ -73427,6 +73487,11 @@ Parse the input for leading trivia.
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_ExpectedSColon">
 <summary>
   Looks up a localized string similar to Expected closing &apos;;&apos; for XML entity..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_ExpectedSingleScript">
+<summary>
+  Looks up a localized string similar to Expected a single script (.vbx file).
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_ExpectedSpecifier">
@@ -74435,6 +74500,11 @@ Parse the input for leading trivia.
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_InvalidParameterSyntax">
 <summary>
   Looks up a localized string similar to Comma or &apos;)&apos; expected..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_InvalidPathMap">
+<summary>
+  Looks up a localized string similar to The pathmap option was incorrectly formatted.
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_InvalidSignaturePublicKey">
@@ -75471,11 +75541,6 @@ Parse the input for leading trivia.
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_NoResponseFile">
 <summary>
   Looks up a localized string similar to unable to open response file &apos;{0}&apos;.
-</summary>
-</member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_NoScriptsSpecified">
-<summary>
-  Looks up a localized string similar to Expected at least one script (.vbx file) but none specified.
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_NoSetProperty1">
@@ -77499,6 +77564,11 @@ Parse the input for leading trivia.
   Looks up a localized string similar to auto-implemented properties.
 </summary>
 </member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_CObjInAttributeArguments">
+<summary>
+  Looks up a localized string similar to CObj in attribute arguments.
+</summary>
+</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_CoContraVariance">
 <summary>
   Looks up a localized string similar to variance.
@@ -77514,6 +77584,11 @@ Parse the input for leading trivia.
   Looks up a localized string similar to declaring a Global namespace.
 </summary>
 </member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_ImplementingReadonlyOrWriteonlyPropertyWithReadwrite">
+<summary>
+  Looks up a localized string similar to implementing read-only or write-only property with read-write property.
+</summary>
+</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_Iterators">
 <summary>
   Looks up a localized string similar to iterators.
@@ -77522,6 +77597,16 @@ Parse the input for leading trivia.
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_LineContinuation">
 <summary>
   Looks up a localized string similar to implicit line continuation.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_LineContinuationComments">
+<summary>
+  Looks up a localized string similar to line continuation comments.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_MultilineStringLiterals">
+<summary>
+  Looks up a localized string similar to multiline string literals.
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_NameOfExpressions">
@@ -77534,6 +77619,26 @@ Parse the input for leading trivia.
   Looks up a localized string similar to null conditional operations.
 </summary>
 </member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_PartialInterfaces">
+<summary>
+  Looks up a localized string similar to partial interfaces.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_PartialModules">
+<summary>
+  Looks up a localized string similar to partial modules.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_ReadonlyAutoProperties">
+<summary>
+  Looks up a localized string similar to readonly auto-implemented properties.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_RegionsEverywhere">
+<summary>
+  Looks up a localized string similar to region directives within method bodies or regions crossing boundaries of declaration blocks.
+</summary>
+</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_StatementLambdas">
 <summary>
   Looks up a localized string similar to multi-line lambda expressions.
@@ -77542,6 +77647,21 @@ Parse the input for leading trivia.
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_SubLambdas">
 <summary>
   Looks up a localized string similar to &apos;Sub&apos; lambda expressions.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_TypeOfIsNot">
+<summary>
+  Looks up a localized string similar to TypeOf IsNot expression.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_WarningDirectives">
+<summary>
+  Looks up a localized string similar to warning directives.
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FEATURE_YearFirstDateLiterals">
+<summary>
+  Looks up a localized string similar to year-first date literals.
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.FieldInitializerSyntaxNotWithinSyntaxTree">
@@ -79483,11 +79603,44 @@ Parse the input for leading trivia.
  A class representing Visual Basic compilation Options.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.#ctor(Microsoft.CodeAnalysis.OutputKind,System.String,System.String,System.String,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.VisualBasic.GlobalImport},System.String,Microsoft.CodeAnalysis.VisualBasic.OptionStrict,System.Boolean,System.Boolean,System.Boolean,Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions,System.Boolean,Microsoft.CodeAnalysis.OptimizationLevel,System.Boolean,System.String,System.String,System.Collections.Immutable.ImmutableArray{System.Byte},System.Nullable{System.Boolean},Microsoft.CodeAnalysis.Platform,Microsoft.CodeAnalysis.ReportDiagnostic,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,Microsoft.CodeAnalysis.ReportDiagnostic}},System.Boolean,Microsoft.CodeAnalysis.XmlReferenceResolver,Microsoft.CodeAnalysis.SourceReferenceResolver,Microsoft.CodeAnalysis.MetadataReferenceResolver,Microsoft.CodeAnalysis.AssemblyIdentityComparer,Microsoft.CodeAnalysis.StrongNameProvider)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.#ctor(Microsoft.CodeAnalysis.OutputKind,System.String,System.String,System.String,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.VisualBasic.GlobalImport},System.String,Microsoft.CodeAnalysis.VisualBasic.OptionStrict,System.Boolean,System.Boolean,System.Boolean,Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions,System.Boolean,Microsoft.CodeAnalysis.OptimizationLevel,System.Boolean,System.String,System.String,System.Collections.Immutable.ImmutableArray{System.Byte},System.Nullable{System.Boolean},Microsoft.CodeAnalysis.Platform,Microsoft.CodeAnalysis.ReportDiagnostic,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,Microsoft.CodeAnalysis.ReportDiagnostic}},System.Boolean,System.Boolean,Microsoft.CodeAnalysis.XmlReferenceResolver,Microsoft.CodeAnalysis.SourceReferenceResolver,Microsoft.CodeAnalysis.MetadataReferenceResolver,Microsoft.CodeAnalysis.AssemblyIdentityComparer,Microsoft.CodeAnalysis.StrongNameProvider)">
  <summary>
  Initializes a new instance of the VisualBasicCompilationOptions type with various options.
  </summary>
  <param name="outputKind">The compilation output kind. <see cref="T:Microsoft.CodeAnalysis.OutputKind"/></param>
+ <param name="moduleName">An optional parameter to specify the name of the assembly that this module will be a part of.</param>
+ <param name="mainTypeName">An optional parameter to specify the class or module that contains the Sub Main procedure.</param>
+ <param name="scriptClassName">An optional parameter to specify an alternate DefaultScriptClassName object to be used.</param>
+ <param name="globalImports">An optional collection of GlobalImports <see cref="P:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.GlobalImports"/> .</param>
+ <param name="rootNamespace">An optional parameter to specify the name of the default root namespace.</param>
+ <param name="optionStrict">An optional parameter to specify the default Option Strict behavior. <see cref="T:Microsoft.CodeAnalysis.VisualBasic.OptionStrict"/></param>
+ <param name="optionInfer">An optional parameter to specify default Option Infer behavior.</param>
+ <param name="optionExplicit">An optional parameter to specify the default Option Explicit behavior.</param>
+ <param name="optionCompareText">An optional parameter to specify the default Option Compare Text behavior.</param>
+ <param name="embedVbCoreRuntime">An optional parameter to specify the embedded Visual Basic Core Runtime behavior.</param>
+ <param name="checkOverflow">An optional parameter to specify enabling/disabling overflow checking.</param>
+ <param name="concurrentBuild">An optional parameter to specify enabling/disabling concurrent build.</param>
+ <param name="cryptoKeyContainer">An optional parameter to specify a key container name for a key pair to give an assembly a strong name.</param>
+ <param name="cryptoKeyFile">An optional parameter to specify a file containing a key or key pair to give an assembly a strong name.</param>
+ <param name="cryptoPublicKey">An optional parameter to specify a public key used to give an assembly a strong name.</param>
+ <param name="delaySign">An optional parameter to specify whether the assembly will be fully or partially signed.</param>
+ <param name="platform">An optional parameter to specify which platform version of common language runtime (CLR) can run compilation. <see cref="T:Microsoft.CodeAnalysis.Platform"/></param>
+ <param name="generalDiagnosticOption">An optional parameter to specify the general warning level.</param>
+ <param name="specificDiagnosticOptions">An optional collection representing specific warnings that differ from general warning behavior.</param>
+ <param name="optimizationLevel">An optional parameter to enabled/disable optimizations. </param>
+ <param name="parseOptions">An optional parameter to specify the parse options. <see cref="T:Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions"/></param>
+ <param name="xmlReferenceResolver">An optional parameter to specify the XML file resolver.</param>
+ <param name="sourceReferenceResolver">An optional parameter to specify the source file resolver.</param>
+ <param name="metadataReferenceResolver">An optional parameter to specify <see cref="T:Microsoft.CodeAnalysis.MetadataReferenceResolver"/>.</param>
+ <param name="assemblyIdentityComparer">An optional parameter to specify <see cref="T:Microsoft.CodeAnalysis.AssemblyIdentityComparer"/>.</param>
+ <param name="strongNameProvider">An optional parameter to specify <see cref="T:Microsoft.CodeAnalysis.StrongNameProvider"/>.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.#ctor(Microsoft.CodeAnalysis.OutputKind,System.Boolean,System.String,System.String,System.String,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.VisualBasic.GlobalImport},System.String,Microsoft.CodeAnalysis.VisualBasic.OptionStrict,System.Boolean,System.Boolean,System.Boolean,Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions,System.Boolean,Microsoft.CodeAnalysis.OptimizationLevel,System.Boolean,System.String,System.String,System.Collections.Immutable.ImmutableArray{System.Byte},System.Nullable{System.Boolean},Microsoft.CodeAnalysis.Platform,Microsoft.CodeAnalysis.ReportDiagnostic,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,Microsoft.CodeAnalysis.ReportDiagnostic}},System.Boolean,System.Boolean,Microsoft.CodeAnalysis.XmlReferenceResolver,Microsoft.CodeAnalysis.SourceReferenceResolver,Microsoft.CodeAnalysis.MetadataReferenceResolver,Microsoft.CodeAnalysis.AssemblyIdentityComparer,Microsoft.CodeAnalysis.StrongNameProvider)">
+ <summary>
+ Initializes a new instance of the VisualBasicCompilationOptions type with various options.
+ </summary>
+ <param name="outputKind">The compilation output kind. <see cref="T:Microsoft.CodeAnalysis.OutputKind"/></param>
+ <param name="reportSuppressedDiagnostics">Specifies whether diagnostics suppressed in source, i.e. <see cref="P:Microsoft.CodeAnalysis.Diagnostic.IsSuppressed"/> = 'True', should be reported.</param>
  <param name="moduleName">An optional parameter to specify the name of the assembly that this module will be a part of.</param>
  <param name="mainTypeName">An optional parameter to specify the class or module that contains the Sub Main procedure.</param>
  <param name="scriptClassName">An optional parameter to specify an alternate DefaultScriptClassName object to be used.</param>
@@ -79683,11 +79836,25 @@ Parse the input for leading trivia.
  <param name="concurrentBuild">The concurrent build setting. </param>        
  <returns>A new instance of VisualBasicCompilationOptions, if the concurrent build is different; otherwise current instance.</returns>        
 </member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.WithDeterministic(System.Boolean)">
+ <summary>
+ Creates a new VisualBasicCompilationOptions instance with a different deterministic mode specified.
+ <param name="deterministic"> The deterministic mode. </param>
+ <returns> A new instance of VisualBasicCompilationOptions, if the concurrent build is different; otherwise the current instance.</returns>
+ </summary>
+</member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.WithExtendedCustomDebugInformation(System.Boolean)">
  <summary>
  Creates a new VisualBasicCompilationOptions instance with a different extended custom debug information specified.
  </summary>
  <param name="extendedCustomDebugInformation">The extended custom debug information setting. </param>        
+ <returns>A new instance of VisualBasicCompilationOptions, if the extended custom debug information is different; otherwise current instance.</returns>        
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.WithDebugPlusMode(System.Boolean)">
+ <summary>
+ Creates a new VisualBasicCompilationOptions instance with a different extended custom debug information specified.
+ </summary>
+ <param name="debugPlusMode">The extended custom debug information setting. </param>        
  <returns>A new instance of VisualBasicCompilationOptions, if the extended custom debug information is different; otherwise current instance.</returns>        
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.WithSuppressEmbeddedDeclarations(System.Boolean)">
@@ -79753,6 +79920,13 @@ Parse the input for leading trivia.
  </summary>
  <param name="value">Specific report warnings. <see cref="T:Microsoft.CodeAnalysis.ReportDiagnostic"/></param>        
  <returns>A new instance of VisualBasicCompilationOptions, if the dictionary of report warning is different; otherwise current instance.</returns>        
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.WithReportSuppressedDiagnostics(System.Boolean)">
+ <summary>
+ Creates a new <see cref="T:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions"/> instance with specified suppress diagnostics reporting option.
+ </summary>
+ <param name="value">Report suppressed diagnostics setting.</param>        
+ <returns>A new instance of VisualBasicCompilationOptions, if the value is different from the current value; otherwise current instance.</returns>        
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.WithOptimizationLevel(Microsoft.CodeAnalysis.OptimizationLevel)">
  <summary>
