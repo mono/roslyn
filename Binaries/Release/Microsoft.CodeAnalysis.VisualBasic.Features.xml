@@ -173,22 +173,22 @@ Microsoft.CodeAnalysis.VisualBasic.Features
  'A' has no type parameters and so cannot have type arguments.
  </summary>
 </member>
-<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.Spellcheck.SpellcheckCodeFixProvider.BC30002">
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.Spellcheck.SpellCheckCodeFixProvider.BC30002">
  <summary>
  Type xxx is not defined
  </summary>
 </member>
-<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.Spellcheck.SpellcheckCodeFixProvider.BC30451">
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.Spellcheck.SpellCheckCodeFixProvider.BC30451">
  <summary>
  Error 'x' is not declared
  </summary>
 </member>
-<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.Spellcheck.SpellcheckCodeFixProvider.BC30456">
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.Spellcheck.SpellCheckCodeFixProvider.BC30456">
  <summary>
  xxx is not a member of yyy
  </summary>
 </member>
-<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.Spellcheck.SpellcheckCodeFixProvider.BC32045">
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.CodeFixes.Spellcheck.SpellCheckCodeFixProvider.BC32045">
  <summary>
  'A' has no type parameters and so cannot have type arguments.
  </summary>
@@ -1021,6 +1021,11 @@ Microsoft.CodeAnalysis.VisualBasic.Features
   Looks up a localized string similar to AddHandler statement.
 </summary>
 </member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AddOverloadsKeyword">
+<summary>
+  Looks up a localized string similar to Add Overloads.
+</summary>
+</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.AddressOfKeywordToolTip">
 <summary>
   Looks up a localized string similar to Creates a delegate procedure instance that references the specified procedure.
@@ -1195,11 +1200,6 @@ Case {&lt;expression&gt;|&lt;expression1&gt; To &lt;expression2&gt;|[Is] &lt;com
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.CatchKeywordToolTip">
 <summary>
   Looks up a localized string similar to Introduces a statement block to be run if the specified exception occurs inside a Try block..
-</summary>
-</member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ChangeTo">
-<summary>
-  Looks up a localized string similar to Change &apos;{0}&apos; to &apos;{1}&apos;..
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ClassKeywordToolTip">
@@ -1743,11 +1743,6 @@ Function(&lt;parameterList&gt;) &lt;expression&gt;.
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ImplicitMemberAccessCantB">
 <summary>
   Looks up a localized string similar to Implicit member access can&apos;t be included in the selection without containing statement.
-</summary>
-</member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.Import">
-<summary>
-  Looks up a localized string similar to Import &apos;{0}&apos;..
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ImportsKeywordToolTip">
@@ -2527,11 +2522,6 @@ Option Strict {On | Off}.
 <summary>
   Looks up a localized string similar to Defines a lambda expression that can execute statements and does not return a value. Can be used wherever a delegate type is expected.
 Sub(&lt;parameterList&gt;) &lt;statement&gt;.
-</summary>
-</member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SuppressWithPragma">
-<summary>
-  Looks up a localized string similar to with #Disable directive.
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.SyncLockBlock">

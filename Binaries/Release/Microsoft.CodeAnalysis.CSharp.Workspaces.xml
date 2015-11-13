@@ -52,7 +52,7 @@
             the specified argument is greater than the number of parameters.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.Extensions.ExpressionSyntaxExtensions.CastIfPossible(Microsoft.CodeAnalysis.CSharp.Syntax.ExpressionSyntax,Microsoft.CodeAnalysis.ITypeSymbol,System.Int32,Microsoft.CodeAnalysis.SemanticModel,System.Boolean@)">
+        <member name="M:Microsoft.CodeAnalysis.CSharp.Extensions.ExpressionSyntaxExtensions.CastIfPossible(Microsoft.CodeAnalysis.CSharp.Syntax.ExpressionSyntax,Microsoft.CodeAnalysis.ITypeSymbol,System.Int32,Microsoft.CodeAnalysis.SemanticModel)">
             <summary>
             Adds to <paramref name="targetType"/> if it does not contain an anonymous
             type and binds to the same type at the given <paramref name="position"/>.

@@ -187,12 +187,17 @@
         </member>
         <member name="F:Microsoft.CodeAnalysis.CSharp.CodeFixes.Async.CSharpAddAwaitCodeFixProvider.CS4014">
             <summary>
-            Since this is an async method, the return expression must be of type 'blah' rather than 'baz'
+            Because this call is not awaited, execution of the current method continues before the call is completed.
             </summary>
         </member>
         <member name="F:Microsoft.CodeAnalysis.CSharp.CodeFixes.Async.CSharpAddAwaitCodeFixProvider.CS4016">
             <summary>
-            Because this call is not awaited, execution of the current method continues before the call is completed.
+            Since this is an async method, the return expression must be of type 'blah' rather than 'baz'
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.CSharp.CodeFixes.Async.CSharpAddAwaitCodeFixProvider.CS0029">
+            <summary>
+            cannot implicitly convert from 'X' to 'Y'.
             </summary>
         </member>
         <member name="F:Microsoft.CodeAnalysis.CSharp.CodeFixes.Async.CSharpConvertToAsyncMethodCodeFixProvider.CS4008">
@@ -351,6 +356,11 @@
               Looks up a localized string similar to conversion operator.
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpFeaturesResources.DelegateInvocationCanBeSimplified">
+            <summary>
+              Looks up a localized string similar to Delegate invocation can be simplified..
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpFeaturesResources.Deprecated">
             <summary>
               Looks up a localized string similar to deprecated.
@@ -429,6 +439,11 @@
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpFeaturesResources.GroupByClause">
             <summary>
               Looks up a localized string similar to groupby clause.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpFeaturesResources.HideBase">
+            <summary>
+              Looks up a localized string similar to Hide base member.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpFeaturesResources.ImplementAbstractClass">
@@ -689,11 +704,6 @@
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpFeaturesResources.Struct">
             <summary>
               Looks up a localized string similar to struct.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpFeaturesResources.SuppressWithPragma">
-            <summary>
-              Looks up a localized string similar to with #pragma directive.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpFeaturesResources.TheSelectedCodeIsInsideAnUnsafeContext">
