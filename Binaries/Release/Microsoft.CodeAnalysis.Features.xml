@@ -766,6 +766,16 @@
             this is not finished form. as refactoring going on, this class will become more stateless in respect to caller, and less dependency on owner.
             </summary>
         </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.EngineV1.DiagnosticIncrementalAnalyzer.ConcurrentAnalysis">
+            <summary>
+            PERF: Always run analyzers sequentially for background analysis.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.EngineV1.DiagnosticIncrementalAnalyzer.ReportSuppressedDiagnostics">
+            <summary>
+            Always compute suppressed diagnostics - diagnostic clients may or may not request for suppressed diagnostics.
+            </summary>
+        </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.BuildToolId">
             <summary>
             Support ErrorSource information.

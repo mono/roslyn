@@ -1011,13 +1011,13 @@ Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.ResultProvider
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.TryStatement">
  <summary>
- Represents the Try part part of a Try...Catch...Finally...End Try. This
+ Represents the Try part of a Try...Catch...Finally...End Try. This
  statement is always the Begin of a TryPart.
  </summary>
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.CatchStatement">
  <summary>
- Represents the Catch part part of a Try...Catch...Finally...End Try. This
+ Represents the Catch part of a Try...Catch...Finally...End Try. This
  statement is always the Begin of a CatchPart.
  </summary>
 </member>
@@ -1028,7 +1028,7 @@ Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.ResultProvider
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.FinallyStatement">
  <summary>
- Represents the Finally part part of a Try...Catch...Finally...End Try. This
+ Represents the Finally part of a Try...Catch...Finally...End Try. This
  statement is always the Begin of a FinallyPart.
  </summary>
 </member>
@@ -3655,7 +3655,7 @@ Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.ResultProvider
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.DocumentationCommentTrivia">
  <summary>
- Represents a documentation comment e.g. ''' &lt;Summary&gt; apearing in source.
+ Represents a documentation comment e.g. ''' &lt;Summary&gt; appearing in source.
  </summary>
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.XmlCrefAttribute">
@@ -3892,7 +3892,7 @@ Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.ResultProvider
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InterpolationAlignmentClause">
  <summary>
- Represents an alignment clause ', alignment' of an intepolated string embedded expression.
+ Represents an alignment clause ', alignment' of an interpolated string embedded expression.
  </summary>
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.InterpolationFormatClause">

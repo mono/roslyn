@@ -65,6 +65,17 @@
             <exception cref="T:System.IO.IOException">If the file at <paramref name="assemblyPath"/> does not exist or cannot be accessed.</exception>
             <exception cref="T:System.BadImageFormatException">If the file is not an assembly or is somehow corrupted.</exception>
         </member>
+        <member name="T:Roslyn.Utilities.SetWithInsertionOrder`1">
+            <summary>
+            A set that returns the inserted values in insertion order.
+            The mutation operations are not thread-safe.
+            </summary>
+        </member>
+        <member name="P:Roslyn.Utilities.SetWithInsertionOrder`1.InInsertionOrder">
+            <summary>
+            An enumerable that yields the set's elements in insertion order.
+            </summary>
+        </member>
         <member name="M:Roslyn.Utilities.StreamExtensions.TryReadAll(System.IO.Stream,System.Byte[],System.Int32,System.Int32)">
             <summary>
             Attempts to read all of the requested bytes from the stream into the buffer
@@ -348,7 +359,7 @@
             </summary>
             <returns>-1 if path is null.</returns>
         </member>
-        <member name="M:Roslyn.Utilities.FileNameUtilities.GetFileName(System.String)">
+        <member name="M:Roslyn.Utilities.FileNameUtilities.GetFileName(System.String,System.Boolean)">
             <summary>
             Get file name from path.
             </summary>
@@ -2077,12 +2088,6 @@
             PERF: This cache enables us to re-use semantic model's bound node cache across analyzer execution and diagnostic queries.
             </summary>
         </member>
-        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.CompilationData._symbolDeclarationsMap">
-            <summary>
-            Cached syntax references for a symbol for the lifetime of symbol declared event.
-            PERF: This cache reduces allocations for computing declaring syntax references for a symbol.
-            </summary>
-        </member>
         <member name="P:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.DeclarationAnalysisData.DeclaringReferenceSyntax">
             <summary>
             GetSyntax() for the given SyntaxReference.
@@ -2106,6 +2111,31 @@
         <member name="P:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.DeclarationAnalysisData.IsPartialAnalysis">
             <summary>
             Flag indicating if this is a partial analysis.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver._analyzerGateMap">
+            <summary>
+            Map from non-concurrent analyzers to the gate guarding callback into the analyzer. 
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver._generatedCodeAnalysisFlagsMap">
+            <summary>
+            Map from analyzers to their <see cref="T:Microsoft.CodeAnalysis.Diagnostics.GeneratedCodeAnalysisFlags"/> setting. 
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver._doNotAnalyzeGeneratedCode">
+            <summary>
+            True if no analyzer needs generated code analysis - we can skip all analysis on a generated code symbol/tree.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver._generatedCodeFiles">
+            <summary>
+            Set of generated code files.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver._generatedCodeAttribute">
+            <summary>
+            Symbol for <see cref="T:System.CodeDom.Compiler.GeneratedCodeAttribute"/>.
             </summary>
         </member>
         <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver._initializeTask">
@@ -2139,14 +2169,15 @@
             <see cref="P:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.DiagnosticQueue"/> that is fed the diagnostics as they are computed.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.#ctor(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer},Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.#ctor(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer},Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager,System.Func{Microsoft.CodeAnalysis.SyntaxTrivia,System.Boolean})">
             <summary>
             Create an analyzer driver.
             </summary>
             <param name="analyzers">The set of analyzers to include in the analysis</param>
             <param name="analyzerManager">AnalyzerManager to manage analyzers for analyzer host's lifetime.</param>
+            <param name="isComment">Delegate to identify if the given trivia is a comment.</param>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor,Microsoft.CodeAnalysis.Diagnostics.DiagnosticQueue,System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor,Microsoft.CodeAnalysis.Diagnostics.DiagnosticQueue,Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.CompilationData,System.Threading.CancellationToken)">
             <summary>
             Initializes the <see cref="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.analyzerActions"/> and related actions maps for the analyzer driver.
             It kicks off the <see cref="P:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.WhenInitializedTask"/> task for initialization.
@@ -2161,7 +2192,7 @@
             <param name="analysisScope">Scope of analysis.</param>
             <param name="analysisStateOpt">An optional object to track partial analysis state.</param>
             <param name="cancellationToken">Cancellation token to abort analysis.</param>
-            <remarks>Driver must be initialized before invoking this method, i.e. <see cref="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor,Microsoft.CodeAnalysis.Diagnostics.DiagnosticQueue,System.Threading.CancellationToken)"/> method must have been invoked and <see cref="P:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.WhenInitializedTask"/> must be non-null.</remarks>
+            <remarks>Driver must be initialized before invoking this method, i.e. <see cref="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor,Microsoft.CodeAnalysis.Diagnostics.DiagnosticQueue,Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.CompilationData,System.Threading.CancellationToken)"/> method must have been invoked and <see cref="P:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.WhenInitializedTask"/> must be non-null.</remarks>
         </member>
         <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.AttachQueueAndStartProcessingEvents(Microsoft.CodeAnalysis.Diagnostics.AsyncQueue{Microsoft.CodeAnalysis.Diagnostics.CompilationEvent},Microsoft.CodeAnalysis.Diagnostics.AnalysisScope,System.Threading.CancellationToken)">
             <summary>
@@ -2170,7 +2201,7 @@
             <param name="eventQueue">Compilation events to analyze.</param>
             <param name="analysisScope">Scope of analysis.</param>
             <param name="cancellationToken">Cancellation token to abort analysis.</param>
-            <remarks>Driver must be initialized before invoking this method, i.e. <see cref="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor,Microsoft.CodeAnalysis.Diagnostics.DiagnosticQueue,System.Threading.CancellationToken)"/> method must have been invoked and <see cref="P:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.WhenInitializedTask"/> must be non-null.</remarks>
+            <remarks>Driver must be initialized before invoking this method, i.e. <see cref="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor,Microsoft.CodeAnalysis.Diagnostics.DiagnosticQueue,Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.CompilationData,System.Threading.CancellationToken)"/> method must have been invoked and <see cref="P:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.WhenInitializedTask"/> must be non-null.</remarks>
         </member>
         <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver.CreateAndAttachToCompilation(Microsoft.CodeAnalysis.Compilation,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer},Microsoft.CodeAnalysis.Diagnostics.AnalyzerOptions,Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager,System.Action{Microsoft.CodeAnalysis.Diagnostic},System.Boolean,Microsoft.CodeAnalysis.Compilation@,System.Threading.CancellationToken)">
             <summary>
@@ -2372,6 +2403,11 @@
             Marks the given event as fully analyzed for the given analyzer.
             </summary>
         </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.MarkEventComplete(Microsoft.CodeAnalysis.Diagnostics.CompilationEvent,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer})">
+            <summary>
+            Marks the given event as fully analyzed for the given analyzers.
+            </summary>
+        </member>
         <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.TryStartAnalyzingSymbol(Microsoft.CodeAnalysis.ISymbol,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.AnalysisState.AnalyzerStateData@)">
             <summary>
             Attempts to start processing a symbol for the given analyzer's symbol actions.
@@ -2386,7 +2422,7 @@
             Marks the given symbol as fully analyzed for the given analyzer.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.TryStartAnalyzingDeclaration(Microsoft.CodeAnalysis.SyntaxReference,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.AnalysisState.DeclarationAnalyzerStateData@)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.TryStartAnalyzingDeclaration(Microsoft.CodeAnalysis.ISymbol,System.Int32,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.AnalysisState.DeclarationAnalyzerStateData@)">
             <summary>
             Attempts to start processing a symbol declaration for the given analyzer's syntax node and code block actions.
             </summary>
@@ -2395,17 +2431,22 @@
             If true, then it returns a non-null <paramref name="state"/> representing partial analysis state for the given declaration for the given analyzer.
             </returns>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.IsDeclarationComplete(Microsoft.CodeAnalysis.SyntaxNode)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.IsDeclarationComplete(Microsoft.CodeAnalysis.ISymbol,System.Int32)">
             <summary>
             True if the given symbol declaration is fully analyzed.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.MarkDeclarationComplete(Microsoft.CodeAnalysis.SyntaxReference,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.MarkDeclarationComplete(Microsoft.CodeAnalysis.ISymbol,System.Int32,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer)">
             <summary>
             Marks the given symbol declaration as fully analyzed for the given analyzer.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.MarkDeclarationsComplete(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.SyntaxReference},System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer})">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.MarkDeclarationComplete(Microsoft.CodeAnalysis.ISymbol,System.Int32,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer})">
+            <summary>
+            Marks the given symbol declaration as fully analyzed for the given analyzers.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.MarkDeclarationsComplete(Microsoft.CodeAnalysis.ISymbol,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer})">
             <summary>
             Marks all the symbol declarations for the given symbol as fully analyzed for all the given analyzers.
             </summary>
@@ -2424,6 +2465,11 @@
             Marks the given tree as fully syntactically analyzed for the given analyzer.
             </summary>
         </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.MarkSyntaxAnalysisComplete(Microsoft.CodeAnalysis.SyntaxTree,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer})">
+            <summary>
+            Marks the given tree as fully syntactically analyzed for the given analyzers.
+            </summary>
+        </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.StateKind">
             <summary>
             State kind of per-analyzer <see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.AnalyzerStateData"/> tracking an analyzer's partial analysis state.
@@ -2431,7 +2477,7 @@
             1. Completely unprocessed: <see cref="F:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.StateKind.ReadyToProcess"/>
             2. Currently being processed: <see cref="F:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.StateKind.InProcess"/>
             3. Partially processed by one or more older requests that was either completed or cancelled: <see cref="F:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.StateKind.ReadyToProcess"/>
-            4. Fully processed: We don't need a state kind to represent fully processed state as the analysis state object is discarded once fully processed.
+            4. Fully processed: <see cref="F:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.StateKind.FullyProcessed"/>.
             </summary>
         </member>
         <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.StateKind.ReadyToProcess">
@@ -2443,6 +2489,11 @@
         <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.StateKind.InProcess">
             <summary>
             Currently being processed.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.StateKind.FullyProcessed">
+            <summary>
+            Fully processed.
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalysisState.DeclarationAnalyzerStateData">
@@ -2540,6 +2591,26 @@
             Count of registered code block actions.
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.Diagnostics.Telemetry.AnalyzerTelemetryInfo.OperationActionsCount">
+            <summary>
+            Count of registered operation actions.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Diagnostics.Telemetry.AnalyzerTelemetryInfo.OperationBlockStartActionsCount">
+            <summary>
+            Count of registered operation block start actions.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Diagnostics.Telemetry.AnalyzerTelemetryInfo.OperationBlockEndActionsCount">
+            <summary>
+            Count of registered operation block end actions.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Diagnostics.Telemetry.AnalyzerTelemetryInfo.OperationBlockActionsCount">
+            <summary>
+            Count of registered operation block actions.
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.Diagnostics.Telemetry.AnalyzerTelemetryInfo.ExecutionTime">
             <summary>
             Total execution time.
@@ -2600,18 +2671,43 @@
             Count of code block actions.
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.Diagnostics.Telemetry.AnalyzerActionCounts.OperationActionsCount">
+            <summary>
+            Count of Operation actions.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Diagnostics.Telemetry.AnalyzerActionCounts.OperationBlockStartActionsCount">
+            <summary>
+            Count of Operation block start actions.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Diagnostics.Telemetry.AnalyzerActionCounts.OperationBlockEndActionsCount">
+            <summary>
+            Count of Operation block end actions.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Diagnostics.Telemetry.AnalyzerActionCounts.OperationBlockActionsCount">
+            <summary>
+            Count of Operation block actions.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Diagnostics.Telemetry.AnalyzerActionCounts.HasAnyExecutableCodeActions">
+            <summary>
+            Returns true if there are any actions that need to run on executable code.
+            </summary>
+        </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor">
             <summary>
             Contains the core execution logic for callbacks into analyzers.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.Create(Microsoft.CodeAnalysis.Compilation,Microsoft.CodeAnalysis.Diagnostics.AnalyzerOptions,System.Action{Microsoft.CodeAnalysis.Diagnostic},System.Action{System.Exception,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostic},System.Func{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,System.Boolean},Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager,System.Func{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,System.Object},System.Boolean,System.Action{Microsoft.CodeAnalysis.Diagnostic,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,System.Boolean},System.Action{Microsoft.CodeAnalysis.Diagnostic,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer},System.Threading.CancellationToken)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.Create(Microsoft.CodeAnalysis.Compilation,Microsoft.CodeAnalysis.Diagnostics.AnalyzerOptions,System.Action{Microsoft.CodeAnalysis.Diagnostic},System.Action{System.Exception,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostic},System.Func{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,System.Boolean},Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager,System.Func{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,System.Boolean},System.Func{Microsoft.CodeAnalysis.Diagnostic,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Compilation,System.Threading.CancellationToken,System.Boolean},System.Func{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,System.Object},System.Boolean,System.Action{Microsoft.CodeAnalysis.Diagnostic,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,System.Boolean},System.Action{Microsoft.CodeAnalysis.Diagnostic,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer},System.Threading.CancellationToken)">
             <summary>
             Creates <see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor"/> to execute analyzer actions with given arguments
             </summary>
             <param name="compilation">Compilation to be used in the analysis.</param>
             <param name="analyzerOptions">Analyzer options.</param>
-            <param name="addDiagnostic">Delegate to add analyzer diagnostics.</param>
+            <param name="addNonCategorizedDiagnosticOpt">Optional delegate to add non-categorized analyzer diagnostics.</param>
             <param name="onAnalyzerException">
             Optional delegate which is invoked when an analyzer throws an exception.
             Delegate can do custom tasks such as report the given analyzer exception diagnostic, report a non-fatal watson for the exception, etc.
@@ -2624,9 +2720,11 @@
             It should return a unique gate object for the given analyzer instance for non-concurrent analyzers, and null otherwise.
             All analyzer callbacks for non-concurrent analyzers will be guarded with a lock on the gate.
             </param>
+            <param name="shouldSkipAnalysisOnGeneratedCode">Delegate to identify if analysis should be skipped on generated code.</param>
+            <param name="shouldSuppressGeneratedCodeDiagnostic">Delegate to identify if diagnostic reported while analyzing generated code should be suppressed.</param>
             <param name="logExecutionTime">Flag indicating whether we need to log analyzer execution time.</param>
-            <param name="addLocalDiagnosticOpt">Optional delegate to add local analyzer diagnostics.</param>
-            <param name="addNonLocalDiagnosticOpt">Optional delegate to add non-local analyzer diagnostics.</param>
+            <param name="addCategorizedLocalDiagnosticOpt">Optional delegate to add categorized local analyzer diagnostics.</param>
+            <param name="addCategorizedNonLocalDiagnosticOpt">Optional delegate to add categorized non-local analyzer diagnostics.</param>
             <param name="cancellationToken">Cancellation token.</param>
         </member>
         <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.CreateForSupportedDiagnostics(System.Action{System.Exception,Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostic},Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager,System.Boolean,System.Threading.CancellationToken)">
@@ -2670,18 +2768,19 @@
             <param name="analysisScope">Scope for analyzer execution.</param>
             <param name="analysisStateOpt">An optional object to track analysis state.</param>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSymbolActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.SymbolAnalyzerAction},Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.ISymbol,System.Func{Microsoft.CodeAnalysis.ISymbol,Microsoft.CodeAnalysis.SyntaxReference,Microsoft.CodeAnalysis.Compilation,Microsoft.CodeAnalysis.SyntaxNode},Microsoft.CodeAnalysis.Diagnostics.AnalysisScope,Microsoft.CodeAnalysis.Diagnostics.AnalysisState)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSymbolActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.SymbolAnalyzerAction},Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.SymbolDeclaredCompilationEvent,System.Func{Microsoft.CodeAnalysis.ISymbol,Microsoft.CodeAnalysis.SyntaxReference,Microsoft.CodeAnalysis.Compilation,Microsoft.CodeAnalysis.SyntaxNode},Microsoft.CodeAnalysis.Diagnostics.AnalysisScope,Microsoft.CodeAnalysis.Diagnostics.AnalysisState,System.Boolean)">
             <summary>
             Executes the symbol actions on the given symbol.
             </summary>
             <param name="symbolActions">Symbol actions to be executed.</param>
             <param name="analyzer">Analyzer whose actions are to be executed.</param>
-            <param name="symbol">Symbol to be analyzed.</param>
+            <param name="symbolDeclaredEvent">Symbol event to be analyzed.</param>
             <param name="getTopMostNodeForAnalysis">Delegate to get topmost declaration node for a symbol declaration reference.</param>
             <param name="analysisScope">Scope for analyzer execution.</param>
             <param name="analysisStateOpt">An optional object to track analysis state.</param>
+            <param name="isGeneratedCodeSymbol">Flag indicating if this is a generated code symbol.</param>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSemanticModelActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.SemanticModelAnalyzerAction},Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.SemanticModel,Microsoft.CodeAnalysis.Diagnostics.CompilationEvent,Microsoft.CodeAnalysis.Diagnostics.AnalysisScope,Microsoft.CodeAnalysis.Diagnostics.AnalysisState)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSemanticModelActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.SemanticModelAnalyzerAction},Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.SemanticModel,Microsoft.CodeAnalysis.Diagnostics.CompilationEvent,Microsoft.CodeAnalysis.Diagnostics.AnalysisScope,Microsoft.CodeAnalysis.Diagnostics.AnalysisState,System.Boolean)">
             <summary>
             Executes the semantic model actions on the given semantic model.
             </summary>
@@ -2691,8 +2790,9 @@
             <param name="compilationUnitCompletedEvent">Compilation event for semantic model analysis.</param>
             <param name="analysisScope">Scope for analyzer execution.</param>
             <param name="analysisStateOpt">An optional object to track analysis state.</param>
+            <param name="isGeneratedCode">Flag indicating if the syntax tree being analyzed is generated code.</param>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSyntaxTreeActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.SyntaxTreeAnalyzerAction},Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.SyntaxTree,Microsoft.CodeAnalysis.Diagnostics.AnalysisScope,Microsoft.CodeAnalysis.Diagnostics.AnalysisState)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor.ExecuteSyntaxTreeActions(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.SyntaxTreeAnalyzerAction},Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.SyntaxTree,Microsoft.CodeAnalysis.Diagnostics.AnalysisScope,Microsoft.CodeAnalysis.Diagnostics.AnalysisState,System.Boolean)">
             <summary>
             Executes the syntax tree actions on the given syntax tree.
             </summary>
@@ -2701,6 +2801,7 @@
             <param name="tree">Syntax tree to analyze.</param>
             <param name="analysisScope">Scope for analyzer execution.</param>
             <param name="analysisStateOpt">An optional object to track analysis state.</param>
+            <param name="isGeneratedCode">Flag indicating if the syntax tree being analyzed is generated code.</param>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager">
             <summary>
@@ -2734,6 +2835,17 @@
             Get all the analyzer actions to execute for the given analyzer against a given compilation.
             The returned actions include the actions registered during <see cref="M:Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext)"/> method as well as
             the actions registered during <see cref="T:Microsoft.CodeAnalysis.Diagnostics.CompilationStartAnalyzerAction"/> for the given compilation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager.IsConcurrentAnalyzerAsync(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor)">
+            <summary>
+            Returns true if the given analyzer has enabled concurrent execution by invoking <see cref="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisContext.EnableConcurrentExecution"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager.GetGeneratedCodeAnalysisFlagsAsync(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor)">
+            <summary>
+            Returns <see cref="T:Microsoft.CodeAnalysis.Diagnostics.GeneratedCodeAnalysisFlags"/> for the given analyzer.
+            If an analyzer hasn't configured generated code analysis, returns <see cref="F:Microsoft.CodeAnalysis.Diagnostics.GeneratedCodeAnalysisFlags.Default"/>.
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager.GetSupportedDiagnosticDescriptors(Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer,Microsoft.CodeAnalysis.Diagnostics.AnalyzerExecutor)">
@@ -2962,13 +3074,14 @@
             It uses a <see cref="T:Microsoft.CodeAnalysis.Diagnostics.AsyncQueue`1"/> of <see cref="T:Microsoft.CodeAnalysis.Diagnostics.CompilationEvent"/>s to drive its analysis.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver`1.#ctor(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer},System.Func{Microsoft.CodeAnalysis.SyntaxNode,`0},Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager)">
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerDriver`1.#ctor(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer},System.Func{Microsoft.CodeAnalysis.SyntaxNode,`0},Microsoft.CodeAnalysis.Diagnostics.AnalyzerManager,System.Func{Microsoft.CodeAnalysis.SyntaxTrivia,System.Boolean})">
             <summary>
             Create an analyzer driver.
             </summary>
             <param name="analyzers">The set of analyzers to include in the analysis</param>
             <param name="getKind">A delegate that returns the language-specific kind for a given syntax node</param>
             <param name="analyzerManager">AnalyzerManager to manage analyzers for the lifetime of analyzer host.</param>
+            <param name="isComment">Delegate to identify if the given trivia is a comment.</param>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerImageReference">
             <summary>
@@ -3429,6 +3542,54 @@
             </summary>
             <param name="action">Action to be executed at completion of semantic analysis of an <see cref="T:Microsoft.CodeAnalysis.Semantics.IOperation"/>.</param>
             <param name="operationKinds">Action will be executed only if an <see cref="T:Microsoft.CodeAnalysis.Semantics.IOperation"/>'s Kind matches one of the operation kind values.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisContext.EnableConcurrentExecution">
+            <summary>
+            Enable concurrent execution of analyzer actions registered by this analyzer.
+            An analyzer that registers for concurrent execution can have better performance than a non-concurrent analyzer.
+            However, such an analyzer must ensure that its actions can execute correctly in parallel.
+            </summary>
+            <remarks>
+            Even when an analyzer registers for concurrent execution, certain related actions are *never* executed concurrently.
+            For example, end actions registered on any analysis unit (compilation, code block, operation block, etc.) are by definition semantically dependent on analysis from non-end actions registered on the same analysis unit.
+            Hence, end actions are never executed concurrently with non-end actions operating on the same analysis unit.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalysisContext.ConfigureGeneratedCodeAnalysis(Microsoft.CodeAnalysis.Diagnostics.GeneratedCodeAnalysisFlags)">
+            <summary>
+            Configure analysis mode of generated code for this analyzer.
+            Non-configured analyzers will default to <see cref="F:Microsoft.CodeAnalysis.Diagnostics.GeneratedCodeAnalysisFlags.Default"/> mode for generated code.
+            It is recommended for the analyzer to always invoke this API with the required <see cref="T:Microsoft.CodeAnalysis.Diagnostics.GeneratedCodeAnalysisFlags"/> setting.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Diagnostics.GeneratedCodeAnalysisFlags">
+            <summary>
+            Flags to configure mode of generated code analysis.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.GeneratedCodeAnalysisFlags.None">
+            <summary>
+            Disable analyzer action callbacks and diagnostic reporting for generated code.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.GeneratedCodeAnalysisFlags.Analyze">
+            <summary>
+            Enable analyzer action callbacks for generated code.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.GeneratedCodeAnalysisFlags.ReportDiagnostics">
+            <summary>
+            Enable reporting diagnostics on generated code.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.GeneratedCodeAnalysisFlags.Default">
+            <summary>
+            Default analysis mode for generated code.
+            </summary>
+            <remarks>
+            This mode will always guarantee that analyzer action callbacks are enabled for generated code, i.e. <see cref="F:Microsoft.CodeAnalysis.Diagnostics.GeneratedCodeAnalysisFlags.Analyze"/> will be set.
+            However, the default diagnostic reporting mode is liable to change in future.
+            </remarks>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.CompilationStartAnalysisContext">
             <summary>
@@ -4071,7 +4232,7 @@
             </summary>
             <param name="s">The decimal floating-point constant's string</param>
             <param name="d">The nearest double value, if conversion succeeds</param>
-            <returns>True of the input was converted; false if there was an overflow</returns>
+            <returns>True if the input was converted; false if there was an overflow</returns>
         </member>
         <member name="M:Microsoft.CodeAnalysis.RealParser.TryParseFloat(System.String,System.Single@)">
             <summary>
@@ -4081,7 +4242,7 @@
             </summary>
             <param name="s">The float floating-point constant's string</param>
             <param name="f">The nearest float value, if conversion succeeds</param>
-            <returns>True of the input was converted; false if there was an overflow</returns>
+            <returns>True if the input was converted; false if there was an overflow</returns>
         </member>
         <member name="T:Microsoft.CodeAnalysis.RealParser.FloatingPointType">
             <summary>
@@ -4269,6 +4430,1018 @@
               
             o {A, A} + {A, B, B} = {A, A, B, B}
               We preserve dups in each alias array, but avoid making more dups when merging.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CryptoBlobParser.TryGetPublicKey(System.Collections.Immutable.ImmutableArray{System.Byte},System.Collections.Immutable.ImmutableArray{System.Byte}@)">
+            <summary>
+            Try to retrieve the public key from a crypto blob.
+            </summary>
+            <remarks>
+            Can be either a PUBLICKEYBLOB or PRIVATEKEYBLOB. The BLOB must /// be unencrypted.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.LargeTextWriter.AppendChunk(System.Char[])">
+            <summary>
+            Append chunk to writer (may reuse char array)
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Text.EncodedStringText.s_utf8Encoding">
+            <summary>
+            Encoding to use when there is no byte order mark (BOM) on the stream. This encoder may throw a <see cref="T:System.Text.DecoderFallbackException"/>
+            if the stream contains invalid UTF-8 bytes.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Text.EncodedStringText.s_fallbackEncoding">
+            <summary>
+            Encoding to use when UTF-8 fails. We try to find the following, in order, if available:
+                1. The default ANSI codepage
+                2. CodePage 1252.
+                3. Latin1.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.Create(System.IO.Stream,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm)">
+            <summary>
+            Initializes an instance of <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> from the provided stream. This version differs
+            from <see cref="M:Microsoft.CodeAnalysis.Text.SourceText.From(System.IO.Stream,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm,System.Boolean)"/> in two ways:
+            1. It attempts to minimize allocations by trying to read the stream into a byte array.
+            2. If <paramref name="defaultEncoding"/> is null, it will first try UTF8 and, if that fails, it will
+               try CodePage 1252. If CodePage 1252 is not available on the system, then it will try Latin1.
+            </summary>
+            <param name="stream">The stream containing encoded text.</param>
+            <param name="defaultEncoding">
+            Specifies an encoding to be used if the actual encoding can't be determined from the stream content (the stream doesn't start with Byte Order Mark).
+            If not specified auto-detect heuristics are used to determine the encoding. If these heuristics fail the decoding is assumed to be Encoding.Default.
+            Note that if the stream starts with Byte Order Mark the value of <paramref name="defaultEncoding"/> is ignored.
+            </param>
+            <param name="checksumAlgorithm">Hash algorithm used to calculate document checksum.</param>
+            <exception cref="T:System.IO.InvalidDataException">
+            The stream content can't be decoded using the specified <paramref name="defaultEncoding"/>, or
+            <paramref name="defaultEncoding"/> is null and the stream appears to be a binary file.
+            </exception>
+            <exception cref="T:System.IO.IOException">An IO error occurred while reading from the stream.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.Decode(System.IO.Stream,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm,System.Boolean)">
+            <summary>
+            Try to create a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> from the given stream using the given encoding.
+            </summary>
+            <param name="data">The input stream containing the encoded text. The stream will not be closed.</param>
+            <param name="encoding">The expected encoding of the stream. The actual encoding used may be different if byte order marks are detected.</param>
+            <param name="checksumAlgorithm">The checksum algorithm to use.</param>
+            <param name="throwIfBinaryDetected">Throw <see cref="T:System.IO.InvalidDataException"/> if binary (non-text) data is detected.</param>
+            <returns>The <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> decoded from the stream.</returns>
+            <exception cref="T:System.Text.DecoderFallbackException">The decoder was unable to decode the stream with the given encoding.</exception>
+            <remarks>
+            internal for unit testing
+            </remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.TryGetByteArrayFromStream(System.IO.Stream)">
+            <summary>
+            Some streams are easily represented as byte arrays.
+            </summary>
+            <param name="data">The stream</param>
+            <returns>
+            The contents of <paramref name="data"/> as a byte array or null if the stream can't easily
+            be read into a byte array.
+            </returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.TryGetByteArrayFromMemoryStream(System.IO.MemoryStream,System.Byte[]@)">
+            <summary>
+            If the MemoryStream was created with publiclyVisible=true, then we can access its buffer
+            directly and save allocations in StreamReader. The input MemoryStream is not closed on exit.
+            </summary>
+            <returns>True if a byte array could be created.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.TryGetByteArrayFromFileStream(System.IO.Stream,System.Byte[]@)">
+            <summary>
+            Read the contents of a FileStream into a byte array.
+            </summary>
+            <param name="stream">The FileStream with encoded text.</param>
+            <param name="buffer">A byte array filled with the contents of the file.</param>
+            <returns>True if a byte array could be created.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.ChangedText.GetLinesCore">
+            <summary>
+            Computes line starts faster given already computed line starts from text before the change.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.CompositeText">
+            <summary>
+            A composite of a sequence of <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/>s.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.CompositeText.CheckCopyToArguments(System.Int32,System.Char[],System.Int32,System.Int32)">
+            <summary>
+            Validates the arguments passed to <see cref="M:Microsoft.CodeAnalysis.Text.CompositeText.CopyTo(System.Int32,System.Char[],System.Int32,System.Int32)"/> against the published contract.
+            </summary>
+            <returns>True if should bother to proceed with copying.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.CompositeText.ReduceSegmentCountIfNecessary(Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.Text.SourceText})">
+            <summary>
+            Reduces the number of segments toward the target number of segments,
+            if the number of regments is deemed to be too large (beyond the maximum).
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.CompositeText.GetMinimalSegmentSizeToUseForCombining(Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.Text.SourceText})">
+            <summary>
+            Determines the segment size to use for call to CombineSegments, that will result in the segment count
+            being reduced to less than or equal to the target segment count.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.CompositeText.GetSegmentCountIfCombined(Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.Text.SourceText},System.Int32)">
+            <summary>
+            Determines the segment count that would result if the segments of size less than or equal to 
+            the specified segment size were to be combined.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.CompositeText.CombineSegments(Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.Text.SourceText},System.Int32)">
+            <summary>
+            Combines contiguous segments with lengths that are each less than or equal to the specified segment size.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.CompositeText.ComputeLengthAndStorageSize(System.Collections.Generic.IReadOnlyList{Microsoft.CodeAnalysis.Text.SourceText},System.Int32@,System.Int32@)">
+            <summary>
+            Compute total text length and total size of storage buffers held
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.CompositeText.TrimInaccessibleText(Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.Text.SourceText})">
+            <summary>
+            Trim excessive inaccessible text.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.LargeText">
+            <summary>
+            A <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> optimized for very large sources. The text is stored as
+            a list of chunks (char arrays).
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Text.LargeText.ChunkSize">
+            <remarks>
+            internal for unit testing
+            </remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.LargeText.IsBinary(System.Char[])">
+            <summary>
+            Check for occurrence of two consecutive NUL (U+0000) characters.
+            This is unlikely to appear in genuine text, so it's a good heuristic
+            to detect binary files.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.LargeText.GetLinesCore">
+            <summary>
+            Called from <see cref="P:Microsoft.CodeAnalysis.Text.SourceText.Lines"/> to initialize the <see cref="T:Microsoft.CodeAnalysis.Text.TextLineCollection"/>. Thereafter,
+            the collection is cached.
+            </summary>
+            <returns>A new <see cref="T:Microsoft.CodeAnalysis.Text.TextLineCollection"/> representing the individual text lines.</returns>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.LinePosition">
+            <summary>
+            Immutable representation of a line number and position within a SourceText instance.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.LinePosition.Zero">
+            <summary>
+            A <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> that represents position 0 at line 0.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Initializes a new instance of a <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> with the given line and character.
+            </summary>
+            <param name="line">
+            The line of the line position. The first line in a file is defined as line 0 (zero based line numbering).
+            </param>
+            <param name="character">
+            The character position in the line.
+            </param>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="line"/> or <paramref name="character"/> is less than zero. </exception>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.LinePosition.Line">
+            <summary>
+            The line number. The first line in a file is defined as line 0 (zero based line numbering).
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.LinePosition.Character">
+            <summary>
+            The character position within the line.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.op_Equality(Microsoft.CodeAnalysis.Text.LinePosition,Microsoft.CodeAnalysis.Text.LinePosition)">
+            <summary>
+            Determines whether two <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> are the same.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.op_Inequality(Microsoft.CodeAnalysis.Text.LinePosition,Microsoft.CodeAnalysis.Text.LinePosition)">
+            <summary>
+            Determines whether two <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> are different.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.Equals(Microsoft.CodeAnalysis.Text.LinePosition)">
+            <summary>
+            Determines whether two <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> are the same.
+            </summary>
+            <param name="other">The object to compare.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.Equals(System.Object)">
+            <summary>
+            Determines whether two <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> are the same.
+            </summary>
+            <param name="obj">The object to compare.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.GetHashCode">
+            <summary>
+            Provides a hash function for <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.ToString">
+            <summary>
+            Provides a string representation for <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/>.
+            </summary>
+            <example>0,10</example>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.LinePositionSpan">
+            <summary>
+            Immutable span represented by a pair of line number and index within the line.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.LinePositionSpan.#ctor(Microsoft.CodeAnalysis.Text.LinePosition,Microsoft.CodeAnalysis.Text.LinePosition)">
+            <summary>
+            Creates <see cref="T:Microsoft.CodeAnalysis.Text.LinePositionSpan"/>.
+            </summary>
+            <param name="start">Start position.</param>
+            <param name="end">End position.</param>
+            <exception cref="T:System.ArgumentException"><paramref name="end"/> precedes <paramref name="start"/>.</exception>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.LinePositionSpan.Start">
+            <summary>
+            Gets the start position of the span.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.LinePositionSpan.End">
+            <summary>
+            Gets the end position of the span.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.LinePositionSpan.ToString">
+            <summary>
+            Provides a string representation for <see cref="T:Microsoft.CodeAnalysis.Text.LinePositionSpan"/>.
+            </summary>
+            <example>(0,0)-(5,6)</example>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.SourceHashAlgorithm">
+            <summary>
+            Specifies a hash algorithms used for hashing source files.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Text.SourceHashAlgorithm.None">
+            <summary>
+            No algorithm specified.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Text.SourceHashAlgorithm.Sha1">
+            <summary>
+            Secure Hash Algorithm 1.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Text.SourceHashAlgorithm.Sha256">
+            <summary>
+            Secure Hash Algorithm 2 with a hash size of 256 bits.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.SourceText">
+            <summary>
+            An abstraction of source text.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.From(System.String,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm)">
+            <summary>
+            Constructs a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> from text in a string.
+            </summary>
+            <param name="text">Text.</param>
+            <param name="encoding">
+            Encoding of the file that the <paramref name="text"/> was read from or is going to be saved to.
+            <c>null</c> if the encoding is unspecified.
+            If the encoding is not specified the resulting <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> isn't debuggable.
+            If an encoding-less <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> is written to a file a <see cref="P:System.Text.Encoding.UTF8"/> shall be used as a default.
+            </param>
+            <param name="checksumAlgorithm">
+            Hash algorithm to use to calculate checksum of the text that's saved to PDB.
+            </param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="text"/> is null.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="checksumAlgorithm"/> is not supported.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.From(System.IO.Stream,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm,System.Boolean)">
+            <summary>
+            Constructs a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> from stream content.
+            </summary>
+            <param name="stream">Stream. The stream must be seekable.</param>
+            <param name="encoding">
+            Data encoding to use if the stream doesn't start with Byte Order Mark specifying the encoding.
+            <see cref="P:System.Text.Encoding.UTF8"/> if not specified.
+            </param>
+            <param name="checksumAlgorithm">
+            Hash algorithm to use to calculate checksum of the text that's saved to PDB.
+            </param>
+            <param name="throwIfBinaryDetected">If the decoded text contains at least two consecutive NUL
+            characters, then an <see cref="T:System.IO.InvalidDataException"/> is thrown.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="stream"/> is null.</exception>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="stream"/> doesn't support reading or seeking.
+            <paramref name="checksumAlgorithm"/> is not supported.
+            </exception>
+            <exception cref="T:System.Text.DecoderFallbackException">If the given encoding is set to use a throwing decoder as a fallback</exception>
+            <exception cref="T:System.IO.InvalidDataException">Two consecutive NUL characters were detected in the decoded text and <paramref name="throwIfBinaryDetected"/> was true.</exception>
+            <exception cref="T:System.IO.IOException">An I/O error occurs.</exception>
+            <remarks>Reads from the beginning of the stream. Leaves the stream open.</remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.From(System.Byte[],System.Int32,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm,System.Boolean)">
+            <summary>
+            Constructs a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> from a byte array.
+            </summary>
+            <param name="buffer">The encoded source buffer.</param>
+            <param name="length">The number of bytes to read from the buffer.</param>
+            <param name="encoding">
+            Data encoding to use if the encoded buffer doesn't start with Byte Order Mark.
+            <see cref="P:System.Text.Encoding.UTF8"/> if not specified.
+            </param>
+            <param name="checksumAlgorithm">
+            Hash algorithm to use to calculate checksum of the text that's saved to PDB.
+            </param>
+            <param name="throwIfBinaryDetected">If the decoded text contains at least two consecutive NUL
+            characters, then an <see cref="T:System.IO.InvalidDataException"/> is thrown.</param>
+            <returns>The decoded text.</returns>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="buffer"/> is null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="length"/> is negative or longer than the <paramref name="buffer"/>.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="checksumAlgorithm"/> is not supported.</exception>
+            <exception cref="T:System.Text.DecoderFallbackException">If the given encoding is set to use a throwing decoder as a fallback</exception>
+            <exception cref="T:System.IO.InvalidDataException">Two consecutive NUL characters were detected in the decoded text and <paramref name="throwIfBinaryDetected"/> was true.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.Decode(System.IO.Stream,System.Text.Encoding,System.Text.Encoding@)">
+            <summary>
+            Decode text from a stream.
+            </summary>
+            <param name="stream">The stream containing encoded text.</param>
+            <param name="encoding">The encoding to use if an encoding cannot be determined from the byte order mark.</param>
+            <param name="actualEncoding">The actual encoding used.</param>
+            <returns>The decoded text.</returns>
+            <exception cref="T:System.Text.DecoderFallbackException">If the given encoding is set to use a throwing decoder as a fallback</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.Decode(System.Byte[],System.Int32,System.Text.Encoding,System.Text.Encoding@)">
+            <summary>
+            Decode text from a byte array.
+            </summary>
+            <param name="buffer">The byte array containing encoded text.</param>
+            <param name="length">The count of valid bytes in <paramref name="buffer"/>.</param>
+            <param name="encoding">The encoding to use if an encoding cannot be determined from the byte order mark.</param>
+            <param name="actualEncoding">The actual encoding used.</param>
+            <returns>The decoded text.</returns>
+            <exception cref="T:System.Text.DecoderFallbackException">If the given encoding is set to use a throwing decoder as a fallback</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.IsBinary(System.String)">
+            <summary>
+            Check for occurrence of two consecutive NUL (U+0000) characters.
+            This is unlikely to appear in genuine text, so it's a good heuristic
+            to detect binary files.
+            </summary>
+            <remarks>
+            internal for unit testing
+            </remarks>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.ChecksumAlgorithm">
+            <summary>
+            Hash algorithm to use to calculate checksum of the text that's saved to PDB.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.Encoding">
+            <summary>
+            Encoding of the file that the text was read from or is going to be saved to.
+            <c>null</c> if the encoding is unspecified.
+            </summary>
+            <remarks>
+            If the encoding is not specified the source isn't debuggable.
+            If an encoding-less <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> is written to a file a <see cref="P:System.Text.Encoding.UTF8"/> shall be used as a default.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.Length">
+            <summary>
+            The length of the text in characters.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.StorageSize">
+            <summary>
+            The size of the storage representation of the text (in characters).
+            This can differ from length when storage buffers are reused to represent fragments/subtext.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.Item(System.Int32)">
+            <summary>
+            Returns a character at given position.
+            </summary>
+            <param name="position">The position to get the character from.</param>
+            <returns>The character.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">When position is negative or 
+            greater than <see cref="P:Microsoft.CodeAnalysis.Text.SourceText.Length"/>.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.CopyTo(System.Int32,System.Char[],System.Int32,System.Int32)">
+            <summary>
+            Copy a range of characters from this SourceText to a destination array.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.Container">
+            <summary>
+            The container of this <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.GetSubText(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Gets a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> that contains the characters in the specified span of this text.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.GetSubText(System.Int32)">
+            <summary>
+            Returns a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> that has the contents of this text including and after the start position.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.Write(System.IO.TextWriter,System.Threading.CancellationToken)">
+            <summary>
+            Write this <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> to a text writer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.Write(System.IO.TextWriter,Microsoft.CodeAnalysis.Text.TextSpan,System.Threading.CancellationToken)">
+            <summary>
+            Write a span of text to a text writer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.ToString">
+            <summary>
+            Provides a string representation of the SourceText.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.ToString(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Gets a string containing the characters in specified span.
+            </summary>
+            <exception cref="T:System.ArgumentOutOfRangeException">When given span is outside of the text range.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.WithChanges(System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Text.TextChange})">
+            <summary>
+            Constructs a new SourceText from this text with the specified changes.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.WithChanges(Microsoft.CodeAnalysis.Text.TextChange[])">
+            <summary>
+            Constructs a new SourceText from this text with the specified changes.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.Replace(Microsoft.CodeAnalysis.Text.TextSpan,System.String)">
+            <summary>
+            Returns a new SourceText with the specified span of characters replaced by the new text.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.Replace(System.Int32,System.Int32,System.String)">
+            <summary>
+            Returns a new SourceText with the specified range of characters replaced by the new text.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.GetChangeRanges(Microsoft.CodeAnalysis.Text.SourceText)">
+            <summary>
+            Gets the set of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/> that describe how the text changed
+            between this text an older version. This may be multiple detailed changes
+            or a single change encompassing the entire text.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.GetTextChanges(Microsoft.CodeAnalysis.Text.SourceText)">
+            <summary>
+            Gets the set of <see cref="T:Microsoft.CodeAnalysis.Text.TextChange"/> that describe how the text changed
+            between this text and an older version. This may be multiple detailed changes 
+            or a single change encompassing the entire text.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.Lines">
+            <summary>
+            The collection of individual text lines.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.GetLinesCore">
+            <summary>
+            Called from <see cref="P:Microsoft.CodeAnalysis.Text.SourceText.Lines"/> to initialize the <see cref="T:Microsoft.CodeAnalysis.Text.TextLineCollection"/>. Thereafter,
+            the collection is cached.
+            </summary>
+            <returns>A new <see cref="T:Microsoft.CodeAnalysis.Text.TextLineCollection"/> representing the individual text lines.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.ContentEquals(Microsoft.CodeAnalysis.Text.SourceText)">
+            <summary>
+            Compares the content with content of another <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.ContentEqualsImpl(Microsoft.CodeAnalysis.Text.SourceText)">
+            <summary>
+            Implements equality comparison of the content of two different instances of <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.TryReadByteOrderMark(System.Byte[],System.Int32,System.Int32@)">
+            <summary>
+            Detect an encoding by looking for byte order marks.
+            </summary>
+            <param name="source">A buffer containing the encoded text.</param>
+            <param name="length">The length of valid data in the buffer.</param>
+            <param name="preambleLength">The length of any detected byte order marks.</param>
+            <returns>The detected encoding or null if no recognized byte order mark was present.</returns>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.SourceTextContainer">
+            <summary>
+            An object that contains an instance of an SourceText and raises events when its current instance
+            changes.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.SourceTextContainer.CurrentText">
+            <summary>
+            The current text instance.
+            </summary>
+        </member>
+        <member name="E:Microsoft.CodeAnalysis.Text.SourceTextContainer.TextChanged">
+            <summary>
+            Raised when the current text instance changes.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.SourceTextStream">
+            <summary>
+            A read-only, non-seekable <see cref="T:System.IO.Stream"/> over a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.StringBuilderText">
+            <summary>
+            Implementation of <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> based on a <see cref="T:System.Text.StringBuilder"/> input
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Text.StringBuilderText._builder">
+            <summary>
+            Underlying string on which this SourceText instance is based
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.StringBuilderText.Builder">
+            <summary>
+            Underlying string which is the source of this SourceText instance
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.StringBuilderText.Length">
+            <summary>
+            The length of the text represented by <see cref="T:Microsoft.CodeAnalysis.Text.StringBuilderText"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.StringBuilderText.Item(System.Int32)">
+            <summary>
+            Returns a character at given position.
+            </summary>
+            <param name="position">The position to get the character from.</param>
+            <returns>The character.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">When position is negative or 
+            greater than <see cref="P:Microsoft.CodeAnalysis.Text.StringBuilderText.Length"/>.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.StringBuilderText.ToString(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Provides a string representation of the StringBuilderText located within given span.
+            </summary>
+            <exception cref="T:System.ArgumentOutOfRangeException">When given span is outside of the text range.</exception>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.StringText">
+            <summary>
+            Implementation of SourceText based on a <see cref="T:System.String"/> input
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.StringText.Source">
+            <summary>
+            Underlying string which is the source of this <see cref="T:Microsoft.CodeAnalysis.Text.StringText"/>instance
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.StringText.Length">
+            <summary>
+            The length of the text represented by <see cref="T:Microsoft.CodeAnalysis.Text.StringText"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.StringText.Item(System.Int32)">
+            <summary>
+            Returns a character at given position.
+            </summary>
+            <param name="position">The position to get the character from.</param>
+            <returns>The character.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">When position is negative or 
+            greater than <see cref="P:Microsoft.CodeAnalysis.Text.StringText.Length"/>.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.StringText.ToString(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Provides a string representation of the StringText located within given span.
+            </summary>
+            <exception cref="T:System.ArgumentOutOfRangeException">When given span is outside of the text range.</exception>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.SubText">
+            <summary>
+            An <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> that represents a subrange of another <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.TextChange">
+            <summary>
+            Describes a single change when a particular span is replaced with a new text.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextChange.Span">
+            <summary>
+            The original span of the changed text. 
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextChange.NewText">
+            <summary>
+            The new text.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextChange.#ctor(Microsoft.CodeAnalysis.Text.TextSpan,System.String)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChange"/>
+            </summary>
+            <param name="span">The original span of the changed text.</param>
+            <param name="newText">The new text.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextChange.ToString">
+            <summary>
+            Provides a string representation for <see cref="T:Microsoft.CodeAnalysis.Text.TextChange"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextChange.op_Implicit(Microsoft.CodeAnalysis.Text.TextChange)~Microsoft.CodeAnalysis.Text.TextChangeRange">
+            <summary>
+            Converts a <see cref="T:Microsoft.CodeAnalysis.Text.TextChange"/> to a <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/>.
+            </summary>
+            <param name="change"></param>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextChange.NoChanges">
+            <summary>
+            An empty set of changes.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.TextChangeEventArgs">
+            <summary>
+            Represents state for a TextChanged event.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeEventArgs.#ctor(Microsoft.CodeAnalysis.Text.SourceText,Microsoft.CodeAnalysis.Text.SourceText,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Text.TextChangeRange})">
+            <summary>
+            Initializes an instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeEventArgs"/>.
+            </summary>
+            <param name="oldText">The text before the change.</param>
+            <param name="newText">The text after the change.</param>
+            <param name="changes">A non-empty set of ranges for the change.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeEventArgs.#ctor(Microsoft.CodeAnalysis.Text.SourceText,Microsoft.CodeAnalysis.Text.SourceText,Microsoft.CodeAnalysis.Text.TextChangeRange[])">
+            <summary>
+            Initializes an instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeEventArgs"/>.
+            </summary>
+            <param name="oldText">The text before the change.</param>
+            <param name="newText">The text after the change.</param>
+            <param name="changes">A non-empty set of ranges for the change.</param>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextChangeEventArgs.OldText">
+            <summary>
+            Gets the text before the change.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextChangeEventArgs.NewText">
+            <summary>
+            Gets the text after the change.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextChangeEventArgs.Changes">
+            <summary>
+            Gets the set of ranges for the change.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.TextChangeRange">
+            <summary>
+            Represents the change to a span of text.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextChangeRange.Span">
+            <summary>
+            The span of text before the edit which is being changed
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextChangeRange.NewLength">
+            <summary>
+            Width of the span after the edit.  A 0 here would represent a delete
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.#ctor(Microsoft.CodeAnalysis.Text.TextSpan,System.Int32)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/>.
+            </summary>
+            <param name="span"></param>
+            <param name="newLength"></param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.Equals(Microsoft.CodeAnalysis.Text.TextChangeRange)">
+            <summary>
+            Compares current instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/> to another.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.Equals(System.Object)">
+            <summary>
+            Compares current instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/> to another.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.GetHashCode">
+            <summary>
+            Provides hash code for current instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/>.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.op_Equality(Microsoft.CodeAnalysis.Text.TextChangeRange,Microsoft.CodeAnalysis.Text.TextChangeRange)">
+            <summary>
+            Determines if two instances of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/> are same.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.op_Inequality(Microsoft.CodeAnalysis.Text.TextChangeRange,Microsoft.CodeAnalysis.Text.TextChangeRange)">
+            <summary>
+            Determines if two instances of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/> are different.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextChangeRange.NoChanges">
+            <summary>
+            An empty set of changes.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.Collapse(System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Text.TextChangeRange})">
+            <summary>
+            Collapse a set of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/>s into a single encompassing range.  If
+            the set of ranges provided is empty, an empty range is returned.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.TextLine">
+            <summary>
+            Information about the character boundaries of a single line of text.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextLine.FromSpan(Microsoft.CodeAnalysis.Text.SourceText,Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Creates a <see cref="T:Microsoft.CodeAnalysis.Text.TextLine"/> instance.
+            </summary>
+            <param name="text">The source text.</param>
+            <param name="span">The span of the line.</param>
+            <returns>An instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextLine"/>.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">The span does not represent a text line.</exception>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.Text">
+            <summary>
+            Gets the source text.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.LineNumber">
+            <summary>
+            Gets the zero-based line number.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.Start">
+            <summary>
+            Gets the start position of the line.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.End">
+            <summary>
+            Gets the end position of the line not including the line break.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.EndIncludingLineBreak">
+            <summary>
+            Gets the end position of the line including the line break.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.Span">
+            <summary>
+            Gets the line span not including the line break.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.SpanIncludingLineBreak">
+            <summary>
+            Gets the line span including the line break.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.TextLineCollection">
+            <summary>
+            Abstract base class for <see cref="T:Microsoft.CodeAnalysis.Text.TextLine"/> collections.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextLineCollection.Count">
+            <summary>
+            The count of <see cref="T:Microsoft.CodeAnalysis.Text.TextLine"/> items in the collection
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextLineCollection.Item(System.Int32)">
+            <summary>
+            Gets the <see cref="T:Microsoft.CodeAnalysis.Text.TextLine"/> item at the specified index.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextLineCollection.IndexOf(System.Int32)">
+            <summary>
+            The index of the TextLine that encompasses the character position.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextLineCollection.GetLineFromPosition(System.Int32)">
+            <summary>
+            Gets a <see cref="T:Microsoft.CodeAnalysis.Text.TextLine"/> that encompasses the character position.
+            </summary>
+            <param name="position"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextLineCollection.GetLinePosition(System.Int32)">
+            <summary>
+            Gets a <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> corresponding to a character position.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextLineCollection.GetLinePositionSpan(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Convert a <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> to a <see cref="T:Microsoft.CodeAnalysis.Text.LinePositionSpan"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextLineCollection.GetPosition(Microsoft.CodeAnalysis.Text.LinePosition)">
+            <summary>
+            Convert a <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> to a position.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextLineCollection.GetTextSpan(Microsoft.CodeAnalysis.Text.LinePositionSpan)">
+            <summary>
+            Convert a <see cref="T:Microsoft.CodeAnalysis.Text.LinePositionSpan"/> to <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.TextSpan">
+            <summary>
+            Immutable abstract representation of a span of text.  For example, in an error diagnostic that reports a
+            location, it could come from a parsed string, text from a tool editor buffer, etc.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Creates a TextSpan instance beginning with the position Start and having the Length
+            specified with <paramref name="length" />.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextSpan.Start">
+            <summary>
+            Start point of the span.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextSpan.End">
+            <summary>
+            End of the span.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextSpan.Length">
+            <summary>
+            Length of the span.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextSpan.IsEmpty">
+            <summary>
+            Determines whether or not the span is empty.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.Contains(System.Int32)">
+            <summary>
+            Determines whether the position lies within the span.
+            </summary>
+            <param name="position">
+            The position to check.
+            </param>
+            <returns>
+            <c>true</c> if the position is greater than or equal to Start and strictly less 
+            than End, otherwise <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.Contains(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Determines whether <paramref name="span"/> falls completely within this span.
+            </summary>
+            <param name="span">
+            The span to check.
+            </param>
+            <returns>
+            <c>true</c> if the specified span falls completely within this span, otherwise <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.OverlapsWith(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Determines whether <paramref name="span"/> overlaps this span. Two spans are considered to overlap 
+            if they have positions in common and neither is empty. Empty spans do not overlap with any 
+            other span.
+            </summary>
+            <param name="span">
+            The span to check.
+            </param>
+            <returns>
+            <c>true</c> if the spans overlap, otherwise <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.Overlap(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Returns the overlap with the given span, or null if there is no overlap.
+            </summary>
+            <param name="span">
+            The span to check.
+            </param>
+            <returns>
+            The overlap of the spans, or null if the overlap is empty.
+            </returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.IntersectsWith(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Determines whether <paramref name="span"/> intersects this span. Two spans are considered to 
+            intersect if they have positions in common or the end of one span 
+            coincides with the start of the other span.
+            </summary>
+            <param name="span">
+            The span to check.
+            </param>
+            <returns>
+            <c>true</c> if the spans intersect, otherwise <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.IntersectsWith(System.Int32)">
+            <summary>
+            Determines whether <paramref name="position"/> intersects this span. 
+            A position is considered to intersect if it is between the start and
+            end positions (inclusive) of this span.
+            </summary>
+            <param name="position">
+            The position to check.
+            </param>
+            <returns>
+            <c>true</c> if the position intersects, otherwise <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.Intersection(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Returns the intersection with the given span, or null if there is no intersection.
+            </summary>
+            <param name="span">
+            The span to check.
+            </param>
+            <returns>
+            The intersection of the spans, or null if the intersection is empty.
+            </returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.FromBounds(System.Int32,System.Int32)">
+            <summary>
+            Creates a new <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> from <paramref name="start" /> and <paramref
+            name="end"/> positions as opposed to a position and length.
+            
+            The returned TextSpan contains the range with <paramref name="start"/> inclusive, 
+            and <paramref name="end"/> exclusive.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.op_Equality(Microsoft.CodeAnalysis.Text.TextSpan,Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Determines if two instances of <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> are the same.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.op_Inequality(Microsoft.CodeAnalysis.Text.TextSpan,Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Determines if two instances of <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> are different.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.Equals(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Determines if current instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> is equal to another.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.Equals(System.Object)">
+            <summary>
+            Determines if current instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> is equal to another.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.GetHashCode">
+            <summary>
+            Produces a hash code for <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.ToString">
+            <summary>
+            Provides a string representation for <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.CompareTo(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Compares current instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> with another.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.TextUtilities">
+            <summary>
+            Holder for common Text Utility functions and values
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextUtilities.GetStartAndLengthOfLineBreakEndingAt(Microsoft.CodeAnalysis.Text.SourceText,System.Int32,System.Int32@,System.Int32@)">
+            <summary>
+            Return startLineBreak = index-1, lengthLineBreak = 2   if there is a \r\n at index-1
+            Return startLineBreak = index,   lengthLineBreak = 1   if there is a 1-char newline at index
+            Return startLineBreak = index+1, lengthLineBreak = 0   if there is no newline at index.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.TextUtilities.IsAnyLineBreakCharacter(System.Char)">
+            <summary>
+            Determine if the character in question is any line break character
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.UnicodeCharacterUtilities">
@@ -4622,6 +5795,11 @@
               Looks up a localized string similar to Reported diagnostic has an ID &apos;{0}&apos;, which is not a valid identifier..
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.CodeAnalysisResources.InvalidDiagnosticLocationReported">
+            <summary>
+              Looks up a localized string similar to Reported diagnostic has a source location in file &apos;{0}&apos;, which is not part of the compilation being analyzed..
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.CodeAnalysisResources.InvalidHash">
             <summary>
               Looks up a localized string similar to Invalid hash..
@@ -4855,6 +6033,11 @@
         <member name="P:Microsoft.CodeAnalysis.CodeAnalysisResources.RuleSetMissingAttribute">
             <summary>
               Looks up a localized string similar to The element {0} is missing an attribute named {1}..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CodeAnalysisResources.SharedArgumentMissing">
+            <summary>
+              Looks up a localized string similar to Value for argument &apos;/shared:&apos; must not be empty.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CodeAnalysisResources.SizeHasToBePositive">
@@ -5676,7 +6859,7 @@
             Trims all '.' and whitespace from the end of the path
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.TryParseClientArgs(System.Collections.Generic.IEnumerable{System.String},System.Collections.Generic.List{System.String}@,System.Boolean@,System.String@,System.String@)">
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.TryParseClientArgs(System.Collections.Generic.IEnumerable{System.String},System.Collections.Generic.List{System.String}@,System.Boolean@,System.String@,System.String@,System.String@)">
             <summary>
             Returns false if any of the client arguments are invalid and true otherwise.
             </summary>
@@ -5697,6 +6880,10 @@
             <param name="errorMessage">
             Only defined if errors were encountered.
             The error message for the encountered error.
+            </param>
+            <param name="sessionKey">
+            Only specified if <paramref name="containsShared"/> is true and the session key
+            was provided.  Can be null
             </param>
         </member>
         <member name="M:Microsoft.CodeAnalysis.CommandLineParser.ParseResponseFile(System.String,System.Collections.Generic.IList{Microsoft.CodeAnalysis.Diagnostic})">
@@ -6622,9 +7809,6 @@
         <member name="M:Microsoft.CodeAnalysis.DesktopStrongNameProvider.SignAssembly(Microsoft.CodeAnalysis.StrongNameKeys,System.IO.Stream,System.IO.Stream)">
             <exception cref="T:System.IO.IOException"></exception>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.DesktopStrongNameProvider.GetPublicKey(System.Byte[])">
-            <exception cref="T:System.IO.IOException"/>
-        </member>
         <member name="M:Microsoft.CodeAnalysis.DesktopStrongNameProvider.Sign(System.String,System.String)">
             <exception cref="T:System.IO.IOException"/>
         </member>
@@ -7168,961 +8352,6 @@
             <paramref name="kind"/> is not a valid kind.
             </exception>
         </member>
-        <member name="F:Microsoft.CodeAnalysis.Text.EncodedStringText.s_utf8Encoding">
-            <summary>
-            Encoding to use when there is no byte order mark (BOM) on the stream. This encoder may throw a <see cref="T:System.Text.DecoderFallbackException"/>
-            if the stream contains invalid UTF-8 bytes.
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.Text.EncodedStringText.s_fallbackEncoding">
-            <summary>
-            Encoding to use when UTF-8 fails. We try to find the following, in order, if available:
-                1. The default ANSI codepage
-                2. CodePage 1252.
-                3. Latin1.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.Create(System.IO.Stream,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm)">
-            <summary>
-            Initializes an instance of <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> from the provided stream. This version differs
-            from <see cref="M:Microsoft.CodeAnalysis.Text.SourceText.From(System.IO.Stream,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm,System.Boolean)"/> in two ways:
-            1. It attempts to minimize allocations by trying to read the stream into a byte array.
-            2. If <paramref name="defaultEncoding"/> is null, it will first try UTF8 and, if that fails, it will
-               try CodePage 1252. If CodePage 1252 is not available on the system, then it will try Latin1.
-            </summary>
-            <param name="stream">The stream containing encoded text.</param>
-            <param name="defaultEncoding">
-            Specifies an encoding to be used if the actual encoding can't be determined from the stream content (the stream doesn't start with Byte Order Mark).
-            If not specified auto-detect heuristics are used to determine the encoding. If these heuristics fail the decoding is assumed to be Encoding.Default.
-            Note that if the stream starts with Byte Order Mark the value of <paramref name="defaultEncoding"/> is ignored.
-            </param>
-            <param name="checksumAlgorithm">Hash algorithm used to calculate document checksum.</param>
-            <exception cref="T:System.IO.InvalidDataException">
-            The stream content can't be decoded using the specified <paramref name="defaultEncoding"/>, or
-            <paramref name="defaultEncoding"/> is null and the stream appears to be a binary file.
-            </exception>
-            <exception cref="T:System.IO.IOException">An IO error occurred while reading from the stream.</exception>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.Decode(System.IO.Stream,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm,System.Boolean)">
-            <summary>
-            Try to create a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> from the given stream using the given encoding.
-            </summary>
-            <param name="data">The input stream containing the encoded text. The stream will not be closed.</param>
-            <param name="encoding">The expected encoding of the stream. The actual encoding used may be different if byte order marks are detected.</param>
-            <param name="checksumAlgorithm">The checksum algorithm to use.</param>
-            <param name="throwIfBinaryDetected">Throw <see cref="T:System.IO.InvalidDataException"/> if binary (non-text) data is detected.</param>
-            <returns>The <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> decoded from the stream.</returns>
-            <exception cref="T:System.Text.DecoderFallbackException">The decoder was unable to decode the stream with the given encoding.</exception>
-            <remarks>
-            internal for unit testing
-            </remarks>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.TryGetByteArrayFromStream(System.IO.Stream)">
-            <summary>
-            Some streams are easily represented as byte arrays.
-            </summary>
-            <param name="data">The stream</param>
-            <returns>
-            The contents of <paramref name="data"/> as a byte array or null if the stream can't easily
-            be read into a byte array.
-            </returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.TryGetByteArrayFromMemoryStream(System.IO.MemoryStream,System.Byte[]@)">
-            <summary>
-            If the MemoryStream was created with publiclyVisible=true, then we can access its buffer
-            directly and save allocations in StreamReader. The input MemoryStream is not closed on exit.
-            </summary>
-            <returns>True if a byte array could be created.</returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.TryGetByteArrayFromFileStream(System.IO.Stream,System.Byte[]@)">
-            <summary>
-            Read the contents of a FileStream into a byte array.
-            </summary>
-            <param name="stream">The FileStream with encoded text.</param>
-            <param name="buffer">A byte array filled with the contents of the file.</param>
-            <returns>True if a byte array could be created.</returns>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.CompositeText">
-            <summary>
-            A composite of a sequence of <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/>s.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.CompositeText.CheckCopyToArguments(System.Int32,System.Char[],System.Int32,System.Int32)">
-            <summary>
-            Validates the arguments passed to <see cref="M:Microsoft.CodeAnalysis.Text.CompositeText.CopyTo(System.Int32,System.Char[],System.Int32,System.Int32)"/> against the published contract.
-            </summary>
-            <returns>True if should bother to proceed with copying.</returns>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.LargeEncodedText">
-            <summary>
-            A <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> optimized for very large sources. The text is stored as
-            a list of chunks (char arrays).
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.Text.LargeEncodedText.ChunkSize">
-            <remarks>
-            internal for unit testing
-            </remarks>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.LargeEncodedText.IsBinary(System.Char[])">
-            <summary>
-            Check for occurrence of two consecutive NUL (U+0000) characters.
-            This is unlikely to appear in genuine text, so it's a good heuristic
-            to detect binary files.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.LargeEncodedText.GetLinesCore">
-            <summary>
-            Called from <see cref="P:Microsoft.CodeAnalysis.Text.SourceText.Lines"/> to initialize the <see cref="T:Microsoft.CodeAnalysis.Text.TextLineCollection"/>. Thereafter,
-            the collection is cached.
-            </summary>
-            <returns>A new <see cref="T:Microsoft.CodeAnalysis.Text.TextLineCollection"/> representing the individual text lines.</returns>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.LinePosition">
-            <summary>
-            Immutable representation of a line number and position within a SourceText instance.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.LinePosition.Zero">
-            <summary>
-            A <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> that represents position 0 at line 0.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.#ctor(System.Int32,System.Int32)">
-            <summary>
-            Initializes a new instance of a <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> with the given line and character.
-            </summary>
-            <param name="line">
-            The line of the line position. The first line in a file is defined as line 0 (zero based line numbering).
-            </param>
-            <param name="character">
-            The character position in the line.
-            </param>
-            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="line"/> or <paramref name="character"/> is less than zero. </exception>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.LinePosition.Line">
-            <summary>
-            The line number. The first line in a file is defined as line 0 (zero based line numbering).
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.LinePosition.Character">
-            <summary>
-            The character position within the line.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.op_Equality(Microsoft.CodeAnalysis.Text.LinePosition,Microsoft.CodeAnalysis.Text.LinePosition)">
-            <summary>
-            Determines whether two <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> are the same.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.op_Inequality(Microsoft.CodeAnalysis.Text.LinePosition,Microsoft.CodeAnalysis.Text.LinePosition)">
-            <summary>
-            Determines whether two <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> are different.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.Equals(Microsoft.CodeAnalysis.Text.LinePosition)">
-            <summary>
-            Determines whether two <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> are the same.
-            </summary>
-            <param name="other">The object to compare.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.Equals(System.Object)">
-            <summary>
-            Determines whether two <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> are the same.
-            </summary>
-            <param name="obj">The object to compare.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.GetHashCode">
-            <summary>
-            Provides a hash function for <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/>.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.LinePosition.ToString">
-            <summary>
-            Provides a string representation for <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/>.
-            </summary>
-            <example>0,10</example>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.LinePositionSpan">
-            <summary>
-            Immutable span represented by a pair of line number and index within the line.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.LinePositionSpan.#ctor(Microsoft.CodeAnalysis.Text.LinePosition,Microsoft.CodeAnalysis.Text.LinePosition)">
-            <summary>
-            Creates <see cref="T:Microsoft.CodeAnalysis.Text.LinePositionSpan"/>.
-            </summary>
-            <param name="start">Start position.</param>
-            <param name="end">End position.</param>
-            <exception cref="T:System.ArgumentException"><paramref name="end"/> precedes <paramref name="start"/>.</exception>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.LinePositionSpan.Start">
-            <summary>
-            Gets the start position of the span.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.LinePositionSpan.End">
-            <summary>
-            Gets the end position of the span.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.LinePositionSpan.ToString">
-            <summary>
-            Provides a string representation for <see cref="T:Microsoft.CodeAnalysis.Text.LinePositionSpan"/>.
-            </summary>
-            <example>(0,0)-(5,6)</example>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.SourceHashAlgorithm">
-            <summary>
-            Specifies a hash algorithms used for hashing source files.
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.Text.SourceHashAlgorithm.None">
-            <summary>
-            No algorithm specified.
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.Text.SourceHashAlgorithm.Sha1">
-            <summary>
-            Secure Hash Algorithm 1.
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.Text.SourceHashAlgorithm.Sha256">
-            <summary>
-            Secure Hash Algorithm 2 with a hash size of 256 bits.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.SourceText">
-            <summary>
-            An abstraction of source text.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.From(System.String,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm)">
-            <summary>
-            Constructs a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> from text in a string.
-            </summary>
-            <param name="text">Text.</param>
-            <param name="encoding">
-            Encoding of the file that the <paramref name="text"/> was read from or is going to be saved to.
-            <c>null</c> if the encoding is unspecified.
-            If the encoding is not specified the resulting <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> isn't debuggable.
-            If an encoding-less <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> is written to a file a <see cref="P:System.Text.Encoding.UTF8"/> shall be used as a default.
-            </param>
-            <param name="checksumAlgorithm">
-            Hash algorithm to use to calculate checksum of the text that's saved to PDB.
-            </param>
-            <exception cref="T:System.ArgumentNullException"><paramref name="text"/> is null.</exception>
-            <exception cref="T:System.ArgumentException"><paramref name="checksumAlgorithm"/> is not supported.</exception>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.From(System.IO.Stream,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm,System.Boolean)">
-            <summary>
-            Constructs a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> from stream content.
-            </summary>
-            <param name="stream">Stream. The stream must be seekable.</param>
-            <param name="encoding">
-            Data encoding to use if the stream doesn't start with Byte Order Mark specifying the encoding.
-            <see cref="P:System.Text.Encoding.UTF8"/> if not specified.
-            </param>
-            <param name="checksumAlgorithm">
-            Hash algorithm to use to calculate checksum of the text that's saved to PDB.
-            </param>
-            <param name="throwIfBinaryDetected">If the decoded text contains at least two consecutive NUL
-            characters, then an <see cref="T:System.IO.InvalidDataException"/> is thrown.</param>
-            <exception cref="T:System.ArgumentNullException"><paramref name="stream"/> is null.</exception>
-            <exception cref="T:System.ArgumentException">
-            <paramref name="stream"/> doesn't support reading or seeking.
-            <paramref name="checksumAlgorithm"/> is not supported.
-            </exception>
-            <exception cref="T:System.Text.DecoderFallbackException">If the given encoding is set to use a throwing decoder as a fallback</exception>
-            <exception cref="T:System.IO.InvalidDataException">Two consecutive NUL characters were detected in the decoded text and <paramref name="throwIfBinaryDetected"/> was true.</exception>
-            <exception cref="T:System.IO.IOException">An I/O error occurs.</exception>
-            <remarks>Reads from the beginning of the stream. Leaves the stream open.</remarks>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.From(System.Byte[],System.Int32,System.Text.Encoding,Microsoft.CodeAnalysis.Text.SourceHashAlgorithm,System.Boolean)">
-            <summary>
-            Constructs a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> from a byte array.
-            </summary>
-            <param name="buffer">The encoded source buffer.</param>
-            <param name="length">The number of bytes to read from the buffer.</param>
-            <param name="encoding">
-            Data encoding to use if the encoded buffer doesn't start with Byte Order Mark.
-            <see cref="P:System.Text.Encoding.UTF8"/> if not specified.
-            </param>
-            <param name="checksumAlgorithm">
-            Hash algorithm to use to calculate checksum of the text that's saved to PDB.
-            </param>
-            <param name="throwIfBinaryDetected">If the decoded text contains at least two consecutive NUL
-            characters, then an <see cref="T:System.IO.InvalidDataException"/> is thrown.</param>
-            <returns>The decoded text.</returns>
-            <exception cref="T:System.ArgumentNullException">The <paramref name="buffer"/> is null.</exception>
-            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="length"/> is negative or longer than the <paramref name="buffer"/>.</exception>
-            <exception cref="T:System.ArgumentException"><paramref name="checksumAlgorithm"/> is not supported.</exception>
-            <exception cref="T:System.Text.DecoderFallbackException">If the given encoding is set to use a throwing decoder as a fallback</exception>
-            <exception cref="T:System.IO.InvalidDataException">Two consecutive NUL characters were detected in the decoded text and <paramref name="throwIfBinaryDetected"/> was true.</exception>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.Decode(System.IO.Stream,System.Text.Encoding,System.Text.Encoding@)">
-            <summary>
-            Decode text from a stream.
-            </summary>
-            <param name="stream">The stream containing encoded text.</param>
-            <param name="encoding">The encoding to use if an encoding cannot be determined from the byte order mark.</param>
-            <param name="actualEncoding">The actual encoding used.</param>
-            <returns>The decoded text.</returns>
-            <exception cref="T:System.Text.DecoderFallbackException">If the given encoding is set to use a throwing decoder as a fallback</exception>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.Decode(System.Byte[],System.Int32,System.Text.Encoding,System.Text.Encoding@)">
-            <summary>
-            Decode text from a byte array.
-            </summary>
-            <param name="buffer">The byte array containing encoded text.</param>
-            <param name="length">The count of valid bytes in <paramref name="buffer"/>.</param>
-            <param name="encoding">The encoding to use if an encoding cannot be determined from the byte order mark.</param>
-            <param name="actualEncoding">The actual encoding used.</param>
-            <returns>The decoded text.</returns>
-            <exception cref="T:System.Text.DecoderFallbackException">If the given encoding is set to use a throwing decoder as a fallback</exception>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.IsBinary(System.String)">
-            <summary>
-            Check for occurrence of two consecutive NUL (U+0000) characters.
-            This is unlikely to appear in genuine text, so it's a good heuristic
-            to detect binary files.
-            </summary>
-            <remarks>
-            internal for unit testing
-            </remarks>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.ChecksumAlgorithm">
-            <summary>
-            Hash algorithm to use to calculate checksum of the text that's saved to PDB.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.Encoding">
-            <summary>
-            Encoding of the file that the text was read from or is going to be saved to.
-            <c>null</c> if the encoding is unspecified.
-            </summary>
-            <remarks>
-            If the encoding is not specified the source isn't debuggable.
-            If an encoding-less <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> is written to a file a <see cref="P:System.Text.Encoding.UTF8"/> shall be used as a default.
-            </remarks>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.Length">
-            <summary>
-            The length of the text in characters.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.Item(System.Int32)">
-            <summary>
-            Returns a character at given position.
-            </summary>
-            <param name="position">The position to get the character from.</param>
-            <returns>The character.</returns>
-            <exception cref="T:System.ArgumentOutOfRangeException">When position is negative or 
-            greater than <see cref="P:Microsoft.CodeAnalysis.Text.SourceText.Length"/>.</exception>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.CopyTo(System.Int32,System.Char[],System.Int32,System.Int32)">
-            <summary>
-            Copy a range of characters from this SourceText to a destination array.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.Container">
-            <summary>
-            The container of this <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/>.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.GetSubText(Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Gets a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> that contains the characters in the specified span of this text.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.GetSubText(System.Int32)">
-            <summary>
-            Returns a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> that has the contents of this text including and after the start position.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.Write(System.IO.TextWriter,System.Threading.CancellationToken)">
-            <summary>
-            Write this <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> to a text writer.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.Write(System.IO.TextWriter,Microsoft.CodeAnalysis.Text.TextSpan,System.Threading.CancellationToken)">
-            <summary>
-            Write a span of text to a text writer.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.ToString">
-            <summary>
-            Provides a string representation of the SourceText.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.ToString(Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Gets a string containing the characters in specified span.
-            </summary>
-            <exception cref="T:System.ArgumentOutOfRangeException">When given span is outside of the text range.</exception>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.WithChanges(System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Text.TextChange})">
-            <summary>
-            Constructs a new SourceText from this text with the specified changes.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.WithChanges(Microsoft.CodeAnalysis.Text.TextChange[])">
-            <summary>
-            Constructs a new SourceText from this text with the specified changes.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.Replace(Microsoft.CodeAnalysis.Text.TextSpan,System.String)">
-            <summary>
-            Returns a new SourceText with the specified span of characters replaced by the new text.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.Replace(System.Int32,System.Int32,System.String)">
-            <summary>
-            Returns a new SourceText with the specified range of characters replaced by the new text.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.GetChangeRanges(Microsoft.CodeAnalysis.Text.SourceText)">
-            <summary>
-            Gets the set of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/> that describe how the text changed
-            between this text an older version. This may be multiple detailed changes
-            or a single change encompassing the entire text.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.GetTextChanges(Microsoft.CodeAnalysis.Text.SourceText)">
-            <summary>
-            Gets the set of <see cref="T:Microsoft.CodeAnalysis.Text.TextChange"/> that describe how the text changed
-            between this text and an older version. This may be multiple detailed changes 
-            or a single change encompassing the entire text.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.SourceText.Lines">
-            <summary>
-            The collection of individual text lines.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.GetLinesCore">
-            <summary>
-            Called from <see cref="P:Microsoft.CodeAnalysis.Text.SourceText.Lines"/> to initialize the <see cref="T:Microsoft.CodeAnalysis.Text.TextLineCollection"/>. Thereafter,
-            the collection is cached.
-            </summary>
-            <returns>A new <see cref="T:Microsoft.CodeAnalysis.Text.TextLineCollection"/> representing the individual text lines.</returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.ContentEquals(Microsoft.CodeAnalysis.Text.SourceText)">
-            <summary>
-            Compares the content with content of another <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/>.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.ContentEqualsImpl(Microsoft.CodeAnalysis.Text.SourceText)">
-            <summary>
-            Implements equality comparison of the content of two different instances of <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/>.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.SourceText.TryReadByteOrderMark(System.Byte[],System.Int32,System.Int32@)">
-            <summary>
-            Detect an encoding by looking for byte order marks.
-            </summary>
-            <param name="source">A buffer containing the encoded text.</param>
-            <param name="length">The length of valid data in the buffer.</param>
-            <param name="preambleLength">The length of any detected byte order marks.</param>
-            <returns>The detected encoding or null if no recognized byte order mark was present.</returns>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.SourceTextContainer">
-            <summary>
-            An object that contains an instance of an SourceText and raises events when its current instance
-            changes.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.SourceTextContainer.CurrentText">
-            <summary>
-            The current text instance.
-            </summary>
-        </member>
-        <member name="E:Microsoft.CodeAnalysis.Text.SourceTextContainer.TextChanged">
-            <summary>
-            Raised when the current text instance changes.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.SourceTextStream">
-            <summary>
-            A read-only, non-seekable <see cref="T:System.IO.Stream"/> over a <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/>.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.StringBuilderText">
-            <summary>
-            Implementation of <see cref="T:Microsoft.CodeAnalysis.Text.SourceText"/> based on a <see cref="T:System.Text.StringBuilder"/> input
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.Text.StringBuilderText._builder">
-            <summary>
-            Underlying string on which this SourceText instance is based
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.StringBuilderText.Builder">
-            <summary>
-            Underlying string which is the source of this SourceText instance
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.StringBuilderText.Length">
-            <summary>
-            The length of the text represented by <see cref="T:Microsoft.CodeAnalysis.Text.StringBuilderText"/>.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.StringBuilderText.Item(System.Int32)">
-            <summary>
-            Returns a character at given position.
-            </summary>
-            <param name="position">The position to get the character from.</param>
-            <returns>The character.</returns>
-            <exception cref="T:System.ArgumentOutOfRangeException">When position is negative or 
-            greater than <see cref="P:Microsoft.CodeAnalysis.Text.StringBuilderText.Length"/>.</exception>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.StringBuilderText.ToString(Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Provides a string representation of the StringBuilderText located within given span.
-            </summary>
-            <exception cref="T:System.ArgumentOutOfRangeException">When given span is outside of the text range.</exception>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.StringText">
-            <summary>
-            Implementation of SourceText based on a <see cref="T:System.String"/> input
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.StringText.Source">
-            <summary>
-            Underlying string which is the source of this <see cref="T:Microsoft.CodeAnalysis.Text.StringText"/>instance
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.StringText.Length">
-            <summary>
-            The length of the text represented by <see cref="T:Microsoft.CodeAnalysis.Text.StringText"/>.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.StringText.Item(System.Int32)">
-            <summary>
-            Returns a character at given position.
-            </summary>
-            <param name="position">The position to get the character from.</param>
-            <returns>The character.</returns>
-            <exception cref="T:System.ArgumentOutOfRangeException">When position is negative or 
-            greater than <see cref="P:Microsoft.CodeAnalysis.Text.StringText.Length"/>.</exception>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.StringText.ToString(Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Provides a string representation of the StringText located within given span.
-            </summary>
-            <exception cref="T:System.ArgumentOutOfRangeException">When given span is outside of the text range.</exception>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.SubText">
-            <summary>
-            An SourceText that represents a subrange of another SourceText.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.TextChange">
-            <summary>
-            Describes a single change when a particular span is replaced with a new text.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextChange.Span">
-            <summary>
-            The original span of the changed text. 
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextChange.NewText">
-            <summary>
-            The new text.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextChange.#ctor(Microsoft.CodeAnalysis.Text.TextSpan,System.String)">
-            <summary>
-            Initializes a new instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChange"/>
-            </summary>
-            <param name="span">The original span of the changed text.</param>
-            <param name="newText">The new text.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextChange.ToString">
-            <summary>
-            Provides a string representation for <see cref="T:Microsoft.CodeAnalysis.Text.TextChange"/>.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextChange.op_Implicit(Microsoft.CodeAnalysis.Text.TextChange)~Microsoft.CodeAnalysis.Text.TextChangeRange">
-            <summary>
-            Converts a <see cref="T:Microsoft.CodeAnalysis.Text.TextChange"/> to a <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/>.
-            </summary>
-            <param name="change"></param>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextChange.NoChanges">
-            <summary>
-            An empty set of changes.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.TextChangeEventArgs">
-            <summary>
-            Represents state for a TextChanged event.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeEventArgs.#ctor(Microsoft.CodeAnalysis.Text.SourceText,Microsoft.CodeAnalysis.Text.SourceText,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Text.TextChangeRange})">
-            <summary>
-            Initializes an instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeEventArgs"/>.
-            </summary>
-            <param name="oldText">The text before the change.</param>
-            <param name="newText">The text after the change.</param>
-            <param name="changes">A non-empty set of ranges for the change.</param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeEventArgs.#ctor(Microsoft.CodeAnalysis.Text.SourceText,Microsoft.CodeAnalysis.Text.SourceText,Microsoft.CodeAnalysis.Text.TextChangeRange[])">
-            <summary>
-            Initializes an instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeEventArgs"/>.
-            </summary>
-            <param name="oldText">The text before the change.</param>
-            <param name="newText">The text after the change.</param>
-            <param name="changes">A non-empty set of ranges for the change.</param>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextChangeEventArgs.OldText">
-            <summary>
-            Gets the text before the change.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextChangeEventArgs.NewText">
-            <summary>
-            Gets the text after the change.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextChangeEventArgs.Changes">
-            <summary>
-            Gets the set of ranges for the change.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.TextChangeRange">
-            <summary>
-            Represents the change to a span of text.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextChangeRange.Span">
-            <summary>
-            The span of text before the edit which is being changed
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextChangeRange.NewLength">
-            <summary>
-            Width of the span after the edit.  A 0 here would represent a delete
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.#ctor(Microsoft.CodeAnalysis.Text.TextSpan,System.Int32)">
-            <summary>
-            Initializes a new instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/>.
-            </summary>
-            <param name="span"></param>
-            <param name="newLength"></param>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.Equals(Microsoft.CodeAnalysis.Text.TextChangeRange)">
-            <summary>
-            Compares current instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/> to another.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.Equals(System.Object)">
-            <summary>
-            Compares current instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/> to another.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.GetHashCode">
-            <summary>
-            Provides hash code for current instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/>.
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.op_Equality(Microsoft.CodeAnalysis.Text.TextChangeRange,Microsoft.CodeAnalysis.Text.TextChangeRange)">
-            <summary>
-            Determines if two instances of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/> are same.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.op_Inequality(Microsoft.CodeAnalysis.Text.TextChangeRange,Microsoft.CodeAnalysis.Text.TextChangeRange)">
-            <summary>
-            Determines if two instances of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/> are different.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextChangeRange.NoChanges">
-            <summary>
-            An empty set of changes.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextChangeRange.Collapse(System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.Text.TextChangeRange})">
-            <summary>
-            Collapse a set of <see cref="T:Microsoft.CodeAnalysis.Text.TextChangeRange"/>s into a single encompassing range.  If
-            the set of ranges provided is empty, an empty range is returned.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.TextLine">
-            <summary>
-            Information about the character boundaries of a single line of text.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextLine.FromSpan(Microsoft.CodeAnalysis.Text.SourceText,Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Creates a <see cref="T:Microsoft.CodeAnalysis.Text.TextLine"/> instance.
-            </summary>
-            <param name="text">The source text.</param>
-            <param name="span">The span of the line.</param>
-            <returns>An instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextLine"/>.</returns>
-            <exception cref="T:System.ArgumentOutOfRangeException">The span does not represent a text line.</exception>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.Text">
-            <summary>
-            Gets the source text.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.LineNumber">
-            <summary>
-            Gets the zero-based line number.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.Start">
-            <summary>
-            Gets the start position of the line.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.End">
-            <summary>
-            Gets the end position of the line not including the line break.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.EndIncludingLineBreak">
-            <summary>
-            Gets the end position of the line including the line break.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.Span">
-            <summary>
-            Gets the line span not including the line break.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextLine.SpanIncludingLineBreak">
-            <summary>
-            Gets the line span including the line break.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.TextLineCollection">
-            <summary>
-            Abstract base class for <see cref="T:Microsoft.CodeAnalysis.Text.TextLine"/> collections.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextLineCollection.Count">
-            <summary>
-            The count of <see cref="T:Microsoft.CodeAnalysis.Text.TextLine"/> items in the collection
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextLineCollection.Item(System.Int32)">
-            <summary>
-            Gets the <see cref="T:Microsoft.CodeAnalysis.Text.TextLine"/> item at the specified index.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextLineCollection.IndexOf(System.Int32)">
-            <summary>
-            The index of the TextLine that encompasses the character position.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextLineCollection.GetLineFromPosition(System.Int32)">
-            <summary>
-            Gets a <see cref="T:Microsoft.CodeAnalysis.Text.TextLine"/> that encompasses the character position.
-            </summary>
-            <param name="position"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextLineCollection.GetLinePosition(System.Int32)">
-            <summary>
-            Gets a <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> corresponding to a character position.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextLineCollection.GetLinePositionSpan(Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Convert a <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> to a <see cref="T:Microsoft.CodeAnalysis.Text.LinePositionSpan"/>.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextLineCollection.GetPosition(Microsoft.CodeAnalysis.Text.LinePosition)">
-            <summary>
-            Convert a <see cref="T:Microsoft.CodeAnalysis.Text.LinePosition"/> to a position.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextLineCollection.GetTextSpan(Microsoft.CodeAnalysis.Text.LinePositionSpan)">
-            <summary>
-            Convert a <see cref="T:Microsoft.CodeAnalysis.Text.LinePositionSpan"/> to <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/>.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.TextSpan">
-            <summary>
-            Immutable abstract representation of a span of text.  For example, in an error diagnostic that reports a
-            location, it could come from a parsed string, text from a tool editor buffer, etc.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.#ctor(System.Int32,System.Int32)">
-            <summary>
-            Creates a TextSpan instance beginning with the position Start and having the Length
-            specified with <paramref name="length" />.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextSpan.Start">
-            <summary>
-            Start point of the span.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextSpan.End">
-            <summary>
-            End of the span.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextSpan.Length">
-            <summary>
-            Length of the span.
-            </summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.Text.TextSpan.IsEmpty">
-            <summary>
-            Determines whether or not the span is empty.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.Contains(System.Int32)">
-            <summary>
-            Determines whether the position lies within the span.
-            </summary>
-            <param name="position">
-            The position to check.
-            </param>
-            <returns>
-            <c>true</c> if the position is greater than or equal to Start and strictly less 
-            than End, otherwise <c>false</c>.
-            </returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.Contains(Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Determines whether <paramref name="span"/> falls completely within this span.
-            </summary>
-            <param name="span">
-            The span to check.
-            </param>
-            <returns>
-            <c>true</c> if the specified span falls completely within this span, otherwise <c>false</c>.
-            </returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.OverlapsWith(Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Determines whether <paramref name="span"/> overlaps this span. Two spans are considered to overlap 
-            if they have positions in common and neither is empty. Empty spans do not overlap with any 
-            other span.
-            </summary>
-            <param name="span">
-            The span to check.
-            </param>
-            <returns>
-            <c>true</c> if the spans overlap, otherwise <c>false</c>.
-            </returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.Overlap(Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Returns the overlap with the given span, or null if there is no overlap.
-            </summary>
-            <param name="span">
-            The span to check.
-            </param>
-            <returns>
-            The overlap of the spans, or null if the overlap is empty.
-            </returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.IntersectsWith(Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Determines whether <paramref name="span"/> intersects this span. Two spans are considered to 
-            intersect if they have positions in common or the end of one span 
-            coincides with the start of the other span.
-            </summary>
-            <param name="span">
-            The span to check.
-            </param>
-            <returns>
-            <c>true</c> if the spans intersect, otherwise <c>false</c>.
-            </returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.IntersectsWith(System.Int32)">
-            <summary>
-            Determines whether <paramref name="position"/> intersects this span. 
-            A position is considered to intersect if it is between the start and
-            end positions (inclusive) of this span.
-            </summary>
-            <param name="position">
-            The position to check.
-            </param>
-            <returns>
-            <c>true</c> if the position intersects, otherwise <c>false</c>.
-            </returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.Intersection(Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Returns the intersection with the given span, or null if there is no intersection.
-            </summary>
-            <param name="span">
-            The span to check.
-            </param>
-            <returns>
-            The intersection of the spans, or null if the intersection is empty.
-            </returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.FromBounds(System.Int32,System.Int32)">
-            <summary>
-            Creates a new <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> from <paramref name="start" /> and <paramref
-            name="end"/> positions as opposed to a position and length.
-            
-            The returned TextSpan contains the range with <paramref name="start"/> inclusive, 
-            and <paramref name="end"/> exclusive.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.op_Equality(Microsoft.CodeAnalysis.Text.TextSpan,Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Determines if two instances of <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> are the same.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.op_Inequality(Microsoft.CodeAnalysis.Text.TextSpan,Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Determines if two instances of <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> are different.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.Equals(Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Determines if current instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> is equal to another.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.Equals(System.Object)">
-            <summary>
-            Determines if current instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> is equal to another.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.GetHashCode">
-            <summary>
-            Produces a hash code for <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/>.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.ToString">
-            <summary>
-            Provides a string representation for <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/>.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextSpan.CompareTo(Microsoft.CodeAnalysis.Text.TextSpan)">
-            <summary>
-            Compares current instance of <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> with another.
-            </summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.Text.TextUtilities">
-            <summary>
-            Holder for common Text Utility functions and values
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextUtilities.GetStartAndLengthOfLineBreakEndingAt(Microsoft.CodeAnalysis.Text.SourceText,System.Int32,System.Int32@,System.Int32@)">
-            <summary>
-            Return startLineBreak = index-1, lengthLineBreak = 2   if there is a \r\n at index-1
-            Return startLineBreak = index,   lengthLineBreak = 1   if there is a 1-char newline at index
-            Return startLineBreak = index+1, lengthLineBreak = 0   if there is no newline at index.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.Text.TextUtilities.IsAnyLineBreakCharacter(System.Char)">
-            <summary>
-            Determine if the character in question is any line break character
-            </summary>
-        </member>
         <member name="M:Microsoft.CodeAnalysis.FileSystemExtensions.Emit(Microsoft.CodeAnalysis.Compilation,System.String,System.String,System.String,System.String,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.ResourceDescription},System.Threading.CancellationToken)">
             <summary>
             Emit the IL for the compilation into the specified stream.
@@ -8385,11 +8614,12 @@
         </member>
         <member name="P:Microsoft.CodeAnalysis.CompilationOptions.CryptoPublicKey">
             <summary>
-            Specifies public key used to generate strong name for the compilation assembly, or empty of not specified.
+            Specifies public key used to generate strong name for the compilation assembly, or empty if not specified.
             </summary>
             <remarks>
-            If specified the values of <see cref="P:Microsoft.CodeAnalysis.CompilationOptions.CryptoKeyFile"/> and <see cref="P:Microsoft.CodeAnalysis.CompilationOptions.CryptoKeyContainer"/> must be null.
-            If <see cref="P:Microsoft.CodeAnalysis.CompilationOptions.DelaySign"/> is false the assembly is marked as signed but not actually signed (aka "OSS signing").
+            If specified the values of <see cref="P:Microsoft.CodeAnalysis.CompilationOptions.CryptoKeyFile"/> and <see cref="P:Microsoft.CodeAnalysis.CompilationOptions.CryptoKeyContainer"/>
+            must be null. If <see cref="P:Microsoft.CodeAnalysis.CompilationOptions.PublicSign"/> is true the assembly is marked as fully signed
+            but only signed with the public key (aka "OSS signing").
             </remarks>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CompilationOptions.CryptoKeyFile">
@@ -8427,7 +8657,7 @@
         </member>
         <member name="P:Microsoft.CodeAnalysis.CompilationOptions.DelaySign">
             <summary>
-            Turn compilation assembly signing on or off.
+            Mark the compilation assembly as delay-signed.
             </summary>
             <remarks>
             If true the resulting assembly is marked as delay signed.
@@ -8438,6 +8668,14 @@
             
             If null the semantics is specified by the value of attribute System.Reflection.AssemblyDelaySignAttribute 
             applied to the compilation assembly in source. If the attribute is not present the value defaults to "false".
+            </remarks>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CompilationOptions.PublicSign">
+            <summary>
+            Mark the compilation assembly as fully signed, but only sign with the public key.
+            </summary>
+            <remarks>
+            If true, the assembly is marked as signed, but is only signed with the public key.
             </remarks>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CompilationOptions.CheckOverflow">
@@ -8576,6 +8814,11 @@
         <member name="M:Microsoft.CodeAnalysis.CompilationOptions.WithPlatform(Microsoft.CodeAnalysis.Platform)">
             <summary>
             Creates a new options instance with the specified platform.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CompilationOptions.WithPublicSign(System.Boolean)">
+            <summary>
+            Creates a new options instance with the specified public sign setting.
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.CompilationOptions.WithOptimizationLevel(Microsoft.CodeAnalysis.OptimizationLevel)">
@@ -8719,7 +8962,7 @@
         </member>
         <member name="P:Microsoft.CodeAnalysis.Semantics.IExpression.ConstantValue">
             <summary>
-            If the expression evaluates to a constant value, the value of the expression, and otherwise null.
+            If the expression evaluates to a constant value, <see cref="P:Microsoft.CodeAnalysis.Optional`1.HasValue"/> is true and <see cref="P:Microsoft.CodeAnalysis.Optional`1.Value"/> is the value of the expression, and otherwise <see cref="P:Microsoft.CodeAnalysis.Optional`1.HasValue"/> is false.
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Semantics.IInvocationExpression">
@@ -8910,17 +9153,22 @@
         </member>
         <member name="T:Microsoft.CodeAnalysis.Semantics.IMemberReferenceExpression">
             <summary>
-            Represents a reference to a member of a class or struct.
+            Represents a reference to a member of a class, struct, or interface.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.Semantics.IMemberReferenceExpression.Instance">
             <summary>
-            Instance of the class or struct. Null if the reference is to a static/shared member.
+            Instance of the type. Null if the reference is to a static/shared member.
             </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Semantics.IMemberReferenceExpression.Member">
+            <summary>
+            Referenced member.  
+            </summary>  
         </member>
         <member name="T:Microsoft.CodeAnalysis.Semantics.IFieldReferenceExpression">
             <summary>
-            Represents a reference to a field of a class or struct.
+            Represents a reference to a field.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.Semantics.IFieldReferenceExpression.Field">
@@ -8928,29 +9176,64 @@
             Referenced field.
             </summary>
         </member>
-        <member name="T:Microsoft.CodeAnalysis.Semantics.IMethodReferenceExpression">
+        <member name="T:Microsoft.CodeAnalysis.Semantics.IMethodBindingExpression">
             <summary>
-            Represents a reference to a method of a class or struct.
+            Represents a reference to a method other than as the target of an invocation.
             </summary>
         </member>
-        <member name="P:Microsoft.CodeAnalysis.Semantics.IMethodReferenceExpression.Method">
+        <member name="P:Microsoft.CodeAnalysis.Semantics.IMethodBindingExpression.Method">
             <summary>
             Referenced method.
             </summary>
         </member>
-        <member name="P:Microsoft.CodeAnalysis.Semantics.IMethodReferenceExpression.IsVirtual">
+        <member name="P:Microsoft.CodeAnalysis.Semantics.IMethodBindingExpression.IsVirtual">
             <summary>
             Indicates whether the reference uses virtual semantics.
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Semantics.IPropertyReferenceExpression">
             <summary>
-            Represents a reference to a property of a class or struct.
+            Represents a reference to a property.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.Semantics.IPropertyReferenceExpression.Property">
             <summary>
             Referenced property.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Semantics.IEventReferenceExpression">
+            <summary>
+            Represents a reference to an event.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Semantics.IEventReferenceExpression.Event">
+            <summary>
+            Referenced event.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Semantics.IEventAssignmentExpression">
+            <summary>
+            Represents a binding of an event.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Semantics.IEventAssignmentExpression.Event">
+            <summary>
+            Event being bound.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Semantics.IEventAssignmentExpression.EventInstance">
+            <summary>
+            Instance used to refer to the event being bound.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Semantics.IEventAssignmentExpression.HandlerValue">
+            <summary>
+            Handler supplied for the event.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Semantics.IEventAssignmentExpression.Adds">
+            <summary>
+            True for adding a binding, false for removing one.
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.Semantics.IConditionalAccessExpression">
@@ -9368,6 +9651,11 @@
         <member name="P:Microsoft.CodeAnalysis.Semantics.IOperation.Kind">
             <summary>
             Identifies the kind of the operation.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Semantics.IOperation.IsInvalid">
+            <summary>
+             Indicates whether the operation is invalid, either semantically or syntactically.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.Semantics.IOperation.Syntax">

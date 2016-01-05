@@ -125,16 +125,6 @@
             'A' is not an attribute class
             </summary>
         </member>
-        <member name="F:Microsoft.CodeAnalysis.CSharp.CodeFixes.AddImport.CSharpAddImportCodeFixProvider.CS1002">
-            <summary>
-            ; expected.
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.CSharp.CodeFixes.AddImport.CSharpAddImportCodeFixProvider.CS1003">
-            <summary>
-            Syntax error, 'A' expected
-            </summary>
-        </member>
         <member name="F:Microsoft.CodeAnalysis.CSharp.CodeFixes.AddImport.CSharpAddImportCodeFixProvider.CS1501">
             <summary>
              No overload for method 'X' takes 'N' arguments
@@ -168,6 +158,16 @@
         <member name="F:Microsoft.CodeAnalysis.CSharp.CodeFixes.AddImport.CSharpAddImportCodeFixProvider.CS1929">
             <summary>
             Type 'X' does not contain a valid extension method accepting 'Y'
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.CSharp.CodeFixes.AddImport.CSharpAddImportCodeFixProvider.CS0428">
+            <summary>
+            Cannot convert method group 'X' to non-delegate type 'Y'. Did you intend to invoke the method?
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.CSharp.CodeFixes.AddImport.CSharpAddImportCodeFixProvider.CS7036">
+            <summary>
+             There is no argument given that corresponds to the required formal parameter 'X' of 'Y'
             </summary>
         </member>
         <member name="F:Microsoft.CodeAnalysis.CSharp.CodeFixes.Async.CSharpAddAsyncCodeFixProvider.CS4032">

@@ -13145,7 +13145,7 @@
         </member>
         <member name="T:Microsoft.CodeAnalysis.CSharp.Symbols.TypeParameterBuilder">
             <summary>
-            A context for binding type parameter symbols.
+            A context for binding type parameter symbols of named types.
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.CSharp.Symbols.TypeParameterConstraintClause">
@@ -15238,7 +15238,7 @@
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_BadArgExtraRef">
             <summary>
-              Looks up a localized string similar to Argument {0} should not be passed with the &apos;{1}&apos; keyword.
+              Looks up a localized string similar to Argument {0} may not be passed with the &apos;{1}&apos; keyword.
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_BadArgRef">
@@ -17708,7 +17708,7 @@
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_InvalidPathMap">
             <summary>
-              Looks up a localized string similar to The pathmap option was incorrectly formatted.
+              Looks up a localized string similar to The pathmap option was incorrectly formatted..
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_InvalidPreprocExpr">
@@ -17724,6 +17724,11 @@
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_InvalidQM">
             <summary>
               Looks up a localized string similar to Type of conditional expression cannot be determined because there is no implicit conversion between &apos;{0}&apos; and &apos;{1}&apos;.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_InvalidReal">
+            <summary>
+              Looks up a localized string similar to Invalid real literal..
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_InvalidSignaturePublicKey">
@@ -18789,6 +18794,11 @@
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_PublicKeyFileFailure">
             <summary>
               Looks up a localized string similar to Error signing output with public key from file &apos;{0}&apos; -- {1}.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_PublicSignButNoKey">
+            <summary>
+              Looks up a localized string similar to Public signing was specified and requires a public key, but no public key was specified..
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_QueryDuplicateRangeVariable">
@@ -20211,6 +20221,11 @@
               Looks up a localized string similar to SyntaxTree &apos;{0}&apos; resulted from a #load directive and cannot be removed or replaced directly..
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.SyntaxTreeIsNotASubmission">
+            <summary>
+              Looks up a localized string similar to Syntax tree should be created from a submission..
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.SyntaxTreeNotFoundTo">
             <summary>
               Looks up a localized string similar to SyntaxTree &apos;{0}&apos; not found to remove.
@@ -20253,17 +20268,17 @@
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.UseLiteralForNumeric">
             <summary>
-              Looks up a localized string similar to Use Roslyn.Compilers.CSharp.Syntax.Literal to create numeric literal tokens..
+              Looks up a localized string similar to Use Microsoft.CodeAnalysis.CSharp.SyntaxFactory.Literal to create numeric literal tokens..
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.UseLiteralForTokens">
             <summary>
-              Looks up a localized string similar to Use Roslyn.Compilers.CSharp.Syntax.Literal to create character literal tokens..
+              Looks up a localized string similar to Use Microsoft.CodeAnalysis.CSharp.SyntaxFactory.Literal to create character literal tokens..
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.UseVerbatimIdentifier">
             <summary>
-              Looks up a localized string similar to Use Roslyn.Compilers.CSharp.Syntax.Identifier or Roslyn.Compilers.CSharp.Syntax.VerbatimIdentifier to create identifier tokens..
+              Looks up a localized string similar to Use Microsoft.CodeAnalysis.CSharp.SyntaxFactory.Identifier or Microsoft.CodeAnalysis.CSharp.SyntaxFactory.VerbatimIdentifier to create identifier tokens..
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.WRN_AlignmentMagnitude">
@@ -21300,7 +21315,7 @@
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.WRN_InvalidAttributeLocation">
             <summary>
-              Looks up a localized string similar to &apos;{0}&apos; is not a recognized attribute location. All attributes in this block will be ignored..
+              Looks up a localized string similar to &apos;{0}&apos; is not a recognized attribute location. Valid attribute locations for this declaration are &apos;{1}&apos;. All attributes in this block will be ignored..
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.WRN_InvalidAttributeLocation_Title">
@@ -22852,7 +22867,7 @@
             A region analysis walker that records jumps out of the region.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.FlowAnalysisPass.Rewrite(Microsoft.CodeAnalysis.CSharp.Symbols.MethodSymbol,Microsoft.CodeAnalysis.CSharp.BoundBlock,Microsoft.CodeAnalysis.DiagnosticBag,System.Boolean)">
+        <member name="M:Microsoft.CodeAnalysis.CSharp.FlowAnalysisPass.Rewrite(Microsoft.CodeAnalysis.CSharp.Symbols.MethodSymbol,Microsoft.CodeAnalysis.CSharp.BoundBlock,Microsoft.CodeAnalysis.DiagnosticBag,System.Boolean,System.Boolean)">
             <summary>
             The flow analysis pass.  This pass reports required diagnostics for unreachable
             statements and uninitialized variables (through the call to FlowAnalysisWalker.Analyze),
@@ -22862,6 +22877,7 @@
             <param name="block">the method's body</param>
             <param name="diagnostics">the receiver of the reported diagnostics</param>
             <param name="hasTrailingExpression">indicates whether this Script had a trailing expression</param>
+            <param name="originalBodyNested">the original method body is the last statement in the block</param>
             <returns>the rewritten block for the method (with a return statement possibly inserted)</returns>
         </member>
         <member name="M:Microsoft.CodeAnalysis.CSharp.PreciseAbstractFlowPass`1.AbstractLocalState.Clone">
@@ -25608,6 +25624,9 @@
         <member name="P:Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ConditionalExpressionSyntax.WhenTrue">
             <summary>ExpressionSyntax node representing the expression to be executed when the condition is true.</summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ConditionalExpressionSyntax.ColonToken">
+            <summary>SyntaxToken representing the colon.</summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ConditionalExpressionSyntax.WhenFalse">
             <summary>ExpressionSyntax node representing the expression to be executed when the condition is false.</summary>
         </member>
@@ -26822,6 +26841,12 @@
         <member name="P:Microsoft.CodeAnalysis.CSharp.Syntax.GenericNameSyntax.TypeArgumentList">
             <summary>TypeArgumentListSyntax node representing the list of type arguments of the generic name.</summary>
         </member>
+        <member name="T:Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax">
+            <summary>Class which represents the syntax node for identifier name.</summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax.Identifier">
+            <summary>SyntaxToken representing the keyword for the kind of the identifier name.</summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.Syntax.PropertyDeclarationSyntax.Identifier">
             <summary>Gets the identifier.</summary>
         </member>
@@ -26937,6 +26962,11 @@
             If called on an instance of <see cref="T:Microsoft.CodeAnalysis.CSharp.Syntax.SimpleNameSyntax"/> returns the instance itself.
             </returns>
         </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.Syntax.NameSyntax.ErrorDisplayName">
+            <summary>
+            Return the name in string form, without trivia or generic arguments, for use in diagnostics.
+            </summary>
+        </member>
         <member name="M:Microsoft.CodeAnalysis.CSharp.Syntax.NameSyntax.GetAliasQualifierOpt">
             <remarks>
             This inspection is entirely syntactic.  We are not trying to find the alias corresponding to the assembly symbol
@@ -27014,12 +27044,6 @@
         </member>
         <member name="T:Microsoft.CodeAnalysis.CSharp.Syntax.TypeSyntax">
             <summary>Provides the base class from which the classes that represent type syntax nodes are derived. This is an abstract class.</summary>
-        </member>
-        <member name="T:Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax">
-            <summary>Class which represents the syntax node for identifier name.</summary>
-        </member>
-        <member name="P:Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax.Identifier">
-            <summary>SyntaxToken representing the keyword for the kind of the identifier name.</summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.CSharp.Syntax.TypeArgumentListSyntax">
             <summary>Class which represents the syntax node for type argument list.</summary>
@@ -27194,6 +27218,9 @@
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.Syntax.ConditionalExpressionSyntax.WhenTrue">
             <summary>ExpressionSyntax node representing the expression to be executed when the condition is true.</summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.Syntax.ConditionalExpressionSyntax.ColonToken">
+            <summary>SyntaxToken representing the colon.</summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.Syntax.ConditionalExpressionSyntax.WhenFalse">
             <summary>ExpressionSyntax node representing the expression to be executed when the condition is false.</summary>
@@ -31172,6 +31199,7 @@
         <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.IsCompleteSubmission(Microsoft.CodeAnalysis.SyntaxTree)">
             <summary>
             Determines whether the given text is considered a syntactically complete submission.
+            Throws <see cref="T:System.ArgumentException"/> if the tree was not compiled as an interactive submission.
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.CaseSwitchLabel(Microsoft.CodeAnalysis.CSharp.Syntax.ExpressionSyntax)">

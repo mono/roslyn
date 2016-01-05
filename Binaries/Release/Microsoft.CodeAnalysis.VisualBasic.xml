@@ -11206,7 +11206,7 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  the dictionaries needed by BindImportClause.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceFile.ValidateImports(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.NamespaceOrTypeAndImportsClausePosition},System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.SyntaxReference},System.Collections.Generic.Dictionary{System.String,Microsoft.CodeAnalysis.VisualBasic.AliasAndImportsClausePosition},Microsoft.CodeAnalysis.DiagnosticBag)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceFile.ValidateImports(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.NamespaceOrTypeAndImportsClausePosition},System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.SyntaxReference},System.Collections.Generic.IReadOnlyDictionary{System.String,Microsoft.CodeAnalysis.VisualBasic.AliasAndImportsClausePosition},Microsoft.CodeAnalysis.DiagnosticBag)">
  <summary>
  Perform any validation of import statements that must occur
  after the import statements have been added to the SourceFile.
@@ -11215,15 +11215,17 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceFile.MemberImports">
  <summary>
- Return the member imports for this file. May return Nothing if there are no member imports.
+ Return the member imports for this file.
+ Doesn't contain error types.
  </summary>
 </member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceFile.AliasImports">
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceFile.AliasImportsOpt">
  <summary>
  Return the alias imports for this file. May return Nothing if there are no alias imports.
+ May contain aliases with error type targets.
  </summary>
 </member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceFile.XmlNamespaces">
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.SourceFile.XmlNamespacesOpt">
  <summary>
  Return the xmlns imports for this file. May return Nothing if there are no xmlns imports.
  </summary>
@@ -14937,8 +14939,6 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.SyntaxTrees">
  <summary>
  Get a read-only list of the syntax trees that this compilation was created with.
- The ordering of the trees is arbitrary and may be different than the order the
- trees were supplied to the compilation.
  </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.AllSyntaxTrees">
@@ -54619,6 +54619,32 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  It returns true the child is recursively visited, otherwise the child and its subtree is disregarded.
  </param>
 </member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.IsPartOfLinqQueryNotFollowedByNewLine(Microsoft.CodeAnalysis.SyntaxToken,Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.SyntaxToken)">
+ <summary>
+ Determines if a submission contains an LINQ query not followed by an empty line.
+
+ Examples:
+ 1. <c>Dim x = 1</c> returns false since the statement is not a LINQ query
+ 2. <c>
+ Dim x = FROM {1, 2, 3}
+
+ </c> return false since the statement is followed by an empty new line.
+ 3. <c>Dim x = FROM {1, 2, 3}</c> returns true since the LINQ statement is not followed by an empty new line.
+ </summary>
+ <param name="token">Last expected token of the last statement in a submission.</param>
+ <param name="statementNode">Top level statement which token is part of.</param>
+ <param name="endOfFileToken">Token that marks the end of submission.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.IsCompleteSubmission(Microsoft.CodeAnalysis.SyntaxTree)">
+ <summary>
+ Determines if a submission is complete.
+ Returns false if the syntax is valid but incomplete.
+ Returns true if the syntax is invalid or complete.
+ Throws <see cref="T:System.ArgumentNullException"/> in case the tree is null.
+ Throws <see cref="T:System.ArgumentException"/> in case the tree is not a submission.
+ </summary>
+ <param name="tree">Syntax tree.</param>
+</member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.SyntaxTree(Microsoft.CodeAnalysis.SyntaxNode,Microsoft.CodeAnalysis.ParseOptions,System.String,System.Text.Encoding)">
  <summary>
  Create a new syntax tree from a syntax node.
@@ -73211,7 +73237,7 @@ Parse the input for leading trivia.
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_ExpectedConditionalDirective">
 <summary>
-  Looks up a localized string similar to &apos;If&apos;, &apos;ElseIf&apos;, &apos;Else&apos;, &apos;Const&apos;, &apos;Region&apos;, &apos;ExternalSource&apos;, &apos;ExternalChecksum&apos;, &apos;Enable&apos;, &apos;Disable&apos;, or &apos;End&apos; expected..
+  Looks up a localized string similar to &apos;If&apos;, &apos;ElseIf&apos;, &apos;Else&apos;, &apos;Const&apos;, &apos;Region&apos;, &apos;ExternalSource&apos;, &apos;ExternalChecksum&apos;, &apos;Enable&apos;, &apos;Disable&apos;, &apos;End&apos; or &apos;R&apos; expected..
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_ExpectedContinueKind">
@@ -74504,7 +74530,7 @@ Parse the input for leading trivia.
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_InvalidPathMap">
 <summary>
-  Looks up a localized string similar to The pathmap option was incorrectly formatted.
+  Looks up a localized string similar to The pathmap option was incorrectly formatted..
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_InvalidSignaturePublicKey">
@@ -77863,6 +77889,11 @@ Parse the input for leading trivia.
   Looks up a localized string similar to Syntax tree already present.
 </summary>
 </member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.SyntaxTreeIsNotASubmission">
+<summary>
+  Looks up a localized string similar to Syntax tree should be created from a submission..
+</summary>
+</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.SyntaxTreeNotFoundToRemove">
 <summary>
   Looks up a localized string similar to SyntaxTree &apos;{0}&apos; not found to remove.
@@ -79603,7 +79634,7 @@ Parse the input for leading trivia.
  A class representing Visual Basic compilation Options.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.#ctor(Microsoft.CodeAnalysis.OutputKind,System.String,System.String,System.String,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.VisualBasic.GlobalImport},System.String,Microsoft.CodeAnalysis.VisualBasic.OptionStrict,System.Boolean,System.Boolean,System.Boolean,Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions,System.Boolean,Microsoft.CodeAnalysis.OptimizationLevel,System.Boolean,System.String,System.String,System.Collections.Immutable.ImmutableArray{System.Byte},System.Nullable{System.Boolean},Microsoft.CodeAnalysis.Platform,Microsoft.CodeAnalysis.ReportDiagnostic,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,Microsoft.CodeAnalysis.ReportDiagnostic}},System.Boolean,System.Boolean,Microsoft.CodeAnalysis.XmlReferenceResolver,Microsoft.CodeAnalysis.SourceReferenceResolver,Microsoft.CodeAnalysis.MetadataReferenceResolver,Microsoft.CodeAnalysis.AssemblyIdentityComparer,Microsoft.CodeAnalysis.StrongNameProvider)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.#ctor(Microsoft.CodeAnalysis.OutputKind,System.String,System.String,System.String,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.VisualBasic.GlobalImport},System.String,Microsoft.CodeAnalysis.VisualBasic.OptionStrict,System.Boolean,System.Boolean,System.Boolean,Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions,System.Boolean,Microsoft.CodeAnalysis.OptimizationLevel,System.Boolean,System.String,System.String,System.Collections.Immutable.ImmutableArray{System.Byte},System.Nullable{System.Boolean},Microsoft.CodeAnalysis.Platform,Microsoft.CodeAnalysis.ReportDiagnostic,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,Microsoft.CodeAnalysis.ReportDiagnostic}},System.Boolean,System.Boolean,Microsoft.CodeAnalysis.XmlReferenceResolver,Microsoft.CodeAnalysis.SourceReferenceResolver,Microsoft.CodeAnalysis.MetadataReferenceResolver,Microsoft.CodeAnalysis.AssemblyIdentityComparer,Microsoft.CodeAnalysis.StrongNameProvider,System.Boolean,System.Boolean)">
  <summary>
  Initializes a new instance of the VisualBasicCompilationOptions type with various options.
  </summary>
@@ -79634,39 +79665,8 @@ Parse the input for leading trivia.
  <param name="metadataReferenceResolver">An optional parameter to specify <see cref="T:Microsoft.CodeAnalysis.MetadataReferenceResolver"/>.</param>
  <param name="assemblyIdentityComparer">An optional parameter to specify <see cref="T:Microsoft.CodeAnalysis.AssemblyIdentityComparer"/>.</param>
  <param name="strongNameProvider">An optional parameter to specify <see cref="T:Microsoft.CodeAnalysis.StrongNameProvider"/>.</param>
-</member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.#ctor(Microsoft.CodeAnalysis.OutputKind,System.Boolean,System.String,System.String,System.String,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.VisualBasic.GlobalImport},System.String,Microsoft.CodeAnalysis.VisualBasic.OptionStrict,System.Boolean,System.Boolean,System.Boolean,Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions,System.Boolean,Microsoft.CodeAnalysis.OptimizationLevel,System.Boolean,System.String,System.String,System.Collections.Immutable.ImmutableArray{System.Byte},System.Nullable{System.Boolean},Microsoft.CodeAnalysis.Platform,Microsoft.CodeAnalysis.ReportDiagnostic,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,Microsoft.CodeAnalysis.ReportDiagnostic}},System.Boolean,System.Boolean,Microsoft.CodeAnalysis.XmlReferenceResolver,Microsoft.CodeAnalysis.SourceReferenceResolver,Microsoft.CodeAnalysis.MetadataReferenceResolver,Microsoft.CodeAnalysis.AssemblyIdentityComparer,Microsoft.CodeAnalysis.StrongNameProvider)">
- <summary>
- Initializes a new instance of the VisualBasicCompilationOptions type with various options.
- </summary>
- <param name="outputKind">The compilation output kind. <see cref="T:Microsoft.CodeAnalysis.OutputKind"/></param>
- <param name="reportSuppressedDiagnostics">Specifies whether diagnostics suppressed in source, i.e. <see cref="P:Microsoft.CodeAnalysis.Diagnostic.IsSuppressed"/> = 'True', should be reported.</param>
- <param name="moduleName">An optional parameter to specify the name of the assembly that this module will be a part of.</param>
- <param name="mainTypeName">An optional parameter to specify the class or module that contains the Sub Main procedure.</param>
- <param name="scriptClassName">An optional parameter to specify an alternate DefaultScriptClassName object to be used.</param>
- <param name="globalImports">An optional collection of GlobalImports <see cref="P:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.GlobalImports"/> .</param>
- <param name="rootNamespace">An optional parameter to specify the name of the default root namespace.</param>
- <param name="optionStrict">An optional parameter to specify the default Option Strict behavior. <see cref="T:Microsoft.CodeAnalysis.VisualBasic.OptionStrict"/></param>
- <param name="optionInfer">An optional parameter to specify default Option Infer behavior.</param>
- <param name="optionExplicit">An optional parameter to specify the default Option Explicit behavior.</param>
- <param name="optionCompareText">An optional parameter to specify the default Option Compare Text behavior.</param>
- <param name="embedVbCoreRuntime">An optional parameter to specify the embedded Visual Basic Core Runtime behavior.</param>
- <param name="checkOverflow">An optional parameter to specify enabling/disabling overflow checking.</param>
- <param name="concurrentBuild">An optional parameter to specify enabling/disabling concurrent build.</param>
- <param name="cryptoKeyContainer">An optional parameter to specify a key container name for a key pair to give an assembly a strong name.</param>
- <param name="cryptoKeyFile">An optional parameter to specify a file containing a key or key pair to give an assembly a strong name.</param>
- <param name="cryptoPublicKey">An optional parameter to specify a public key used to give an assembly a strong name.</param>
- <param name="delaySign">An optional parameter to specify whether the assembly will be fully or partially signed.</param>
- <param name="platform">An optional parameter to specify which platform version of common language runtime (CLR) can run compilation. <see cref="T:Microsoft.CodeAnalysis.Platform"/></param>
- <param name="generalDiagnosticOption">An optional parameter to specify the general warning level.</param>
- <param name="specificDiagnosticOptions">An optional collection representing specific warnings that differ from general warning behavior.</param>
- <param name="optimizationLevel">An optional parameter to enabled/disable optimizations. </param>
- <param name="parseOptions">An optional parameter to specify the parse options. <see cref="T:Microsoft.CodeAnalysis.VisualBasic.VisualBasicParseOptions"/></param>
- <param name="xmlReferenceResolver">An optional parameter to specify the XML file resolver.</param>
- <param name="sourceReferenceResolver">An optional parameter to specify the source file resolver.</param>
- <param name="metadataReferenceResolver">An optional parameter to specify <see cref="T:Microsoft.CodeAnalysis.MetadataReferenceResolver"/>.</param>
- <param name="assemblyIdentityComparer">An optional parameter to specify <see cref="T:Microsoft.CodeAnalysis.AssemblyIdentityComparer"/>.</param>
- <param name="strongNameProvider">An optional parameter to specify <see cref="T:Microsoft.CodeAnalysis.StrongNameProvider"/>.</param>
+ <param name="publicSign">An optional parameter to specify whether the assembly will be public signed.</param>
+ <param name="reportSuppressedDiagnostics">An optional parameter to specify whether or not suppressed diagnostics should be reported.</param>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions.GlobalImports">
  <summary>

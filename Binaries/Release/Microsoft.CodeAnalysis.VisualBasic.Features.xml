@@ -193,6 +193,51 @@ Microsoft.CodeAnalysis.VisualBasic.Features
  'A' has no type parameters and so cannot have type arguments.
  </summary>
 </member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.ReferenceDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#R" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.WarningDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#Disable" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.ConstDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#Const" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.ElseDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#Else" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.ElseIfDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#ElseIf" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.EndIfDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#End If" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.EndRegionDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#End Region" directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.IfDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#If" preprocessor directive
+ </summary>
+</member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.RegionDirectiveKeywordRecommender">
+ <summary>
+ Recommends the "#Region" directive
+ </summary>
+</member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.ArrayStatements.EraseKeywordRecommender">
  <summary>
  Recommends the "Erase" statement.
@@ -551,46 +596,6 @@ Microsoft.CodeAnalysis.VisualBasic.Features
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.OptionStatements.StrictOptionsRecommender">
  <summary>
  Recommends the "On" and "Off" options that come after "Option Infer"
- </summary>
-</member>
-<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.WarningDirectiveKeywordRecommender">
- <summary>
- Recommends the "#Disable" preprocessor directive
- </summary>
-</member>
-<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.ConstDirectiveKeywordRecommender">
- <summary>
- Recommends the "#Const" preprocessor directive
- </summary>
-</member>
-<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.ElseDirectiveKeywordRecommender">
- <summary>
- Recommends the "#Else" preprocessor directive
- </summary>
-</member>
-<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.ElseIfDirectiveKeywordRecommender">
- <summary>
- Recommends the "#ElseIf" preprocessor directive
- </summary>
-</member>
-<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.EndIfDirectiveKeywordRecommender">
- <summary>
- Recommends the "#End If" preprocessor directive
- </summary>
-</member>
-<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.EndRegionDirectiveKeywordRecommender">
- <summary>
- Recommends the "#End Region" directive
- </summary>
-</member>
-<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.IfDirectiveKeywordRecommender">
- <summary>
- Recommends the "#If" preprocessor directive
- </summary>
-</member>
-<member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.PreprocessorDirectives.RegionDirectiveKeywordRecommender">
- <summary>
- Recommends the "#Region" directive
  </summary>
 </member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.Completion.KeywordRecommenders.Queries.AggregateKeywordRecommender">
@@ -2324,6 +2329,11 @@ RaiseEvent &lt;eventName&gt; [(&lt;argumentList&gt;)].
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ReDimKeywordToolTip">
 <summary>
   Looks up a localized string similar to Reallocates storage space for an array variable..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.ReferenceKeywordTooltip">
+<summary>
+  Looks up a localized string similar to Add a metadata reference to specified assembly and all its dependencies, e.g. #r &quot;myLib.dll&quot;..
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.RegionKeywordToolTip">
