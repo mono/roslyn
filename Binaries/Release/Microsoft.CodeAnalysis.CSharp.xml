@@ -32,6 +32,11 @@
             This portion of the binder converts StatementSyntax nodes into BoundStatements
             </summary>
         </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.Binder.#ctor(Microsoft.CodeAnalysis.CSharp.CSharpCompilation)">
+            <summary>
+            Used to create a root binder.
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.Binder.Next">
             <summary>
             Get the next binder in which to look up a name, if not found by this binder.
@@ -830,7 +835,7 @@
             Bind an expression as a method invocation.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.Binder.BindInvocationExpressionContinued(Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode,Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode,System.String,Microsoft.CodeAnalysis.CSharp.OverloadResolutionResult{Microsoft.CodeAnalysis.CSharp.Symbols.MethodSymbol},Microsoft.CodeAnalysis.CSharp.AnalyzedArguments,Microsoft.CodeAnalysis.CSharp.MethodGroup,Microsoft.CodeAnalysis.CSharp.Symbols.NamedTypeSymbol,Microsoft.CodeAnalysis.DiagnosticBag,Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode)">
+        <member name="M:Microsoft.CodeAnalysis.CSharp.Binder.BindInvocationExpressionContinued(Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode,Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode,System.String,Microsoft.CodeAnalysis.CSharp.OverloadResolutionResult{Microsoft.CodeAnalysis.CSharp.Symbols.MethodSymbol},Microsoft.CodeAnalysis.CSharp.AnalyzedArguments,Microsoft.CodeAnalysis.CSharp.MethodGroup,Microsoft.CodeAnalysis.CSharp.Symbols.NamedTypeSymbol,Microsoft.CodeAnalysis.DiagnosticBag,System.Boolean,Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode)">
             <summary>
             Perform overload resolution on the method group or expression (BoundMethodGroup)
             and arguments and return a BoundExpression representing the invocation.
@@ -843,6 +848,10 @@
             <param name="methodGroup">Method group if the invocation represents a potentially overloaded member.</param>
             <param name="delegateTypeOpt">Delegate type if method group represents a delegate.</param>
             <param name="diagnostics">Diagnostics.</param>
+            <param name="extensionMethodsOfSameViabilityAreAvailable">
+            Indicates that there are additional extension method candidates of the same lookup viability in cases when 
+            none of the instance methods are applicable to the argument list.
+            </param>
             <param name="queryClause">The syntax for the query clause generating this invocation expression, if any.</param>
             <returns>BoundCall or error expression representing the invocation.</returns>
         </member>
@@ -3446,6 +3455,12 @@
             Set if the group has a receiver but none was not specified in syntax.
             </summary>
         </member>
+        <member name="F:Microsoft.CodeAnalysis.CSharp.BoundNode.BoundNodeAttributes.WasCompilerGeneratedIsChecked">
+            <summary>
+            Captures the fact that consumers of the node already checked the state of the WasCompilerGenerated bit.
+            Allows to assert on attempts to set WasCompilerGenerated bit after that.
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.BoundNode.HasAnyErrors">
             <summary>
             Determines if a bound node, or associated syntax or type has an error (not a warning) 
@@ -3690,7 +3705,7 @@
               LEFT_NOT_NULL:
             </remarks>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.CodeGen.CodeGenerator.CodeForJump(Microsoft.CodeAnalysis.CSharp.BoundBinaryOperator,System.Boolean,Microsoft.CodeAnalysis.CodeGen.ILOpCode@)">
+        <member name="M:Microsoft.CodeAnalysis.CSharp.CodeGen.CodeGenerator.CodeForJump(Microsoft.CodeAnalysis.CSharp.BoundBinaryOperator,System.Boolean,System.Reflection.Metadata.ILOpCode@)">
             <summary>
             Produces opcode for a jump that corresponds to given operation and sense.
             Also produces a reverse opcode - opcode for the same condition with inverted sense.
@@ -6286,6 +6301,11 @@
             The arity is appended via `N suffix since in MetadataName calculation since the delegate is generic.
             </summary>
         </member>
+        <member name="F:Microsoft.CodeAnalysis.CSharp.Symbols.AnonymousTypeManager._sourceLocationsSeen">
+            <summary>
+            Holds a collection of all the locations of anonymous types and delegates from source
+            </summary>
+        </member>
         <member name="M:Microsoft.CodeAnalysis.CSharp.Symbols.AnonymousTypeManager.ConstructAnonymousTypeImplementationSymbol(Microsoft.CodeAnalysis.CSharp.Symbols.AnonymousTypeManager.AnonymousTypePublicSymbol)">
             <summary>
             Given anonymous type provided constructs an implementation type symbol to be used in emit phase; 
@@ -8817,6 +8837,13 @@
             Lookup member declaration in predefined CorLib type used by this Assembly.
             </summary>
         </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.Symbols.AssemblySymbol.GetMetadata">
+            <summary>
+            If this symbol represents a metadata assembly returns the underlying <see cref="T:Microsoft.CodeAnalysis.AssemblyMetadata"/>.
+            
+            Otherwise, this returns <code>null</code>.
+            </summary>
+        </member>
         <member name="T:Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE.PEAttributeData">
             <summary>
             Represents a PE custom attribute
@@ -11150,6 +11177,13 @@
         <member name="M:Microsoft.CodeAnalysis.CSharp.Symbols.ModuleSymbol.GetModuleNamespace(Microsoft.CodeAnalysis.INamespaceSymbol)">
             <summary>
             Given a namespace symbol, returns the corresponding module specific namespace symbol
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.Symbols.ModuleSymbol.GetMetadata">
+            <summary>
+            If this symbol represents a metadata module returns the underlying <see cref="T:Microsoft.CodeAnalysis.ModuleMetadata"/>.
+            
+            Otherwise, this returns <code>null</code>.
             </summary>
         </member>
         <member name="T:Microsoft.CodeAnalysis.CSharp.Symbols.MutableTypeMap">
@@ -14379,6 +14413,12 @@
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions.Usings">
             <summary>
             Global namespace usings.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions.TopLevelBinderFlags">
+            <summary>
+            Flags applied to the top-level binder created for each syntax tree in the compilation 
+            as well as for the binder of global imports.
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.CSharp.CSharpExtensions.Insert(Microsoft.CodeAnalysis.SyntaxTokenList,System.Int32,Microsoft.CodeAnalysis.SyntaxToken[])">
@@ -19304,6 +19344,11 @@
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_TooManyLocals">
             <summary>
               Looks up a localized string similar to Only 65534 locals, including those generated by the compiler, are allowed.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_TooManyUserStrings">
+            <summary>
+              Looks up a localized string similar to Combined length of user strings used by the program exceeds allowed limit. Try to decrease use of string literals..
             </summary>
         </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpResources.ERR_TrailingWhitespaceInFormatSpecifier">
@@ -24650,7 +24695,16 @@
             </summary>
             <param name="sections"></param>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntheticBoundNodeFactory.StoreToTemp(Microsoft.CodeAnalysis.CSharp.BoundExpression,Microsoft.CodeAnalysis.CSharp.BoundAssignmentOperator@,Microsoft.CodeAnalysis.RefKind,Microsoft.CodeAnalysis.SynthesizedLocalKind,Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode)">
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntheticBoundNodeFactory.ArrayOrEmpty(Microsoft.CodeAnalysis.CSharp.Symbols.TypeSymbol,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.CSharp.BoundExpression})">
+            <summary>
+            Helper that will use Array.Empty if available and elements have 0 length
+            NOTE: it is valid only if we know that the API that is being called will not 
+                  retain or use the array argument for any purpose (like locking or key in a hash table)
+                  Typical example of valid use is Linq.Expressions factories - they do not make any 
+                  assumptions about array arguments and do not keep them or rely on their identity.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntheticBoundNodeFactory.StoreToTemp(Microsoft.CodeAnalysis.CSharp.BoundExpression,Microsoft.CodeAnalysis.CSharp.BoundAssignmentOperator@,Microsoft.CodeAnalysis.RefKind,Microsoft.CodeAnalysis.SynthesizedLocalKind,Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode,System.Int32,System.String)">
             <summary>
             Takes an expression and returns the bound local expression "temp" 
             and the bound assignment expression "temp = expr".
@@ -28375,7 +28429,7 @@
             and <c>null</c>.
             </remarks>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.ObjectDisplay.ReplaceChar(System.Char,System.Char,System.String@)">
+        <member name="M:Microsoft.CodeAnalysis.CSharp.ObjectDisplay.TryReplaceChar(System.Char,System.String@)">
             <summary>
             Returns true if the character should be replaced and sets
             <paramref name="replaceWith"/> to the replacement text if the
@@ -28390,7 +28444,7 @@
             <param name="options">Options used to customize formatting of an object value.</param>
             <returns>A string literal with the given value.</returns>
             <remarks>
-            Escapes non-printable characters.
+            Optionally escapes non-printable characters.
             </remarks>
         </member>
         <member name="M:Microsoft.CodeAnalysis.CSharp.ObjectDisplay.FormatLiteral(System.Char,Microsoft.CodeAnalysis.ObjectDisplayOptions)">
@@ -28885,19 +28939,6 @@
             <param name="includeDocumentationComments">True if documentation comments should be
             included, false by default.</param>
             <returns></returns>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode.FindToken(System.Int32,System.Func{Microsoft.CodeAnalysis.SyntaxTrivia,System.Boolean})">
-            <summary>
-            Finds a token according to the following rules:
-            1) If position matches the End of the node/s FullSpan and the node is CompilationUnit,
-              then EoF is returned. 
-            
-            2) If node.FullSpan.Contains(position) the token that contains given position is
-               returned. If stepInto is not Nothing, then structured trivia that satisfies the
-               condition will also be visited during the search.
-            
-            3) Otherwise an IndexOutOfRange is thrown
-            </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode.FindToken(System.Int32,System.Boolean)">
             <summary>
@@ -30766,6 +30807,307 @@
             <param name="value">The xml text value.</param>
             <param name="trailing">A list of trivia immediately following the token.</param>
         </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlEntity(Microsoft.CodeAnalysis.SyntaxTriviaList,System.String,System.String,Microsoft.CodeAnalysis.SyntaxTriviaList)">
+            <summary>
+            Creates a token with kind XmlEntityLiteralToken.
+            </summary>
+            <param name="leading">A list of trivia immediately preceding the token.</param>
+            <param name="text">The raw text of the literal.</param>
+            <param name="value">The xml entity value.</param>
+            <param name="trailing">A list of trivia immediately following the token.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.DocumentationComment(Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax[])">
+            <summary>
+            Creates an xml documentation comment that abstracts xml syntax creation.
+            </summary>
+            <param name="content">
+            A list of xml node syntax that will be the content within the xml documentation comment
+            (e.g. a summary element, a returns element, exception element and so on).
+            </param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlSummaryElement(Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax[])">
+            <summary>
+            Creates a summary element within an xml documentation comment.
+            </summary>
+            <param name="content">A list of xml node syntax that will be the content within the summary element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlSummaryElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates a summary element within an xml documentation comment.
+            </summary>
+            <param name="content">A list of xml node syntax that will be the content within the summary element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlSeeElement(Microsoft.CodeAnalysis.CSharp.Syntax.CrefSyntax)">
+            <summary>
+            Creates a see element within an xml documentation comment.
+            </summary>
+            <param name="cref">A cref syntax node that points to the referenced item (e.g. a class, struct).</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlSeeAlsoElement(Microsoft.CodeAnalysis.CSharp.Syntax.CrefSyntax)">
+            <summary>
+            Creates a seealso element within an xml documentation comment.
+            </summary>
+            <param name="cref">A cref syntax node that points to the referenced item (e.g. a class, struct).</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlSeeAlsoElement(System.Uri,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates a seealso element within an xml documentation comment.
+            </summary>
+            <param name="linkAddress">The uri of the referenced item.</param>
+            <param name="linkText">A list of xml node syntax that will be used as the link text for the referenced item.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlThreadSafetyElement">
+            <summary>
+            Creates a threadsafty element within an xml documentation comment.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlThreadSafetyElement(System.Boolean,System.Boolean)">
+            <summary>
+            Creates a threadsafty element within an xml documentation comment.
+            </summary>
+            <param name="static">Indicates whether static member of this class are safe for multi-threaded operations.</param>
+            <param name="instance">Indicates whether members of instances of this type are safe for multi-threaded operations.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlNameAttribute(System.String)">
+            <summary>
+            Creates a syntax node for a name attribute in a xml element within a xml documentation comment.
+            </summary>
+            <param name="parameterName">The value of the name attribute.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlPreliminaryElement">
+            <summary>
+            Creates a syntax node for a priliminary element within a xml documentation comment.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlCrefAttribute(Microsoft.CodeAnalysis.CSharp.Syntax.CrefSyntax)">
+            <summary>
+            Creates a syntax node for a cref attribute within a xml documentation comment.
+            </summary>
+            <param name="cref">The <see cref="T:Microsoft.CodeAnalysis.CSharp.Syntax.CrefSyntax"/> used for the xml cref attribute syntax.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlCrefAttribute(Microsoft.CodeAnalysis.CSharp.Syntax.CrefSyntax,Microsoft.CodeAnalysis.CSharp.SyntaxKind)">
+            <summary>
+            Creates a syntax node for a cref attribute within a xml documentation comment.
+            </summary>
+            <param name="cref">The <see cref="T:Microsoft.CodeAnalysis.CSharp.Syntax.CrefSyntax"/> used for the xml cref attribute syntax.</param>
+            <param name="quoteKind">The kind of the quote for the referenced item in the cref attribute.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlRemarksElement(Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax[])">
+            <summary>
+            Creates a remarks element within an xml documentation comment.
+            </summary>
+            <param name="content">A list of xml node syntax that will be the content within the remarks element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlRemarksElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates a remarks element within an xml documentation comment.
+            </summary>
+            <param name="content">A list of xml node syntax that will be the content within the remarks element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlReturnsElement(Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax[])">
+            <summary>
+            Creates a returns element within an xml documentation comment.
+            </summary>
+            <param name="content">A list of xml node syntax that will be the content within the returns element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlReturnsElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates a returns element within an xml documentation comment.
+            </summary>
+            <param name="content">A list of xml node syntax that will be the content within the returns element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlValueElement(Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax[])">
+            <summary>
+            Creates the the syntax representation of an xml value element (e.g. for xml documentation comments).
+            </summary>
+            <param name="content">A list of xml syntax nodes that represents the content of the value element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlValueElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates the the syntax representation of an xml value element (e.g. for xml documentation comments).
+            </summary>
+            <param name="content">A list of xml syntax nodes that represents the content of the value element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlExceptionElement(Microsoft.CodeAnalysis.CSharp.Syntax.CrefSyntax,Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax[])">
+            <summary>
+            Creates the syntax representation of an exception element within xml documentation comments.
+            </summary>
+            <param name="cref">Syntax representation of the reference to the exception type.</param>
+            <param name="content">A list of syntax nodes that represents the content of the exception element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlExceptionElement(Microsoft.CodeAnalysis.CSharp.Syntax.CrefSyntax,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates the syntax representation of an exception element within xml documentation comments.
+            </summary>
+            <param name="cref">Syntax representation of the reference to the exception type.</param>
+            <param name="content">A list of syntax nodes that represents the content of the exception element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlPermissionElement(Microsoft.CodeAnalysis.CSharp.Syntax.CrefSyntax,Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax[])">
+            <summary>
+            Creates the syntax representation of a permission element within xml documentation comments.
+            </summary>
+            <param name="cref">Syntax representation of the reference to the permission type.</param>
+            <param name="content">A list of syntax nodes that represents the content of the permission element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlPermissionElement(Microsoft.CodeAnalysis.CSharp.Syntax.CrefSyntax,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates the syntax representation of a permission element within xml documentation comments.
+            </summary>
+            <param name="cref">Syntax representation of the reference to the permission type.</param>
+            <param name="content">A list of syntax nodes that represents the content of the permission element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlExampleElement(Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax[])">
+            <summary>
+            Creates the syntax representation of an example element within xml documentation comments.
+            </summary>
+            <param name="content">A list of syntax nodes that represents the content of the example element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlExampleElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates the syntax representation of an example element within xml documentation comments.
+            </summary>
+            <param name="content">A list of syntax nodes that represents the content of the example element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlParaElement(Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax[])">
+            <summary>
+            Creates the syntax representation of a para element within xml documentation comments.
+            </summary>
+            <param name="content">A list of syntax nodes that represents the content of the para element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlParaElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates the syntax representation of a para element within xml documentation comments.
+            </summary>
+            <param name="content">A list of syntax nodes that represents the content of the para element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlParamElement(System.String,Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax[])">
+            <summary>
+            Creates the syntax representation of a param element within xml documentation comments (e.g. for
+            documentation of method parameters).
+            </summary>
+            <param name="parameterName">The name of the parameter.</param>
+            <param name="content">A list of syntax nodes that represents the content of the param element (e.g. 
+            the description and meaning of the parameter).</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlParamElement(System.String,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates the syntax representation of a param element within xml documentation comments (e.g. for
+            documentation of method parameters).
+            </summary>
+            <param name="parameterName">The name of the parameter.</param>
+            <param name="content">A list of syntax nodes that represents the content of the param element (e.g. 
+            the description and meaning of the parameter).</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlParamRefElement(System.String)">
+            <summary>
+            Creates the syntax representation of a paramref element within xml documentation comments (e.g. for
+            referencing particular parameters of a method).
+            </summary>
+            <param name="parameterName">The name of the referenced parameter.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlNullKeywordElement">
+            <summary>
+            Creates the syntax representation of a see element within xml documentation comments,
+            that points to the 'null' language keyword.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlKeywordElement(System.String)">
+            <summary>
+            Creates the syntax representation of a see element within xml documentation comments,
+            that points to a language keyword.
+            </summary>
+            <param name="keyword">The language keyword to which the see element points to.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlPlaceholderElement(Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax[])">
+            <summary>
+            Creates the syntax representation of a placeholder element within xml documentation comments.
+            </summary>
+            <param name="content">A list of syntax nodes that represents the content of the placeholder element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlPlaceholderElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates the syntax representation of a placeholder element within xml documentation comments.
+            </summary>
+            <param name="content">A list of syntax nodes that represents the content of the placeholder element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlEmptyElement(System.String)">
+            <summary>
+            Creates the syntax representation of a named empty xml element within xml documentation comments.
+            </summary>
+            <param name="localName">The name of the empty xml element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlElement(System.String,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates the syntax representation of a named xml element within xml documentation comments.
+            </summary>
+            <param name="localName">The name of the empty xml element.</param>
+            <param name="content">A list of syntax nodes that represents the content of the xml element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlElement(Microsoft.CodeAnalysis.CSharp.Syntax.XmlNameSyntax,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates the syntax representation of a named xml element within xml documentation comments.
+            </summary>
+            <param name="name">The name of the empty xml element.</param>
+            <param name="content">A list of syntax nodes that represents the content of the xml element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlTextAttribute(System.String,System.String)">
+            <summary>
+            Creates the syntax representation of an xml text attribute.
+            </summary>
+            <param name="name">The name of the xml text attribute.</param>
+            <param name="value">The value of the xml text attribute.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlTextAttribute(System.String,Microsoft.CodeAnalysis.SyntaxToken[])">
+            <summary>
+            Creates the syntax representation of an xml text attribute.
+            </summary>
+            <param name="name">The name of the xml text attribute.</param>
+            <param name="textTokens">A list of tokens used for the value of the xml text attribute.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlTextAttribute(System.String,Microsoft.CodeAnalysis.CSharp.SyntaxKind,Microsoft.CodeAnalysis.SyntaxTokenList)">
+            <summary>
+            Creates the syntax representation of an xml text attribute.
+            </summary>
+            <param name="name">The name of the xml text attribute.</param>
+            <param name="quoteKind">The kind of the quote token to be used to quote the value (e.g. " or ').</param>
+            <param name="textTokens">A list of tokens used for the value of the xml text attribute.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlTextAttribute(Microsoft.CodeAnalysis.CSharp.Syntax.XmlNameSyntax,Microsoft.CodeAnalysis.CSharp.SyntaxKind,Microsoft.CodeAnalysis.SyntaxTokenList)">
+            <summary>
+            Creates the syntax representation of an xml text attribute.
+            </summary>
+            <param name="name">The name of the xml text attribute.</param>
+            <param name="quoteKind">The kind of the quote token to be used to quote the value (e.g. " or ').</param>
+            <param name="textTokens">A list of tokens used for the value of the xml text attribute.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlMultiLineElement(System.String,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates the syntax representation of an xml element that spans multiple text lines.
+            </summary>
+            <param name="localName">The name of the xml element.</param>
+            <param name="content">A list of syntax nodes that represents the content of the xml multi line element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlMultiLineElement(Microsoft.CodeAnalysis.CSharp.Syntax.XmlNameSyntax,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.CSharp.Syntax.XmlNodeSyntax})">
+            <summary>
+            Creates the syntax representation of an xml element that spans multiple text lines.
+            </summary>
+            <param name="name">The name of the xml element.</param>
+            <param name="content">A list of syntax nodes that represents the content of the xml multi line element.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlNewLine(System.String)">
+            <summary>
+            Creates the syntax representation of an xml text that contains a newline token with a documentation comment 
+            exterior trivia at the end (continued documentation comment).
+            </summary>
+            <param name="text">The raw text within the new line.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlTextNewLine(System.String)">
+            <summary>
+            Creates the syntax representation of an xml newline token with a documentation comment exterior trivia at 
+            the end (continued documentation comment).
+            </summary>
+            <param name="text">The raw text within the new line.</param>
+        </member>
         <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlTextNewLine(Microsoft.CodeAnalysis.SyntaxTriviaList,System.String,System.String,Microsoft.CodeAnalysis.SyntaxTriviaList)">
             <summary>
             Creates a token with kind XmlTextLiteralNewLineToken.
@@ -30775,14 +31117,47 @@
             <param name="value">The xml text new line value.</param>
             <param name="trailing">A list of trivia immediately following the token.</param>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlEntity(Microsoft.CodeAnalysis.SyntaxTriviaList,System.String,System.String,Microsoft.CodeAnalysis.SyntaxTriviaList)">
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlTextNewLine(System.String,System.Boolean)">
             <summary>
-            Creates a token with kind XmlEntityLiteralToken.
+            Creates the syntax representation of an xml newline token for xml documentation comments.
             </summary>
-            <param name="leading">A list of trivia immediately preceding the token.</param>
+            <param name="text">The raw text within the new line.</param>
+            <param name="continueXmlDocumentationComment">
+            If set to true, a documentation comment exterior token will be added to the trailing trivia
+            of the new token.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlText(System.String)">
+            <summary>
+            Generates the syntax representation of a xml text node (e.g. for xml documentation comments).
+            </summary>
+            <param name="value">The string literal used as the text of the xml text node.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlText(Microsoft.CodeAnalysis.SyntaxToken[])">
+            <summary>
+            Generates the syntax representation of a xml text node (e.g. for xml documentation comments).
+            </summary>
+            <param name="textTokens">A list of text tokens used as the text of the xml text node.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlTextLiteral(System.String)">
+            <summary>
+            Generates the syntax representation of an xml text literal.
+            </summary>
+            <param name="value">The text used within the xml text literal.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlTextLiteral(System.String,System.String)">
+            <summary>
+            Generates the syntax representation of an xml text literal.
+            </summary>
             <param name="text">The raw text of the literal.</param>
-            <param name="value">The xml entity value.</param>
-            <param name="trailing">A list of trivia immediately following the token.</param>
+            <param name="value">The text used within the xml text literal.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.XmlReplaceBracketTokens(Microsoft.CodeAnalysis.SyntaxToken,Microsoft.CodeAnalysis.SyntaxToken)">
+            <summary>
+            Helper method that replaces less-than and greater-than characters with brackets. 
+            </summary>
+            <param name="originalToken">The original token that is to be replaced.</param>
+            <param name="rewrittenToken">The new rewritten token.</param>
+            <returns>Returns the new rewritten token with replaced characters.</returns>
         </member>
         <member name="M:Microsoft.CodeAnalysis.CSharp.SyntaxFactory.DocumentationCommentExterior(System.String)">
             <summary>

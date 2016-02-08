@@ -57,6 +57,39 @@
             TODO: Rewrite this to track backward through references instead of binding everything
             </remarks>
         </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeFixes.AddImport.AbstractAddImportCodeFixProvider`1.SearchScope">
+            <summary>
+            SearchScope is used to control where the <see cref="T:Microsoft.CodeAnalysis.CodeFixes.AddImport.AbstractAddImportCodeFixProvider`1"/>
+            searches.  We search different scopes in different ways.  For example we use 
+            SymbolTreeInfos to search unreferenced projects and metadata dlls.  However,
+            for the current project we're editing we defer to the compiler to do the 
+            search.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeFixes.AddImport.AbstractAddImportCodeFixProvider`1.AllSymbolsProjectSearchScope">
+            <summary>
+            SearchScope used for searching *all* the symbols contained within a project/compilation.
+            i.e. the symbols created from source *and* symbols from references (both project and
+            metadata).
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeFixes.AddImport.AbstractAddImportCodeFixProvider`1.SourceSymbolsProjectSearchScope">
+            <summary>
+            SearchScope used for searching *only* the source symbols contained within a project/compilation.
+            i.e. symbols from metadata will not be searched.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CodeFixes.AddImport.AbstractAddImportCodeFixProvider`1.CreateCompilation(Microsoft.CodeAnalysis.Project,Microsoft.CodeAnalysis.PortableExecutableReference)">
+            <summary>
+            Called when when we want to search a metadata reference.  We create a dummy compilation
+            containing just that reference and we search that.  That way we can get actual symbols
+            returned.
+            
+            We don't want to use the project that the reference is actually associated with as 
+            getting the compilation for that project may be extremely expensive.  For example,
+            in a large solution it may cause us to build an enormous amount of skeleton assemblies.
+            </summary>
+        </member>
         <member name="M:Microsoft.CodeAnalysis.CodeFixes.CodeFixContextExtensions.RegisterFixes(Microsoft.CodeAnalysis.CodeFixes.CodeFixContext,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.CodeActions.CodeAction},Microsoft.CodeAnalysis.Diagnostic)">
             <summary>
             Use this helper to register multiple fixes (<paramref name="actions"/>) each of which addresses / fixes the same supplied <paramref name="diagnostic"/>.
@@ -636,6 +669,11 @@
             Base type of a type that is used as <see cref="P:Microsoft.CodeAnalysis.Common.UpdatedEventArgs.Id"/> for live diagnostic
             </summary>
         </member>
+        <member name="T:Microsoft.CodeAnalysis.Diagnostics.DiagnosticEventTaskScheduler">
+            <summary>
+            This task scheduler will block queuing new tasks if upper bound has met.
+            </summary>
+        </member>
         <member name="T:Microsoft.CodeAnalysis.Diagnostics.HostDiagnosticAnalyzerPackage">
             <summary>
             Information on vsix that contains diagnostic analyzers
@@ -764,6 +802,16 @@
             it might uses cache to skip unnecessary duplicate analysis, but it will never update any internal state such as state
             
             this is not finished form. as refactoring going on, this class will become more stateless in respect to caller, and less dependency on owner.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Diagnostics.EngineV1.DiagnosticIncrementalAnalyzer.DiagnosticState.Name_TestingOnly">
+            <summary>
+            Only For Testing
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Diagnostics.EngineV1.DiagnosticIncrementalAnalyzer.DiagnosticState.Language_TestingOnly">
+            <summary>
+            Only For Testing
             </summary>
         </member>
         <member name="F:Microsoft.CodeAnalysis.Diagnostics.EngineV1.DiagnosticIncrementalAnalyzer.ConcurrentAnalysis">
@@ -2635,6 +2683,11 @@
               Looks up a localized string similar to location unknown.
             </summary>
         </member>
+        <member name="P:Microsoft.CodeAnalysis.FeaturesResources.Make_method_synchronous">
+            <summary>
+              Looks up a localized string similar to Make method synchronous..
+            </summary>
+        </member>
         <member name="P:Microsoft.CodeAnalysis.FeaturesResources.Method">
             <summary>
               Looks up a localized string similar to method.
@@ -3231,6 +3284,18 @@
             <returns>Returns the rewritten document, or the document passed in if no changes were made. If cancellation
             was observed, it returns null.</returns>
         </member>
+        <member name="T:Microsoft.CodeAnalysis.Shared.Options.RuntimeOptions">
+            <summary>
+            Options that aren't persisted. options here will be reset to default on new process.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Shared.Options.ServiceFeatureOnOffOptions.ClosedFileDiagnostic">
+            <summary>
+            this option is solely for performance. don't confused by option name. 
+            this option doesn't mean we will show all diagnostics that belong to opened files when turned off,
+            rather it means we will only show diagnostics that are cheap to calculate for small scope such as opened files.
+            </summary>
+        </member>
         <member name="F:Microsoft.CodeAnalysis.Shared.Options.OrganizerOptions.WarnOnBuildErrors">
             <summary>
             This option is currently unused by Roslyn, but we might want to implement it in the 
@@ -3414,6 +3479,29 @@
             loop, dig into the waiters and see all of the active <see cref="T:Microsoft.CodeAnalysis.Shared.TestHooks.IAsyncToken"/> values 
             representing the remaining work.
             </remarks>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.IncrementalCaches.SymbolTreeInfoIncrementalAnalyzerProvider">
+            <summary>
+            Features like add-using want to be able to quickly search symbol indices for projects and
+            metadata.  However, creating those indices can be expensive.  As such, we don't want to
+            construct them during the add-using process itself.  Instead, we expose this type as an 
+            Incremental-Analyzer to walk our projects/metadata in the background to keep the indices
+            up to date.
+            
+            We also then export this type as a service that can give back the index for a project or
+            metadata dll on request.  If the index has been produced then it will be returned and 
+            can be used by add-using.  Otherwise, nothing is returned and no results will be found.
+            
+            This means that as the project is being indexed, partial results may be returned.  However
+            once it is fully indexed, then total results will be returned.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.IncrementalCaches.SymbolTreeInfoIncrementalAnalyzerProvider.MetadataInfo.ReferencingProjects">
+            <summary>
+            Note: the Incremental-Analyzer infrastructure guarantees that it will call all the methods
+            on <see cref="T:Microsoft.CodeAnalysis.IncrementalCaches.SymbolTreeInfoIncrementalAnalyzerProvider.IncrementalAnalyzer"/> in a serial fashion.  As that is the only type that
+            reads/writes these <see cref="T:Microsoft.CodeAnalysis.IncrementalCaches.SymbolTreeInfoIncrementalAnalyzerProvider.MetadataInfo"/> objects, we don't need to lock this.
+            </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.MetadataAsSource.AbstractMetadataAsSourceService.GetFormattingRules(Microsoft.CodeAnalysis.Document)">
             <summary>

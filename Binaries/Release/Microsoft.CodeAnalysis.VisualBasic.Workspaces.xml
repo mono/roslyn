@@ -241,16 +241,6 @@ Microsoft.CodeAnalysis.VisualBasic.Workspaces
  this node is the VB equivalent of a BlockSyntax in C#.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Extensions.SyntaxNodeExtensions.FindTokenOnRightOfPosition(Microsoft.CodeAnalysis.SyntaxNode,System.Int32,System.Boolean,System.Boolean,System.Boolean)">
- <summary>
- If the position is inside of token, return that token; otherwise, return the token to right.
- </summary>
-</member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Extensions.SyntaxNodeExtensions.FindTokenOnLeftOfPosition(Microsoft.CodeAnalysis.SyntaxNode,System.Int32,System.Boolean,System.Boolean,System.Boolean)">
- <summary>
- If the position is inside of token, return that token; otherwise, return the token to left. 
- </summary>
-</member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Extensions.SyntaxNodeExtensions.ChildThatContainsPosition(Microsoft.CodeAnalysis.SyntaxNode,System.Int32,System.Int32@)">
  <summary>
  Returns child node or token that contains given position.
@@ -258,21 +248,6 @@ Microsoft.CodeAnalysis.VisualBasic.Workspaces
  <remarks>
  This is a copy of <see cref="M:Microsoft.CodeAnalysis.SyntaxNode.ChildThatContainsPosition(System.Int32)"/>  that also returns the index of the child node.
  </remarks>
-</member>
-<member name="F:Microsoft.CodeAnalysis.VisualBasic.Extensions.SyntaxNodeExtensions.s_findSkippedTokenForward">
- <summary>
- Look inside a trivia list for a skipped token that contains the given position.
- </summary>
-</member>
-<member name="F:Microsoft.CodeAnalysis.VisualBasic.Extensions.SyntaxNodeExtensions.s_findSkippedTokenBackward">
- <summary>
- Look inside a trivia list for a skipped token that contains the given position.
- </summary>
-</member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Extensions.SyntaxNodeExtensions.GetSkippedTokens(Microsoft.CodeAnalysis.SyntaxTriviaList)">
- <summary>
- get skipped tokens from the trivia list
- </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Extensions.SyntaxNodeExtensions.GetCorrespondingConditionalAccessExpression(Microsoft.CodeAnalysis.VisualBasic.Syntax.ExpressionSyntax)">
  <summary>
@@ -310,16 +285,6 @@ Microsoft.CodeAnalysis.VisualBasic.Workspaces
  </summary>
  <param name="syntaxTree">The syntaxTree to search.</param>
  <param name="position">The position to find trivia.</param>
-</member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Extensions.SyntaxTreeExtensions.FindTokenOnRightOfPosition(Microsoft.CodeAnalysis.SyntaxTree,System.Int32,System.Threading.CancellationToken,System.Boolean,System.Boolean,System.Boolean)">
- <summary>
- If the position is inside of token, return that token; otherwise, return the token to right.
- </summary>
-</member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Extensions.SyntaxTreeExtensions.FindTokenOnLeftOfPosition(Microsoft.CodeAnalysis.SyntaxTree,System.Int32,System.Threading.CancellationToken,System.Boolean,System.Boolean,System.Boolean)">
- <summary>
- If the position is inside of token, return that token; otherwise, return the token to left. 
- </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Extensions.SyntaxTreeExtensions.IsLastTokenOfStatementWithEndOfLine(Microsoft.CodeAnalysis.SyntaxToken)">
  <summary>

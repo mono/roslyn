@@ -1813,7 +1813,7 @@ Microsoft.CodeAnalysis.VisualBasic
  when we have already looked up for the name.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Binder.BindMemberAccess(Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxNode,Microsoft.CodeAnalysis.VisualBasic.BoundExpression,Microsoft.CodeAnalysis.VisualBasic.Syntax.SimpleNameSyntax,System.Boolean,System.Boolean,Microsoft.CodeAnalysis.DiagnosticBag)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Binder.BindMemberAccess(Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxNode,Microsoft.CodeAnalysis.VisualBasic.BoundExpression,Microsoft.CodeAnalysis.VisualBasic.Syntax.SimpleNameSyntax,System.Boolean,Microsoft.CodeAnalysis.DiagnosticBag)">
  <summary> 
  Method binds member access in case when we got hold 
  of a bound node representing the left expression 
@@ -1936,7 +1936,7 @@ Microsoft.CodeAnalysis.VisualBasic
  Bind an initializer for an implicitly allocated array field (for example: Private F(2) As Object).
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Binder.BindFieldInitializer(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbol},Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxNode,Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.VisualBasic.BoundInitializer},Microsoft.CodeAnalysis.DiagnosticBag,System.Boolean)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Binder.BindFieldInitializer(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbols.FieldSymbol},Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxNode,Microsoft.CodeAnalysis.ArrayBuilder{Microsoft.CodeAnalysis.VisualBasic.BoundInitializer},Microsoft.CodeAnalysis.DiagnosticBag,System.Boolean)">
  <summary>
  Binds the field initializer. A bound field initializer contains the bound field access and bound init value.
  </summary>
@@ -4135,6 +4135,34 @@ Figure out the set of best candidates in the following preference order:
  Imports statements.
  </summary>
 </member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.ImplicitVariableBinder">
+ <summary>
+ The ImplicitVariableBinder manages implicitly declared local variables in VB.
+ Unlike other Binders, the ImplicitVariableBinder is observably 
+ mutable -- as new implicit local variables are declared, those variables will be
+ found by lookup operations on the binder. This mutability requires that use of the 
+ ImplicitVariableBinder be treated with somewhat more care than other binders.
+ 
+ The implicit variable binder is placed immediately outside the method body binder
+ when the method body binder is created.
+ 
+ Furthermore, the semantics of binding of implicitly declared local variables in VB
+ are order dependent because of type characters:
+     x$ = "hello": x = "hi"   ' OK
+     x = "hi": X$ = "hello"   ' error: x is of type Object.
+ 
+ An ImplicitVariableBinder can be frozen, at which point additional variables cannot
+ be declared. This should be done once an entire method body is bound.
+ 
+ Thus, it is important that only one thread at a time be allowed to access the implicit variable binder for
+ declaration (once frozen, it is OK for multiple threads to do lookups.)
+ 
+ In Debug, Asserts validate these rules.
+ 
+ Additional assert to make sure that declarations are handled in order is handled by 
+ <see cref="M:Microsoft.CodeAnalysis.VisualBasic.ExecutableCodeBinder.CheckSimpleNameBindingOrder(Microsoft.CodeAnalysis.VisualBasic.Syntax.SimpleNameSyntax)"/>
+ </summary>
+</member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.ImplicitVariableBinder.#ctor(Microsoft.CodeAnalysis.VisualBasic.Binder,Microsoft.CodeAnalysis.VisualBasic.Symbol)">
  <summary>
  If Option Explicit is Off for this source file, then implicit variable declaration will be allowed
@@ -4372,6 +4400,12 @@ Figure out the set of best candidates in the following preference order:
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.LookupOptions.IgnoreCorLibraryDuplicatedTypes">
  <summary>
  Ignore duplicate types from the cor library.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.LookupOptions.AllowIntrinsicAliases">
+ <summary>
+ Handle a case of being able to refer to System.Int32 through System.Integer.
+ Same for other intrinsic types with intrinsic name different from emitted name.
  </summary>
 </member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.SingleLookupResult">
@@ -4760,7 +4794,7 @@ For more explanation of Kind, Symbol, Error - see LookupResult.
  Create binder for binding the body of a method. 
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.MethodBodySemanticModel.Create(Microsoft.CodeAnalysis.VisualBasic.MethodBodyBinder,System.Boolean)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.MethodBodySemanticModel.Create(Microsoft.CodeAnalysis.VisualBasic.SubOrFunctionBodyBinder,System.Boolean)">
  <summary>
  Creates an MethodBodySemanticModel that allows asking semantic questions about an attribute node.
  </summary>
@@ -4946,6 +4980,11 @@ For more explanation of Kind, Symbol, Error - see LookupResult.
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.Symbols.AnonymousTypeManager._concurrentDelegatesCache">
  <summary> Cache of created anonymous delegates </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.Symbols.AnonymousTypeManager._sourceLocationsSeen">
+ <summary>
+ Holds a collection of all the locations of anonymous types and delegates from source
+ </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.AnonymousTypeManager.ConstructAnonymousTypeImplementationSymbol(Microsoft.CodeAnalysis.VisualBasic.Symbols.AnonymousTypeManager.AnonymousTypePublicSymbol)">
  <summary> 
@@ -7509,6 +7548,13 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  True if the assembly contains interactive code.
  </summary>
 </member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.AssemblySymbol.GetMetadata">
+ <summary>
+ If this symbol represents a metadata assembly returns the underlying <see cref="T:Microsoft.CodeAnalysis.AssemblyMetadata"/>.
+ 
+ Otherwise, this returns <code>nothing</code>.
+ </summary>
+</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.Symbols.AssemblySymbol.Identity">
  <summary>
  Get the name of this assembly.
@@ -9751,6 +9797,13 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  Returns an array of assembly identities for assemblies referenced by this module.
  Items at the same position from ReferencedAssemblies And from ReferencedAssemblySymbols 
  correspond to each other.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.ModuleSymbol.GetMetadata">
+ <summary>
+ If this symbol represents a metadata module returns the underlying <see cref="T:Microsoft.CodeAnalysis.ModuleMetadata"/>.
+ 
+ Otherwise, this returns <code>nothing</code>.
  </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.ModuleSymbol.GetReferencedAssemblies">
@@ -13952,6 +14005,12 @@ we see that namespaces A and B and C are declared.  This declaration is represen
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.BoundExpressionExtensions.TypeArguments(Microsoft.CodeAnalysis.VisualBasic.BoundMethodOrPropertyGroup)">
  <summary>
  returns type arguments or Nothing if group does not have type arguments.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.BoundNode.BoundNodeAttributes.WasCompilerGeneratedIsChecked">
+ <summary>
+ Captures the fact that consumers of the node already checked the state of the WasCompilerGenerated bit.
+ Allows to assert on attempts to set WasCompilerGenerated bit after that.
  </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.BoundNode.WasCompilerGenerated">
@@ -18330,6 +18389,17 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  <param name="topLevelMethod">Method that contains lambda expression for which we do the rewrite.</param>
  <param name="lambdaNode">Lambda expression which is represented by this method.</param>
 </member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter._unstructuredExceptionHandlingResumableStatements">
+ <summary>
+ A map from SyntaxNode to corresponding visited BoundStatement.
+ Used to ensure correct generation of resumable code for Unstructured Exception Handling.
+ </summary>
+</member>
+<member name="F:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter._rewrittenNodes">
+ <summary>
+ Used to prevent multiple rewrite of the same nodes.
+ </summary>
+</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.PlaceholderReplacement(Microsoft.CodeAnalysis.VisualBasic.BoundValuePlaceholderBase)">
  <summary>
  Returns substitution currently used by the rewriter for a placeholder node.
@@ -18486,7 +18556,7 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  constructor is supposed to be generated)
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.VisitFieldOrPropertyInitializer(Microsoft.CodeAnalysis.VisualBasic.BoundFieldOrPropertyInitializer)">
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.VisitFieldOrPropertyInitializer(Microsoft.CodeAnalysis.VisualBasic.BoundFieldOrPropertyInitializer,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.VisualBasic.Symbol})">
  <summary>
  Field initializers need to be rewritten multiple times in case of an AsNew declaration with multiple field names because the 
  initializer may contain references to the current field like in the following example:
@@ -40106,6 +40176,35 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  the argument list and return type.
  </summary>
 </member>
+<member name="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.SkippedTokensTriviaSyntax">
+ <summary>
+ Represents tokens that were skipped by the parser as part of error recovery,
+ and thus are not part of any syntactic structure.
+ </summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.Syntax.SkippedTokensTriviaSyntax.Tokens">
+ <summary>
+ The list of tokens that were skipped by the parser.
+ </summary>
+ <remarks>
+ If nothing is present, an empty list is returned.
+ </remarks>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Syntax.SkippedTokensTriviaSyntax.WithTokens(Microsoft.CodeAnalysis.SyntaxTokenList)">
+ <summary>
+ Returns a copy of this with the Tokens property changed to the specified value.
+ Returns this instance if the specified value is the same as the current value.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.Syntax.SkippedTokensTriviaSyntax.Update(Microsoft.CodeAnalysis.SyntaxTokenList)">
+ <summary>
+ Returns a copy of this with the specified changes. Returns this instance if
+ there are no actual changes.
+ </summary>
+ <param name="tokens">
+ The value for the Tokens property.
+ </param>
+</member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.StructuredTriviaSyntax">
  <summary>
  Abstract class that represent structured trivia.
@@ -51385,35 +51484,6 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  The value for the Expression property.
  </param>
 </member>
-<member name="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.SkippedTokensTriviaSyntax">
- <summary>
- Represents tokens that were skipped by the parser as part of error recovery,
- and thus are not part of any syntactic structure.
- </summary>
-</member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.Syntax.SkippedTokensTriviaSyntax.Tokens">
- <summary>
- The list of tokens that were skipped by the parser.
- </summary>
- <remarks>
- If nothing is present, an empty list is returned.
- </remarks>
-</member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Syntax.SkippedTokensTriviaSyntax.WithTokens(Microsoft.CodeAnalysis.SyntaxTokenList)">
- <summary>
- Returns a copy of this with the Tokens property changed to the specified value.
- Returns this instance if the specified value is the same as the current value.
- </summary>
-</member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.Syntax.SkippedTokensTriviaSyntax.Update(Microsoft.CodeAnalysis.SyntaxTokenList)">
- <summary>
- Returns a copy of this with the specified changes. Returns this instance if
- there are no actual changes.
- </summary>
- <param name="tokens">
- The value for the Tokens property.
- </param>
-</member>
 <member name="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlCrefAttributeSyntax">
  <summary>
  A symbol referenced by a cref attribute (e.g. in a &lt;see&gt; or
@@ -54549,6 +54619,320 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  <param name="text">The raw text of the literal, including quotes and escape sequences.</param>
  <param name="value">The character value to be represented by the returned token.</param>
  <param name="trailing">A list of trivia immediately following the token.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.DocumentationComment(Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax[])">
+ <summary>
+ Creates an xml documentation comment that abstracts xml syntax creation.
+ </summary>
+ <param name="content">
+ A list of xml node syntax that will be the content within the xml documentation comment
+ (e.g. a summary element, a returns element, exception element and so on).
+ </param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlSummaryElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax[])">
+ <summary>
+ Creates a summary element within an xml documentation comment.
+ </summary>
+ <param name="content">A list of xml node syntax that will be the content within the summary element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlSummaryElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates a summary element within an xml documentation comment.
+ </summary>
+ <param name="content">A list of xml node syntax that will be the content within the summary element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlSeeElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.CrefReferenceSyntax)">
+ <summary>
+ Creates a see element within an xml documentation comment.
+ </summary>
+ <param name="cref">A cref syntax node that points to the referenced item (e.g. a class, struct).</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlSeeAlsoElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.CrefReferenceSyntax)">
+ <summary>
+ Creates a seealso element within an xml documentation comment.
+ </summary>
+ <param name="cref">A cref syntax node that points to the referenced item (e.g. a class, struct).</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlSeeAlsoElement(System.Uri,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates a seealso element within an xml documentation comment.
+ </summary>
+ <param name="linkAddress">The uri of the referenced item.</param>
+ <param name="linkText"> A list of xml node syntax that will be used as the link text for the referenced item.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlThreadSafetyElement">
+ <summary>
+ Creates a threadsafty element within an xml documentation comment.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlThreadSafetyElement(System.Boolean,System.Boolean)">
+ <summary>
+ Creates a threadsafty element within an xml documentation comment.
+ </summary>
+ <param name="static" static="sfd">Indicates whether static member of this class are safe for multi-threaded operations.</param>
+ <param name="instance">Indicates whether members of instances of this type are safe for multi-threaded operations.</param>
+ <threadsafety static="true" instance=""/>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlNameAttribute(System.String)">
+ <summary>
+ Creates a syntax node for a name attribute in a xml element within a xml documentation comment.
+ </summary>
+ <param name="parameterName">The value of the name attribute.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlPreliminaryElement">
+ <summary>
+ Creates a syntax node for a priliminary element within a xml documentation comment.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlCrefAttribute(Microsoft.CodeAnalysis.VisualBasic.Syntax.CrefReferenceSyntax)">
+ <summary>
+ Creates a syntax node for a cref attribute within a xml documentation comment.
+ </summary>
+ <param name="cref">The <see cref="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.CrefReferenceSyntax"/> used for the xml cref attribute syntax.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlCrefAttribute(Microsoft.CodeAnalysis.VisualBasic.Syntax.CrefReferenceSyntax,Microsoft.CodeAnalysis.VisualBasic.SyntaxKind)">
+ <summary>
+ Creates a syntax node for a cref attribute within a xml documentation comment.
+ </summary>
+ <param name="cref">The <see cref="T:Microsoft.CodeAnalysis.VisualBasic.Syntax.CrefReferenceSyntax"/> used for the xml cref attribute syntax.</param>
+ <param name="quoteKind">The kind of the quote for the referenced item in the cref attribute.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlRemarksElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax[])">
+ <summary>
+ Creates a remarks element within an xml documentation comment.
+ </summary>
+ <param name="content">A list of xml node syntax that will be the content within the remarks element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlRemarksElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates a remarks element within an xml documentation comment.
+ </summary>
+ <param name="content">A list of xml node syntax that will be the content within the remarks element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlReturnsElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax[])">
+ <summary>
+ Creates a returns element within an xml documentation comment.
+ </summary>
+ <param name="content">A list of xml node syntax that will be the content within the returns element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlReturnsElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates a returns element within an xml documentation comment.
+ </summary>
+ <param name="content">A list of xml node syntax that will be the content within the returns element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlValueElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax[])">
+ <summary>
+ Creates the the syntax representation of an xml value element (e.g. for xml documentation comments).
+ </summary>
+ <param name="content">A list of xml syntax nodes that represents the content of the value element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlValueElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates the the syntax representation of an xml value element (e.g. for xml documentation comments).
+ </summary>
+ <param name="content">A list of xml syntax nodes that represents the content of the value element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlExceptionElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.CrefReferenceSyntax,Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax[])">
+ <summary>
+ Creates the syntax representation of an exception element within xml documentation comments.
+ </summary>
+ <param name="cref">Syntax representation of the reference to the exception type.</param>
+ <param name="content">A list of syntax nodes that represents the content of the exception element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlExceptionElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.CrefReferenceSyntax,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates the syntax representation of an exception element within xml documentation comments.
+ </summary>
+ <param name="cref">Syntax representation of the reference to the exception type.</param>
+ <param name="content">A list of syntax nodes that represents the content of the exception element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlPermissionElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.CrefReferenceSyntax,Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax[])">
+ <summary>
+ Creates the syntax representation of a permission element within xml documentation comments.
+ </summary>
+ <param name="cref">Syntax representation of the reference to the permission type.</param>
+ <param name="content">A list of syntax nodes that represents the content of the permission element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlPermissionElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.CrefReferenceSyntax,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates the syntax representation of a permission element within xml documentation comments.
+ </summary>
+ <param name="cref">Syntax representation of the reference to the permission type.</param>
+ <param name="content">A list of syntax nodes that represents the content of the permission element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlExampleElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax[])">
+ <summary>
+ Creates the syntax representation of an example element within xml documentation comments.
+ </summary>
+ <param name="content">A list of syntax nodes that represents the content of the example element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlExampleElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates the syntax representation of an example element within xml documentation comments.
+ </summary>
+ <param name="content">A list of syntax nodes that represents the content of the example element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlParaElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax[])">
+ <summary>
+ Creates the syntax representation of a para element within xml documentation comments.
+ </summary>
+ <param name="content">A list of syntax nodes that represents the content of the para element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlParaElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates the syntax representation of a para element within xml documentation comments.
+ </summary>
+ <param name="content">A list of syntax nodes that represents the content of the para element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlParamElement(System.String,Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax[])">
+ <summary>
+ Creates the syntax representation of a param element within xml documentation comments (e.g. for
+ documentation of method parameters).
+ </summary>
+ <param name="parameterName">The name of the parameter.</param>
+ <param name="content">A list of syntax nodes that represents the content of the param element (e.g. 
+ the description and meaning of the parameter).</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlParamElement(System.String,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates the syntax representation of a param element within xml documentation comments (e.g. for
+ documentation of method parameters).
+ </summary>
+ <param name="parameterName">The name of the parameter.</param>
+ <param name="content">A list of syntax nodes that represents the content of the param element (e.g. 
+ the description and meaning of the parameter).</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlParamRefElement(System.String)">
+ <summary>
+ Creates the syntax representation of a paramref element within xml documentation comments (e.g. for
+ referencing particular parameters of a method).
+ </summary>
+ <param name="parameterName">The name of the referenced parameter.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlNullKeywordElement">
+ <summary>
+ Creates the syntax representation of a see element within xml documentation comments,
+ that points to the 'null' language keyword.
+ </summary>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlKeywordElement(System.String)">
+ <summary>
+ Creates the syntax representation of a see element within xml documentation comments,
+ that points to a language keyword.
+ </summary>
+ <param name="keyword">The language keyword to which the see element points to.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlPlaceholderElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax[])">
+ <summary>
+ Creates the syntax representation of a placeholder element within xml documentation comments.
+ </summary>
+ <param name="content">A list of syntax nodes that represents the content of the placeholder element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlPlaceholderElement(Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates the syntax representation of a placeholder element within xml documentation comments.
+ </summary>
+ <param name="content">A list of syntax nodes that represents the content of the placeholder element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlEmptyElement(System.String)">
+ <summary>
+ Creates the syntax representation of a named empty xml element within xml documentation comments.
+ </summary>
+ <param name="localName">The name of the empty xml element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlElement(System.String,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates the syntax representation of a named xml element within xml documentation comments.
+ </summary>
+ <param name="localName">The name of the empty xml element.</param>
+ <param name="content">A list of syntax nodes that represents the content of the xml element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNameSyntax,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates the syntax representation of a named xml element within xml documentation comments.
+ </summary>
+ <param name="name">The name of the empty xml element.</param>
+ <param name="content">A list of syntax nodes that represents the content of the xml element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlMultiLineElement(System.String,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates the syntax representation of an xml element that spans multiple text lines.
+ </summary>
+ <param name="localName">The name of the xml element.</param>
+ <param name="content">A list of syntax nodes that represents the content of the xml multi line element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlMultiLineElement(Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNameSyntax,Microsoft.CodeAnalysis.SyntaxList{Microsoft.CodeAnalysis.VisualBasic.Syntax.XmlNodeSyntax})">
+ <summary>
+ Creates the syntax representation of an xml element that spans multiple text lines.
+ </summary>
+ <param name="name">The name of the xml element.</param>
+ <param name="content">A list of syntax nodes that represents the content of the xml multi line element.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlNewLine(System.String)">
+ <summary>
+ Creates the syntax representation of an xml text that contains a newline token with a documentation comment 
+ exterior trivia at the end (continued documentation comment).
+ </summary>
+ <param name="text">The raw text within the new line.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlTextNewLine(System.String)">
+ <summary>
+ Creates the syntax representation of an xml newline token with a documentation comment exterior trivia at 
+ the end (continued documentation comment).
+ </summary>
+ <param name="text">The raw text within the new line.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlTextNewLine(System.String,System.String,Microsoft.CodeAnalysis.SyntaxTriviaList,Microsoft.CodeAnalysis.SyntaxTriviaList)">
+ <summary>
+ Creates a token with kind XmlTextLiteralNewLineToken.
+ </summary>
+ <param name="text">The raw text of the literal.</param>
+ <param name="value">The xml text new line value.</param>
+ <param name="leading">A list of trivia immediately preceding the token.</param>
+ <param name="trailing">A list of trivia immediately following the token.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlTextNewLine(System.String,System.Boolean)">
+ <summary>
+ Creates the syntax representation of an xml newline token for xml documentation comments.
+ </summary>
+ <param name="text">The raw text within the new line.</param>
+ <param name="continueXmlDocumentationComment">
+ If set to true, a documentation comment exterior token will be added to the trailing trivia
+ of the new token.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlText(System.String)">
+ <summary>
+ Generates the syntax representation of a xml text node (e.g. for xml documentation comments).
+ </summary>
+ <param name="value">The string literal used as the text of the xml text node.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlText(Microsoft.CodeAnalysis.SyntaxToken[])">
+ <summary>
+ Generates the syntax representation of a xml text node (e.g. for xml documentation comments).
+ </summary>
+ <param name="textTokens">A list of text tokens used as the text of the xml text node.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlTextLiteral(System.String)">
+ <summary>
+ Generates the syntax representation of an xml text literal.
+ </summary>
+ <param name="value">The text used within the xml text literal.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlTextLiteral(System.String,System.String)">
+ <summary>
+ Generates the syntax representation of an xml text literal.
+ </summary>
+ <param name="text">The raw text of the literal.</param>
+ <param name="value">The text used within the xml text literal.</param>
+</member>
+<member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.XmlReplaceBracketTokens(Microsoft.CodeAnalysis.SyntaxToken,Microsoft.CodeAnalysis.SyntaxToken)">
+ <summary>
+ Helper method that replaces less-than and greater-than characters with brackets. 
+ </summary>
+ <param name="originalToken">The original token that is to be replaced.</param>
+ <param name="rewrittenToken">The new rewritten token.</param>
+ <returns>Returns the new rewritten token with replaced characters.</returns>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.AreEquivalent(Microsoft.CodeAnalysis.SyntaxTree,Microsoft.CodeAnalysis.SyntaxTree,System.Boolean)">
  <summary>
@@ -70789,17 +71173,6 @@ Parse the input for leading trivia.
  This method does not filter diagnostics based on compiler options like nowarn, warnaserror etc.
  </summary>
 </member>
-<member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxNode.FindToken(System.Int32,System.Func{Microsoft.CodeAnalysis.SyntaxTrivia,System.Boolean})">
- <summary>
- Finds a token according to the following rules:
- 1)	If position matches the End of the node's Span, then its last token is returned. 
- 
- 2)	If node.FullSpan.Contains(position) the token that contains given position is returned.
-     If stepInto is not Nothing, then structured trivia that satisfies the condition will also be visited during the search.
- 
- 3)	Otherwise an IndexOutOfRange is thrown
- </summary>
-</member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxNode.FindToken(System.Int32,System.Boolean)">
  <summary>
  Finds a token according to the following rules:
@@ -76217,6 +76590,11 @@ Parse the input for leading trivia.
   Looks up a localized string similar to Error extracting public key from file &apos;{0}&apos;: {1}.
 </summary>
 </member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_PublicSignNoKey">
+<summary>
+  Looks up a localized string similar to Public sign was specified and requires a public key, but no public key was specified.
+</summary>
+</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_QualifiedNameNotAllowed">
 <summary>
   Looks up a localized string similar to &apos;:&apos; is not allowed. XML qualified names cannot be used in this context..
@@ -76827,6 +77205,11 @@ Parse the input for leading trivia.
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_TooManyIndices">
 <summary>
   Looks up a localized string similar to Number of indices exceeds the number of dimensions of the indexed array..
+</summary>
+</member>
+<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_TooManyUserStrings">
+<summary>
+  Looks up a localized string similar to Combined length of user strings used by the program exceeds allowed limit. Try to decrease use of string or XML literals..
 </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBResources.ERR_TryAndOnErrorDoNotMix">

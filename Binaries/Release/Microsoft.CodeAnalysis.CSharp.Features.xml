@@ -291,11 +291,6 @@
               Looks up a localized string similar to Autoselect disabled due to potential range variable declaration..
             </summary>
         </member>
-        <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpFeaturesResources.Await">
-            <summary>
-              Looks up a localized string similar to await.
-            </summary>
-        </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpFeaturesResources.Awaitable">
             <summary>
               Looks up a localized string similar to awaitable.

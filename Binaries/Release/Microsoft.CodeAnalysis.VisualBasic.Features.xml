@@ -1120,11 +1120,6 @@ Async Sub/Function(&lt;parameterList&gt;) &lt;expression&gt;.
   Looks up a localized string similar to Used in a Declare statement. The Auto modifier specifies that Visual Basic should marshal strings according to .NET Framework rules, and should determine the base character set of the run-time platform and possibly modify the external procedure name if the initial search fails..
 </summary>
 </member>
-<member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.Await">
-<summary>
-  Looks up a localized string similar to Await.
-</summary>
-</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources.VBFeaturesResources.Awaitable">
 <summary>
   Looks up a localized string similar to Awaitable.

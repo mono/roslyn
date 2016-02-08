@@ -162,31 +162,6 @@
             breaking any pp constructs.
             </summary>
         </member>
-        <member name="F:Microsoft.CodeAnalysis.CSharp.Extensions.SyntaxNodeExtensions.s_findSkippedTokenForward">
-            <summary>
-            Look inside a trivia list for a skipped token that contains the given position.
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.CSharp.Extensions.SyntaxNodeExtensions.s_findSkippedTokenBackward">
-            <summary>
-            Look inside a trivia list for a skipped token that contains the given position.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.Extensions.SyntaxNodeExtensions.GetSkippedTokens(Microsoft.CodeAnalysis.SyntaxTriviaList)">
-            <summary>
-            return only skipped tokens
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.Extensions.SyntaxNodeExtensions.FindTokenOnRightOfPosition(Microsoft.CodeAnalysis.SyntaxNode,System.Int32,System.Boolean,System.Boolean,System.Boolean)">
-            <summary>
-            If the position is inside of token, return that token; otherwise, return the token to the right.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.Extensions.SyntaxNodeExtensions.FindTokenOnLeftOfPosition(Microsoft.CodeAnalysis.SyntaxNode,System.Int32,System.Boolean,System.Boolean,System.Boolean)">
-            <summary>
-            If the position is inside of token, return that token; otherwise, return the token to the left.
-            </summary>
-        </member>
         <member name="M:Microsoft.CodeAnalysis.CSharp.Extensions.SyntaxNodeExtensions.ChildThatContainsPosition(Microsoft.CodeAnalysis.SyntaxNode,System.Int32,System.Int32@)">
             <summary>
             Returns child node or token that contains given position.
@@ -214,16 +189,6 @@
             the "&amp;"</param>
             <returns>The last token in the name</returns>
             <remarks>This is related to the code in <see cref="M:Microsoft.CodeAnalysis.CSharp.Extensions.SyntaxTreeExtensions.IsInPartiallyWrittenGeneric(Microsoft.CodeAnalysis.SyntaxTree,System.Int32,System.Threading.CancellationToken)"/></remarks>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.Extensions.SyntaxTreeExtensions.FindTokenOnRightOfPosition(Microsoft.CodeAnalysis.SyntaxTree,System.Int32,System.Threading.CancellationToken,System.Boolean,System.Boolean,System.Boolean)">
-            <summary>
-            If the position is inside of token, return that token; otherwise, return the token to the right.
-            </summary>
-        </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.Extensions.SyntaxTreeExtensions.FindTokenOnLeftOfPosition(Microsoft.CodeAnalysis.SyntaxTree,System.Int32,System.Threading.CancellationToken,System.Boolean,System.Boolean,System.Boolean)">
-            <summary>
-            If the position is inside of token, return that token; otherwise, return the token to the left.
-            </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.CSharp.Extensions.TypeSyntaxExtensions.IsTypeInferred(Microsoft.CodeAnalysis.CSharp.Syntax.TypeSyntax,Microsoft.CodeAnalysis.SemanticModel)">
             <summary>
