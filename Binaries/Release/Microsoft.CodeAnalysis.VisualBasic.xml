@@ -4135,34 +4135,6 @@ Figure out the set of best candidates in the following preference order:
  Imports statements.
  </summary>
 </member>
-<member name="T:Microsoft.CodeAnalysis.VisualBasic.ImplicitVariableBinder">
- <summary>
- The ImplicitVariableBinder manages implicitly declared local variables in VB.
- Unlike other Binders, the ImplicitVariableBinder is observably 
- mutable -- as new implicit local variables are declared, those variables will be
- found by lookup operations on the binder. This mutability requires that use of the 
- ImplicitVariableBinder be treated with somewhat more care than other binders.
- 
- The implicit variable binder is placed immediately outside the method body binder
- when the method body binder is created.
- 
- Furthermore, the semantics of binding of implicitly declared local variables in VB
- are order dependent because of type characters:
-     x$ = "hello": x = "hi"   ' OK
-     x = "hi": X$ = "hello"   ' error: x is of type Object.
- 
- An ImplicitVariableBinder can be frozen, at which point additional variables cannot
- be declared. This should be done once an entire method body is bound.
- 
- Thus, it is important that only one thread at a time be allowed to access the implicit variable binder for
- declaration (once frozen, it is OK for multiple threads to do lookups.)
- 
- In Debug, Asserts validate these rules.
- 
- Additional assert to make sure that declarations are handled in order is handled by 
- <see cref="M:Microsoft.CodeAnalysis.VisualBasic.ExecutableCodeBinder.CheckSimpleNameBindingOrder(Microsoft.CodeAnalysis.VisualBasic.Syntax.SimpleNameSyntax)"/>
- </summary>
-</member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.ImplicitVariableBinder.#ctor(Microsoft.CodeAnalysis.VisualBasic.Binder,Microsoft.CodeAnalysis.VisualBasic.Symbol)">
  <summary>
  If Option Explicit is Off for this source file, then implicit variable declaration will be allowed
@@ -4980,11 +4952,6 @@ For more explanation of Kind, Symbol, Error - see LookupResult.
 </member>
 <member name="F:Microsoft.CodeAnalysis.VisualBasic.Symbols.AnonymousTypeManager._concurrentDelegatesCache">
  <summary> Cache of created anonymous delegates </summary>
-</member>
-<member name="F:Microsoft.CodeAnalysis.VisualBasic.Symbols.AnonymousTypeManager._sourceLocationsSeen">
- <summary>
- Holds a collection of all the locations of anonymous types and delegates from source
- </summary>
 </member>
 <member name="M:Microsoft.CodeAnalysis.VisualBasic.Symbols.AnonymousTypeManager.ConstructAnonymousTypeImplementationSymbol(Microsoft.CodeAnalysis.VisualBasic.Symbols.AnonymousTypeManager.AnonymousTypePublicSymbol)">
  <summary> 
@@ -14007,12 +13974,6 @@ we see that namespaces A and B and C are declared.  This declaration is represen
  returns type arguments or Nothing if group does not have type arguments.
  </summary>
 </member>
-<member name="F:Microsoft.CodeAnalysis.VisualBasic.BoundNode.BoundNodeAttributes.WasCompilerGeneratedIsChecked">
- <summary>
- Captures the fact that consumers of the node already checked the state of the WasCompilerGenerated bit.
- Allows to assert on attempts to set WasCompilerGenerated bit after that.
- </summary>
-</member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.BoundNode.WasCompilerGenerated">
  <summary>
  The node should not be treated as a direct semantical representation of the syntax it is associated with. 
@@ -18388,17 +18349,6 @@ Creates a string representing the unformatted LocalizableErrorArgument instance.
  - it is either Frame or enclosing class in a case if we do not lift anything.</param>
  <param name="topLevelMethod">Method that contains lambda expression for which we do the rewrite.</param>
  <param name="lambdaNode">Lambda expression which is represented by this method.</param>
-</member>
-<member name="F:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter._unstructuredExceptionHandlingResumableStatements">
- <summary>
- A map from SyntaxNode to corresponding visited BoundStatement.
- Used to ensure correct generation of resumable code for Unstructured Exception Handling.
- </summary>
-</member>
-<member name="F:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter._rewrittenNodes">
- <summary>
- Used to prevent multiple rewrite of the same nodes.
- </summary>
 </member>
 <member name="P:Microsoft.CodeAnalysis.VisualBasic.LocalRewriter.PlaceholderReplacement(Microsoft.CodeAnalysis.VisualBasic.BoundValuePlaceholderBase)">
  <summary>

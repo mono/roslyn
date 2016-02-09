@@ -3455,12 +3455,6 @@
             Set if the group has a receiver but none was not specified in syntax.
             </summary>
         </member>
-        <member name="F:Microsoft.CodeAnalysis.CSharp.BoundNode.BoundNodeAttributes.WasCompilerGeneratedIsChecked">
-            <summary>
-            Captures the fact that consumers of the node already checked the state of the WasCompilerGenerated bit.
-            Allows to assert on attempts to set WasCompilerGenerated bit after that.
-            </summary>
-        </member>
         <member name="P:Microsoft.CodeAnalysis.CSharp.BoundNode.HasAnyErrors">
             <summary>
             Determines if a bound node, or associated syntax or type has an error (not a warning) 
@@ -6299,11 +6293,6 @@
             <summary>
             Produces name of the synthesized delegate symbol that encodes the parameter byref-ness and return type of the delegate.
             The arity is appended via `N suffix since in MetadataName calculation since the delegate is generic.
-            </summary>
-        </member>
-        <member name="F:Microsoft.CodeAnalysis.CSharp.Symbols.AnonymousTypeManager._sourceLocationsSeen">
-            <summary>
-            Holds a collection of all the locations of anonymous types and delegates from source
             </summary>
         </member>
         <member name="M:Microsoft.CodeAnalysis.CSharp.Symbols.AnonymousTypeManager.ConstructAnonymousTypeImplementationSymbol(Microsoft.CodeAnalysis.CSharp.Symbols.AnonymousTypeManager.AnonymousTypePublicSymbol)">
@@ -24704,7 +24693,7 @@
                   assumptions about array arguments and do not keep them or rely on their identity.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntheticBoundNodeFactory.StoreToTemp(Microsoft.CodeAnalysis.CSharp.BoundExpression,Microsoft.CodeAnalysis.CSharp.BoundAssignmentOperator@,Microsoft.CodeAnalysis.RefKind,Microsoft.CodeAnalysis.SynthesizedLocalKind,Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode,System.Int32,System.String)">
+        <member name="M:Microsoft.CodeAnalysis.CSharp.SyntheticBoundNodeFactory.StoreToTemp(Microsoft.CodeAnalysis.CSharp.BoundExpression,Microsoft.CodeAnalysis.CSharp.BoundAssignmentOperator@,Microsoft.CodeAnalysis.RefKind,Microsoft.CodeAnalysis.SynthesizedLocalKind,Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode)">
             <summary>
             Takes an expression and returns the bound local expression "temp" 
             and the bound assignment expression "temp = expr".

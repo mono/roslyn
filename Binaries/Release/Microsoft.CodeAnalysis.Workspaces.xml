@@ -5726,11 +5726,6 @@
             if exact location (not relative location) is needed from symbol, regular GetSemanticModel should be used.
             </summary>
         </member>
-        <member name="M:Microsoft.CodeAnalysis.Shared.Extensions.DocumentExtensions.VerifyNoErrorsAsync(Microsoft.CodeAnalysis.Document,System.String,System.Threading.CancellationToken,System.Collections.Generic.List{System.String})">
-            <summary>
-            Debug only extension method to verify no errors were introduced by formatting, pretty listing and other related document altering service in error-free code.
-            </summary>
-        </member>
         <member name="M:Microsoft.CodeAnalysis.Shared.Extensions.DocumentExtensions.GetPartialSemanticModelAsync(Microsoft.CodeAnalysis.Document,System.Threading.CancellationToken)">
             <summary>
             Returns the semantic model for this document that may be produced from partial semantics. The semantic model
