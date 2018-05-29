@@ -4,7 +4,7 @@
 
 export PATH=Binaries/dotnet-cli:$PATH
 
-./build/scripts/restore.sh
+./build.sh --restore
 
 dotnet restore Compilers.sln
 # How to build  -f net461 only?
@@ -12,7 +12,7 @@ dotnet build Compilers.sln
 
 mkdir -p mono-tests
 
-# TODO: Need to copy from roslyn-binaries
+# TODO: Should copy from roslyn-binaries to test code we ship
 cp Binaries/Debug/Dlls/CSharpCodeAnalysis/Microsoft.CodeAnalysis.CSharp.dll mono-tests/
 cp Binaries/Debug/Dlls/CodeAnalysis/Microsoft.CodeAnalysis.dll mono-tests/
 cp Binaries/Debug/Dlls/Scripting/Microsoft.CodeAnalysis.Scripting.dll mono-tests/
@@ -28,22 +28,22 @@ cp Binaries/Debug/Dlls/CSharpCompilerTestUtilities/Roslyn.Compilers.CSharp.Test.
 cp Binaries/Debug/Dlls/TestUtilities/net461/Roslyn.Test.Utilities.??? mono-tests/
 cp Binaries/Debug/Dlls/TestUtilities/net461/Microsoft.CodeAnalysis.Test.Resources.Proprietary.??? mono-tests/
 cp Binaries/Debug/Dlls/CompilerTestResources/Roslyn.Compilers.Test.Resources.??? mono-tests/
-cp Binaries/Debug/Dlls/TestUtilities.Desktop/Microsoft.Metadata.Visualizer.??? mono-tests/
+cp Binaries/Debug/Dlls/TestUtilities/net461/Microsoft.Metadata.Visualizer.??? mono-tests/
 cp Binaries/Debug/Dlls/ScriptingTestUtilities/Microsoft.CodeAnalysis.Scripting.TestUtilities.??? mono-tests/
 cp Binaries/Debug/Dlls/TestUtilities/net461/Microsoft.CodeAnalysis.Test.Resources.Proprietary.??? mono-tests/
 cp Binaries/Debug/Dlls/CSharpCompilerTestUtilities/Roslyn.Compilers.CSharp.Test.Utilities.??? mono-tests/
 cp Binaries/Debug/Dlls/PdbUtilities/Roslyn.Test.PdbUtilities.??? mono-tests/
 cp Binaries/Debug/Dlls/TestUtilities/net461/Microsoft.DiaSymReader.??? mono-tests/
 cp Binaries/Debug/UnitTests/CSharpScriptingTest/net461/Microsoft.DiaSymReader.Converter.??? mono-tests/
-cp Binaries/Debug/Dlls/TestUtilities.Desktop/Roslyn.Test.Utilities.Desktop.??? mono-tests/
-cp Binaries/Debug/Dlls/CSharpCompilerTestUtilities.Desktop/Roslyn.Compilers.CSharp.Test.Utilities.Desktop.??? mono-tests/
+#cp Binaries/Debug/Dlls/TestUtilities.Desktop/net461/Roslyn.Test.Utilities.Desktop.??? mono-tests/
+#cp Binaries/Debug/Dlls/CSharpCompilerTestUtilities.Desktop/net461/Roslyn.Compilers.CSharp.Test.Utilities.Desktop.??? mono-tests/
 cp Binaries/Debug/Dlls/TestUtilities/net461/Microsoft.DiaSymReader.PortablePdb.??? mono-tests/
 
 cp Binaries/Debug/Dlls/TestUtilities/net461/Microsoft.DiaSymReader.Converter.Xml.??? mono-tests/
 
-cp Binaries/Debug/UnitTests/CSharpCompilerEmitTest/Roslyn.Compilers.CSharp.Emit.UnitTests.??? mono-tests/
+cp Binaries/Debug/UnitTests/CSharpCompilerEmitTest/net461/Roslyn.Compilers.CSharp.Emit.UnitTests.??? mono-tests/
 cp Binaries/Debug/UnitTests/CSharpCodeStyleTests/net461/Microsoft.CodeAnalysis.CSharp.CodeStyle.UnitTests.??? mono-tests/
-cp Binaries/Debug/UnitTests/CSharpCompilerSymbolTest/net461/ref/Roslyn.Compilers.CSharp.Symbol.UnitTests.??? mono-tests/
+cp Binaries/Debug/UnitTests/CSharpCompilerSymbolTest/net461/Roslyn.Compilers.CSharp.Symbol.UnitTests.??? mono-tests/
 cp Binaries/Debug/UnitTests/CodeStyleTests/net461/Microsoft.CodeAnalysis.CodeStyle.UnitTests.??? mono-tests/
 cp Binaries/Debug/UnitTests/ScriptingTest/net461/Microsoft.CodeAnalysis.Scripting.UnitTests.??? mono-tests/
 cp Binaries/Debug/UnitTests/CSharpCompilerSyntaxTest/net461/Roslyn.Compilers.CSharp.Syntax.UnitTests.??? mono-tests/
@@ -51,7 +51,7 @@ cp Binaries/Debug/UnitTests/VBCSCompilerTests/net461/Roslyn.Compilers.CompilerSe
 cp Binaries/Debug/UnitTests/CSharpScriptingTest/net461/Microsoft.CodeAnalysis.CSharp.Scripting.UnitTests.??? mono-tests/
 cp Binaries/Debug/UnitTests/CSharpCompilerSemanticTest/Roslyn.Compilers.CSharp.Semantic.UnitTests.??? mono-tests/
 
-cp Binaries/Debug/Dlls/TestUtilities.Desktop/xunit.*.dll mono-tests/
+cp Binaries/Debug/Dlls/TestUtilities/net461/xunit.*.dll mono-tests/
 
 cd mono-tests/
 
