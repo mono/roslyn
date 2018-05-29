@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright (c)  Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\..\..\build\Targets\SettingsSdk.props" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -45,9 +44,6 @@
   <ItemGroup>
     <Compile Include="..\..\Compilers\Core\Portable\FileSystem\RelativePathResolver.cs">
       <Link>Hosting\Resolvers\RelativePathResolver.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Compilers\Shared\CoreClrShim.cs">
-      <Link>CoreClrShim.cs</Link>
     </Compile>
     <Compile Include="..\..\Compilers\Shared\GlobalAssemblyCacheHelpers\ClrGlobalAssemblyCache.cs">
       <Link>Hosting\Resolvers\ClrGlobalAssemblyCache.cs</Link>
@@ -107,5 +103,4 @@
     <PublicAPI Include="PublicAPI.Shipped.txt" />
     <PublicAPI Include="PublicAPI.Unshipped.txt" />
   </ItemGroup>
-  <Import Project="..\..\..\build\Targets\Imports.targets" />
 </Project>

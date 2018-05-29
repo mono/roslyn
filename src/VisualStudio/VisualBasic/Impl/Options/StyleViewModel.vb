@@ -271,6 +271,26 @@ Class Customer
     End Sub
 End Class"
 
+        Private Shared ReadOnly s_preferAutoProperties As String = $"
+Imports System
+
+Class Customer
+//[
+    ' {ServicesVSResources.Prefer_colon}
+    Public ReadOnly Property Age As Integer
+
+    ' {ServicesVSResources.Over_colon}
+    Private _age As Integer
+
+    Public ReadOnly Property Age As Integer
+        Get
+            return _age
+        End Get
+    End Property
+//]
+End Class
+"
+
         Private Shared ReadOnly s_preferIsNothingCheckOverReferenceEquals As String = $"
 Imports System
 
@@ -288,6 +308,19 @@ Class Customer
         End If
 //]
     End Sub
+End Class"
+
+        Private Shared ReadOnly s_preferReadonly As String = $"
+Class Customer
+//[
+    ' {ServicesVSResources.Prefer_colon}
+    ' 'value' can only be assigned in constructor
+    Private ReadOnly value As Integer = 0
+
+    ' {ServicesVSResources.Over_colon}
+    ' 'value' can be assigned anywhere
+    Private value As Integer = 0
+//]
 End Class"
 
 #End Region
@@ -312,8 +345,10 @@ End Class"
                 New CodeStylePreference(ServicesVSResources.Prefer_framework_type, isChecked:=False)
             }
 
+            Dim codeBlockPreferencesGroupTitle = ServicesVSResources.Code_block_preferences_colon
             Dim expressionPreferencesGroupTitle = ServicesVSResources.Expression_preferences_colon
             Dim nothingPreferencesGroupTitle = BasicVSResources.nothing_checking_colon
+            Dim fieldPreferencesGroupTitle = ServicesVSResources.Field_preferences_colon
 
             ' qualify with Me. group
             Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.QualifyFieldAccess, BasicVSResources.Qualify_field_access_with_Me, s_fieldDeclarationPreviewTrue, s_fieldDeclarationPreviewFalse, Me, optionSet, qualifyGroupTitle, qualifyMemberAccessPreferences))
@@ -325,17 +360,23 @@ End Class"
             Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferIntrinsicPredefinedTypeKeywordInDeclaration, ServicesVSResources.For_locals_parameters_and_members, _intrinsicDeclarationPreviewTrue, _intrinsicDeclarationPreviewFalse, Me, optionSet, predefinedTypesGroupTitle, predefinedTypesPreferences))
             Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferIntrinsicPredefinedTypeKeywordInMemberAccess, ServicesVSResources.For_member_access_expressions, _intrinsicMemberAccessPreviewTrue, _intrinsicMemberAccessPreviewFalse, Me, optionSet, predefinedTypesGroupTitle, predefinedTypesPreferences))
 
+            ' Code block
+            Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferAutoProperties, ServicesVSResources.analyzer_Prefer_auto_properties, s_preferAutoProperties, s_preferAutoProperties, Me, optionSet, codeBlockPreferencesGroupTitle))
+
             ' expression preferences
             Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferObjectInitializer, ServicesVSResources.Prefer_object_initializer, s_preferObjectInitializer, s_preferObjectInitializer, Me, optionSet, expressionPreferencesGroupTitle))
             Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferCollectionInitializer, ServicesVSResources.Prefer_collection_initializer, s_preferCollectionInitializer, s_preferCollectionInitializer, Me, optionSet, expressionPreferencesGroupTitle))
             Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferExplicitTupleNames, ServicesVSResources.Prefer_explicit_tuple_name, s_preferExplicitTupleName, s_preferExplicitTupleName, Me, optionSet, expressionPreferencesGroupTitle))
-            Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(VisualBasicCodeStyleOptions.PreferInferredTupleNames, ServicesVSResources.Prefer_inferred_tuple_names, s_preferInferredTupleName, s_preferInferredTupleName, Me, optionSet, expressionPreferencesGroupTitle))
-            Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(VisualBasicCodeStyleOptions.PreferInferredAnonymousTypeMemberNames, ServicesVSResources.Prefer_inferred_anonymous_type_member_names, s_preferInferredAnonymousTypeMemberName, s_preferInferredAnonymousTypeMemberName, Me, optionSet, expressionPreferencesGroupTitle))
+            Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferInferredTupleNames, ServicesVSResources.Prefer_inferred_tuple_names, s_preferInferredTupleName, s_preferInferredTupleName, Me, optionSet, expressionPreferencesGroupTitle))
+            Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferInferredAnonymousTypeMemberNames, ServicesVSResources.Prefer_inferred_anonymous_type_member_names, s_preferInferredAnonymousTypeMemberName, s_preferInferredAnonymousTypeMemberName, Me, optionSet, expressionPreferencesGroupTitle))
 
             ' nothing preferences
             Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferCoalesceExpression, ServicesVSResources.Prefer_coalesce_expression, s_preferCoalesceExpression, s_preferCoalesceExpression, Me, optionSet, nothingPreferencesGroupTitle))
             Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferNullPropagation, ServicesVSResources.Prefer_null_propagation, s_preferNullPropagation, s_preferNullPropagation, Me, optionSet, nothingPreferencesGroupTitle))
             Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferIsNullCheckOverReferenceEqualityMethod, BasicVSResources.Prefer_Is_Nothing_over_ReferenceEquals, s_preferIsNothingCheckOverReferenceEquals, s_preferIsNothingCheckOverReferenceEquals, Me, optionSet, nothingPreferencesGroupTitle))
+
+            ' field preferences
+            Me.CodeStyleItems.Add(New BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferReadonly, ServicesVSResources.Prefer_readonly, s_preferReadonly, s_preferReadonly, Me, optionSet, fieldPreferencesGroupTitle))
         End Sub
     End Class
 End Namespace

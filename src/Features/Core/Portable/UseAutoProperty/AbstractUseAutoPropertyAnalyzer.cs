@@ -1,7 +1,5 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
@@ -31,6 +29,7 @@ namespace Microsoft.CodeAnalysis.UseAutoProperty
         protected abstract void AnalyzeCompilationUnit(SemanticModelAnalysisContext context, SyntaxNode root, List<AnalysisResult> analysisResults);
         protected abstract bool SupportsReadOnlyProperties(Compilation compilation);
         protected abstract bool SupportsPropertyInitializer(Compilation compilation);
+        protected abstract bool CanExplicitInterfaceImplementationsBeFixed();
         protected abstract TExpression GetFieldInitializer(TVariableDeclarator variable, CancellationToken cancellationToken);
         protected abstract TExpression GetGetterExpression(IMethodSymbol getMethod, CancellationToken cancellationToken);
         protected abstract TExpression GetSetterExpression(IMethodSymbol setMethod, SemanticModel semanticModel, CancellationToken cancellationToken);
@@ -45,15 +44,32 @@ namespace Microsoft.CodeAnalysis.UseAutoProperty
 
         private void AnalyzeSemanticModel(SemanticModelAnalysisContext context)
         {
+            var cancellationToken = context.CancellationToken;
+            var semanticModel = context.SemanticModel;
+
+            // Don't even bother doing the analysis if the user doesn't even want auto-props.
+            var optionSet = context.Options.GetDocumentOptionSetAsync(
+                semanticModel.SyntaxTree, cancellationToken).GetAwaiter().GetResult();
+            if (optionSet == null)
+            {
+                return;
+            }
+
+            var option = optionSet.GetOption(CodeStyleOptions.PreferAutoProperties, semanticModel.Language);
+            if (!option.Value)
+            {
+                return;
+            }
+
             var analysisResults = new List<AnalysisResult>();
             var ineligibleFields = new HashSet<IFieldSymbol>();
 
-            var root = context.SemanticModel.SyntaxTree.GetRoot(context.CancellationToken);
+            var root = semanticModel.SyntaxTree.GetRoot(cancellationToken);
             AnalyzeCompilationUnit(context, root, analysisResults);
 
             RegisterIneligibleFieldsAction(
                 analysisResults, ineligibleFields,
-                context.SemanticModel.Compilation, context.CancellationToken);
+                semanticModel.Compilation, cancellationToken);
             Process(analysisResults, ineligibleFields, context);
         }
 
@@ -92,6 +108,11 @@ namespace Microsoft.CodeAnalysis.UseAutoProperty
 
             // Need at least a getter.
             if (property.GetMethod == null)
+            {
+                return;
+            }
+
+            if (!CanExplicitInterfaceImplementationsBeFixed() && property.ExplicitInterfaceImplementations.Length != 0)
             {
                 return;
             }
@@ -195,10 +216,18 @@ namespace Microsoft.CodeAnalysis.UseAutoProperty
                 return;
             }
 
+            if (!CanConvert(property))
+            {
+                return;
+            }
+
             // Looks like a viable property/field to convert into an auto property.
             analysisResults.Add(new AnalysisResult(property, getterField, propertyDeclaration, fieldDeclaration, variableDeclarator,
                 property.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
         }
+
+        protected virtual bool CanConvert(IPropertySymbol property)
+            => true;
 
         private IFieldSymbol GetSetterField(
             SemanticModel semanticModel, ISymbol containingType, IMethodSymbol setMethod, CancellationToken cancellationToken)
@@ -268,20 +297,49 @@ namespace Microsoft.CodeAnalysis.UseAutoProperty
             var variableDeclarator = result.VariableDeclarator;
             var nodeToFade = GetNodeToFade(result.FieldDeclaration, variableDeclarator);
 
-            // Fade out the field/variable we are going to remove.
-            var diagnostic1 = Diagnostic.Create(UnnecessaryWithoutSuggestionDescriptor, nodeToFade.GetLocation());
-            context.ReportDiagnostic(diagnostic1);
+            var optionSet = context.Options.GetDocumentOptionSetAsync(
+                result.FieldDeclaration.SyntaxTree, cancellationToken).GetAwaiter().GetResult();
+            if (optionSet == null)
+            {
+                return;
+            }
 
             // Now add diagnostics to both the field and the property saying we can convert it to 
             // an auto property.  For each diagnostic store both location so we can easily retrieve
             // them when performing the code fix.
-            IEnumerable<Location> additionalLocations = new Location[] { propertyDeclaration.GetLocation(), variableDeclarator.GetLocation() };
+            var additionalLocations = ImmutableArray.Create(
+                propertyDeclaration.GetLocation(), variableDeclarator.GetLocation());
 
-            var diagnostic2 = Diagnostic.Create(HiddenDescriptor, propertyDeclaration.GetLocation(), additionalLocations);
+            var option = optionSet.GetOption(CodeStyleOptions.PreferAutoProperties, propertyDeclaration.Language);
+
+            // Place the appropriate marker on the field depending on the user option.
+            var diagnostic1 = Diagnostic.Create(
+                GetFieldDescriptor(option), nodeToFade.GetLocation(),
+                additionalLocations: additionalLocations);
+
+            // Also, place a hidden marker on the property.  If they bring up a lightbulb
+            // there, they'll be able to see that they can convert it to an auto-prop.
+            var diagnostic2 = Diagnostic.Create(
+                HiddenDescriptor, propertyDeclaration.GetLocation(),
+                additionalLocations: additionalLocations);
+
+            context.ReportDiagnostic(diagnostic1);
             context.ReportDiagnostic(diagnostic2);
+        }
 
-            var diagnostic3 = Diagnostic.Create(HiddenDescriptor, nodeToFade.GetLocation(), additionalLocations);
-            context.ReportDiagnostic(diagnostic3);
+        private DiagnosticDescriptor GetFieldDescriptor(CodeStyleOption<bool> styleOption)
+        {
+            if (styleOption.Value)
+            {
+                switch (styleOption.Notification.Value)
+                {
+                    case DiagnosticSeverity.Error: return ErrorDescriptor;
+                    case DiagnosticSeverity.Warning: return WarningDescriptor;
+                    case DiagnosticSeverity.Info: return InfoDescriptor;
+                }
+            }
+
+            return UnnecessaryWithSuggestionDescriptor;
         }
 
         protected virtual bool IsEligibleHeuristic(IFieldSymbol field, TPropertyDeclaration propertyDeclaration, Compilation compilation, CancellationToken cancellationToken)

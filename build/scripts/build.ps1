@@ -22,11 +22,13 @@ param (
     [switch]$official = $false,
     [switch]$cibuild = $false,
     [switch]$build = $false,
-    [switch]$buildAll = $false,
+    [switch]$buildCoreClr = $false,
     [switch]$bootstrap = $false,
     [switch]$sign = $false,
     [switch]$pack = $false,
-    [string]$msbuildDir = "",
+    [switch]$packAll = $false,
+    [switch]$binaryLog = $false,
+    [switch]$noAnalyzers = $false,
     [string]$signType = "",
 
     # Test options 
@@ -54,12 +56,12 @@ function Print-Usage() {
     Write-Host "  -release                  Perform release build (default is debug)"
     Write-Host "  -restore                  Restore packages"
     Write-Host "  -build                    Build Roslyn.sln"
-    Write-Host "  -buildAll                 Build all Roslyn source items"
     Write-Host "  -official                 Perform an official build"
     Write-Host "  -bootstrap                Build using a bootstrap Roslyn"
     Write-Host "  -sign                     Sign our binaries"
+    Write-Host "  -signType                 Type of sign: real, test, verify"
     Write-Host "  -pack                     Create our NuGet packages"
-    Write-Host "  -msbuildDir               MSBuild to use for operations"
+    Write-Host "  -binaryLog                Create binary log for every MSBuild invocation"
     Write-Host "" 
     Write-Host "Test options" 
     Write-Host "  -test32                   Run unit tests in the 32-bit runner"
@@ -81,7 +83,7 @@ function Print-Usage() {
 # specified.
 #
 # In this function it's okay to use two arguments to extend the effect of another. For 
-# example it's okay to look at $buildAll and infer $build. It's not okay though to infer 
+# example it's okay to look at $buildCoreClr and infer $build. It's not okay though to infer 
 # $build based on say $testDesktop. It's possible the developer wanted only for testing 
 # to execute, not any build.
 function Process-Arguments() {
@@ -109,7 +111,10 @@ function Process-Arguments() {
         exit 1
     }
 
-    if ($buildAll) {
+    $script:pack = $pack -or $packAll
+    $script:packAll = $packAll -or ($pack -and $official)
+
+    if ($buildCoreClr) {
         $script:build = $true
     }
 
@@ -117,7 +122,7 @@ function Process-Arguments() {
     $script:debug = -not $release
 }
 
-function Run-MSBuild([string]$buildArgs = "", [string]$logFile = "", [switch]$parallel = $true) {
+function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]$logFileName = "", [switch]$parallel = $true, [switch]$useDotnetBuild = $false) {
     # Because we override the C#/VB toolset to build against our LKG package, it is important
     # that we do not reuse MSBuild nodes from other jobs/builds on the machine. Otherwise,
     # we'll run into issues such as https://github.com/dotnet/roslyn/issues/6211.
@@ -127,9 +132,19 @@ function Run-MSBuild([string]$buildArgs = "", [string]$logFile = "", [switch]$pa
     if ($parallel) {
         $args += " /m"
     }
-    
-    if ($logFile -ne "") {
-        $args += " /bl:$logFile"
+
+    if ($noAnalyzers -or ($cibuild -and $testVsi)) {
+        # Avoid spending time in analyzers when requested, and also in the slowest integration test builds
+        $args += " /p:UseRoslynAnalyzers=false"
+    }
+
+    if ($binaryLog) {
+        if ($logFileName -eq "") { 
+            $logFileName = [IO.Path]::GetFileNameWithoutExtension($projectFilePath)
+        }
+        $logFileName = [IO.Path]::ChangeExtension($logFileName, ".binlog")
+        $logFilePath = Join-Path $logsDir $logFileName
+        $args += " /bl:$logFilePath"
     }
 
     if ($official) {
@@ -140,45 +155,114 @@ function Run-MSBuild([string]$buildArgs = "", [string]$logFile = "", [switch]$pa
         $args += " /p:BootstrapBuildPath=$bootstrapDir"
     }
 
-    if ($testIOperation)
-    {
+    if ($testIOperation) {
         $args += " /p:TestIOperationInterface=true"
     }
 
     $args += " $buildArgs"
-    Exec-Console $msbuild $args
+    $args += " $projectFilePath"
+
+    if ($useDotnetBuild) {
+        $args = " msbuild $args"
+        Exec-Console $dotnet $args
+    }
+    else {
+        Exec-Console $msbuild $args
+    }
 }
 
-# Create a bootstrap build of the compiler.  Returns the directory where the bootstrap buil 
+# Restore all of the projects that the repo consumes
+function Restore-Packages() {
+    Write-Host "Restore using dotnet at $dotnet"
+
+    $all = @(
+        "Roslyn Toolset:build\ToolsetPackages\RoslynToolset.csproj",
+        "Roslyn:Roslyn.sln")
+
+    foreach ($cur in $all) {
+        $both = $cur.Split(':')
+        Write-Host "Restoring $($both[0])"
+        $projectFilePath = $both[1]
+        $projectFileName = [IO.Path]::GetFileNameWithoutExtension($projectFilePath)
+        $logFilePath = ""
+        if ($binaryLog) { 
+            $logFilePath = Join-Path $logsDir "Restore-$($projectFileName).binlog"
+        }
+        Restore-Project $dotnet $both[1] $logFilePath
+    }
+}
+
+# Create a bootstrap build of the compiler.  Returns the directory where the bootstrap build 
 # is located. 
 #
 # Important to not set $script:bootstrapDir here yet as we're actually in the process of 
 # building the bootstrap.
 function Make-BootstrapBuild() {
-
-    $bootstrapLog = Join-Path $binariesDir "Bootstrap.binlog"
-    Write-Host "Building Bootstrap compiler"
-    Run-MSBuild "/p:UseShippingAssemblyVersion=true /p:InitialDefineConstants=BOOTSTRAP build\Toolset\Toolset.csproj" -logFile $bootstrapLog 
     $dir = Join-Path $binariesDir "Bootstrap"
+    Write-Host "Building Bootstrap compiler"
+    $bootstrapArgs = "/p:UseShippingAssemblyVersion=true /p:InitialDefineConstants=BOOTSTRAP"
     Remove-Item -re $dir -ErrorAction SilentlyContinue
     Create-Directory $dir
-    Move-Item "$configDir\Exes\Toolset\*" $dir
+    if ($buildCoreClr) {
+        $bootstrapFramework = "netcoreapp2.0"
+        $projectFiles = @(
+            'src/Compilers/CSharp/csc/csc.csproj',
+            'src/Compilers/VisualBasic/vbc/vbc.csproj',
+            'src/Compilers/Server/VBCSCompiler/VBCSCompiler.csproj',
+            'src/Compilers/Core/MSBuildTask/MSBuildTask.csproj'
+        )
 
-    Write-Host "Cleaning Bootstrap compiler artifacts"
-    Run-MSBuild "/t:Clean build\Toolset\Toolset.csproj"
-    Stop-BuildProcesses
+        foreach ($projectFilePath in $projectFiles) { 
+            $fileName = [IO.Path]::GetFileNameWithoutExtension((Split-Path -leaf $projectFilePath))
+            $logFileName = "Bootstrap$($fileName)"
+            Run-MSBuild $projectFilePath "/t:Publish /p:TargetFramework=netcoreapp2.0 $bootstrapArgs" -logFileName $logFileName -useDotnetBuild
+        }
+
+        Pack-One "Microsoft.NetCore.Compilers.nuspec" "Bootstrap" $dir
+        Unzip-File "$dir\Microsoft.NETCore.Compilers.42.42.42.42-bootstrap.nupkg" "$dir\Microsoft.NETCore.Compilers\42.42.42.42"
+
+        Write-Host "Cleaning Bootstrap compiler artifacts"
+        Run-MSBuild "Compilers.sln" "/t:Clean"
+        Stop-BuildProcesses
+    }
+    else {
+        Run-MSBuild "build\Toolset\Toolset.csproj" $bootstrapArgs -logFileName "Bootstrap"
+        Remove-Item -re $dir -ErrorAction SilentlyContinue
+        Create-Directory $dir
+
+        Pack-One "Microsoft.Net.Compilers.nuspec" "Bootstrap" $dir
+        Unzip-File "$dir\Microsoft.Net.Compilers.42.42.42.42-bootstrap.nupkg" "$dir\Microsoft.Net.Compilers\42.42.42.42"
+
+        Write-Host "Cleaning Bootstrap compiler artifacts"
+        Run-MSBuild "build\Toolset\Toolset.csproj" "/t:Clean" -logFileName "BootstrapClean"
+        Stop-BuildProcesses
+    }
+
     return $dir
 }
 
 function Build-Artifacts() { 
-    Run-MSBuild "Roslyn.sln /p:DeployExtension=false"
-
-    if ($testDesktop) { 
-        Run-MSBuild "src\Samples\Samples.sln /p:DeployExtension=false"
+    if ($buildCoreClr) {
+        Run-MSBuild "Compilers.sln" -useDotnetBuild
+    }
+    elseif ($build) {
+        Run-MSBuild "Roslyn.sln" "/p:DeployExtension=false"
+        Build-ExtraSignArtifacts
     }
 
-    if ($buildAll) {
-        Build-ExtraSignArtifacts
+    if ($pack) {
+        Build-NuGetPackages
+    }
+
+    if ($sign) {
+        Run-SignTool
+    }
+
+    if ($pack -and ($cibuild -or $official)) { 
+        Build-DeployToSymStore
+    }
+
+    if ($build -and (-not $buildCoreClr)) {
         Build-InsertionItems
     }
 }
@@ -191,26 +275,23 @@ function Build-ExtraSignArtifacts() {
     try {
         # Publish the CoreClr projects (CscCore and VbcCore) and dependencies for later NuGet packaging.
         Write-Host "Publishing csc"
-        Run-MSBuild "..\Compilers\CSharp\csc\csc.csproj /p:TargetFramework=netcoreapp2.0 /t:PublishWithoutBuilding"
-        Write-Host "Publishing csc"
-        Run-MSBuild "..\Compilers\VisualBasic\vbc\vbc.csproj /p:TargetFramework=netcoreapp2.0 /t:PublishWithoutBuilding"
+        Run-MSBuild "..\Compilers\CSharp\csc\csc.csproj" "/p:TargetFramework=netcoreapp2.0 /t:PublishWithoutBuilding"
+        Write-Host "Publishing vbc"
+        Run-MSBuild "..\Compilers\VisualBasic\vbc\vbc.csproj" "/p:TargetFramework=netcoreapp2.0 /t:PublishWithoutBuilding"
+        Write-Host "Publishing VBCSCompiler"
+        Run-MSBuild "..\Compilers\Server\VBCSCompiler\VBCSCompiler.csproj" "/p:TargetFramework=netcoreapp2.0 /t:PublishWithoutBuilding"
+        Write-Host "Publishing MSBuildTask"
+        Run-MSBuild "..\Compilers\Core\MSBuildTask\MSBuildTask.csproj" "/p:TargetFramework=netcoreapp2.0 /t:PublishWithoutBuilding"
+        Write-Host "Building PortableFacades Swix"
+        Run-MSBuild "DevDivVsix\PortableFacades\PortableFacades.swixproj"
+        Write-Host "Building CompilersCodeAnalysis Swix"
+        Run-MSBuild "DevDivVsix\CompilersPackage\Microsoft.CodeAnalysis.Compilers.swixproj"
 
-        # No need to build references here as we just built the rest of the source tree. 
-        # We build these serially to work around https://github.com/dotnet/roslyn/issues/11856,
-        # where building multiple projects that produce VSIXes larger than 10MB will race against each other
-        Run-MSBuild "Deployment\Current\Roslyn.Deployment.Full.csproj /p:BuildProjectReferences=false" -parallel:$false
-        Run-MSBuild "Deployment\Next\Roslyn.Deployment.Full.Next.csproj /p:BuildProjectReferences=false" -parallel:$false
-
-        $dest = @(
-            $configDir,
-            "Templates\CSharp\Diagnostic\Analyzer",
-            "Templates\VisualBasic\Diagnostic\Analyzer\tools")
+        $dest = @($configDir)
         foreach ($dir in $dest) { 
             Copy-Item "PowerShell\*.ps1" $dir
         }
 
-        Run-MSBuild "Templates\Templates.sln /p:VersionType=Release"
-        Run-MSBuild "DevDivInsertionFiles\DevDivInsertionFiles.sln"
         Copy-Item -Force "Vsix\myget_org-extensions.config" $configDir
     }
     finally {
@@ -243,7 +324,7 @@ function Build-InsertionItems() {
     Push-Location $setupDir
     try { 
         Create-PerfTests
-        Exec-Console (Join-Path $configDir "Exes\DevDivInsertionFiles\Roslyn.BuildDevDivInsertionFiles.exe") "$configDir $setupDir $(Get-PackagesDir)"
+        Exec-Console (Join-Path $configDir "Exes\DevDivInsertionFiles\Roslyn.BuildDevDivInsertionFiles.exe") "$configDir $repoDir $(Get-PackagesDir)"
         
         # In non-official builds need to supply values for a few MSBuild properties. The actual value doesn't
         # matter, just that it's provided some value.
@@ -252,40 +333,101 @@ function Build-InsertionItems() {
             $extraArgs = " /p:FinalizeValidate=false /p:ManifestPublishUrl=https://vsdrop.corp.microsoft.com/file/v1/Products/DevDiv/dotnet/roslyn/master/20160729.6"
         }
 
-        Run-MSBuild "DevDivPackages\Roslyn.proj"
-        Run-MSBuild "DevDivVsix\PortableFacades\PortableFacades.vsmanproj $extraArgs"
-        Run-MSBuild "DevDivVsix\CompilersPackage\Microsoft.CodeAnalysis.Compilers.vsmanproj $extraArgs"
-        Run-MSBuild "DevDivVsix\MicrosoftCodeAnalysisLanguageServices\Microsoft.CodeAnalysis.LanguageServices.vsmanproj $extraArgs"
-        Run-MSBuild "..\Dependencies\Microsoft.NetFX20\Microsoft.NetFX20.nuget.proj"
+        $insertionDir = Join-Path $configDir "DevDivInsertionFiles"
+        $vsToolsDir = Join-Path $insertionDir "VS.Tools.Roslyn"
+        $packageOutDir = Join-Path $configDir "DevDivPackages\Roslyn"
+        $packArgs = "/p:NoPackageAnalysis=true"
+        Create-Directory $packageOutDir
+        Pack-One (Join-Path $insertionDir "VS.ExternalAPIs.Roslyn.nuspec") "PerBuildPreRelease" $packageOutDir $packArgs 
+        Pack-One (Join-Path $vsToolsDir "VS.Tools.Roslyn.nuspec") "PerBuildPreRelease" $packageOutDir $packArgs -basePath $vsToolsDir 
+
+        $netfx20Dir = Join-Path $repoDir "src\Dependencies\Microsoft.NetFX20"
+        Pack-One (Join-Path $netfx20Dir "Microsoft.NetFX20.nuspec") "PerBuildPreRelease" -packageOutDir (Join-Path $configDir "NuGet\NetFX20") -basePath $netfx20Dir -extraArgs "$packArgs /p:CurrentVersion=4.3.0" 
+
+        Run-MSBuild "DevDivVsix\PortableFacades\PortableFacades.vsmanproj" -buildArgs $extraArgs
+        Run-MSBuild "DevDivVsix\CompilersPackage\Microsoft.CodeAnalysis.Compilers.vsmanproj" -buildArgs $extraArgs
+        Run-MSBuild "DevDivVsix\MicrosoftCodeAnalysisLanguageServices\Microsoft.CodeAnalysis.LanguageServices.vsmanproj" -buildArgs "$extraArgs"
     }
     finally {
         Pop-Location
     }
 }
 
-function Build-NuGetPackages() {
-    [string]$build = Join-Path $repoDir "src\NuGet\NuGet.proj"
-    if (-not $official) {
-        $build += ' /p:SkipReleaseVersion=true /p:SkipPreReleaseVersion=true'
+function Pack-One([string]$nuspecFilePath, [string]$packageKind, [string]$packageOutDir = "", [string]$extraArgs = "", [string]$basePath = "", [switch]$useConsole = $true) { 
+    $nugetDir = Join-Path $repoDir "src\Nuget"
+    if ($packageOutDir -eq "") {
+        $packageOutDir = Join-Path $configDir "NuGet\$packageKind"
     }
 
-    Run-MSBuild $build
+    if ($basePath -eq "") { 
+        $basePath = $configDir
+    }
+    
+    if (-not ([IO.Path]::IsPathRooted($nuspecFilePath))) { 
+        $nuspecFilePath = Join-Path $nugetDir $nuspecFilePath
+    }
+
+    Create-Directory $packageOutDir
+    $nuspecFileName = Split-Path -leaf $nuspecFilePath
+    $projectFilePath = Join-Path $nugetDir "NuGetProjectPackUtil.csproj"
+    $packArgs = "pack -nologo --no-build $projectFilePath $extraArgs /p:NugetPackageKind=$packageKind /p:NuspecFile=$nuspecFilePath /p:NuspecBasePath=$basePath -o $packageOutDir" 
+
+    if ($official) {
+        $packArgs = "$packArgs /p:OfficialBuild=true"
+    }
+
+    if ($useConsole) { 
+        Exec-Console $dotnet $packArgs
+    }
+    else {
+        Exec-Command $dotnet $packArgs
+    }
+}
+
+function Build-NuGetPackages() {
+
+    function Pack-All([string]$packageKind, $extraArgs) {
+
+        Write-Host "Packing for $packageKind"
+        foreach ($item in Get-ChildItem *.nuspec) {
+            $name = Split-Path -leaf $item
+            Pack-One $name $packageKind -extraArgs $extraArgs
+        }
+    }
+
+    Push-Location (Join-Path $repoDir "src\NuGet")
+    try {
+        $extraArgs = ""
+
+        if ($official) {
+            $extraArgs += " /p:UseRealCommit=true"
+        }
+
+        # Empty directory for packing explicit empty items in the nuspec
+        $emptyDir = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName())
+        Create-Directory $emptyDir
+        New-Item -Path (Join-Path $emptyDir "_._") -Type File | Out-Null
+        $extraArgs += " /p:EmptyDir=$emptyDir"
+
+        Pack-All "PreRelease" $extraArgs
+        if ($packAll) {
+            Pack-All "Release" $extraArgs
+            Pack-All "PerBuildPreRelease" $extraArgs
+        }
+    }
+    finally {
+        Pop-Location
+    }
 }
 
 function Build-DeployToSymStore() {
-    Run-MSBuild "Roslyn.sln /t:DeployToSymStore"
+    Run-MSBuild "Roslyn.sln" "/t:DeployToSymStore" -logFileName "RoslynDeployToSymStore"
 }
 
 # These are tests that don't follow our standard restore, build, test pattern. They customize 
 # the processes in order to test specific elements of our build and hence are handled 
 # separately from our other tests
 function Test-Special() {
-
-    if ($restore) { 
-        Write-Host "Running restore"
-        Restore-All -msbuildDir $msbuildDir 
-    }
-
     if ($testBuildCorrectness) {
         Exec-Block { & ".\build\scripts\test-build-correctness.ps1" -config $buildConfiguration } | Out-Host
     }
@@ -305,12 +447,12 @@ function Test-Special() {
 }
 
 function Test-PerfCorrectness() {
-    Run-MSBuild "Roslyn.sln /p:DeployExtension=false"
+    Run-MSBuild "Roslyn.sln" "/p:DeployExtension=false" -logFileName "RoslynPerfCorrectness"
     Exec-Block { & ".\Binaries\$buildConfiguration\Exes\Perf.Runner\Roslyn.Test.Performance.Runner.exe" --ci-test } | Out-Host
 }
 
 function Test-PerfRun() { 
-    Run-MSBuild "Roslyn.sln /p:DeployExtension=false"
+    Run-MSBuild "Roslyn.sln" "/p:DeployExtension=false" -logFileName "RoslynPerfRun"
 
     # Check if we have credentials to upload to benchview
     $extraArgs = @()
@@ -340,38 +482,23 @@ function Test-PerfRun() {
     }
 }
 
-function Test-XUnitCoreClr() { 
+function Test-XUnitCoreClr() {
+    Write-Host "Publishing ILAsm.csproj"
+    $toolsDir = Join-Path $binariesDir "Tools"
+    $ilasmDir = Join-Path $toolsDir "ILAsm"
+    Exec-Console $dotnet "publish src\Tools\ILAsm --no-restore --runtime win-x64 --self-contained -o $ilasmDir"
 
     $unitDir = Join-Path $configDir "UnitTests"
-    $runtimeIdentifier = "win-x64"
     $tf = "netcoreapp2.0"
-    $logDir = Join-Path $unitDir "xUnitResults"
-    Create-Directory $logDir 
-    $xunitConsole = Join-Path (Get-PackageDir "dotnet-xunit") "tools\$tf\xunit.console.dll"
-
-    # A number of our tests need to be published before they can be executed in order to get some 
-    # runtime assets.
-    $needPublish = @(
-        "src\Compilers\CSharp\Test\Symbol\CSharpCompilerSymbolTest.csproj"
-    )
-
-    foreach ($file in $needPublish) {
-        $name = Split-Path -leaf $file
-        Write-Host "Publishing $name"
-        $filePath = Join-Path $repoDir $file
-        Run-MSBuild "$filePath /m /v:m /t:Publish /p:TargetFramework=$tf /p:RuntimeIdentifier=$runtimeIdentifier /p:SelfContained=true"
-    }
+    $xunitResultDir = Join-Path $unitDir "xUnitResults"
+    Create-Directory $xunitResultDir 
+    $xunitConsole = Join-Path (Get-PackageDir "xunit.runner.console") "tools\$tf\xunit.console.dll"
 
     $dlls = @()
     $allGood = $true
     foreach ($dir in Get-ChildItem $unitDir) {
         $testDir = Join-Path $unitDir (Join-Path $dir $tf)
         if (Test-Path $testDir) { 
-            $publishDir = Join-Path $testDir "$runtimeIdentifier\publish"
-            if (Test-path $publishDir) {
-                $testDir = $publishDir
-            }   
-            
             $dllName = Get-ChildItem -name "*.UnitTests.dll" -path $testDir
             $dllPath = Join-Path $testDir $dllName
 
@@ -380,7 +507,11 @@ function Test-XUnitCoreClr() {
             $args += " --runtimeconfig " + [IO.Path]::ChangeExtension($dllPath, ".runtimeconfig.json")
             $args += " $xunitConsole"
             $args += " $dllPath"
-            $args += " -xml " + (Join-Path $logDir ([IO.Path]::ChangeExtension($dllName, ".xml")))
+            $args += " -xml " + (Join-Path $xunitResultDir ([IO.Path]::ChangeExtension($dllName, ".xml")))
+
+            # https://github.com/dotnet/roslyn/issues/25049
+            # Disable parallel runs everywhere until we get assembly specific settings working again
+            $args += " -parallel none"
 
             try {
                 Write-Host "Running $dllName"
@@ -401,6 +532,9 @@ function Test-XUnitCoreClr() {
 # Core function for running our unit / integration tests tests
 function Test-XUnit() { 
 
+    # Used by tests to locate dotnet CLI
+    $env:DOTNET_INSTALL_DIR = Split-Path $dotnet -Parent
+
     if ($testCoreClr) {
         Test-XUnitCoreClr
         return
@@ -410,12 +544,11 @@ function Test-XUnit() {
         Deploy-VsixViaTool
     }
 
-    $logFilePath = Join-Path $configDir "runtests.log"
     $unitDir = Join-Path $configDir "UnitTests"
     $runTests = Join-Path $configDir "Exes\RunTests\RunTests.exe"
-    $xunitDir = Join-Path (Get-PackageDir "xunit.runner.console") "tools"
+    $xunitDir = Join-Path (Get-PackageDir "xunit.runner.console") "tools\net452"
     $args = "$xunitDir"
-    $args += " -log:$logFilePath"
+    $args += " -logpath:$logsDir"
     $args += " -nocache"
 
     if ($testDesktop) {
@@ -441,7 +574,7 @@ function Test-XUnit() {
     $dlls = $dlls | ?{ -not ($_.FullName -match ".*\\ref\\.*") }
     $dlls = $dlls | ?{ -not ($_.FullName -match ".*/ref/.*") }
 
-    if ($cibuild) {
+    if ($cibuild -or $official) {
         # Use a 50 minute timeout on CI
         $args += " -xml -timeout:50"
 
@@ -468,7 +601,7 @@ function Test-XUnit() {
 # Deploy our core VSIX libraries to Visual Studio via the Roslyn VSIX tool.  This is an alternative to 
 # deploying at build time.
 function Deploy-VsixViaTool() { 
-    $vsixDir = Get-PackageDir "roslyntools.microsoft.vsixexpinstaller"
+    $vsixDir = Get-PackageDir "RoslynTools.Microsoft.VSIXExpInstaller"
     $vsixExe = Join-Path $vsixDir "tools\VsixExpInstaller.exe"
     $both = Get-VisualStudioDirAndId
     $vsDir = $both[0].Trim("\")
@@ -512,8 +645,11 @@ function Deploy-VsixViaTool() {
 function Run-SignTool() { 
     Push-Location $repoDir
     try {
-        $signTool = Join-Path (Get-PackageDir "RoslynTools.Microsoft.SignTool") "tools\SignTool.exe"
+        $signTool = Join-Path (Get-PackageDir "RoslynTools.SignTool") "tools\SignTool.exe"
         $signToolArgs = "-msbuildPath `"$msbuild`""
+        if ($binaryLog) {
+            $signToolArgs += " -msbuildBinaryLog $logsDir\Signing.binlog"
+        }
         switch ($signType) {
             "real" { break; }
             "test" { $signToolArgs += " -testSign"; break; }
@@ -560,6 +696,9 @@ function Ensure-ProcDump() {
 function Redirect-Temp() {
     $temp = Join-Path $binariesDir "Temp"
     Create-Directory $temp
+    Copy-Item (Join-Path $repoDir "src\Workspaces\CoreTestUtilities\TestFiles\.editorconfig") $temp
+    Copy-Item (Join-Path $repoDir "src\Workspaces\CoreTestUtilities\TestFiles\Directory.Build.props") $temp
+    Copy-Item (Join-Path $repoDir "src\Workspaces\CoreTestUtilities\TestFiles\Directory.Build.targets") $temp
     ${env:TEMP} = $temp
     ${env:TMP} = $temp
 }
@@ -568,6 +707,7 @@ function List-BuildProcesses() {
     Write-Host "Listing running build processes..."
     Get-Process -Name "msbuild" -ErrorAction SilentlyContinue | Out-Host
     Get-Process -Name "vbcscompiler" -ErrorAction SilentlyContinue | Out-Host
+    Get-Process -Name "dotnet" -ErrorAction SilentlyContinue | where { $_.Modules | select { $_.ModuleName -eq "VBCSCompiler.dll" } } | Out-Host
 }
 
 function List-VSProcesses() {
@@ -583,6 +723,7 @@ function Stop-BuildProcesses() {
     Write-Host "Killing running build processes..."
     Get-Process -Name "msbuild" -ErrorAction SilentlyContinue | Stop-Process
     Get-Process -Name "vbcscompiler" -ErrorAction SilentlyContinue | Stop-Process
+    Get-Process -Name "dotnet" -ErrorAction SilentlyContinue | where { $_.Modules | select { $_.ModuleName -eq "VBCSCompiler.dll" } } | Stop-Process
 }
 
 # Kill any instances of devenv.exe to ensure VSIX install/uninstall works in future runs and to ensure
@@ -602,15 +743,17 @@ try {
 
     Process-Arguments
 
-    $msbuild, $msbuildDir = Ensure-MSBuildAndDir -msbuildDir $msbuildDir
-    $dotnet, $sdkDir = Ensure-SdkInPathAndData
+    $msbuild = Ensure-MSBuild
+    $dotnet = Ensure-DotnetSdk
     $buildConfiguration = if ($release) { "Release" } else { "Debug" }
     $configDir = Join-Path $binariesDir $buildConfiguration
+    $logsDir = Join-Path $configDir "Logs"
     $bootstrapDir = ""
 
     # Ensure the main output directories exist as a number of tools will fail when they don't exist. 
     Create-Directory $binariesDir
     Create-Directory $configDir 
+    Create-Directory $logsDir
 
     if ($cibuild) { 
         List-VSProcesses
@@ -618,34 +761,22 @@ try {
         Redirect-Temp
     }
 
+    if ($restore) {
+        Write-Host "Running restore"
+        Restore-Packages
+    }
+
     if ($isAnyTestSpecial) {
         Test-Special
         exit 0
-    }
-
-    if ($restore) { 
-        Write-Host "Running restore"
-        Restore-All -msbuildDir $msbuildDir 
     }
 
     if ($bootstrap) {
         $bootstrapDir = Make-BootstrapBuild
     }
 
-    if ($build) {
+    if ($build -or $pack) {
         Build-Artifacts
-    }
-
-    if ($pack) {
-        Build-NuGetPackages
-
-        if ($cibuild -or $official) { 
-            Build-DeployToSymStore
-        }
-    }
-
-    if ($sign) {
-        Run-SignTool
     }
 
     if ($testDesktop -or $testCoreClr -or $testVsi -or $testVsiNetCore) {

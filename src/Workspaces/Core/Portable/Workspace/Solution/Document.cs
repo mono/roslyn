@@ -276,15 +276,18 @@ namespace Microsoft.CodeAnalysis
                     return result;
                 }
 
-                // it looks like someone has set it. try to reuse same semantic model
-                if (original.TryGetTarget(out semanticModel))
+                // It looks like someone has set it. Try to reuse same semantic model, or assign the new model if that
+                // fails. The lock is required since there is no compare-and-set primitive for WeakReference<T>.
+                lock (original)
                 {
-                    return semanticModel;
-                }
+                    if (original.TryGetTarget(out semanticModel))
+                    {
+                        return semanticModel;
+                    }
 
-                // it looks like cache is gone. reset the cache.
-                original.SetTarget(result);
-                return result;
+                    original.SetTarget(result);
+                    return result;
+                }
             }
             catch (Exception e) when (FatalError.ReportUnlessCanceled(e))
             {
@@ -467,6 +470,7 @@ namespace Microsoft.CodeAnalysis
             return GetOptionsAsync(Project.Solution.Options, cancellationToken);
         }
 
+        [PerformanceSensitive("https://github.com/dotnet/roslyn/issues/23582", AllowCaptures = false)]
         internal Task<DocumentOptionSet> GetOptionsAsync(OptionSet solutionOptions, CancellationToken cancellationToken)
         {
             // TODO: we have this workaround since Solution.Options is not actually snapshot but just return Workspace.Options which violate snapshot model.
@@ -475,17 +479,22 @@ namespace Microsoft.CodeAnalysis
             //       snapshot model. once that is fixed, we can remove this workaround - https://github.com/dotnet/roslyn/issues/19284
             if (_cachedOptions == null)
             {
-                var newAsyncLazy = new AsyncLazy<DocumentOptionSet>(async c =>
-                {
-                    var optionsService = Project.Solution.Workspace.Services.GetRequiredService<IOptionService>();
-                    var documentOptionSet = await optionsService.GetUpdatedOptionSetForDocumentAsync(this, solutionOptions, c).ConfigureAwait(false);
-                    return new DocumentOptionSet(documentOptionSet, Project.Language);
-                }, cacheResult: true);
-
-                Interlocked.CompareExchange(ref _cachedOptions, newAsyncLazy, comparand: null);
+                InitializeCachedOptions(solutionOptions, cancellationToken);
             }
 
             return _cachedOptions.GetValueAsync(cancellationToken);
+        }
+
+        private void InitializeCachedOptions(OptionSet solutionOptions, CancellationToken cancellationToken)
+        {
+            var newAsyncLazy = new AsyncLazy<DocumentOptionSet>(async c =>
+            {
+                var optionsService = Project.Solution.Workspace.Services.GetRequiredService<IOptionService>();
+                var documentOptionSet = await optionsService.GetUpdatedOptionSetForDocumentAsync(this, solutionOptions, c).ConfigureAwait(false);
+                return new DocumentOptionSet(documentOptionSet, Project.Language);
+            }, cacheResult: true);
+
+            Interlocked.CompareExchange(ref _cachedOptions, newAsyncLazy, comparand: null);
         }
     }
 }

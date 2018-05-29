@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.UseLocalFunction;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Diagnostics;
+using Microsoft.CodeAnalysis.Test.Utilities;
 using Roslyn.Test.Utilities;
 using Xunit;
 
@@ -1437,24 +1438,50 @@ class Enclosing<T> where T : class
 
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsUseLocalFunction)]
         [WorkItem(22672, "https://github.com/dotnet/roslyn/issues/22672")]
-        public async Task TestMissingIfUsedInMemberAccess()
+        public async Task TestMissingIfUsedInMemberAccess1()
         {
             await TestMissingAsync(
 @"using System;
 
 class Enclosing<T> where T : class
 {
-  delegate T MyDelegate(T t = null);
+    delegate T MyDelegate(T t = null);
 
-  public class Class
-  {
-    public void Caller()
+    public class Class
     {
-      MyDelegate [||]local = x => x;
+        public void Caller()
+        {
+            MyDelegate [||]local = x => x;
 
-      local.Invoke();
+            var str = local.ToString();
+        }
     }
-  }
+}");
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsUseLocalFunction)]
+        [WorkItem(23150, "https://github.com/dotnet/roslyn/issues/23150")]
+        public async Task TestMissingIfUsedInMemberAccess2()
+        {
+            await TestMissingAsync(
+@"using System;
+
+class Enclosing<T> where T : class
+{
+    delegate T MyDelegate(T t = null);
+
+    public class Class
+    {
+        public void Caller(T t)
+        {
+            MyDelegate[||]local = x => x;
+
+            Console.Write(local.Invoke(t));
+
+            var str = local.ToString();
+            local.Invoke(t);
+        }
+    }
 }");
         }
 
@@ -1479,6 +1506,195 @@ class Enclosing<T> where T : class
       Expression<Action> expression = () => local(null);
     }
   }
+}");
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsUseLocalFunction)]
+        [WorkItem(24344, "https://github.com/dotnet/roslyn/issues/24344")]
+        public async Task TestMissingIfUsedInExpressionTree2()
+        {
+            await TestMissingAsync(
+@"using System;
+using System.Linq.Expressions;
+
+public class C
+{
+    void Method(Action action) { }
+
+    Expression<Action> Example()
+    {
+        Action [||]action = () => Method(null);
+        return () => Method(action);
+    }
+}
+");
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsUseLocalFunction)]
+        [WorkItem(23150, "https://github.com/dotnet/roslyn/issues/23150")]
+        public async Task TestWithInvokeMethod1()
+        {
+            await TestInRegularAndScript1Async(
+@"using System;
+
+class Enclosing<T> where T : class
+{
+    delegate T MyDelegate(T t = null);
+
+    public class Class
+    {
+        public void Caller()
+        {
+            MyDelegate [||]local = x => x;
+
+            local.Invoke();
+        }
+    }
+}",
+@"using System;
+
+class Enclosing<T> where T : class
+{
+    delegate T MyDelegate(T t = null);
+
+    public class Class
+    {
+        public void Caller()
+        {
+            T local(T x = null) => x;
+
+            local();
+        }
+    }
+}");
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsUseLocalFunction)]
+        [WorkItem(23150, "https://github.com/dotnet/roslyn/issues/23150")]
+        public async Task TestWithInvokeMethod2()
+        {
+            await TestInRegularAndScript1Async(
+@"using System;
+
+class Enclosing<T> where T : class
+{
+    delegate T MyDelegate(T t = null);
+
+    public class Class
+    {
+        public void Caller(T t)
+        {
+            MyDelegate [||]local = x => x;
+
+            Console.Write(local.Invoke(t));
+        }
+    }
+}",
+@"using System;
+
+class Enclosing<T> where T : class
+{
+    delegate T MyDelegate(T t = null);
+
+    public class Class
+    {
+        public void Caller(T t)
+        {
+            T local(T x = null) => x;
+
+            Console.Write(local(t));
+        }
+    }
+}");
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsUseLocalFunction)]
+        [WorkItem(23150, "https://github.com/dotnet/roslyn/issues/23150")]
+        public async Task TestWithInvokeMethod3()
+        {
+            await TestInRegularAndScript1Async(
+@"using System;
+
+class Enclosing<T> where T : class
+{
+    delegate T MyDelegate(T t = null);
+
+    public class Class
+    {
+        public void Caller(T t)
+        {
+            MyDelegate [||]local = x => x;
+
+            Console.Write(local.Invoke(t));
+
+            var val = local.Invoke(t);
+            local.Invoke(t);
+        }
+    }
+}",
+@"using System;
+
+class Enclosing<T> where T : class
+{
+    delegate T MyDelegate(T t = null);
+
+    public class Class
+    {
+        public void Caller(T t)
+        {
+            T local(T x = null) => x;
+
+            Console.Write(local(t));
+
+            var val = local(t);
+            local(t);
+        }
+    }
+}");
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsUseLocalFunction)]
+        [WorkItem(23150, "https://github.com/dotnet/roslyn/issues/23150")]
+        public async Task TestWithInvokeMethod4()
+        {
+            await TestInRegularAndScript1Async(
+@"using System;
+
+class Enclosing<T> where T : class
+{
+    delegate T MyDelegate(T t = null);
+
+    public class Class
+    {
+        public void Caller(T t)
+        {
+            MyDelegate [||]local = x => x;
+
+            Console.Write(local.Invoke(t));
+
+            var val = local.Invoke(t);
+            local(t);
+        }
+    }
+}",
+@"using System;
+
+class Enclosing<T> where T : class
+{
+    delegate T MyDelegate(T t = null);
+
+    public class Class
+    {
+        public void Caller(T t)
+        {
+            T local(T x = null) => x;
+
+            Console.Write(local(t));
+
+            var val = local(t);
+            local(t);
+        }
+    }
 }");
         }
     }

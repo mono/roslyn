@@ -551,6 +551,29 @@ class Customer
 }}
 ";
 
+        private static readonly string s_preferAutoProperties = $@"
+using System;
+
+class Customer
+{{
+//[
+    // {ServicesVSResources.Prefer_colon}
+    public int Age {{ get; }}
+
+    // {ServicesVSResources.Over_colon}
+    private int age;
+
+    public int Age
+    {{
+        get
+        {{
+            return age;
+        }}
+    }}
+//]
+}}
+";
+
         private static readonly string s_preferLocalFunctionOverAnonymousFunction = $@"
 using System;
 
@@ -562,14 +585,14 @@ class Customer
         // {ServicesVSResources.Prefer_colon}
         int fibonacci(int n)
         {{
-            return n <= 1 ? 1 : fibonacci(n - 1) + fibonacci(n - 2);
+            return n <= 1 ? n : fibonacci(n - 1) + fibonacci(n - 2);
         }}
 
         // {ServicesVSResources.Over_colon}
         Func<int, int> fibonacci = null;
         fibonacci = (int n) =>
         {{
-            return n <= 1 ? 1 : fibonacci(n - 1) + fibonacci(n - 2);
+            return n <= 1 ? n : fibonacci(n - 1) + fibonacci(n - 2);
         }};
 //]
     }}
@@ -760,6 +783,21 @@ class List<T>
 //]
 ";
 
+        private static readonly string s_preferReadonly = $@"
+class Customer
+{{
+//[
+        // {ServicesVSResources.Prefer_colon}
+        // '_value' can only be assigned in constructor
+        private readonly int _value = 0;
+        
+        // {ServicesVSResources.Over_colon}
+        // '_value' can be assigned anywhere
+        private int _value = 0;
+//]
+}}
+";
+
         #endregion
 
         internal StyleViewModel(OptionSet optionSet, IServiceProvider serviceProvider) : base(optionSet, serviceProvider, LanguageNames.CSharp)
@@ -771,6 +809,7 @@ class List<T>
             var predefinedTypesGroupTitle = CSharpVSResources.predefined_type_preferences_colon;
             var varGroupTitle = CSharpVSResources.var_preferences_colon;
             var nullCheckingGroupTitle = CSharpVSResources.null_checking_colon;
+            var fieldGroupTitle = ServicesVSResources.Field_preferences_colon;
             var codeBlockPreferencesGroupTitle = ServicesVSResources.Code_block_preferences_colon;
             var expressionPreferencesGroupTitle = ServicesVSResources.Expression_preferences_colon;
             var variablePreferencesGroupTitle = ServicesVSResources.Variable_preferences_colon;
@@ -808,6 +847,7 @@ class List<T>
 
             // Code block
             CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CSharpCodeStyleOptions.PreferBraces, ServicesVSResources.Prefer_braces, s_preferBraces, s_preferBraces, this, optionSet, codeBlockPreferencesGroupTitle));
+            CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferAutoProperties, ServicesVSResources.analyzer_Prefer_auto_properties, s_preferAutoProperties, s_preferAutoProperties, this, optionSet, codeBlockPreferencesGroupTitle));
 
             // Expression preferences
             CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferObjectInitializer, ServicesVSResources.Prefer_object_initializer, s_preferObjectInitializer, s_preferObjectInitializer, this, optionSet, expressionPreferencesGroupTitle));
@@ -816,8 +856,8 @@ class List<T>
             CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CSharpCodeStyleOptions.PreferPatternMatchingOverAsWithNullCheck, CSharpVSResources.Prefer_pattern_matching_over_as_with_null_check, s_preferPatternMatchingOverAsWithNullCheck, s_preferPatternMatchingOverAsWithNullCheck, this, optionSet, expressionPreferencesGroupTitle));
             CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferExplicitTupleNames, ServicesVSResources.Prefer_explicit_tuple_name, s_preferExplicitTupleName, s_preferExplicitTupleName, this, optionSet, expressionPreferencesGroupTitle));
             CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CSharpCodeStyleOptions.PreferSimpleDefaultExpression, ServicesVSResources.Prefer_simple_default_expression, s_preferSimpleDefaultExpression, s_preferSimpleDefaultExpression, this, optionSet, expressionPreferencesGroupTitle));
-            CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CSharpCodeStyleOptions.PreferInferredTupleNames, ServicesVSResources.Prefer_inferred_tuple_names, s_preferInferredTupleName, s_preferInferredTupleName, this, optionSet, expressionPreferencesGroupTitle));
-            CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CSharpCodeStyleOptions.PreferInferredAnonymousTypeMemberNames, ServicesVSResources.Prefer_inferred_anonymous_type_member_names, s_preferInferredAnonymousTypeMemberName, s_preferInferredAnonymousTypeMemberName, this, optionSet, expressionPreferencesGroupTitle));
+            CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferInferredTupleNames, ServicesVSResources.Prefer_inferred_tuple_names, s_preferInferredTupleName, s_preferInferredTupleName, this, optionSet, expressionPreferencesGroupTitle));
+            CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferInferredAnonymousTypeMemberNames, ServicesVSResources.Prefer_inferred_anonymous_type_member_names, s_preferInferredAnonymousTypeMemberName, s_preferInferredAnonymousTypeMemberName, this, optionSet, expressionPreferencesGroupTitle));
             CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CSharpCodeStyleOptions.PreferLocalOverAnonymousFunction, ServicesVSResources.Prefer_local_function_over_anonymous_function, s_preferLocalFunctionOverAnonymousFunction, s_preferLocalFunctionOverAnonymousFunction, this, optionSet, expressionPreferencesGroupTitle));
 
             AddExpressionBodyOptions(optionSet, expressionPreferencesGroupTitle);
@@ -832,6 +872,9 @@ class List<T>
             CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferCoalesceExpression, ServicesVSResources.Prefer_coalesce_expression, s_preferCoalesceExpression, s_preferCoalesceExpression, this, optionSet, nullCheckingGroupTitle));
             CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferNullPropagation, ServicesVSResources.Prefer_null_propagation, s_preferNullPropagation, s_preferNullPropagation, this, optionSet, nullCheckingGroupTitle));
             CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferIsNullCheckOverReferenceEqualityMethod, CSharpVSResources.Prefer_is_null_over_ReferenceEquals, s_preferIsNullOverReferenceEquals, s_preferIsNullOverReferenceEquals, this, optionSet, nullCheckingGroupTitle));
+
+            // Field preferences.
+            CodeStyleItems.Add(new BooleanCodeStyleOptionViewModel(CodeStyleOptions.PreferReadonly, ServicesVSResources.Prefer_readonly, s_preferReadonly, s_preferReadonly, this, optionSet, fieldGroupTitle));
         }
 
         private void AddExpressionBodyOptions(OptionSet optionSet, string expressionPreferencesGroupTitle)
