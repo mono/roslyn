@@ -6,9 +6,11 @@ export PATH=Binaries/dotnet-cli:$PATH
 
 ./build.sh --restore
 
-dotnet restore Compilers.sln
+DOTNET=Binaries/Tools/dotnet/dotnet
+
+$DOTNET restore Compilers.sln
 # How to build  -f net461 only?
-dotnet build Compilers.sln
+$DOTNET build Compilers.sln
 
 mkdir -p mono-tests
 
