@@ -215,7 +215,8 @@ class Module1
             CompileAndVerify(compilation, expectedOutput: "Test");
         }
 
-        [ConditionalFact(typeof(DesktopOnly))]
+        [ConditionalFact(typeof(DesktopClrOnly))]
+        [WorkItem(10565, "https://github.com/mono/mono/issues/10565")]
         [WorkItem(4163, "https://github.com/dotnet/roslyn/issues/4163")]
         [WorkItem(18411, "https://github.com/dotnet/roslyn/issues/18411")]
         public void ConcatModifiers_02()
@@ -296,7 +297,8 @@ class CL3
             CompileAndVerify(compilation, expectedOutput: "Overridden");
         }
 
-        [ConditionalFact(typeof(DesktopOnly))]
+        [ConditionalFact(typeof(DesktopClrOnly))]
+        [WorkItem(10565, "https://github.com/mono/mono/issues/10565")]
         [WorkItem(4163, "https://github.com/dotnet/roslyn/issues/4163")]
         [WorkItem(18411, "https://github.com/dotnet/roslyn/issues/18411")]
         public void ConcatModifiersAndByRef_01()
@@ -369,7 +371,8 @@ class CL3
             CompileAndVerify(compilation, expectedOutput: "Overridden");
         }
 
-        [ConditionalFact(typeof(DesktopOnly))]
+        [ConditionalFact(typeof(DesktopClrOnly))]
+        [WorkItem(10565, "https://github.com/mono/mono/issues/10565")]
         [WorkItem(4163, "https://github.com/dotnet/roslyn/issues/4163")]
         [WorkItem(18411, "https://github.com/dotnet/roslyn/issues/18411")]
         public void ConcatModifiersAndByRef_02()
@@ -515,7 +518,8 @@ class CL3
             CompileAndVerify(compilation, expectedOutput: "Overridden");
         }
 
-        [ConditionalFact(typeof(DesktopOnly))]
+        [ConditionalFact(typeof(DesktopClrOnly))]
+        [WorkItem(10565, "https://github.com/mono/mono/issues/10565")]
         [WorkItem(4163, "https://github.com/dotnet/roslyn/issues/4163")]
         [WorkItem(18411, "https://github.com/dotnet/roslyn/issues/18411")]
         public void ConcatModifiersAndByRef_04()
@@ -589,7 +593,8 @@ class CL3
             CompileAndVerify(compilation, expectedOutput: "Overridden");
         }
 
-        [ConditionalFact(typeof(DesktopOnly))]
+        [ConditionalFact(typeof(DesktopClrOnly))]
+        [WorkItem(10565, "https://github.com/mono/mono/issues/10565")]
         [WorkItem(8948, "https://github.com/dotnet/roslyn/issues/8948")]
         [WorkItem(18411, "https://github.com/dotnet/roslyn/issues/18411")]
         public void ConcatModifiersAndByRefReturn_01()
@@ -700,7 +705,8 @@ class CL3
 Overridden P");
         }
 
-        [ConditionalFact(typeof(DesktopOnly))]
+        [ConditionalFact(typeof(DesktopClrOnly))]
+        [WorkItem(10565, "https://github.com/mono/mono/issues/10565")]
         [WorkItem(8948, "https://github.com/dotnet/roslyn/issues/8948")]
         [WorkItem(18411, "https://github.com/dotnet/roslyn/issues/18411")]
         public void ConcatModifiersAndByRefReturn_02()
@@ -920,7 +926,8 @@ class CL3
 Overridden P");
         }
 
-        [ConditionalFact(typeof(DesktopOnly))]
+        [ConditionalFact(typeof(DesktopClrOnly))]
+        [WorkItem(10565, "https://github.com/mono/mono/issues/10565")]
         [WorkItem(8948, "https://github.com/dotnet/roslyn/issues/8948")]
         [WorkItem(18411, "https://github.com/dotnet/roslyn/issues/18411")]
         public void ConcatModifiersAndByRefReturn_04()
