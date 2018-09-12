@@ -1125,9 +1125,10 @@ CL3.P
 ");
         }
 
-        [ConditionalFact(typeof(DesktopOnly))]
+        [ConditionalFact(typeof(DesktopClrOnly))]
         [WorkItem(4163, "https://github.com/dotnet/roslyn/issues/4163")]
         [WorkItem(18411, "https://github.com/dotnet/roslyn/issues/18411")]
+        [WorkItem(10564, "https://github.com/mono/mono/issues/10564")]
         public void ConcatModifiers_03()
         {
             var ilSource = @"
