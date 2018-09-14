@@ -50,7 +50,11 @@ namespace Roslyn.Test.Utilities
 
             if (MonoHelpers.IsRunningOnMono())
             {
-                Skip = GetSkipReason(Reason);
+                // HACK: We're going to use corecclr ilasm
+                if (reason == ClrOnlyReason.Ilasm)
+                    Skip = null;
+                else
+                    Skip = GetSkipReason(Reason);
             }
         }
 
