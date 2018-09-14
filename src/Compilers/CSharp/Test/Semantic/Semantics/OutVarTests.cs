@@ -12555,7 +12555,7 @@ public class X
             VerifyModelForOutVarWithoutDataFlow(model, y4Decl, y4Ref);
         }
 
-        [ConditionalFact(typeof(DesktopClrOnly), Reason = "https://github.com/dotnet/roslyn/issues/28026")]
+        [ConditionalFact(typeof(DesktopClrOnly))]
         [WorkItem(10562, "https://github.com/mono/mono/issues/10562")]
         public void Query_01()
         {

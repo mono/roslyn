@@ -100,7 +100,7 @@ namespace Roslyn.Test.Utilities
 
     public class DesktopClrOnly : ExecutionCondition
     {
-        public override bool ShouldSkip => MonoHelpers.IsRunningOnMono() || !ExecutionConditionUtil.IsDesktop;
+        public override bool ShouldSkip => MonoHelpers.IsRunningOnMono() || (CoreClrShim.AssemblyLoadContext.Type != null);
         public override string SkipReason => "Test not supported on Mono or CoreCLR";
     }
 

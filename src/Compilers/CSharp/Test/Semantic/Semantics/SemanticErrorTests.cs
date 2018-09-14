@@ -21249,7 +21249,7 @@ public class Test
                 Diagnostic(ErrorCode.WRN_MissingXMLComment, "Main").WithArguments("Test.Main()"));
         }
 
-        [ConditionalFact(typeof(DesktopClrOnly), Reason = "https://github.com/dotnet/roslyn/issues/18610")]
+        [ConditionalFact(typeof(DesktopClrOnly))]
         [WorkItem(10567, "https://github.com/mono/mono/issues/10567")]
         public void CS1592WRN_XMLParseIncludeError()
         {
