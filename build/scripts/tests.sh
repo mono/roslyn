@@ -23,11 +23,6 @@ if [[ "${runtime}" == "dotnet" ]]; then
     xunit_console="${nuget_dir}"/xunit.runner.console/"${xunit_console_version}"/tools/${target_framework}/xunit.console.dll
 elif [[ "${runtime}" == "mono" ]]; then
     target_framework=net461
-    file_list=(
-        "${unittest_dir}/Microsoft.CodeAnalysis.CSharp.Symbol.UnitTests/net46/Microsoft.CodeAnalysis.CSharp.Symbol.UnitTests.dll"
-        "${unittest_dir}/Microsoft.CodeAnalysis.CSharp.Syntax.UnitTests/net46/Microsoft.CodeAnalysis.CSharp.Syntax.UnitTests.dll"
-        "${unittest_dir}/Microsoft.CodeAnalysis.CSharp.Semantic.UnitTests/net46/Microsoft.CodeAnalysis.CSharp.Semantic.UnitTests.dll"
-        )
     xunit_console="${nuget_dir}"/xunit.runner.console/"${xunit_console_version}"/tools/net452/xunit.console.exe
 else
     echo "Unknown runtime: ${runtime}"
@@ -53,7 +48,7 @@ echo "Using ${xunit_console}"
 mkdir -p "${log_dir}"
 
 exit_code=0
-for test_path in "${unittest_dir}"/*/"${target_framework}"
+for test_path in "${unittest_dir}"/*/"${target_framework}" "${unittest_dir}"/*
 do
     file_name=( "${test_path}"/*.UnitTests.dll )
     log_file="${log_dir}"/"$(basename "${file_name%.*}.xml")"
@@ -62,7 +57,7 @@ do
 
     # If the user specifies a test on the command line, only run that one
     # "${3:-}" => take second arg, empty string if unset
-    if [[ ("${3:-}" != "") && (! "${file_name}" =~ "${2:-}") ]]
+    if [[ ("${3:-}" != "") && (! "${file_name}" =~ "${3:-}") ]]
     then
         echo "Skipping ${file_name}"
         continue
