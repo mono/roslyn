@@ -24,6 +24,21 @@ if [[ "${runtime}" == "dotnet" ]]; then
 elif [[ "${runtime}" == "mono" ]]; then
     target_framework=net461
     xunit_console="${nuget_dir}"/xunit.runner.console/"${xunit_console_version}"/tools/net452/xunit.console.exe
+    mono_excluded_assemblies=(
+        "Microsoft.CodeAnalysis.CSharp.Scripting.UnitTests.dll"
+        "Roslyn.Compilers.CompilerServer.UnitTests.dll"
+        # Missing mscoree.dll, other problems
+        "Roslyn.Compilers.CSharp.Emit.UnitTests.dll"
+        # Omitted because we appear to be missing things necessary to compile vb.net.
+        # See https://github.com/mono/mono/issues/10679
+        "Roslyn.Compilers.VisualBasic.CommandLine.UnitTests.dll"
+        "Roslyn.Compilers.VisualBasic.Semantic.UnitTests.dll"
+        # PortablePdb and lots of other problems
+        "Microsoft.CodeAnalysis.VisualBasic.Scripting.UnitTests.dll"
+        # GetSystemInfo is missing, and other problems
+        # See https://github.com/mono/mono/issues/10678
+        "Roslyn.Compilers.CSharp.WinRT.UnitTests.dll"
+    )
 else
     echo "Unknown runtime: ${runtime}"
     exit 1
@@ -51,7 +66,14 @@ exit_code=0
 for test_path in "${unittest_dir}"/*/"${target_framework}" "${unittest_dir}"/*
 do
     file_name=( "${test_path}"/*.UnitTests.dll )
-    log_file="${log_dir}"/"$(basename "${file_name%.*}.xml")"
+
+    if [ ! -f $file_name ]; then
+        continue
+    fi
+
+    file_base_name=`basename "${file_name}"`
+
+    log_file="${log_dir}"/"${file_base_name}.xml"
     deps_json="${file_name%.*}".deps.json
     runtimeconfig_json="${file_name%.*}".runtimeconfig.json
 
@@ -73,7 +95,7 @@ do
         fi
     elif [[ "${runtime}" == "mono" ]]; then
         runner="mono --debug"
-        if [[ "${file_name[@]}" == *'Microsoft.CodeAnalysis.CSharp.Scripting.UnitTests.dll' || "${file_name[@]}" == *'Roslyn.Compilers.CompilerServer.UnitTests.dll' || "${file_name[@]}" == *'Roslyn.Compilers.CSharp.Emit.UnitTests.dll' ]]
+        if [[ $mono_excluded_assemblies =~ ${file_name[@]} ]]
         then
             echo "Skipping ${file_name[@]}"
             continue
