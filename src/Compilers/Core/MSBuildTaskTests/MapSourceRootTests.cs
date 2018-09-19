@@ -22,7 +22,8 @@ namespace Microsoft.CodeAnalysis.BuildTasks.UnitTests
                $" MappedPath='{sourceRoot.GetMetadata("MappedPath")}'" +
                $" SourceLinkUrl='{sourceRoot.GetMetadata("SourceLinkUrl")}'";
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10678, "https://github.com/mono/mono/issues/10678")]
         public void BasicMapping()
         {
             var engine = new MockEngine();
@@ -72,7 +73,8 @@ namespace Microsoft.CodeAnalysis.BuildTasks.UnitTests
             Assert.True(result);
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10678, "https://github.com/mono/mono/issues/10678")]
         public void InvalidChars()
         {
             var engine = new MockEngine();
@@ -116,7 +118,8 @@ namespace Microsoft.CodeAnalysis.BuildTasks.UnitTests
             Assert.True(result);
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10678, "https://github.com/mono/mono/issues/10678")]
         public void SourceRootPaths_EndWithSeparator()
         {
             var engine = new MockEngine();
@@ -143,7 +146,8 @@ ERROR : {string.Format(ErrorString.MapSourceRoots_PathMustEndWithSlashOrBackslas
             Assert.False(result);
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10678, "https://github.com/mono/mono/issues/10678")]
         public void NestedRoots_Separators()
         {
             var engine = new MockEngine();
@@ -193,7 +197,8 @@ ERROR : {string.Format(ErrorString.MapSourceRoots_PathMustEndWithSlashOrBackslas
             Assert.True(result);
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10678, "https://github.com/mono/mono/issues/10678")]
         public void SourceRootCaseSensitive()
         {
             var engine = new MockEngine();
@@ -227,7 +232,8 @@ ERROR : {string.Format(ErrorString.MapSourceRoots_PathMustEndWithSlashOrBackslas
             Assert.True(result);
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10678, "https://github.com/mono/mono/issues/10678")]
         public void Error_Recursion()
         {
             var engine = new MockEngine();
@@ -344,7 +350,8 @@ ERROR : {string.Format(ErrorString.MapSourceRoots_PathMustEndWithSlashOrBackslas
             Assert.True(result);
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10678, "https://github.com/mono/mono/issues/10678")]
         public void Error_MissingContainingRoot()
         {
             var engine = new MockEngine();
@@ -374,7 +381,8 @@ ERROR : {string.Format(ErrorString.MapSourceRoots_PathMustEndWithSlashOrBackslas
             Assert.False(result);
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10678, "https://github.com/mono/mono/issues/10678")]
         public void Error_NoContainingRootSpecified()
         {
             var engine = new MockEngine();
