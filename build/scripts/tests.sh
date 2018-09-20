@@ -25,29 +25,31 @@ elif [[ "${runtime}" == "mono" ]]; then
     target_framework=net461
     xunit_console="${nuget_dir}"/xunit.runner.console/"${xunit_console_version}"/tools/net452/xunit.console.exe
     mono_excluded_assemblies=(
-        "Microsoft.CodeAnalysis.CSharp.Scripting.UnitTests.dll"
-        "Roslyn.Compilers.CompilerServer.UnitTests.dll"
+        'Microsoft.CodeAnalysis.CSharp.Scripting.UnitTests.dll'
+        'Roslyn.Compilers.CompilerServer.UnitTests.dll'
         # Missing mscoree.dll, other problems
-        "Roslyn.Compilers.CSharp.Emit.UnitTests.dll"
+        'Roslyn.Compilers.CSharp.Emit.UnitTests.dll'
         # Omitted because we appear to be missing things necessary to compile vb.net.
         # See https://github.com/mono/mono/issues/10679
-        "Roslyn.Compilers.VisualBasic.CommandLine.UnitTests.dll"
-        "Roslyn.Compilers.VisualBasic.Semantic.UnitTests.dll"
+        'Roslyn.Compilers.VisualBasic.CommandLine.UnitTests.dll'
+        'Roslyn.Compilers.VisualBasic.Semantic.UnitTests.dll'
         # PortablePdb and lots of other problems
-        "Microsoft.CodeAnalysis.VisualBasic.Scripting.UnitTests.dll"
+        'Microsoft.CodeAnalysis.VisualBasic.Scripting.UnitTests.dll'
         # GetSystemInfo is missing, and other problems
         # See https://github.com/mono/mono/issues/10678
-        "Roslyn.Compilers.CSharp.WinRT.UnitTests.dll"
+        'Roslyn.Compilers.CSharp.WinRT.UnitTests.dll'
         # Many test failures
-        "Roslyn.Compilers.UnitTests.dll"
+        'Roslyn.Compilers.UnitTests.dll'
         # Multiple test failures
-        "Roslyn.Compilers.CSharp.CommandLine.UnitTests.dll"
+        'Roslyn.Compilers.CSharp.CommandLine.UnitTests.dll'
         # Multiple test failures
-        "Microsoft.Build.Tasks.CodeAnalysis.UnitTests.dll"
+        'Microsoft.Build.Tasks.CodeAnalysis.UnitTests.dll'
         # Various failures related to PDBs, along with a runtime crash
-        "Roslyn.Compilers.CSharp.Emit.UnitTests.dll"
+        'Roslyn.Compilers.CSharp.Emit.UnitTests.dll'
         # Deadlocks or hangs for some reason
-        "Roslyn.Compilers.CompilerServer.UnitTests.dll"
+        'Roslyn.Compilers.CompilerServer.UnitTests.dll'
+        # Disabling on assumption
+        'Roslyn.Compilers.VisualBasic.Emit.UnitTests.dll'
     )
 else
     echo "Unknown runtime: ${runtime}"
@@ -95,22 +97,23 @@ do
         continue
     fi
 
-    echo Running "${runtime} ${file_name[@]}"
     if [[ "${runtime}" == "dotnet" ]]; then
         runner="dotnet exec --depsfile ${deps_json} --runtimeconfig ${runtimeconfig_json}"
         if [[ "${file_name[@]}" == *'Roslyn.Compilers.CSharp.Emit.UnitTests.dll' ]]
         then
-            echo "Skipping ${file_name[@]}"
+            echo "Skipping ${file_base_name}"
             continue
         fi
     elif [[ "${runtime}" == "mono" ]]; then
         runner="mono --debug"
-        if [[ $mono_excluded_assemblies =~ ${file_name[@]} ]]
+        if [[ "${mono_excluded_assemblies[*]}" =~ "${file_base_name}" ]]
         then
-            echo "Skipping ${file_name[@]}"
+            echo "Skipping ${file_base_name}"
             continue
         fi
     fi
+    
+    echo Running "${runtime} ${file_base_name}"
     if ${runner} "${xunit_console}" "${file_name[@]}" -xml "${log_file}"
     then
         echo "Assembly ${file_name[@]} passed"
