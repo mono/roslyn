@@ -106,7 +106,7 @@ do
         fi
     elif [[ "${runtime}" == "mono" ]]; then
         runner="mono --debug"
-        if [[ "${mono_excluded_assemblies[*]}" =~ "${file_base_name}" ]]
+        if [[ ("${mono_excluded_assemblies[*]}" =~ "${file_base_name}") && (! "${file_name}" =~ "${3:-}") ]]
         then
             echo "Skipping ${file_base_name}"
             continue
