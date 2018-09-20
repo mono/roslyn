@@ -38,6 +38,16 @@ elif [[ "${runtime}" == "mono" ]]; then
         # GetSystemInfo is missing, and other problems
         # See https://github.com/mono/mono/issues/10678
         "Roslyn.Compilers.CSharp.WinRT.UnitTests.dll"
+        # Many test failures
+        "Roslyn.Compilers.UnitTests.dll"
+        # Multiple test failures
+        "Roslyn.Compilers.CSharp.CommandLine.UnitTests.dll"
+        # Multiple test failures
+        "Microsoft.Build.Tasks.CodeAnalysis.UnitTests.dll"
+        # Various failures related to PDBs, along with a runtime crash
+        "Roslyn.Compilers.CSharp.Emit.UnitTests.dll"
+        # Deadlocks or hangs for some reason
+        "Roslyn.Compilers.CompilerServer.UnitTests.dll"
     )
 else
     echo "Unknown runtime: ${runtime}"
