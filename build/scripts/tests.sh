@@ -79,13 +79,19 @@ single_test_name=${3:-}
 [[ "${single_test_name}" != "" ]] && was_argv_specified=1
 
 exit_code=0
-for test_path in "${unittest_dir}"/*/"${target_framework}" "${unittest_dir}"/*
+for test_path in "${unittest_dir}"/*
 do
-    file_names=("${test_path}"/*.UnitTests.dll)
-    file_name=${file_names[0]}
+    file_names=(${test_path}/${target_framework}/*.UnitTests.dll)
+    fallback_file_names=(${test_path}/*.UnitTests.dll)
 
-    if [ ! -f "${file_name}" ]; then
-        continue
+    if [ -f "${file_names[0]}" ]; then
+        file_name=${file_names[0]}
+    else
+        if [ -f "${fallback_file_names[0]}" ]; then
+            file_name=${fallback_file_names[0]}
+        else
+            continue
+        fi
     fi
 
     file_base_name=$(basename "${file_name}")
