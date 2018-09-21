@@ -1575,8 +1575,9 @@ Overriden 16
 ");
         }
 
-        [ClrOnlyFact(ClrOnlyReason.Ilasm)]
+        [ClrOnlyFact]
         [WorkItem(4958, "https://github.com/dotnet/roslyn/issues/4958")]
+        [WorkItem(10757 ,"https://github.com/mono/mono/issues/10757")]
         public void ArraysOfRank1_InAttributes()
         {
             var ilSource = @"
