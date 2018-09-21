@@ -50,6 +50,9 @@ elif [[ "${runtime}" == "mono" ]]; then
         'Roslyn.Compilers.CompilerServer.UnitTests.dll'
         # Disabling on assumption
         'Roslyn.Compilers.VisualBasic.Emit.UnitTests.dll'
+        # A zillion test failures + crash
+        # See https://github.com/mono/mono/issues/10756
+        'Roslyn.Compilers.VisualBasic.Symbol.UnitTests.dll'
     )
 else
     echo "Unknown runtime: ${runtime}"

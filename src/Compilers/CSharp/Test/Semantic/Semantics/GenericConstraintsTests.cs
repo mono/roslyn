@@ -2483,8 +2483,14 @@ class Test
         [InlineData("false", "System.Boolean", 1)]
         [InlineData("E.A", "E", 4)]
         [InlineData("new S { a = 1, b = 2, c = 3 }", "S", 12)]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void UnmanagedConstraints_PointerOperations_SimpleTypes(string arg, string type, int size)
         {
+            if (MonoHelpers.IsRunningOnMono()) {
+                Console.Error.WriteLine("UnmanagedConstraints_PointerOperations_SimpleTypes [SKIP]");
+                return;
+            }
+
             CompileAndVerify(@"
 enum E
 {
