@@ -2579,7 +2579,8 @@ class Test
             CreateCompilation(source).VerifyDiagnostics();
         }
 
-        [Fact, WorkItem(530747, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/530747")]
+        [ClrOnlyFact, WorkItem(530747, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/530747")]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void RefOmittedComCall_Unsafe()
         {
             // Native compiler generates invalid IL for ref omitted argument of pointer type, while Roslyn generates correct IL.
@@ -11050,7 +11051,8 @@ class Program
             CompileAndVerify(code, expectedOutput: @"2");
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void MethodGroupConversionIn2Overloaded()
         {
             var code = @"

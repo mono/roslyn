@@ -2532,7 +2532,8 @@ unsafe class Test
 }");
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void UnmanagedConstraints_InterfaceMethod()
         {
             CompileAndVerify(@"
@@ -3008,7 +3009,8 @@ public class Test
                 Diagnostic(ErrorCode.ERR_GenericConstraintNotSatisfiedValType, "IsEnum<Wrapper<string>.S>").WithArguments("Test.IsEnum<T>()", "System.Enum", "T", "Wrapper<string>.S").WithLocation(38, 9));
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void UnmanagedConstraints_PointerInsideStruct()
         {
             CompileAndVerify(@"

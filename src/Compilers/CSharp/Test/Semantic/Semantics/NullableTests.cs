@@ -107,7 +107,8 @@ class C
                 );
         }
 
-        [Fact, WorkItem(543954, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/543954")]
+        [ClrOnlyFact, WorkItem(543954, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/543954")]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void TestLiftedIncrementOperatorBreakingChanges02()
         {
             // Now here we have a case where the compilation *should* succeed, and does, but 
@@ -174,7 +175,8 @@ class C
             verifier = CompileAndVerify(source: source3, expectedOutput: "1", parseOptions: TestOptions.Regular.WithPEVerifyCompatFeature());
         }
 
-        [Fact, WorkItem(543954, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/543954")]
+        [ClrOnlyFact, WorkItem(543954, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/543954")]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void TestLiftedIncrementOperatorBreakingChanges03()
         {
             // Let's in fact verify that this works correctly for all possible conversions to built-in types:
