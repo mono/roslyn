@@ -74,51 +74,62 @@ echo "Using ${xunit_console}"
 # Discover and run the tests
 mkdir -p "${log_dir}"
 
+was_argv_specified=0
+single_test_name=${3:-}
+[[ "${single_test_name}" != "" ]] && was_argv_specified=1
+
 exit_code=0
 for test_path in "${unittest_dir}"/*/"${target_framework}" "${unittest_dir}"/*
 do
-    file_name=( "${test_path}"/*.UnitTests.dll )
+    file_names=("${test_path}"/*.UnitTests.dll)
+    file_name=${file_names[0]}
 
-    if [ ! -f $file_name ]; then
+    if [ ! -f "${file_name}" ]; then
         continue
     fi
 
-    file_base_name=`basename "${file_name}"`
+    file_base_name=$(basename "${file_name}")
 
-    log_file="${log_dir}"/"${file_base_name}.xml"
+    log_file="${log_dir}/${file_base_name}.xml"
     deps_json="${file_name%.*}".deps.json
     runtimeconfig_json="${file_name%.*}".runtimeconfig.json
 
+    is_argv_match=0
+    [[ "${file_name}" =~ "${single_test_name}" ]] && is_argv_match=1
+
     # If the user specifies a test on the command line, only run that one
     # "${3:-}" => take second arg, empty string if unset
-    if [[ ("${3:-}" != "") && (! "${file_name}" =~ "${3:-}") ]]
+    if (( was_argv_specified && ! is_argv_match ))
     then
-        echo "Skipping ${file_name}"
+        echo "Skipping ${file_base_name} to run single test"
         continue
     fi
 
     if [[ "${runtime}" == "dotnet" ]]; then
         runner="dotnet exec --depsfile ${deps_json} --runtimeconfig ${runtimeconfig_json}"
-        if [[ "${file_name[@]}" == *'Roslyn.Compilers.CSharp.Emit.UnitTests.dll' ]]
+        if [[ "${file_name}" == *'Roslyn.Compilers.CSharp.Emit.UnitTests.dll' ]]
         then
             echo "Skipping ${file_base_name}"
             continue
         fi
     elif [[ "${runtime}" == "mono" ]]; then
         runner="mono --debug"
-        if [[ ("${mono_excluded_assemblies[*]}" =~ "${file_base_name}") || (("${3:-}" == "") && (! "${file_name}" =~ "${3:-}")) ]]
+        is_blacklist_match=0
+        [[ ("${mono_excluded_assemblies[*]}" =~ "${file_base_name}") ]] && is_blacklist_match=1
+        if (( is_blacklist_match && ! ( is_argv_match && was_argv_specified ) ))
         then
-            echo "Skipping ${file_base_name}"
+            echo "Skipping blacklisted ${file_base_name}"
             continue
         fi
     fi
     
     echo Running "${runtime} ${file_base_name}"
-    if ${runner} "${xunit_console}" "${file_name[@]}" -xml "${log_file}"
+
+    if ${runner} "${xunit_console}" "${file_name}" -xml "${log_file}"
     then
-        echo "Assembly ${file_name[@]} passed"
+        echo "Assembly ${file_name} passed"
     else
-        echo "Assembly ${file_name[@]} failed"
+        echo "Assembly ${file_name} failed"
         exit_code=1
     fi
 done
