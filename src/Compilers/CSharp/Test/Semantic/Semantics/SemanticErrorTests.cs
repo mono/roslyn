@@ -7206,7 +7206,8 @@ class MyDerived : MyClass
                 );
         }
 
-        [Fact, WorkItem(990, "https://github.com/dotnet/roslyn/issues/990")]
+        [ClrOnlyFact, WorkItem(990, "https://github.com/dotnet/roslyn/issues/990")]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void WriteOfReadonlyStaticMemberOfAnotherInstantiation02()
         {
             var text =
@@ -15493,7 +15494,8 @@ class Test
                  );
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void CS1666ERR_FixedBufferNotFixed()
         {
             var text = @"
@@ -21249,7 +21251,8 @@ public class Test
                 Diagnostic(ErrorCode.WRN_MissingXMLComment, "Main").WithArguments("Test.Main()"));
         }
 
-        [ClrOnlyFact]
+        [ConditionalFact(typeof(DesktopClrOnly))]
+        [WorkItem(10567, "https://github.com/mono/mono/issues/10567")]
         public void CS1592WRN_XMLParseIncludeError()
         {
             var xmlFile = Temp.CreateFile(extension: ".xml").WriteAllText("&");

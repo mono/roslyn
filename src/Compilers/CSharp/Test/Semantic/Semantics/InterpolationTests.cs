@@ -969,7 +969,8 @@ class Program {
             );
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void SillyCoreLib01()
         {
             var text =

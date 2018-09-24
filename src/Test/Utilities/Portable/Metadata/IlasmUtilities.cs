@@ -21,30 +21,21 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
 
         private static string GetIlasmPath()
         {
-            if (CoreClrShim.AssemblyLoadContext.Type == null)
+            var ilasmExeName = PlatformInformation.IsWindows ? "ilasm.exe" : "ilasm";
+
+            var directory = Path.GetDirectoryName(RuntimeUtilities.GetAssemblyLocation(typeof(RuntimeUtilities)));
+            string path = null;
+            while (directory != null && !File.Exists(path = Path.Combine(directory, "Binaries", "Tools", "ILAsm", ilasmExeName)))
             {
-                return Path.Combine(
-                    Path.GetDirectoryName(RuntimeUtilities.GetAssemblyLocation(typeof(object))),
-                    "ilasm.exe");
+                directory = Path.GetDirectoryName(directory);
             }
-            else
+
+            if (directory == null)
             {
-                var ilasmExeName = PlatformInformation.IsWindows ? "ilasm.exe" : "ilasm";
-
-                var directory = Path.GetDirectoryName(RuntimeUtilities.GetAssemblyLocation(typeof(RuntimeUtilities)));
-                string path = null;
-                while (directory != null && !File.Exists(path = Path.Combine(directory, "Binaries", "Tools", "ILAsm", ilasmExeName)))
-                {
-                    directory = Path.GetDirectoryName(directory);
-                }
-
-                if (directory == null)
-                {
-                    throw new NotSupportedException("Unable to find CoreCLR ilasm tool. Has the Microsoft.NETCore.ILAsm package been published to ./Binaries/Tools?");
-                }
-
-                return path;
+                throw new NotSupportedException("Unable to find CoreCLR ilasm tool. Has the Microsoft.NETCore.ILAsm package been published to ./Binaries/Tools?");
             }
+
+            return path;
         }
 
         private static readonly string IlasmPath = GetIlasmPath();
@@ -99,14 +90,6 @@ $@".assembly '{sourceFileName}' {{}}
                 }
 
                 var program = IlasmPath;
-                if (MonoHelpers.IsRunningOnMono())
-                {
-                    arguments = string.Format("{0} {1}", IlasmPath, arguments);
-                    arguments = arguments.Replace("\"", "");
-                    arguments = arguments.Replace("=", ":");
-                    program = "mono";
-                }
-
                 var result = ProcessUtilities.Run(program, arguments);
 
                 if (result.ContainsErrors)

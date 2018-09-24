@@ -2761,7 +2761,8 @@ class Repro
             CompileAndVerify(comp, expectedOutput: "42");
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void DynamicResultTypeCustomAwaiter()
         {
             const string source = @"

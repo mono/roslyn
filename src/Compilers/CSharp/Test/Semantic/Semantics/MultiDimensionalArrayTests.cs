@@ -279,7 +279,8 @@ Diagnostic(ErrorCode.ERR_ArrayInitializerExpected, "null")
 ";
 
         [WorkItem(126766, "https://devdiv.visualstudio.com:443/defaultcollection/DevDiv/_workitems/edit/126766"), WorkItem(4924, "https://github.com/dotnet/roslyn/issues/4924")]
-        [ClrOnlyFact(ClrOnlyReason.Ilasm)]
+        [WorkItem(10755, "https://github.com/mono/mono/issues/10755")]
+        [ClrOnlyFact]
         public void ArraysOfRank1_GetElement()
         {
             var source =
@@ -312,7 +313,8 @@ Diagnostic(ErrorCode.ERR_ArrayInitializerExpected, "null")
         }
 
         [WorkItem(126766, "https://devdiv.visualstudio.com:443/defaultcollection/DevDiv/_workitems/edit/126766"), WorkItem(4924, "https://github.com/dotnet/roslyn/issues/4924")]
-        [ClrOnlyFact(ClrOnlyReason.Ilasm)]
+        [WorkItem(10755, "https://github.com/mono/mono/issues/10755")]
+        [ClrOnlyFact]
         public void ArraysOfRank1_SetElement()
         {
             var source =
@@ -355,7 +357,8 @@ Test2
         }
 
         [WorkItem(126766, "https://devdiv.visualstudio.com:443/defaultcollection/DevDiv/_workitems/edit/126766"), WorkItem(4924, "https://github.com/dotnet/roslyn/issues/4924")]
-        [ClrOnlyFact(ClrOnlyReason.Ilasm)]
+        [WorkItem(10755, "https://github.com/mono/mono/issues/10755")]
+        [ClrOnlyFact]
         public void ArraysOfRank1_ElementAddress()
         {
             var source =
@@ -571,7 +574,8 @@ Test2
         }
 
         [WorkItem(126766, "https://devdiv.visualstudio.com:443/defaultcollection/DevDiv/_workitems/edit/126766"), WorkItem(4924, "https://github.com/dotnet/roslyn/issues/4924")]
-        [ClrOnlyFact(ClrOnlyReason.Ilasm)]
+        [WorkItem(10755, "https://github.com/mono/mono/issues/10755")]
+        [ClrOnlyFact]
         public void ArraysOfRank1_TypeArgumentInference02()
         {
             var source =
@@ -604,7 +608,8 @@ System.Double
         }
 
         [WorkItem(126766, "https://devdiv.visualstudio.com:443/defaultcollection/DevDiv/_workitems/edit/126766"), WorkItem(4924, "https://github.com/dotnet/roslyn/issues/4924")]
-        [ClrOnlyFact(ClrOnlyReason.Ilasm)]
+        [WorkItem(10755, "https://github.com/mono/mono/issues/10755")]
+        [ClrOnlyFact]
         public void ArraysOfRank1_ForEach()
         {
             var source =
@@ -661,7 +666,8 @@ System.Double
         }
 
         [WorkItem(126766, "https://devdiv.visualstudio.com:443/defaultcollection/DevDiv/_workitems/edit/126766"), WorkItem(4924, "https://github.com/dotnet/roslyn/issues/4924")]
-        [ClrOnlyFact(ClrOnlyReason.Ilasm)]
+        [WorkItem(10755, "https://github.com/mono/mono/issues/10755")]
+        [ClrOnlyFact]
         public void ArraysOfRank1_Length()
         {
             var source =
@@ -693,7 +699,8 @@ System.Double
         }
 
         [WorkItem(126766, "https://devdiv.visualstudio.com:443/defaultcollection/DevDiv/_workitems/edit/126766"), WorkItem(4924, "https://github.com/dotnet/roslyn/issues/4924")]
-        [ClrOnlyFact(ClrOnlyReason.Ilasm)]
+        [WorkItem(10755, "https://github.com/mono/mono/issues/10755")]
+        [ClrOnlyFact]
         public void ArraysOfRank1_LongLength()
         {
             var source =
@@ -1568,8 +1575,9 @@ Overriden 16
 ");
         }
 
-        [ClrOnlyFact(ClrOnlyReason.Ilasm)]
+        [ClrOnlyFact]
         [WorkItem(4958, "https://github.com/dotnet/roslyn/issues/4958")]
+        [WorkItem(10757 ,"https://github.com/mono/mono/issues/10757")]
         public void ArraysOfRank1_InAttributes()
         {
             var ilSource = @"

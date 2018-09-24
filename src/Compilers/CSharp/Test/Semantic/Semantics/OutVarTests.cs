@@ -6021,7 +6021,8 @@ public unsafe class X
             VerifyModelForOutVarDuplicateInSameScope(model, x4Decl[1]);
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void Fixed_01()
         {
             var source =
@@ -6055,7 +6056,8 @@ public unsafe class X
 fixed");
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void Fixed_02()
         {
             var source =
@@ -12555,7 +12557,8 @@ public class X
             VerifyModelForOutVarWithoutDataFlow(model, y4Decl, y4Ref);
         }
 
-        [Fact]
+        [ConditionalFact(typeof(DesktopClrOnly))]
+        [WorkItem(10562, "https://github.com/mono/mono/issues/10562")]
         public void Query_01()
         {
             var source =

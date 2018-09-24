@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
 using Microsoft.CodeAnalysis.Test.Utilities;
+using Roslyn.Test.Utilities;
 using Xunit;
 
 namespace Microsoft.CodeAnalysis.CSharp.UnitTests
@@ -399,7 +400,8 @@ unsafe class Test
             Assert.Equal(Conversion.Identity, element0Info.ImplicitConversion);
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void TestFor_Pointer()
         {
             var comp = CreateCompilationWithMscorlibAndSpan(@"

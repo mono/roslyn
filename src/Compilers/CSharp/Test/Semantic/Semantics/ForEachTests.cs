@@ -2881,7 +2881,8 @@ class Program
         }
 
         [WorkItem(11387, "https://github.com/dotnet/roslyn/issues/11387")]
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void StringNotIEnumerable()
         {
             var source1 =

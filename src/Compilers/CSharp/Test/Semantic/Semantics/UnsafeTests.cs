@@ -8200,8 +8200,9 @@ class C
             CreateCompilation(text, options: TestOptions.UnsafeReleaseDll).VerifyDiagnostics();
         }
 
-        [Fact()]
+        [ClrOnlyFact]
         [WorkItem(547030, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/547030")]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void FixedBuffersUsageScenarioInRange()
         {
             var text = @"
@@ -8312,8 +8313,9 @@ class Program
 ");
         }
 
-        [Fact()]
+        [ClrOnlyFact]
         [WorkItem(547030, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/547030")]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void FixedBuffersUsagescenarioOutOfRange()
         {
             // This should work as no range checking for unsafe code.
@@ -8427,7 +8429,8 @@ class Program
 }");
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void FixedBufferUsageWith_this()
         {
             var text = @"
@@ -8470,8 +8473,9 @@ unsafe struct S
             }
         }
 
-        [Fact()]
+        [ClrOnlyFact]
         [WorkItem(547030, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/547030")]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void FixedBufferUsageDifferentAssemblies()
         {
             // Ensure fixed buffers work as expected when fixed buffer is created in different assembly to where it is consumed.

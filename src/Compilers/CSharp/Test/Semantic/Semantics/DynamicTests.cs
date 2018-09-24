@@ -3426,7 +3426,8 @@ class Test
             Assert.Equal("void Test.Goo<dynamic>(System.Action<dynamic> action, System.Collections.Generic.IEnumerable<dynamic> source)", model.GetSymbolInfo(node).Symbol.ToTestDisplayString());
         }
 
-        [Fact, WorkItem(875140, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/875140")]
+        [ClrOnlyFact, WorkItem(875140, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/875140")]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void Bug875140_01()
         {
             string source = @"
@@ -3453,7 +3454,8 @@ class Program
             Assert.Equal("System.Object Program.Goo<System.Object>(System.Action<System.Object, System.Object> x)", model.GetSymbolInfo(node).Symbol.ToTestDisplayString());
         }
 
-        [Fact, WorkItem(875140, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/875140")]
+        [ClrOnlyFact, WorkItem(875140, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/875140")]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void Bug875140_02()
         {
             string source = @"

@@ -741,7 +741,8 @@ Diagnostic(ErrorCode.ERR_BadNamedArgument, "y").WithArguments("PartialMethod", "
                 );
         }
 
-        [Fact]
+        [ClrOnlyFact]
+        [WorkItem(10752, "https://github.com/mono/mono/issues/10752")]
         public void TestNamedAndOptionalParametersUnsafe()
         {
             string source = @"
