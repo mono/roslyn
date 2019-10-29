@@ -28,10 +28,10 @@ install_dotnet () {
     if [[ ! -x "${DOTNET_PATH}/dotnet" || "$(${DOTNET_PATH}/dotnet --version)" != "${DOTNET_SDK_VERSION}" ]]
     then
         echo "Downloading and installing .NET CLI version ${DOTNET_SDK_VERSION} to ${DOTNET_PATH}"
-        curl https://dot.net/v1/dotnet-install.sh | \
+        curl -L https://dot.net/v1/dotnet-install.sh | \
             /usr/bin/env bash -s -- --version "${DOTNET_SDK_VERSION}" --install-dir "${DOTNET_PATH}"
 
-        curl https://dot.net/v1/dotnet-install.sh | \
+        curl -L https://dot.net/v1/dotnet-install.sh | \
             /usr/bin/env bash -s -- --version "${DOTNET_RUNTIME_VERSION}" --shared-runtime --install-dir "${DOTNET_PATH}"
     fi
 
